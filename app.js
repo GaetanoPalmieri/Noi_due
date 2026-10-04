@@ -2741,9 +2741,13 @@ function openListDetail(listId){
       const text=input.value.trim();
       if(!text){ input.focus(); return; }
       const price=parseAmount(priceInput.value);
-      list().items.push({id:uid(),text:text.slice(0,120),price:price>0?Math.round(price*100)/100:null,done:false,code:"",image:"",url:"",photo:""});
+      const url=extractUrl(text);
+      const label=url?(text.replace(url,"").trim()||"Carico il prodotto dal link…"):text;
+      const it={id:uid(),text:label.slice(0,120),price:price>0?Math.round(price*100)/100:null,done:false,code:"",image:"",url:url||"",photo:""};
+      list().items.push(it);
       input.value=""; priceInput.value="";
       save(); input.focus();
+      if(url) enrichListItem(listId,it.id,url);
     }
     node.querySelector("#listAddBtn").addEventListener("click",add);
     // Incolla una lista: ogni riga (o voce separata da virgole) diventa un articolo.
@@ -2751,13 +2755,17 @@ function openListDetail(listId){
       const l=list(); if(!l||!lines.length) return 0;
       const existing=new Set(l.items.filter(i=>!i.done).map(i=>normName(i.text)));
       let n=0;
-      lines.forEach(text=>{ const k=normName(text); if(!k||existing.has(k)) return; existing.add(k); l.items.push({id:uid(),text:text.slice(0,120),price:null,done:false,code:"",image:"",url:"",photo:""}); n++; });
+      const toEnrich=[];
+      lines.forEach(text=>{ const url=extractUrl(text); const label=url?(text.replace(url,"").trim()||"Carico il prodotto dal link…"):text; const k=normName(url||text); if(!k||existing.has(k)) return; existing.add(k);
+        const it={id:uid(),text:label.slice(0,120),price:null,done:false,code:"",image:"",url:url||"",photo:""}; l.items.push(it); if(url) toEnrich.push([it.id,url]); n++; });
       if(n) save();
+      toEnrich.forEach(([id,url],i)=>setTimeout(()=>enrichListItem(listId,id,url),i*400));
       return n;
     }
     input.addEventListener("paste",e=>{
       const txt=(e.clipboardData||window.clipboardData)?.getData("text")||"";
       const lines=parseShoppingLines(txt);
+      if(lines.length===1 && extractUrl(txt)){ e.preventDefault(); input.value=txt.trim(); add(); return; }
       if(lines.length>1){ e.preventDefault(); const n=addMany(lines); showToast(n?`${n} articoli aggiunti`:"Erano già tutti nella lista"); input.value=""; }
     });
     node.querySelector("#listPasteBtn").addEventListener("click",()=>openListPaste(lines=>{ const n=addMany(lines); showToast(n?`${n} ${n===1?"articolo aggiunto":"articoli aggiunti"}`:"Erano già tutti nella lista"); }));
@@ -2781,6 +2789,54 @@ function openListDetail(listId){
     listDetailRefresh=paint;
     paint();
   });
+}
+/* Noi Due 1.5.2 — Dati del prodotto da un link (nome, foto, prezzo se il sito lo indica).
+   Il browser non può leggere direttamente le pagine di altri siti, quindi passa da Microlink (gratuito, senza chiave). */
+const URL_RE=/https?:\/\/[^\s<>"]+/i;
+function extractUrl(text){ const m=String(text||"").match(URL_RE); return m?m[0].replace(/[),.;!?]+$/,""):""; }
+function cleanProductTitle(title,publisher){
+  let t=String(title||"").replace(/\s+/g," ").trim();
+  const parts=t.split(/\s+[|·•–—-]\s+/);
+  if(parts.length>1 && parts[0].length>=4){
+    const last=parts[parts.length-1].toLowerCase();
+    if(!publisher || last.includes(String(publisher).toLowerCase().slice(0,5)) || /amazon|ikea|zalando|shop|store|online|\.it|\.com/.test(last)) t=parts.slice(0,-1).join(" - ");
+  }
+  return t.replace(/^(Amazon\.it\s*:\s*)/i,"").slice(0,120);
+}
+async function fetchLinkPreview(url){
+  const base=`https://api.microlink.io/?url=${encodeURIComponent(url)}`;
+  const priceRules="&data.price.selector="+encodeURIComponent('meta[property="product:price:amount"],meta[property="og:price:amount"],meta[itemprop="price"],[itemprop="price"][content]')+"&data.price.attr=content";
+  for(const q of [base+priceRules, base]){
+    try{
+      const r=await fetch(q);
+      const j=await r.json();
+      if(j && j.status==="success" && j.data){
+        const d=j.data;
+        const price=parseFloat(String(d.price??"").replace(",","."));
+        return {title:cleanProductTitle(d.title,d.publisher),image:/^https:\/\//.test(d.image?.url||"")?d.image.url:(/^https:\/\//.test(d.logo?.url||"")?d.logo.url:""),
+          url:/^https?:\/\//.test(d.url||"")?d.url:url,price:Number.isFinite(price)&&price>0&&price<100000?Math.round(price*100)/100:null,publisher:String(d.publisher||"").slice(0,40)};
+      }
+    }catch(e){ /* rete assente o limite gratuito raggiunto: riprova senza regole o rinuncia */ }
+  }
+  return null;
+}
+/* Arricchisce un articolo già in lista con i dati presi dal link. */
+async function enrichListItem(listId,itemId,url){
+  const p=await fetchLinkPreview(url);
+  const l=state.lists.find(x=>x.id===listId), it=l?.items.find(x=>x.id===itemId);
+  if(!it) return;
+  if(p){
+    if(p.title && (!it.text || it.text===url || it.text.startsWith("Carico"))) it.text=p.title;
+    if(p.image && !it.photo) it.image=p.image;
+    if(p.price && !it.price) it.price=p.price;
+    it.url=p.url||url;
+    showToast(p.price?"Dati del prodotto presi dal sito, prezzo compreso":"Dati del prodotto presi dal sito");
+  } else {
+    if(it.text.startsWith("Carico")) it.text=(()=>{ try{ return new URL(url).hostname.replace(/^www\./,""); }catch(e){ return "Prodotto dal link"; } })();
+    it.url=url;
+    showToast("Non riesco a leggere il sito: ho salvato il link, scrivi tu il nome");
+  }
+  persist(); renderCoupleLists(); if(listDetailRefresh) listDetailRefresh();
 }
 function parseShoppingLines(text){
   let parts=String(text||"").replace(/\r/g,"").split("\n");
@@ -3259,6 +3315,25 @@ function openListItem(listId,itemId){
     const draft={photo:it.photo||"",image:it.image||"",url:it.url||""};
     const nameInput=node.querySelector("#itemNameInput"), priceInput=node.querySelector("#itemPriceInput"), codeInput=node.querySelector("#itemCodeInput");
     nameInput.value=it.text; priceInput.value=it.price?String(it.price).replace(".",","):""; codeInput.value=it.code||"";
+    const urlInput=node.querySelector("#itemUrlInput"), urlHint=node.querySelector("#itemUrlHint");
+    urlInput.value=it.url||"";
+    async function fetchFromUrl(){
+      const url=extractUrl(urlInput.value);
+      if(!url){ urlHint.textContent="Incolla un link che inizi con https://"; return; }
+      urlHint.textContent="Leggo il sito…";
+      const p=await fetchLinkPreview(url);
+      if(!node.isConnected) return;
+      if(!p){ draft.url=url; urlHint.textContent="Non riesco a leggere questo sito: il link resta salvato, scrivi tu il nome."; paint(); return; }
+      if(p.title) nameInput.value=p.title;
+      if(p.image) draft.image=p.image;
+      if(p.price && !parseAmount(priceInput.value)) priceInput.value=String(p.price).replace(".",",");
+      draft.url=p.url||url;
+      urlHint.textContent=`Dati presi da ${p.publisher||"sito"}${p.price?"":" (prezzo non indicato dal sito)"}.`;
+      paint();
+    }
+    node.querySelector("#itemUrlFetchBtn").addEventListener("click",fetchFromUrl);
+    urlInput.addEventListener("paste",()=>setTimeout(fetchFromUrl,50));
+    urlInput.addEventListener("change",()=>{ draft.url=extractUrl(urlInput.value)||""; paint(); });
     const photoBox=node.querySelector("#itemPhoto"), links=node.querySelector("#itemLinks"), removeBtn=node.querySelector("#itemPhotoRemove");
     function paint(){
       const pic=draft.photo||draft.image;

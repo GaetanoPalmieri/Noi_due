@@ -4,11 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
 <title>Noi Due — Spese di coppia</title>
-<meta name="app-version" content="1.5.1">
+<meta name="app-version" content="1.5.3">
 <meta name="description" content="Spese di coppia: chi ha pagato, chi deve a chi, budget e statistiche.">
 
 <!-- PWA / iOS home screen -->
-<link rel="manifest" href="manifest.json?v=1.5.1">
+<link rel="manifest" href="manifest.json?v=1.5.3">
 <meta name="theme-color" content="#12181F">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -16,9 +16,9 @@
 <!-- iPhone: icona nella cartella principale, senza ?v=, con la dimensione dichiarata (la legge anche Safari più vecchio). -->
 <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
 <link rel="apple-touch-icon-precomposed" sizes="180x180" href="apple-touch-icon-precomposed.png">
-<link rel="icon" href="icons/icon-192.png?v=1.5.1">
+<link rel="icon" href="icons/icon-192.png?v=1.5.3">
 
-<link rel="stylesheet" href="style.css?v=1.5.1">
+<link rel="stylesheet" href="style.css?v=1.5.3">
 </head>
 <body>
 
@@ -96,7 +96,7 @@
         <p class="empty-hint" id="budgetEmptyHint" hidden>Nessuna categoria di spesa.</p>
       </div>
 
-      <p class="app-version">Versione 1.5.1</p>
+      <p class="app-version">Versione 1.5.3</p>
     </section>
 
     <!-- ===== COPPIA ===== -->
@@ -386,7 +386,7 @@
         </div>
       </div>
 
-      <p class="app-version">Noi Due v1.5.1 · dati salvati solo su questo dispositivo</p>
+      <p class="app-version">Noi Due v1.5.3 · dati salvati solo su questo dispositivo</p>
     </section>
 
   </main>
@@ -610,7 +610,7 @@
       <h3 id="listDetailTitle">Lista</h3><button type="button" class="pill-btn mini-btn" id="listEditBtn">Modifica</button>
     </div>
     <div class="list-add">
-      <input type="text" id="listItemInput" class="text-input" placeholder="Aggiungi… es. 2 latte" maxlength="120" enterkeyhint="done" autocomplete="off" aria-label="Cosa comprare">
+      <input type="text" id="listItemInput" class="text-input" placeholder="Aggiungi… o incolla un link" maxlength="600" enterkeyhint="done" autocomplete="off" aria-label="Cosa comprare">
       <input type="text" id="listPriceInput" class="text-input list-price-input" inputmode="decimal" placeholder="€" autocomplete="off" aria-label="Prezzo stimato (facoltativo)">
       <button type="button" class="list-scan-btn" id="listScanBtn" aria-label="Cerca un prodotto con foto o codice a barre">📷</button>
       <button type="button" class="list-add-btn" id="listAddBtn" aria-label="Aggiungi alla lista">＋</button>
@@ -654,6 +654,10 @@
     <div class="item-photo" id="itemPhoto"></div>
     <div class="field-row"><label>Nome</label><input type="text" id="itemNameInput" class="text-input" maxlength="120"></div>
     <div class="field-row"><label>Prezzo stimato (facoltativo)</label><input type="text" id="itemPriceInput" class="text-input" inputmode="decimal" placeholder="€" autocomplete="off"></div>
+    <div class="field-row"><label>Link del prodotto (facoltativo)</label>
+      <div class="scan-code-row"><input type="url" id="itemUrlInput" class="text-input" inputmode="url" placeholder="Incolla il link dal sito del negozio" autocomplete="off"><button type="button" class="list-add-btn" id="itemUrlFetchBtn" aria-label="Prendi i dati dal sito">⬇︎</button></div>
+      <small class="field-hint" id="itemUrlHint"></small>
+    </div>
     <div class="field-row" hidden><label>Codice a barre (facoltativo)</label>
       <div class="scan-code-row"><input type="text" id="itemCodeInput" class="text-input" inputmode="numeric" autocomplete="off"><button type="button" class="list-add-btn" id="itemLookupBtn" aria-label="Cerca il prodotto online">🔎</button></div>
     </div>
@@ -697,7 +701,7 @@
   <div class="sheet" id="sheetListPaste">
     <div class="sheet-handle"></div>
     <div class="sheet-head"><h3>Incolla una lista</h3><button class="primary-btn" id="pasteAddBtn" aria-label="Aggiungi alla lista">Aggiungi</button></div>
-    <textarea id="pasteText" class="text-input paste-text" rows="8" placeholder="Una cosa per riga, es.&#10;Latte&#10;Pane&#10;2 pacchi di pasta"></textarea>
+    <textarea id="pasteText" class="text-input paste-text" rows="8" placeholder="Una cosa per riga, es.&#10;Latte&#10;Pane&#10;https://link-di-un-prodotto"></textarea>
     <p class="field-hint paste-hint" id="pasteHint">Scrivi o incolla: ogni riga diventa un articolo. Puoi separare anche con la virgola.</p>
   </div>
 </template>
@@ -1130,6 +1134,6 @@
   </div>
 </template>
 
-<script src="app.js?v=1.5.1"></script>
+<script src="app.js?v=1.5.3"></script>
 </body>
 </html>

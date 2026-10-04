@@ -1,0 +1,1136 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<title>Noi Due — Spese di coppia</title>
+<meta name="app-version" content="1.3.0">
+<meta name="description" content="Spese di coppia: chi ha pagato, chi deve a chi, budget e statistiche.">
+
+<!-- PWA / iOS home screen -->
+<link rel="manifest" href="manifest.json?v=1.3.0">
+<meta name="theme-color" content="#12181F">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Noi Due">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=1.3.0">
+<link rel="icon" href="icons/icon-192.png?v=1.3.0">
+
+<link rel="stylesheet" href="style.css?v=1.3.0">
+</head>
+<body>
+
+<div id="app">
+
+  <!-- ===== HEADER ===== -->
+  <header class="topbar">
+    <button class="month-nav" id="prevMonth" aria-label="Mese precedente">‹</button>
+    <div class="period-picker">
+      <button class="month-label" id="monthLabel" title="Tocca per vedere un singolo giorno">Settembre 2026</button><button type="button" class="period-x" id="periodX" aria-label="Torna alla vista del mese" hidden>×</button>
+      <div id="periodMenu" class="period-menu" hidden>
+        <button type="button" data-period="day">Visualizzazione giornaliera</button>
+      </div>
+    </div>
+    <button class="month-nav" id="nextMonth" aria-label="Mese successivo">›</button>
+  </header>
+  <div class="period-return" id="periodReturn" hidden>
+    <button type="button" class="pill-btn" id="backToMonth" hidden>‹ Torna al mese</button>
+        <div id="dayControl" hidden>
+          <button type="button" class="pill-btn" id="chooseDay" aria-expanded="false" aria-controls="dateField">📅 Scegli giorno</button>
+          <div id="dateField" hidden><label for="periodDate">Giorno da visualizzare</label><input type="date" id="periodDate" class="text-input"></div>
+        </div>
+  </div>
+
+  <main id="views">
+
+    <!-- ===== HOME / DASHBOARD ===== -->
+    <section class="view active" id="view-home" data-view="home">
+      <h1 class="view-title">Home</h1>
+      <div class="hero">
+        <p class="hero-label">Saldo netto del mese</p>
+        <div class="balance-line"><p class="hero-amount" id="netAmount">€0</p><button class="balance-hide" id="toggleHomeBalance" type="button" aria-label="Nascondi importi"></button></div>
+        <div class="hero-split">
+          <div class="hero-split-item income">
+            <span class="direction-arrow">↑</span>
+            <span class="hero-split-label">Entrate</span>
+            <span class="hero-split-value" id="incomeAmount">€0</span>
+          </div>
+          <div class="hero-split-item expense">
+            <span class="direction-arrow">↓</span>
+            <span class="hero-split-label">Uscite</span>
+            <span class="hero-split-value" id="expenseAmount">€0</span>
+          </div>
+        </div>
+        <div class="hero-liquidity" aria-label="Liquidità sui conti">
+          <button type="button" class="hero-liquidity-item main" id="homeMainAccountCard">
+            <span id="homeMainAccountName">Conto principale non impostato</span>
+            <strong id="homeMainAccountBalance">Imposta</strong>
+          </button>
+          <div class="hero-liquidity-item all">
+            <span>Totale tutti i conti</span>
+            <strong id="homeAllAccountsBalance">€0</strong>
+          </div>
+        </div>
+      </div>
+      <button type="button" class="couple-strip" id="homeCoupleStrip" aria-label="Apri Coppia">
+        <span class="couple-avs"><span class="couple-av sm" id="stripAvA">1</span><span class="couple-av sm b" id="stripAvB">2</span></span>
+        <span class="couple-strip-text"><span id="stripWho">Siete in pari</span><strong id="stripAmount">€0</strong></span>
+        <span class="chev" aria-hidden="true">›</span>
+      </button>
+      <div class="home-lists" id="homeLists" aria-label="Liste"></div>
+      <div class="main-account-notice" id="mainAccountSetupNotice" hidden>
+        <div><strong>Imposta il conto principale</strong><span>Serve per vedere subito la liquidità disponibile sul tuo conto di riferimento.</span></div>
+        <button type="button" class="pill-btn" id="goSetMainAccountBtn">Vai a Conti</button>
+      </div>
+
+      <div class="forecast-grid" aria-label="Previsioni del mese">
+        <div class="forecast-card"><span>Saldo attuale</span><strong id="currentBalanceAmount">€0</strong></div>
+        <div class="forecast-card"><span>Saldo previsto</span><strong id="forecastBalanceAmount">€0</strong></div>
+        <div class="forecast-card wide"><span>Pagamenti in arrivo</span><strong id="upcomingImpactAmount">€0</strong></div>
+      </div>
+
+      <div class="section-block">
+        <div class="section-head">
+          <h2>Movimenti recenti</h2>
+          <div class="section-head-actions">
+            <button class="pill-btn mini-btn" id="openCalendarBtn">📅</button>
+            <button class="pill-btn" id="seeAllTx"><span class="sa-label">Vedi tutti</span><span class="count-badge" id="seeAllTxCount"></span><span class="chev">›</span></button>
+          </div>
+        </div>
+        <div id="recentTx" class="tx-list"></div>
+        <p class="empty-hint" id="txEmptyHint" hidden>Nessun movimento questo mese. Tocca + per aggiungerne uno.</p>
+      </div>
+
+      <div class="section-block" id="upcomingHomeBlock">
+        <div class="section-head"><h2>Prossime scadenze</h2><button class="pill-btn mini-btn" id="openRPFromHome">Vedi R&amp;P<span class="chev">›</span></button></div>
+        <div id="upcomingHomeList" class="tx-list"></div>
+        <p class="empty-hint" id="upcomingHomeEmpty" hidden>Nessuna scadenza in arrivo.</p>
+      </div>
+
+      <div class="section-block">
+        <div class="section-head"><h2>Budget e spese per categoria</h2></div>
+        <p id="budgetPeriodHint" class="budget-period-hint">Budget mensili</p>
+        <div id="budgetList" class="budget-list"></div>
+        <p class="empty-hint" id="budgetEmptyHint" hidden>Nessuna categoria di spesa.</p>
+      </div>
+
+      <p class="app-version">Versione 1.3.0</p>
+    </section>
+
+    <!-- ===== COPPIA ===== -->
+    <section class="view" id="view-coppia" data-view="coppia">
+      <h1 class="view-title">Coppia</h1>
+      <div class="hero couple-hero">
+        <div class="couple-people">
+          <span class="couple-avs"><span class="couple-av" id="coupleAvA">1</span><span class="couple-av b" id="coupleAvB">2</span></span>
+          <button type="button" class="pill-btn mini-btn" id="editCoupleBtn">Modifica</button>
+        </div>
+        <p class="hero-label" id="coupleWho">Siete in pari</p>
+        <div class="balance-line"><p class="hero-amount" id="coupleAmount">€0</p><button class="balance-hide" id="toggleCoupleBalance" type="button" aria-label="Nascondi importi"></button></div>
+        <div class="couple-tug" id="coupleTug" aria-hidden="true"><span class="couple-knot" id="coupleKnot"></span></div>
+        <div class="couple-tug-names"><span id="coupleNameA"></span><span id="coupleNameB"></span></div>
+        <p class="couple-total-note">Totale di tutti i gruppi</p>
+        <button type="button" class="primary-btn couple-settle" id="settleBtn">🤝 Registra rimborso</button>
+      </div>
+
+      <div class="section-block couple-groups-block">
+        <div class="section-head"><h2>Gruppi</h2><button type="button" class="pill-btn mini-btn" id="addGroupBtn">＋ Nuovo</button></div>
+        <div id="coupleGroups" class="couple-groups"></div>
+      </div>
+
+      <div class="section-block couple-lists-block">
+        <div class="section-head"><h2>Liste</h2><button type="button" class="pill-btn mini-btn" id="addListBtn">＋ Nuova</button></div>
+        <div id="coupleLists" class="couple-groups"></div>
+      </div>
+
+      <div class="forecast-grid" aria-label="Chi ha pagato questo mese">
+        <div class="forecast-card"><span id="couplePaidALabel">Ha pagato</span><strong id="couplePaidA">€0</strong></div>
+        <div class="forecast-card"><span id="couplePaidBLabel">Ha pagato</span><strong id="couplePaidB">€0</strong></div>
+        <div class="forecast-card wide"><span>Conto comune</span><strong id="couplePaidJoint">€0</strong></div>
+      </div>
+
+      <div class="section-block">
+        <div class="section-head"><h2 id="coupleSharesTitle">Quote del mese</h2></div>
+        <div id="coupleShares" class="couple-shares"></div>
+      </div>
+
+      <div class="section-block">
+        <div class="section-head"><h2>Spese divise questo mese</h2></div>
+        <div id="coupleSharedTx" class="tx-list"></div>
+        <p class="empty-hint" id="coupleSharedEmpty" hidden>Nessuna spesa divisa questo mese. Paga con una carta personale e scegli come dividere.</p>
+      </div>
+
+      <div class="section-block">
+        <div class="section-head"><h2>Rimborsi tra voi</h2></div>
+        <div id="coupleSettleTx" class="tx-list"></div>
+        <p class="empty-hint" id="coupleSettleEmpty" hidden>Quando uno dei due salda il debito, il rimborso compare qui.</p>
+      </div>
+    </section>
+
+    <!-- ===== TRANSAZIONI (lista completa) ===== -->
+    <section class="view" id="view-transactions" data-view="transactions">
+      <div class="section-head sticky-head" hidden><button class="pill-btn mini-btn" id="backToHomeTx">‹ Home</button><h2>Movimenti — <span id="txMonthLabel"></span></h2></div>
+      <div class="type-toggle tx-type-toggle" id="txTypeToggle"><button class="type-opt active" data-tx-type="all">Tutti</button><button class="type-opt" data-tx-type="income">Entrate</button><button class="type-opt" data-tx-type="expense">Uscite</button></div>
+      <div class="tx-search-filter">
+        <button type="button" class="nav-back-btn" data-nav-back aria-label="Torna alla Home"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button>
+        <input id="txSearchInput" class="text-input" type="search" placeholder="Cerca nome, nota, categoria o conto">
+        <button class="pill-btn mini-btn" id="toggleCustomRange" hidden>Periodo</button><button type="button" class="period-chip" id="txPeriodBtn" aria-label="Scegli il periodo"></button>
+      </div>
+      <div class="tx-custom-range" id="txCustomRange" hidden>
+        <label>Dal <input id="txDateFrom" type="date" class="text-input"></label>
+        <label>Al <input id="txDateTo" type="date" class="text-input"></label>
+        <button class="pill-btn mini-btn" id="clearCustomRange">Azzera</button>
+      </div>
+      <div id="allTx" class="tx-list"></div>
+      <button class="pill-btn load-more-btn" id="loadMoreTxBtn" hidden>Carica altri</button>
+      <p class="empty-hint" id="allTxEmptyHint" hidden>Nessun movimento questo mese.</p>
+
+      <div class="section-block" id="allTxPlannedWrap" hidden>
+        <div class="section-head"><h2>In arrivo questo mese</h2></div>
+        <div id="allTxPlanned" class="tx-list"></div>
+      </div>
+    </section>
+
+    <!-- ===== RICORRENTI ===== -->
+    <section class="view" id="view-recurring" data-view="recurring">
+      <div class="rp-title-row">
+        <h1 class="view-title">R&amp;P</h1>
+        <button class="balance-hide rp-balance-hide" id="toggleRPBalance" type="button" aria-label="Nascondi importi R&amp;P"></button>
+      </div>
+      <div class="type-toggle rp-mode-toggle three" id="rpModeToggle">
+        <button class="type-opt active" data-rp-mode="total">Totali</button>
+        <button class="type-opt" data-rp-mode="recurring">Ricorrenti</button>
+        <button class="type-opt" data-rp-mode="planned">Pianificate</button>
+      </div>
+      <div class="rp-estimates-grid" id="rpEstimatesGrid" aria-label="Stime del mese">
+        <div class="rp-estimate-card recurring" id="recurringEstimateCard">
+          <span class="rp-estimate-label">Ricorrenti · netto</span>
+          <strong class="rp-estimate-value" id="recurringEstimate">€0</strong>
+          <div class="rp-estimate-breakdown"><span>↑ Entrate <b id="recurringIncomeEstimate">€0</b></span><span>↓ Uscite <b id="recurringExpenseEstimate">€0</b></span></div>
+          <div class="rp-account-breakdown" id="recurringAccountBreakdown"></div>
+        </div>
+        <div class="rp-estimate-card planned" id="plannedEstimateCard">
+          <span class="rp-estimate-label">Pianificate · netto</span>
+          <strong class="rp-estimate-value" id="plannedEstimate">€0</strong>
+          <div class="rp-estimate-breakdown"><span>↑ Entrate <b id="plannedIncomeEstimate">€0</b></span><span>↓ Uscite <b id="plannedExpenseEstimate">€0</b></span></div>
+          <div class="rp-account-breakdown" id="plannedAccountBreakdown"></div>
+        </div>
+      </div>
+      <div class="rp-combined-estimate" id="rpCombinedEstimateCard">
+        <div><span>Totale R&amp;P del mese · netto</span><strong id="rpCombinedEstimate">€0</strong></div>
+        <div class="rp-combined-breakdown"><span>↑ Entrate <b id="rpCombinedIncomeEstimate">€0</b></span><span>↓ Uscite <b id="rpCombinedExpenseEstimate">€0</b></span></div>
+        <div class="rp-account-breakdown" id="rpCombinedAccountBreakdown"></div>
+      </div>
+      <div id="rpTotalSection">
+        <div class="section-head rp-list-head"><h2>Prossimi</h2><button type="button" class="pill-btn mini-btn rp-see-all" data-see-all="rpTotalList" hidden><span class="sa-label">Vedi tutti</span><span class="chev">›</span></button></div>
+        <div id="rpTotalList" class="template-manage-list"></div>
+        <p class="empty-hint" id="rpTotalEmptyHint" hidden>Nessun movimento R&amp;P nel mese selezionato.</p>
+        <div class="rp-paid-section" id="rpTotalPaidSection" hidden>
+          <p class="rp-all-paid-notice" id="rpTotalAllPaidNotice" hidden>Tutti i movimenti R&amp;P del mese sono pagati.</p>
+          <div class="rp-paid-head"><span>Pagati nel mese</span><span id="rpTotalPaidCount"></span><button type="button" class="pill-btn mini-btn rp-see-all" data-see-all="rpTotalPaidList" hidden><span class="sa-label">Vedi tutti</span><span class="chev">›</span></button></div>
+          <div id="rpTotalPaidList" class="tx-list rp-paid-list"></div>
+        </div>
+      </div>
+      <div id="rpRecurringSection" hidden>
+        <div class="section-head rp-list-head"><h2>Prossimi</h2><button type="button" class="pill-btn mini-btn rp-see-all" data-see-all="recurringList" hidden><span class="sa-label">Vedi tutti</span><span class="chev">›</span></button></div>
+        <div id="recurringList" class="template-manage-list"></div>
+        <p class="empty-hint" id="recurringEmptyHint" hidden>Nessun movimento ricorrente nel periodo selezionato.</p>
+        <div class="rp-paid-section" id="recurringPaidSection" hidden>
+          <p class="rp-all-paid-notice" id="recurringAllPaidNotice" hidden>Tutti i ricorrenti del mese sono pagati.</p>
+          <div class="rp-paid-head"><span>Pagati nel mese</span><span id="recurringPaidCount"></span><button type="button" class="pill-btn mini-btn rp-see-all" data-see-all="recurringPaidList" hidden><span class="sa-label">Vedi tutti</span><span class="chev">›</span></button></div>
+          <div id="recurringPaidList" class="tx-list rp-paid-list"></div>
+        </div>
+      </div>
+      <div id="rpPlannedSection" hidden>
+        <div class="section-head rp-list-head"><h2>Prossime</h2><button type="button" class="pill-btn mini-btn rp-see-all" data-see-all="plannedListRP" hidden><span class="sa-label">Vedi tutti</span><span class="chev">›</span></button></div>
+        <div id="plannedListRP" class="template-manage-list"></div>
+        <p class="empty-hint" id="plannedEmptyHintRP" hidden>Nessun movimento pianificato nel mese selezionato.</p>
+        <div class="rp-paid-section" id="plannedPaidSection" hidden>
+          <p class="rp-all-paid-notice" id="plannedAllPaidNotice" hidden>Tutte le pianificate del mese sono pagate.</p>
+          <div class="rp-paid-head"><span>Pagate nel mese</span><span id="plannedPaidCount"></span><button type="button" class="pill-btn mini-btn rp-see-all" data-see-all="plannedPaidList" hidden><span class="sa-label">Vedi tutti</span><span class="chev">›</span></button></div>
+          <div id="plannedPaidList" class="tx-list rp-paid-list"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== R&P: TUTTI (pannello "Vedi tutti") ===== -->
+    <section class="view" id="view-rpall" data-view="rpall">
+      <div class="type-toggle rp-mode-toggle three" id="rpAllKindToggle"><button class="type-opt active" data-rpall-kind="total">Totali</button><button class="type-opt" data-rpall-kind="recurring">Ricorrenti</button><button class="type-opt" data-rpall-kind="planned">Pianificate</button></div>
+      <div class="tx-search-filter">
+        <button type="button" class="nav-back-btn" data-nav-back aria-label="Torna a R&amp;P"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button>
+        <input id="rpAllSearchInput" class="text-input" type="search" placeholder="Cerca nome, categoria o conto" autocomplete="off">
+        <button type="button" class="period-chip" id="rpAllPeriodBtn" aria-label="Scegli il periodo"></button>
+      </div>
+      <div class="section-head rp-list-head"><h2 id="rpAllUpcomingTitle">Prossimi</h2><span class="count-badge" id="rpAllUpcomingCount"></span></div>
+      <div id="rpAllUpcoming" class="template-manage-list"></div>
+      <p class="empty-hint" id="rpAllUpcomingEmpty" hidden>Nessuna voce in arrivo nel periodo.</p>
+      <div class="section-head rp-list-head"><h2>Già registrati</h2><span class="count-badge" id="rpAllPaidCount"></span></div>
+      <div id="rpAllPaid" class="tx-list"></div>
+      <p class="empty-hint" id="rpAllPaidEmpty" hidden>Nessuna voce registrata nel periodo.</p>
+    </section>
+
+    <!-- ===== STATISTICHE ===== -->
+    <section class="view" id="view-stats" data-view="stats">
+      <h1 class="view-title">Statistiche</h1>
+      <div class="stats-period-filter">
+        <label for="statsRangeSelect">Periodo statistiche</label>
+        <select id="statsRangeSelect" aria-label="Periodo delle statistiche">
+          <option value="1w">1 settimana</option>
+          <option value="2w">2 settimane</option>
+          <option value="1m" selected>1 mese</option>
+          <option value="2m">2 mesi</option>
+          <option value="3m">3 mesi</option>
+          <option value="6m">6 mesi</option>
+          <option value="1y">1 anno</option>
+        </select>
+      </div>
+      <div id="statsInsights" class="stat-card-grid"></div>
+      <div class="section-block">
+        <div class="section-head"><h2>Spese per categoria</h2><button class="chart-info-btn" data-chart-info="ripartizione" aria-label="Spiega grafico ripartizione">i</button></div>
+        <div class="type-toggle stats-nature-toggle" id="statsNatureToggle"><button class="type-opt active" data-stats-nature="expense">Uscite</button><button class="type-opt" data-stats-nature="income">Entrate</button></div>
+        <div class="type-toggle" id="statsGroupToggle">
+          <button class="type-opt active" data-group="category">Categorie</button>
+          <button class="type-opt" data-group="macro">Macrocategorie</button>
+        </div>
+        <div class="chart-wrap" id="pieWrap"></div>
+        <div id="pieLegend" class="pie-legend"></div>
+      </div>
+      <div class="section-block">
+        <div class="section-head trend-head"><h2>Andamento</h2><button class="chart-info-btn" data-chart-info="andamento" aria-label="Spiega grafico andamento">i</button></div>
+        <div class="type-toggle trend-mode-toggle" id="trendModeToggle"><button class="type-opt active" data-trend-mode="flow">Entrate / uscite</button><button class="type-opt" data-trend-mode="balance">Saldo cumulato</button><button class="type-opt" data-trend-mode="compare">Confronto mensile</button></div>
+        <div class="chart-wrap" id="barWrap"></div>
+        <div id="trendLegend" class="pie-legend"></div>
+      </div>
+      <div class="section-block">
+        <div class="section-head"><h2>Ripartizione per conto</h2><button class="chart-info-btn" data-chart-info="conti" aria-label="Spiega grafico conti">i</button></div>
+        <div id="accountBreakdown" class="account-breakdown"></div>
+      </div>
+    </section>
+
+    <!-- ===== CONTI ===== -->
+    <section class="view" id="view-accounts" data-view="accounts">
+      <h1 class="view-title">Conti</h1>
+      <div class="main-account-setting">
+        <label for="mainAccountSelect">Conto principale</label>
+        <select id="mainAccountSelect" class="text-input" aria-label="Scegli il conto principale"><option value="">Seleziona il conto principale</option></select>
+        <small>È il conto di riferimento mostrato nella sezione Saldo della Home.</small>
+      </div>
+      <div class="total-balance-card">
+        <p class="hero-label">Saldo totale su tutti i conti</p>
+        <div class="balance-line"><p class="hero-amount" id="totalBalanceAmount">€0</p><button class="balance-hide" id="toggleAccountsBalance" type="button" aria-label="Nascondi importi"></button></div>
+      </div>
+      <div class="section-head">
+        <h2>I tuoi conti</h2>
+      </div>
+      <p class="empty-hint" style="padding:0 4px 14px;text-align:left;">Tocca un conto per vedere l'evoluzione del saldo, oppure ✎ per modificarlo.</p>
+      <div id="accountsList" class="account-list"></div>
+    </section>
+
+    <!-- ===== SPESE PIANIFICATE ===== -->
+    <section class="view" id="view-planned" data-view="planned">
+      <h1 class="view-title">Pianificate</h1>
+      <div class="planned-back-row"><button class="pill-btn" id="backFromPlanned">‹ Torna alla Home</button></div>
+      <div class="section-head">
+        <span aria-hidden="true"></span>
+        <button class="add-btn" id="addPlannedBtn" aria-label="Aggiungi spesa pianificata">+</button>
+      </div>
+      <p class="empty-hint" style="padding:0 4px 14px;text-align:left;">Pianifica spese future, ricorrenti o una tantum. Non incidono sul saldo finché non arriva la data effettiva.</p>
+      <div id="plannedList" class="template-manage-list"></div>
+      <p class="empty-hint" id="plannedEmptyHint" hidden>Nessuna spesa pianificata. Tocca + per aggiungerne una.</p>
+    </section>
+
+    <!-- ===== ALTRO (menu: conti, macrocategorie, categorie, struttura, backup) ===== -->
+    <section class="view" id="view-more" data-view="more">
+      <h1 class="view-title">Altro</h1>
+      <div class="section-block">
+        <div class="section-head"><h2>Aspetto</h2></div>
+        <div class="type-toggle three" id="themeModeToggle">
+          <button class="type-opt" data-theme-mode="system">
+            <svg viewBox="0 0 24 24" width="15" height="15"><rect x="3" y="4" width="18" height="12" rx="2" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M8 20h8M12 16v4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+            Sistema
+          </button>
+          <button class="type-opt" data-theme-mode="light">
+            <svg viewBox="0 0 24 24" width="15" height="15"><circle cx="12" cy="12" r="4.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M12 2.5v3M12 18.5v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2.5 12h3M18.5 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+            Chiaro
+          </button>
+          <button class="type-opt" data-theme-mode="dark">
+            <svg viewBox="0 0 24 24" width="15" height="15"><path d="M20 14.5A8.5 8.5 0 119.5 4a7 7 0 1010.5 10.5z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
+            Scuro
+          </button>
+        </div>
+      </div>
+      <div class="section-block">
+        <div class="section-head"><h2>Gestione</h2></div>
+        <div class="settings-rows">
+          <button class="settings-row" id="openAccountsPanelBtn">
+            <span>Conti</span><span class="chev">›</span>
+          </button>
+          <button class="settings-row" id="openCategoriesHubBtn">
+            <span>Categorie, macrocategorie e budget</span><span class="chev">›</span>
+          </button>
+          <button class="settings-row" id="openTrashBtn">
+            <span>Cestino</span><span class="chev">›</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="section-block">
+        <div class="section-head"><h2>Dati</h2></div>
+        <p class="backup-status" id="backupStatus">Nessun backup esportato su questo dispositivo.</p>
+        <div class="settings-rows">
+          <button class="settings-row" id="exportBtn">
+            <span>Esporta / condividi backup</span><span class="chev">›</span>
+          </button>
+          <button class="settings-row" id="exportCsvBtn">
+            <span>Esporta movimenti (.csv)</span><span class="chev">›</span>
+          </button>
+          <button class="settings-row" id="importBtn">
+            <span>Importa backup</span><span class="chev">›</span>
+          </button>
+          <input type="file" id="importFile" accept="application/json,.json,text/plain" hidden>
+          <button class="settings-row" id="undoImportBtn" hidden>
+            <span>Annulla ultima importazione</span><span class="chev">›</span>
+          </button>
+          <button class="settings-row danger" id="resetBtn">
+            <span>Azzera tutti i dati</span><span class="chev">›</span>
+          </button>
+        </div>
+      </div>
+
+      <p class="app-version">Noi Due v1.3.0 · dati salvati solo su questo dispositivo</p>
+    </section>
+
+  </main>
+
+  <!-- ===== ADD TRANSACTION FAB ===== -->
+  <button class="fab" id="fabAdd" aria-label="Aggiungi movimento">+</button>
+
+  <!-- ===== BOTTOM NAV ===== -->
+  <nav class="tabbar">
+    <button class="tab active" data-view="home">
+      <svg viewBox="0 0 24 24" width="22" height="22"><path d="M4 12L12 4l8 8M6 10v9a1 1 0 001 1h4v-6h2v6h4a1 1 0 001-1v-9" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span>Home</span>
+    </button>
+    <button class="tab" data-view="coppia">
+      <svg viewBox="0 0 24 24" width="22" height="22"><circle cx="8.5" cy="8" r="3.2" fill="none" stroke="currentColor" stroke-width="1.8"/><circle cx="16" cy="9.5" r="2.7" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M3 19.5c.7-3.2 2.9-5 5.5-5s4.8 1.8 5.5 5M14.2 14.6c2.8-.4 5.4 1.2 6.3 4.4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      <span>Coppia</span>
+    </button>
+    <button class="tab" data-view="recurring">
+      <svg viewBox="0 0 24 24" width="22" height="22"><path d="M4 12a8 8 0 0113.6-5.7M20 12a8 8 0 01-13.6 5.7M17 3v4h-4M7 21v-4h4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span>R&amp;P</span>
+    </button>
+    <button class="tab" data-view="stats">
+      <svg viewBox="0 0 24 24" width="22" height="22"><path d="M4 20V10M11 20V4M18 20v-7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      <span>Grafici</span>
+    </button>
+    <button class="tab" data-view="accounts">
+      <svg viewBox="0 0 24 24" width="22" height="22"><rect x="3" y="6" width="18" height="13" rx="2" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M3 10h18M7 15h3" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      <span>Conti</span>
+    </button>
+    <button class="tab" data-view="more">
+      <svg viewBox="0 0 24 24" width="22" height="22"><circle cx="5" cy="12" r="1.6" fill="currentColor"/><circle cx="12" cy="12" r="1.6" fill="currentColor"/><circle cx="19" cy="12" r="1.6" fill="currentColor"/></svg>
+      <span>Altro</span>
+    </button>
+  </nav>
+
+</div>
+
+<!-- ===== OVERLAY ROOT for modals ===== -->
+<div id="overlayRoot"></div>
+
+<!-- ===== TEMPLATES (JS <template> tags for modal content) ===== -->
+
+<template id="tpl-add-transaction">
+  <div class="sheet" id="sheetAddTx">
+    <div class="sheet-handle"></div>
+    <div class="sheet-head">
+      <h3>Nuovo movimento</h3><input type="date" id="dateInput" class="text-input sheet-head-date" aria-label="Data"><button class="primary-btn" id="saveTxBtn" aria-label="Salva movimento">Salva</button>
+    </div>
+
+    <div class="type-toggle" id="typeToggle">
+      <button class="type-opt active" data-type="expense">↓ Uscita</button>
+      <button class="type-opt" data-type="income">↑ Entrata</button>
+    </div>
+
+    <div class="amount-field">
+      <span class="currency-sign">€</span>
+      <input type="text" inputmode="decimal" placeholder="0" id="amountInput" autocomplete="off">
+    </div>
+
+    <div class="field-row"><label>Nome movimento</label><input type="text" id="txNameInput" class="text-input" placeholder="es. Spesa supermercato, giroconto…"></div>
+
+    <div class="field-row" id="txCategoryRow">
+      <div id="categoryChipsGrouped" class="chip-groups"></div>
+    </div>
+
+    <div class="field-row">
+      <label>Conto</label>
+      <div class="chip-row" id="accountChips"></div>
+    </div>
+
+    <div class="field-row" id="destinationAccountRow" hidden>
+      <label>Verso conto</label>
+      <div class="chip-row" id="destinationAccountChips"></div>
+    </div>
+
+    <div class="field-row note-field">
+      <label>Nota (opzionale)</label>
+      <input type="text" id="noteInput" class="text-input" placeholder="Nota">
+    </div>
+
+  </div>
+</template>
+
+<template id="tpl-transfer">
+  <div class="sheet" id="sheetTransfer">
+    <div class="sheet-handle"></div>
+    <div class="sheet-head">
+      <h3 id="transferFormTitle">Trasferimento</h3><input type="date" id="transferDateInput" class="text-input sheet-head-date" aria-label="Data"><button class="primary-btn" id="saveTransferBtn" aria-label="Salva trasferimento">Salva</button>
+    </div>
+    <div class="amount-field">
+      <span class="currency-sign">€</span>
+      <input type="text" inputmode="decimal" placeholder="0" id="transferAmountInput" autocomplete="off" aria-label="Importo trasferito">
+    </div>
+    <div class="field-row"><label>Dal conto</label><div class="chip-row" id="transferFromChips"></div></div>
+    <div class="field-row"><label>Verso conto</label><div class="chip-row" id="transferToChips"></div></div>
+    <p class="field-hint atm-total" id="transferSummary"></p>
+    <div class="field-row note-field"><label>Nota (opzionale)</label><input type="text" id="transferNoteInput" class="text-input" placeholder="es. Giroconto risparmi"></div>
+    <button class="text-danger-btn" id="deleteTransferBtn" hidden>Elimina trasferimento</button>
+  </div>
+</template>
+
+<template id="tpl-atm-withdrawal">
+  <div class="sheet" id="sheetAtm">
+    <div class="sheet-handle"></div>
+    <div class="sheet-head">
+      <h3 id="atmFormTitle">🏧 Prelievo</h3><input type="date" id="atmDateInput" class="text-input sheet-head-date" aria-label="Data"><button class="primary-btn" id="saveAtmBtn" aria-label="Salva prelievo">Salva</button>
+    </div>
+    <div class="amount-field">
+      <span class="currency-sign">€</span>
+      <input type="text" inputmode="decimal" placeholder="0" id="atmAmountInput" autocomplete="off" aria-label="Importo prelevato">
+    </div>
+    <div class="field-row"><label>Dalla carta / conto</label><div class="chip-row" id="atmFromChips"></div></div>
+    <div class="field-row"><label>Verso (contanti)</label><div class="chip-row" id="atmToChips"></div></div>
+    <div class="field-row"><label>Commissione (facoltativa)</label><input type="text" inputmode="decimal" id="atmFeeInput" class="text-input" placeholder="es. 2,00" autocomplete="off"></div>
+    <p class="field-hint atm-total" id="atmTotal"></p>
+    <div class="field-row note-field"><label>Nota (opzionale)</label><input type="text" id="atmNoteInput" class="text-input" placeholder="es. Bancomat stazione"></div>
+  </div>
+</template>
+
+<template id="tpl-account-form">
+  <div class="sheet" id="sheetAccountForm">
+    <div class="sheet-handle"></div>
+    <div class="sheet-head">
+      <h3 id="accountFormTitle">Nuovo conto</h3><button class="primary-btn" id="saveAccountBtn" aria-label="Salva conto">Salva</button>
+    </div>
+    <div class="field-row">
+      <label>Nome conto</label>
+      <input type="text" id="accountNameInput" class="text-input" placeholder="es. Carta di Marco, Conto comune…">
+    </div>
+    <div class="field-row">
+      <label>Di chi è</label>
+      <div class="chip-row" id="accountOwnerChips"></div>
+      <small class="field-hint">Le spese pagate da un conto personale si possono dividere; quelle dal conto comune non cambiano il saldo tra voi.</small>
+    </div>
+    <div class="field-row">
+      <label id="accountBalanceLabel">Saldo iniziale</label>
+      <input type="text" inputmode="decimal" id="accountBalanceInput" class="text-input" placeholder="0">
+      <small class="field-hint" id="accountBalanceHint">Per un nuovo conto indica il saldo di partenza.</small>
+    </div>
+    <div class="field-row">
+      <label>Colore</label>
+      <div class="color-row" id="accountColorRow"></div>
+    </div>
+    <button class="secondary-btn" id="reconcileAccountBtn" hidden>Registra rettifica già avvenuta</button>
+    <button class="text-danger-btn" id="deleteAccountBtn" hidden>Elimina conto</button>
+  </div>
+</template>
+
+<template id="tpl-balance-reconcile">
+  <div class="sheet" id="sheetBalanceReconcile">
+    <div class="sheet-handle"></div>
+    <div class="sheet-head">
+      <h3>Rettifica saldo</h3><button class="primary-btn" id="saveBalanceReconcileBtn">Registra</button>
+    </div>
+    <p class="sheet-note">Usa questa funzione solo per una variazione di saldo già avvenuta senza movimento. Il saldo attuale resterà invariato: verrà corretto lo storico contabile.</p>
+    <div class="type-toggle" id="reconcileTypeToggle">
+      <button class="type-opt active" data-type="income">Aumento saldo</button>
+      <button class="type-opt" data-type="expense">Diminuzione saldo</button>
+    </div>
+    <div class="field-row">
+      <label>Importo non tracciato</label>
+      <input type="text" inputmode="decimal" id="reconcileAmountInput" class="text-input" placeholder="0,00">
+    </div>
+    <div class="field-row">
+      <label>Data</label>
+      <input type="date" id="reconcileDateInput" class="text-input">
+    </div>
+    <div class="field-row">
+      <label>Nota (opzionale)</label>
+      <input type="text" id="reconcileNoteInput" class="text-input" placeholder="es. accredito non registrato">
+    </div>
+  </div>
+</template>
+
+<template id="tpl-couple-form">
+  <div class="sheet" id="sheetCoupleForm">
+    <div class="sheet-handle"></div>
+    <div class="sheet-head">
+      <h3>La coppia</h3><button class="primary-btn" id="saveCoupleBtn" aria-label="Salva coppia">Salva</button>
+    </div>
+    <div class="field-row"><label>Nome persona 1</label><input type="text" id="coupleNameAInput" class="text-input" maxlength="24" placeholder="es. Marco"></div>
+    <div class="field-row"><label>Colore</label><div class="color-row" id="coupleColorARow"></div></div>
+    <div class="field-row"><label>Nome persona 2</label><input type="text" id="coupleNameBInput" class="text-input" maxlength="24" placeholder="es. Giulia"></div>
+    <div class="field-row"><label>Colore</label><div class="color-row" id="coupleColorBRow"></div></div>
+    <div class="field-row">
+      <label>Divisione predefinita (se il gruppo non ne ha una)</label>
+      <div class="type-toggle" id="coupleDefaultSplit">
+        <button class="type-opt" data-split="half">A metà</button>
+        <button class="type-opt" data-split="personal">Personale</button>
+      </div>
+    </div>
+    <p class="sheet-note">Ogni gruppo può avere la sua divisione predefinita (Coppia › tocca il gruppo › Modifica). Le spese dal conto comune non cambiano mai il saldo tra voi; le entrate sono personali, salvo diversa scelta.</p>
+  </div>
+</template>
+
+<template id="tpl-group-detail">
+  <div class="sheet" id="sheetGroupDetail">
+    <div class="sheet-handle"></div>
+    <div class="sheet-head">
+      <h3 id="groupDetailTitle">Gruppo</h3><button type="button" class="pill-btn mini-btn" id="groupEditBtn">Modifica</button>
+    </div>
+    <div class="group-detail-hero" id="groupDetailHero">
+      <p class="hero-label" id="groupDetailWho">Siete in pari</p>
+      <p class="hero-amount" id="groupDetailAmount">€0</p>
+      <div class="couple-tug" aria-hidden="true"><span class="couple-knot" id="groupDetailKnot"></span></div>
+      <div class="couple-tug-names"><span id="groupDetailNameA"></span><span id="groupDetailNameB"></span></div>
+      <button type="button" class="gd-settle" id="groupSettleBtn">🤝 Rimborso in questo gruppo</button>
+    </div>
+    <div class="forecast-grid group-detail-grid">
+      <div class="forecast-card"><span id="gdPaidALabel">Ha pagato</span><strong id="gdPaidA">€0</strong></div>
+      <div class="forecast-card"><span id="gdPaidBLabel">Ha pagato</span><strong id="gdPaidB">€0</strong></div>
+      <div class="forecast-card"><span>Conto comune</span><strong id="gdPaidJoint">€0</strong></div>
+    </div>
+    <p class="field-hint gd-month" id="gdMonth"></p>
+    <h4 class="gd-sub">Movimenti del gruppo</h4>
+    <div class="tx-list" id="groupDetailTx"></div>
+    <p class="empty-hint" id="groupDetailEmpty" hidden>Nessun movimento in questo gruppo. Scegli il gruppo quando aggiungi una spesa.</p>
+  </div>
+</template>
+
+<template id="tpl-list-detail">
+  <div class="sheet" id="sheetListDetail">
+    <div class="sheet-handle"></div>
+    <div class="sheet-head">
+      <h3 id="listDetailTitle">Lista</h3><button type="button" class="pill-btn mini-btn" id="listEditBtn">Modifica</button>
+    </div>
+    <div class="list-add">
+      <input type="text" id="listItemInput" class="text-input" placeholder="Aggiungi… es. 2 latte" maxlength="120" enterkeyhint="done" autocomplete="off" aria-label="Cosa comprare">
+      <input type="text" id="listPriceInput" class="text-input list-price-input" inputmode="decimal" placeholder="€" autocomplete="off" aria-label="Prezzo stimato (facoltativo)">
+      <button type="button" class="list-scan-btn" id="listScanBtn" aria-label="Cerca un prodotto con foto o codice a barre">📷</button>
+      <button type="button" class="list-add-btn" id="listAddBtn" aria-label="Aggiungi alla lista">＋</button>
+    </div>
+    <div id="listTodo" class="list-items"></div>
+    <p class="empty-hint" id="listEmpty" hidden>La lista è vuota. Scrivi qui sopra cosa comprare.</p>
+    <div id="listDoneWrap" hidden>
+      <div class="list-done-head"><h4 class="gd-sub">Nel carrello</h4><button type="button" class="pill-btn mini-btn" id="listClearDone">Togli</button></div>
+      <div id="listDone" class="list-items"></div>
+    </div>
+    <p class="field-hint list-total" id="listTotal"></p>
+    <button type="button" class="gd-settle" id="listRegisterBtn" hidden>🧾 Registra come spesa</button>
+  </div>
+</template>
+
+<template id="tpl-scan">
+  <div class="sheet" id="sheetScan">
+    <div class="sheet-handle"></div>
+    <div class="sheet-head"><h3>Cerca prodotto</h3></div>
+    <div class="scan-video-wrap" id="scanVideoWrap" hidden><video id="scanVideo" playsinline muted autoplay></video><div class="scan-frame" aria-hidden="true"></div></div>
+    <p class="field-hint scan-status" id="scanStatus">Inquadra il codice a barre, scatta una foto o scrivi il codice.</p>
+    <div class="scan-actions">
+      <button type="button" class="pill-btn" id="scanLiveBtn">▦ Inquadra il codice</button>
+      <button type="button" class="pill-btn" id="scanPhotoBtn">📷 Scatta una foto</button>
+    </div>
+    <input type="file" accept="image/*" capture="environment" id="scanPhotoInput" hidden>
+    <div class="field-row"><label>Codice a barre o codice prodotto</label>
+      <div class="scan-code-row"><input type="text" id="scanCodeInput" class="text-input" inputmode="numeric" placeholder="es. 8076809513753" autocomplete="off" enterkeyhint="search"><button type="button" class="list-add-btn" id="scanCodeBtn" aria-label="Cerca il codice">🔎</button></div>
+    </div>
+    <div id="scanResult"></div>
+  </div>
+</template>
+
+<template id="tpl-list-item">
+  <div class="sheet" id="sheetListItem">
+    <div class="sheet-handle"></div>
+    <div class="sheet-head"><h3>Articolo</h3><button class="primary-btn" id="saveItemBtn" aria-label="Salva articolo">Salva</button></div>
+    <div class="item-photo" id="itemPhoto"></div>
+    <div class="field-row"><label>Nome</label><input type="text" id="itemNameInput" class="text-input" maxlength="120"></div>
+    <div class="field-row"><label>Prezzo stimato (facoltativo)</label><input type="text" id="itemPriceInput" class="text-input" inputmode="decimal" placeholder="€" autocomplete="off"></div>
+    <div class="field-row"><label>Codice a barre (facoltativo)</label>
+      <div class="scan-code-row"><input type="text" id="itemCodeInput" class="text-input" inputmode="numeric" autocomplete="off"><button type="button" class="list-add-btn" id="itemLookupBtn" aria-label="Cerca il prodotto online">🔎</button></div>
+    </div>
+    <div class="item-links" id="itemLinks"></div>
+    <div class="scan-actions">
+      <button type="button" class="pill-btn" id="itemPhotoBtn">📷 Foto del prodotto</button>
+      <button type="button" class="pill-btn" id="itemPhotoRemove" hidden>Togli foto</button>
+    </div>
+    <input type="file" accept="image/*" capture="environment" id="itemPhotoInput" hidden>
+    <button class="text-danger-btn" id="deleteItemBtn">Elimina articolo</button>
+  </div>
+</template>
+
+<template id="tpl-import-choice">
+  <div class="sheet" id="sheetImportChoice">
+    <div class="sheet-handle"></div>
+    <div class="sheet-head"><h3>Importa backup</h3></div>
+    <p class="sheet-note" id="importFileInfo"></p>
+    <div class="import-compare">
+      <div class="ic-card" id="icLocal"></div>
+      <div class="ic-card" id="icBackup"></div>
+    </div>
+    <p class="field-hint import-diff" id="importDiff"></p>
+    <button type="button" class="import-opt recommended" data-import="merge"><strong>Unisci i due</strong><span>Tiene i movimenti, i gruppi e le liste di entrambi. Gli elementi eliminati su uno dei due telefoni restano eliminati.</span></button>
+    <div class="field-row import-prefer-row">
+      <label>Se lo stesso elemento è diverso, tieni la versione di</label>
+      <div class="type-toggle" id="importPrefer">
+        <button class="type-opt" data-prefer="local">Questo telefono</button>
+        <button class="type-opt" data-prefer="backup">Backup</button>
+      </div>
+    </div>
+    <button type="button" class="import-opt" data-import="replace"><strong>Usa solo il backup</strong><span>Sostituisce tutti i dati di questo telefono con quelli del backup.</span></button>
+    <button type="button" class="import-opt" data-import="keep"><strong>Tieni solo questo telefono</strong><span>Non importa niente.</span></button>
+    <p class="field-hint">Prima di unire o sostituire viene salvata una copia dei dati attuali: puoi tornare indietro da Altro › Annulla ultima importazione.</p>
+  </div>
+</template>
+
+<template id="tpl-list-form">
+  <div class="sheet" id="sheetListForm">
+    <div class="sheet-handle"></div>
+    <div class="sheet-head">
+      <h3 id="listFormTitle">Nuova lista</h3><button class="primary-btn" id="saveListBtn" aria-label="Salva lista">Salva</button>
+    </div>
+    <div class="field-row"><label>Nome lista</label><input type="text" id="listNameInput" class="text-input" maxlength="40" placeholder="es. Spesa, Per la casa, Farmacia…"></div>
+    <div class="field-row"><label>Icona</label><div class="emoji-row" id="listEmojiRow"></div></div>
+    <div class="field-row"><label>Gruppo della spesa</label><div class="chip-row" id="listGroupChips"></div><small class="field-hint">Quando registri gli acquisti, la spesa va in questo gruppo.</small></div>
+    <button class="text-danger-btn" id="deleteListBtn" hidden>Elimina lista</button>
+  </div>
+</template>
+
+<template id="tpl-group-form">
+  <div class="sheet" id="sheetGroupForm">
+    <div class="sheet-handle"></div>
+    <div class="sheet-head">
+      <h3 id="groupFormTitle">Nuovo gruppo</h3><button class="primary-btn" id="saveGroupBtn" aria-label="Salva gruppo">Salva</button>
+    </div>
+    <div class="field-row"><label>Nome gruppo</label><input type="text" id="groupNameInput" class="text-input" maxlength="40" placeholder="es. Casa, Spese di coppia, Viaggio a Lisbona…"></div>
+    <div class="field-row"><label>Icona</label><div class="emoji-row" id="groupEmojiRow"></div></div>
+    <div class="field-row"><label>Colore</label><div class="color-row" id="groupColorRow"></div></div>
+    <div class="field-row">
+      <label>Divisione predefinita delle spese del gruppo</label>
+      <div class="type-toggle" id="groupDefaultSplit">
+        <button class="type-opt" data-split="half">A metà</button>
+        <button class="type-opt" data-split="personal">Personale</button>
+      </div>
+    </div>
+    <button class="text-danger-btn" id="deleteGroupBtn" hidden>Elimina gruppo</button>
+  </div>
+</template>
+
+<template id="tpl-settle">
+  <div class="sheet" id="sheetSettle">
+    <div class="sheet-handle"></div>
+    <div class="sheet-head">
+      <h3>Rimborso</h3><input type="date" id="settleDateInput" class="text-input sheet-head-date" aria-label="Data"><button class="primary-btn" id="saveSettleBtn" aria-label="Salva rimborso">Salva</button>
+    </div>
+    <div class="field-row"><label>Cosa saldare</label><div class="chip-row" id="settleScopeChips"></div></div>
+    <div class="type-toggle" id="settleDirToggle">
+      <button class="type-opt" data-dir="b">—</button>
+      <button class="type-opt" data-dir="a">—</button>
+    </div>
+    <div class="amount-field">
+      <span class="currency-sign">€</span>
+      <input type="text" inputmode="decimal" placeholder="0" id="settleAmountInput" autocomplete="off" aria-label="Importo del rimborso">
+    </div>
+    <p class="field-hint settle-hint" id="settleHint"></p>
+    <div class="field-row"><label id="settleFromLabel">Dal conto</label><div class="chip-row" id="settleFromChips"></div></div>
+    <div class="field-row"><label id="settleToLabel">Al conto</label><div class="chip-row" id="settleToChips"></div></div>
+    <div class="field-row note-field"><label>Nota (opzionale)</label><input type="text" id="settleNoteInput" class="text-input" placeholder="es. Bonifico, contanti…"></div>
+  </div>
+</template>
+
+<template id="tpl-category-form">
+  <div class="sheet" id="sheetCategoryForm">
+    <div class="sheet-handle"></div>
+    <div class="sheet-head">
+      <h3 id="categoryFormTitle">Nuova categoria</h3><button class="primary-btn" id="saveCategoryBtn" aria-label="Salva categoria">Salva</button>
+    </div>
+    <div class="type-toggle" id="categoryKindToggle">
+      <button class="type-opt active" data-kind="expense">Uscita</button>
+      <button class="type-opt" data-kind="income">Entrata</button>
+    </div>
+    <div class="field-row">
+      <label>Nome categoria</label>
+      <input type="text" id="categoryNameInput" class="text-input" placeholder="es. Spesa, Trasporti, Bollette…">
+    </div>
+    <div class="field-row">
+      <label>Macrocategoria (opzionale)</label>
+      <div class="chip-row" id="categoryMacroChips"></div>
+    </div>
+    <div class="field-row">
+      <label>Icona</label>
+      <div class="emoji-row" id="categoryEmojiRow"></div>
+    </div>
+    <div class="field-row">
+      <label>Colore</label>
+      <div class="color-row" id="categoryColorRow"></div>
+    </div>
+    <div class="field-row">
+      <label>Budget mensile (opzionale)</label>
+      <input type="text" inputmode="decimal" id="categoryBudgetInput" class="text-input" placeholder="es. 250">
+    </div>
+    <button class="text-danger-btn" id="deleteCategoryBtn" hidden>Elimina categoria</button>
+  </div>
+</template>
+
+<template id="tpl-recurring-form">
+  <div class="sheet" id="sheetRecurringForm">
+    <div class="sheet-handle"></div>
+    <div class="sheet-head">
+      <h3 id="recurringFormTitle">Nuovo ricorrente</h3><button class="primary-btn" id="saveRecurringBtn" aria-label="Salva ricorrente">Salva</button>
+    </div>
+    <div class="field-row">
+      <label>Nome</label>
+      <input type="text" id="recurringNameInput" class="text-input" placeholder="es. Affitto, Netflix, Stipendio…">
+    </div>
+    <div class="type-toggle" id="recurringTypeToggle">
+      <button class="type-opt active" data-type="expense">Uscita</button>
+      <button class="type-opt" data-type="income">Entrata</button>
+    </div>
+    <div class="field-row">
+      <label>Importo</label>
+      <div class="amount-field compact-amount">
+        <span class="currency-sign">€</span>
+        <input type="text" inputmode="decimal" id="recurringAmountInput" placeholder="0" autocomplete="off">
+      </div>
+    </div>
+    <div class="field-row recurring-start-field">
+      <label for="recurringDateInput">Data di partenza</label>
+      <div class="recurring-start-controls">
+        <input type="date" id="recurringDateInput" class="text-input" aria-label="Data di partenza del ricorrente">
+      </div>
+      <small class="field-hint">È la data della prima rata. Di default è oggi: se parte oggi viene registrato subito nei Movimenti.</small>
+    </div>
+    <div class="field-row">
+      <label>Cadenza</label>
+      <select id="recurringFreqSelect" class="text-input" aria-label="Cadenza del movimento ricorrente">
+        <option value="weekly">Ogni settimana</option>
+        <option value="monthly">Ogni mese</option>
+        <option value="bimonthly">Ogni 2 mesi</option>
+        <option value="quarterly">Ogni 3 mesi</option>
+        <option value="semiannual">Ogni 6 mesi</option>
+        <option value="yearly">Ogni anno</option>
+      </select>
+    </div>
+    <div class="recurring-options">
+      <label class="toggle-line"><input type="checkbox" id="recurringActiveInput" checked> Ricorrenza attiva</label>
+      <label>Durata
+        <select id="recurringDurationMode" class="text-input recurring-duration-select">
+          <option value="unlimited">Senza scadenza</option>
+          <option value="count">Numero di rate</option>
+          <option value="date">Fino a una data</option>
+        </select>
+      </label>
+      <label id="recurringOccurrencesWrap" hidden>Numero di rate
+        <div class="recurring-installments-input">
+          <input type="number" id="recurringOccurrencesInput" class="text-input" min="1" step="1" inputmode="numeric" placeholder="es. 3">
+          <span>rate</span>
+        </div>
+        <small>La prima data conta come prima rata.</small>
+      </label>
+      <label id="recurringEndDateWrap" hidden>Fine ricorrenza<input type="date" id="recurringEndDateInput" class="text-input"></label>
+    </div>
+    <div class="field-row">
+      <div id="recurringCategoryChips" class="chip-groups"></div>
+    </div>
+    <div class="field-row">
+      <label>Conto</label>
+      <div class="chip-row" id="recurringAccountChips"></div>
+    </div>
+    <div class="field-row note-field">
+      <label>Nota (opzionale)</label>
+      <input type="text" id="recurringNoteInput" class="text-input" placeholder="Nota">
+    </div>
+    <button class="text-danger-btn" id="deleteRecurringBtn" hidden>Elimina ricorrente</button>
+  </div>
+</template>
+
+<template id="tpl-macro-form">
+  <div class="sheet" id="sheetMacroForm">
+    <div class="sheet-handle"></div>
+    <div class="sheet-head">
+      <h3 id="macroFormTitle">Nuova macrocategoria</h3><button class="primary-btn" id="saveMacroBtn" aria-label="Salva macrocategoria">Salva</button>
+    </div>
+    <div class="type-toggle" id="macroKindToggle">
+      <button class="type-opt active" data-kind="expense">Uscita</button>
+      <button class="type-opt" data-kind="income">Entrata</button>
+    </div>
+    <div class="field-row">
+      <label>Nome macrocategoria</label>
+      <input type="text" id="macroNameInput" class="text-input" placeholder="es. Spese giornaliere">
+    </div>
+    <div class="field-row">
+      <label>Icona</label>
+      <div class="emoji-row" id="macroEmojiRow"></div>
+    </div>
+    <div class="field-row">
+      <label>Colore</label>
+      <div class="color-row" id="macroColorRow"></div>
+    </div>
+    <div class="field-row">
+      <label>Budget mensile (opzionale)</label>
+      <input type="text" inputmode="decimal" id="macroBudgetInput" class="text-input" placeholder="es. 500">
+    </div>
+    <button class="text-danger-btn" id="deleteMacroBtn" hidden>Elimina macrocategoria</button>
+  </div>
+</template>
+
+<template id="tpl-accounts-panel">
+  <div class="sheet" id="sheetAccountsPanel">
+    <div class="sheet-handle"></div>
+    <div class="sheet-head">
+      <h3>Conti</h3>
+      <div class="sheet-head-actions">
+        <button class="add-btn" id="addAccountBtn" aria-label="Aggiungi conto">+</button>
+        <button class="sheet-close" data-close aria-label="Chiudi pannello">✕</button>
+      </div>
+    </div>
+    <div id="accountsManageList" class="category-list"></div>
+    <section class="balance-adjustment-history">
+      <div class="balance-adjustment-history-head">
+        <h4>Storico rettifiche</h4>
+        <p>Variazioni manuali dei saldi, separate dai movimenti e dalle statistiche.</p>
+      </div>
+      <div id="balanceAdjustmentsList" class="balance-adjustments-list"></div>
+      <p class="empty-hint" id="balanceAdjustmentsEmpty">Nessuna rettifica registrata.</p>
+    </section>
+  </div>
+</template>
+
+<template id="tpl-macro-panel">
+  <div class="sheet" id="sheetMacroPanel">
+    <div class="sheet-handle"></div>
+    <div class="sheet-head">
+      <h3>Macrocategorie</h3>
+      <div class="sheet-head-actions">
+        <button class="add-btn" id="addMacroCategoryBtn" aria-label="Aggiungi macrocategoria">+</button>
+        <button class="sheet-close" data-close aria-label="Chiudi pannello">✕</button>
+      </div>
+    </div>
+    <div id="macroCategoriesList" class="category-list"></div>
+    <p class="empty-hint" id="macroEmptyHint" hidden>Nessuna macrocategoria. Creane una per raggruppare le categorie (es. Spese giornaliere).</p>
+  </div>
+</template>
+
+<template id="tpl-categories-panel">
+  <div class="sheet" id="sheetCategoriesPanel">
+    <div class="sheet-handle"></div>
+    <div class="sheet-head">
+      <h3>Categorie e budget</h3>
+      <div class="sheet-head-actions">
+        <button class="add-btn" id="addCategoryBtn" aria-label="Aggiungi categoria">+</button>
+        <button class="sheet-close" data-close aria-label="Chiudi pannello">✕</button>
+      </div>
+    </div>
+    <div id="categoriesList" class="category-groups"></div>
+  </div>
+</template>
+
+<template id="tpl-categories-hub">
+  <div class="sheet" id="sheetCategoriesHub">
+    <div class="sheet-handle"></div>
+    <div class="sheet-head">
+      <h3>Categorie</h3>
+      <div class="sheet-head-actions">
+        <button class="add-btn" id="hubAddBtn" aria-label="Aggiungi categoria">+</button>
+        <button class="sheet-close" data-close aria-label="Chiudi pannello">✕</button>
+      </div>
+    </div>
+    <div class="type-toggle three" id="catHubToggle" role="tablist">
+      <button class="type-opt active" data-hub="categories" role="tab">Categorie</button>
+      <button class="type-opt" data-hub="macro" role="tab">Macro</button>
+      <button class="type-opt" data-hub="graph" role="tab">Struttura</button>
+    </div>
+    <div class="cat-hub-pane" data-hub-pane="categories"><div id="categoriesList" class="category-groups"></div></div>
+    <div class="cat-hub-pane" data-hub-pane="macro" hidden>
+      <div id="macroCategoriesList" class="category-list"></div>
+      <p class="empty-hint" id="macroEmptyHint" hidden>Nessuna macrocategoria. Creane una per raggruppare le categorie (es. Spese giornaliere).</p>
+    </div>
+    <div class="cat-hub-pane" data-hub-pane="graph" hidden><div id="categoryGraph" class="graph-tree"></div></div>
+  </div>
+</template>
+
+<template id="tpl-graph-panel">
+  <div class="sheet" id="sheetGraphPanel">
+    <div class="sheet-handle"></div>
+    <div class="sheet-head">
+      <h3>Struttura categorie</h3>
+      <button class="sheet-close" data-close aria-label="Chiudi pannello">✕</button>
+    </div>
+    <div id="categoryGraph" class="graph-tree"></div>
+  </div>
+</template>
+
+<template id="tpl-account-evolution">
+  <div class="sheet" id="sheetAccountEvolution">
+    <div class="sheet-handle"></div>
+    <div class="sheet-head">
+      <h3 id="accountEvolutionTitle">Evoluzione saldo</h3>
+      <button class="sheet-close" data-close aria-label="Chiudi pannello">✕</button>
+    </div>
+    <div id="accountEvolutionLegend" class="evo-summary"></div>
+    <button type="button" class="period-chip evo-period" id="evolutionPeriodBtn" aria-label="Scegli il periodo del grafico"></button>
+    <div class="evo-chart" id="accountEvolutionChartWrap"></div>
+  </div>
+</template>
+
+<template id="tpl-tx-detail">
+  <div class="sheet" id="sheetTxDetail">
+    <div class="sheet-handle"></div>
+    <div class="sheet-head">
+      <h3>Dettaglio movimento</h3>
+      <button class="sheet-close" data-close aria-label="Chiudi pannello">✕</button>
+    </div>
+    <div id="txDetailBody" class="tx-detail-body"></div>
+    <div class="detail-actions">
+      <button class="pill-btn" id="editTxBtn">Modifica</button>
+      <button class="pill-btn" id="duplicateTxBtn">Duplica</button>
+    </div>
+    <button class="text-danger-btn" id="deleteTxBtn">Elimina movimento</button>
+  </div>
+</template>
+
+<template id="tpl-planned-form">
+  <div class="sheet" id="sheetPlannedForm">
+    <div class="sheet-handle"></div>
+    <div class="sheet-head">
+      <h3 id="plannedFormTitle">Nuova spesa una tantum</h3><input type="date" id="plannedDateInput" class="text-input sheet-head-date" aria-label="Data prevista"><button class="primary-btn" id="savePlannedBtn" aria-label="Salva pianificata">Salva</button>
+    </div>
+    <div class="type-toggle" id="plannedTypeToggle">
+      <button class="type-opt active" data-type="expense">Uscita</button>
+      <button class="type-opt" data-type="income">Entrata</button>
+    </div>
+    <div class="amount-field">
+      <span class="currency-sign">€</span>
+      <input type="text" inputmode="decimal" placeholder="0" id="plannedAmountInput" autocomplete="off">
+    </div>
+    <div class="field-row"><label>Nome pianificata</label><input type="text" id="plannedNameInput" class="text-input" placeholder="es. Bolletta luce, rata…"></div>
+    <div class="field-row">
+      <div id="plannedCategoryChipsGrouped" class="chip-groups"></div>
+    </div>
+    <div class="field-row">
+      <label>Conto</label>
+      <div class="chip-row" id="plannedAccountChips"></div>
+    </div>
+    <div class="field-row note-field">
+      <label>Nota (opzionale)</label>
+      <input type="text" id="plannedNoteInput" class="text-input" placeholder="Nota">
+    </div>
+    <button class="text-danger-btn" id="deletePlannedBtn" hidden>Elimina spesa pianificata</button>
+  </div>
+</template>
+
+<template id="tpl-period-picker">
+  <div class="sheet" id="sheetPeriodPicker">
+    <div class="sheet-handle"></div>
+    <div class="sheet-head">
+      <h3>Cosa vuoi vedere?</h3>
+      <button class="sheet-close" data-close aria-label="Chiudi pannello">✕</button>
+    </div>
+    <div class="calendar-nav pp-nav">
+      <button class="month-nav" id="ppPrev" aria-label="Precedente">‹</button>
+      <button type="button" id="ppTitle" class="pp-title" aria-label="Scegli il mese"></button>
+      <button class="month-nav" id="ppNext" aria-label="Successivo">›</button>
+    </div>
+    <div id="ppDays">
+      <div class="calendar-weekdays"><span>L</span><span>M</span><span>M</span><span>G</span><span>V</span><span>S</span><span>D</span></div>
+      <div id="ppGrid" class="calendar-grid"></div>
+    </div>
+    <div id="ppMonths" class="pp-months" hidden></div>
+    <div class="pp-footer">
+      <p class="pp-hint" id="ppHint"></p>
+      <div class="pp-actions">
+        <button type="button" class="pp-btn" id="ppWholeMonth">Tutto il mese</button>
+        <button type="button" class="pp-btn primary" id="ppApply" disabled>Mostra</button>
+      </div>
+    </div>
+  </div>
+</template>
+
+<template id="tpl-calendar">
+  <div class="sheet" id="sheetCalendar">
+    <div class="sheet-handle"></div>
+    <div class="sheet-head">
+      <h3>Calendario spese</h3>
+      <button class="sheet-close" data-close aria-label="Chiudi pannello">✕</button>
+    </div>
+    <div class="calendar-nav">
+      <button class="month-nav" id="calPrevMonth">‹</button>
+      <button type="button" id="calMonthLabel" class="calendar-month-label pp-title" aria-label="Scegli il mese"></button>
+      <button class="month-nav" id="calNextMonth">›</button>
+    </div>
+    <div class="calendar-weekdays"><span>L</span><span>M</span><span>M</span><span>G</span><span>V</span><span>S</span><span>D</span></div>
+    <div id="calendarGrid" class="calendar-grid"></div>
+    <div id="calMonths" class="pp-months" hidden></div>
+    <div class="calendar-legend">
+      <span class="cal-leg-item"><span class="dot real"></span>Effettivo</span>
+      <span class="cal-leg-item"><span class="dot planned"></span>Una tantum</span>
+      <span class="cal-leg-item"><span class="dot recurring"></span>Ricorrente</span>
+    </div>
+  </div>
+</template>
+
+<template id="tpl-day-detail">
+  <div class="sheet" id="sheetDayDetail">
+    <div class="sheet-handle"></div>
+    <div class="sheet-head">
+      <h3 id="dayDetailTitle">Movimenti del giorno</h3>
+      <button class="sheet-close" data-close aria-label="Chiudi pannello">✕</button>
+    </div>
+    <div id="dayDetailList" class="tx-list"></div>
+    <p class="empty-hint" id="dayDetailEmptyHint" hidden>Nessun movimento in questo giorno.</p>
+  </div>
+</template>
+
+<template id="tpl-scheduled-detail">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-head">
+      <h3 id="scheduledDetailTitle">Dettaglio</h3>
+      <button class="sheet-close" data-close aria-label="Chiudi pannello">✕</button>
+    </div>
+    <div id="scheduledDetailBody" class="tx-detail"></div>
+    <div class="detail-actions"><button class="pill-btn" id="editScheduledBtn">Modifica</button></div>
+    <button class="text-danger-btn" id="deleteScheduledBtn">Elimina</button>
+  </div>
+</template>
+
+<template id="tpl-trash">
+  <div class="sheet"><div class="sheet-handle"></div>
+    <div class="sheet-head"><h3>Cestino</h3><button class="sheet-close" data-close aria-label="Chiudi pannello">✕</button></div>
+    <div id="trashList" class="template-manage-list"></div>
+    <p id="trashEmptyHint" class="empty-hint" hidden>Il cestino è vuoto.</p>
+  </div>
+</template>
+
+<template id="tpl-chart-fullscreen">
+  <div class="sheet chart-sheet" id="sheetChartFullscreen">
+    <div class="sheet-handle"></div>
+    <div class="sheet-head"><h3 id="chartFullscreenTitle">Grafico</h3><button class="sheet-close" data-close aria-label="Chiudi pannello">✕</button></div>
+    <p class="chart-sheet-help" id="chartFullscreenHelp">Tocca o tieni premuto un punto per vedere il dettaglio.</p>
+    <div id="chartFullscreenBody" class="chart-fullscreen-body"></div>
+  </div>
+</template>
+
+<script src="app.js?v=1.3.0"></script>
+</body>
+</html>

@@ -1,0 +1,6194 @@
+/* =========================================================
+   Bilancio — design tokens
+   Ink:      #14181A  (testo primario, superfici scure)
+   Paper:    #F1F2ED  (sfondo, tinta sage-neutra, non crema)
+   Card:     #FFFFFF con bordo hairline
+   Emerald:  #1F5D4C / #3AA684 (entrate, positivo, accento primario)
+   Amber:    #B98900 / #D4A83A (uscite, secondario)
+   Rust:     #A8322D (sopra budget, solo per allerta)
+   ========================================================= */
+:root {
+  --ink: #14181a;
+  --ink-soft: #4b5450;
+  --paper: #f1f2ed;
+  --card: #ffffff;
+  --line: #c9d5cf;
+  --emerald: #1f5d4c;
+  --emerald-soft: #3aa684;
+  --amber: #8a6a16;
+  --amber-soft: #d4a83a;
+  --rust: #a8322d;
+  --rust-soft: #f3dcd9;
+  --strong: #14181a;
+  --neg-on-dark: #ff7a70;
+  --radius-card: 14px;
+  --radius-chip: 10px;
+  --font-display:
+    -apple-system, BlinkMacSystemFont, "SF Pro Display", system-ui, "Segoe UI",
+    Roboto, sans-serif;
+  --font-body:
+    -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, "Segoe UI",
+    Roboto, sans-serif;
+  --tab-home: #1f5d4c;
+  --tab-recurring: #b98900;
+  --tab-stats: #5b63c4;
+  --tab-accounts: #a8322d;
+  --tab-planned: #6b4fa0;
+  --tab-more: #2e8fa6;
+  --press-glow: rgba(58, 166, 132, 0.45);
+  --navy: #1f5d4c;
+  --navy-soft: #3aa684;
+  --action: #e8a33d;
+  --action-ink: #241800;
+  --surface-muted: #f7f8f5;
+  --surface-strong: #e8ece9;
+  --overlay-surface: #ffffff;
+  --overlay-backdrop: rgba(20, 24, 26, 0.42);
+  --shadow-soft: rgba(20, 24, 26, 0.1);
+}
+/* Tema scuro: unica sorgente dei token cromatici principali. */
+:root[data-theme="dark"] {
+  --ink: #f1f5f4;
+  --ink-soft: #9fb0ab;
+  --paper: #12181f;
+  --card: #1b232c;
+  --line: #2b3640;
+  --emerald: #55c3a7;
+  --emerald-soft: #55c3a7;
+  --amber: #d4a83a;
+  --amber-soft: #e0bc63;
+  --rust: #f08b86;
+  --rust-soft: #542e2e;
+  --strong: #12181f;
+  --tab-home: #3aa684;
+  --tab-recurring: #e0bc63;
+  --tab-stats: #8b92e8;
+  --tab-accounts: #e08880;
+  --tab-planned: #b39ddb;
+  --tab-more: #4fc8e0;
+  --press-glow: rgba(79, 196, 158, 0.5);
+  --radius-card: 16px;
+  --surface-muted: #182029;
+  --surface-strong: #25313b;
+  --overlay-surface: #202a32;
+  --overlay-backdrop: rgba(8, 11, 13, 0.82);
+  --shadow-soft: rgba(0, 0, 0, 0.28);
+}
+* {
+  box-sizing: border-box;
+}
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+html {
+  background: var(--paper);
+}
+body {
+  background: var(--paper);
+  color: var(--ink);
+  -webkit-font-smoothing: antialiased;
+  overscroll-behavior-y: none;
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease;
+}
+button {
+  transition:
+    box-shadow 0.18s ease,
+    transform 0.12s ease,
+    background-color 0.18s ease,
+    border-color 0.18s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+/* ---------- Feedback al tocco: i bordi si illuminano ---------- */
+button:active {
+  box-shadow: 0 0 0 3px var(--press-glow);
+  transform: scale(0.97);
+}
+.fab:active {
+  box-shadow:
+    0 6px 16px rgba(31, 93, 76, 0.38),
+    0 0 0 5px var(--press-glow);
+}
+.theme-toggle-btn:active {
+  box-shadow: 0 0 0 5px var(--press-glow);
+}
+.color-swatch:active {
+  box-shadow: 0 0 0 3px var(--press-glow);
+  transform: scale(1.08);
+}
+.tab:active {
+  box-shadow: none;
+  background: var(--paper);
+  transform: none;
+  border-radius: 14px;
+}
+.tab.active:active,
+.tab[data-view="home"].active:active {
+  background: var(--tab-home);
+}
+.tab[data-view="recurring"].active:active {
+  background: var(--tab-recurring);
+}
+.tab[data-view="stats"].active:active {
+  background: var(--tab-stats);
+}
+.tab[data-view="accounts"].active:active {
+  background: var(--tab-accounts);
+}
+.tab[data-view="planned"].active:active {
+  background: var(--tab-planned);
+}
+.tab[data-view="more"].active:active {
+  background: var(--tab-more);
+}
+#app {
+  margin: 0 auto;
+  min-height: 100vh;
+  padding-bottom: calc(84px + env(safe-area-inset-bottom));
+  position: relative;
+}
+/* ---------- Top bar ---------- */
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  padding: calc(14px + env(safe-area-inset-top)) 16px 10px;
+  position: sticky;
+  top: 0;
+  background: var(--paper);
+  z-index: 20;
+}
+.month-nav {
+  line-height: 1;
+}
+.month-nav:active {
+  background: var(--paper);
+}
+.theme-toggle-btn {
+  position: absolute;
+  left: 16px;
+  top: calc(14px + env(safe-area-inset-top));
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1px solid var(--emerald);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.month-label {
+  font-family: var(--font-display);
+  font-weight: 600;
+  background: none;
+  border: none;
+  color: var(--ink);
+  text-transform: capitalize;
+  text-align: center;
+}
+/* ---------- Views ---------- */
+.view {
+  display: none;
+  padding: 4px 16px 24px;
+}
+.view.active {
+  display: block;
+}
+/* ---------- Titolo di sezione (nome della vista, es. Home, Ricorrenti) ---------- */
+.view-title {
+  font-family: var(--font-display);
+  font-size: 28px;
+  font-weight: 800;
+  text-align: center;
+  color: var(--ink);
+  padding: 10px 18px 0;
+  margin: 14px 0 24px;
+  letter-spacing: -0.3px;
+}
+/* Ricorrenti e Pianificate: più respiro tra titolo e resto della pagina */
+#view-planned {
+  padding-top: 18px;
+}
+#view-planned .view-title {
+  margin-bottom: 24px;
+}
+/* ---------- Hero ---------- */
+.hero {
+  border: 2px solid var(--emerald);
+  border-radius: var(--radius-card);
+  padding: 20px 18px 22px;
+  text-align: center;
+  margin: 6px 0 22px;
+}
+.hero-label {
+  margin: 0 0 4px;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.65);
+}
+.hero-amount {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 46px;
+  letter-spacing: -0.5px;
+  margin: 0 0 16px;
+  font-variant-numeric: tabular-nums;
+  color: #fff;
+}
+.hero-split {
+  display: flex;
+}
+.hero-split-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+}
+.hero-split-item .dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+.hero-split-item.income .dot {
+  background: var(--emerald-soft);
+}
+.hero-split-label {
+  color: rgba(255, 255, 255, 0.65);
+}
+.hero-split-value {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: #fff;
+}
+/* ---------- Section blocks ---------- */
+.section-block {
+  margin-top: 26px;
+}
+.section-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+.section-head h2 {
+  font-size: 17px;
+  font-weight: 600;
+  margin: 0;
+  color: var(--ink);
+}
+.sticky-head {
+  position: sticky;
+  top: 64px;
+  background: var(--paper);
+  padding-top: 6px;
+  z-index: 10;
+}
+.link-btn {
+  background: none;
+  border: none;
+  font-size: 15px;
+  font-weight: 600;
+  padding: 4px;
+}
+.add-btn {
+  flex-shrink: 0;
+}
+.pill-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 6px 12px;
+  border-radius: 20px;
+  border: 1px solid var(--line);
+  font-size: 14.5px;
+  font-weight: 600;
+}
+.pill-btn .chev {
+  font-size: 13px;
+}
+.pill-btn:active {
+  background: var(--paper);
+}
+.pill-btn .chev-ic {
+  font-size: 12.5px;
+}
+.section-head-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.empty-hint {
+  color: var(--ink-soft);
+  padding: 18px 4px;
+  text-align: center;
+}
+/* ---------- Budget list ---------- */
+.budget-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.budget-item {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+}
+.budget-item-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13.5px;
+  margin-bottom: 8px;
+}
+.budget-item-name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+}
+.budget-item-amounts {
+  color: var(--ink);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.budget-item-amounts .over {
+  color: var(--rust);
+  font-weight: 700;
+}
+.budget-bar-track {
+  height: 7px;
+  border-radius: 5px;
+  background: var(--paper);
+  overflow: hidden;
+}
+.budget-bar-fill {
+  height: 100%;
+  border-radius: 5px;
+  transition: width 0.25s ease;
+}
+/* ---------- Transaction list ---------- */
+.tx-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.tx-row {
+  align-items: center;
+  gap: 12px;
+  padding: 11px 4px;
+  border-bottom: 1px solid var(--line);
+  background: none;
+  border-left: none;
+  border-right: none;
+  border-top: none;
+  width: 100%;
+  text-align: left;
+  color: var(--ink);
+}
+.tx-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 17px;
+  flex-shrink: 0;
+}
+.tx-mid {
+  flex: 1;
+  min-width: 0;
+}
+.tx-cat {
+  font-weight: 600;
+  margin: 0;
+}
+.tx-sub {
+  font-size: 12.5px;
+  color: var(--ink-soft);
+  margin: 2px 0 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.tx-amount {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+/* Movimenti pianificati (non ancora reali): tinta più tenue */
+/* ---------- Charts ---------- */
+.chart-wrap {
+  display: flex;
+  justify-content: center;
+}
+.pie-legend {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 6px;
+}
+.pie-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13.5px;
+}
+.pie-legend-item .sw {
+  width: 10px;
+  height: 10px;
+  flex-shrink: 0;
+}
+.pie-legend-item .lbl {
+  flex: 1;
+}
+.pie-legend-item .val {
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+}
+.account-breakdown {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.account-breakdown-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13.5px;
+}
+.account-breakdown-row .sw {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+.account-breakdown-row .name {
+  flex: 1;
+  font-weight: 600;
+}
+.account-breakdown-row .val {
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+}
+/* ---------- Total balance ---------- */
+.total-balance-card {
+  border: 2px solid var(--emerald);
+  border-radius: var(--radius-card);
+  padding: 20px 18px;
+  text-align: center;
+  margin: 6px 0 22px;
+}
+.total-balance-card .hero-amount {
+  color: #fff;
+  margin-bottom: 0;
+}
+/* ---------- Category groups ---------- */
+.category-groups {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+.category-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.category-group-title {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 14.5px;
+  font-weight: 600;
+  color: var(--ink-soft);
+  margin: 0 0 2px 2px;
+}
+.category-group-title .sw {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+/* ---------- Grafo gerarchico categorie ---------- */
+.graph-tree {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.graph-macro {
+  display: flex;
+  flex-direction: column;
+}
+.graph-macro-node {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  align-self: flex-start;
+  background: var(--card);
+  border: 1.5px solid var(--line);
+  border-radius: 10px;
+  padding: 8px 13px;
+  font-size: 15.5px;
+  font-weight: 600;
+}
+.graph-macro-node .em {
+  font-size: 15px;
+}
+.graph-branch {
+  margin-left: 17px;
+  padding-left: 19px;
+  margin-top: 8px;
+  border-left: 1.5px dashed var(--line);
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+.graph-cat-node {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 13px;
+  color: var(--ink-soft);
+  padding: 5px 0;
+}
+.graph-cat-node::before {
+  content: "";
+  position: absolute;
+  left: -19px;
+  top: 50%;
+  width: 14px;
+  height: 1.5px;
+  background: var(--line);
+}
+.graph-cat-node .em {
+  font-size: 14px;
+}
+/* ---------- Accounts ---------- */
+.account-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.account-card {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  display: flex;
+  align-items: center;
+  width: 100%;
+  text-align: left;
+}
+.account-swatch {
+  width: 10px;
+  height: 34px;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+.account-info {
+  flex: 1;
+}
+.account-name {
+  font-weight: 600;
+  margin: 0;
+}
+.account-type {
+  color: var(--ink-soft);
+  margin: 2px 0 0;
+}
+.account-balance {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+/* ---------- Categories/templates manage ---------- */
+.category-list,
+.template-manage-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.category-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 10px 12px;
+  width: 100%;
+  text-align: left;
+  color: var(--ink);
+}
+.template-manage-row {
+  align-items: center;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  width: 100%;
+  text-align: left;
+  color: var(--ink);
+}
+.category-row .ic {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  flex-shrink: 0;
+}
+.template-manage-row .ic {
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.category-row .info,
+.template-manage-row .info {
+  flex: 1;
+}
+.category-row .nm {
+  font-weight: 600;
+  font-size: 16px;
+  margin: 0;
+}
+.template-manage-row .nm {
+  font-weight: 600;
+  margin: 0;
+}
+.category-row .sub {
+  font-size: 12px;
+  color: var(--ink-soft);
+  margin: 1px 0 0;
+}
+.template-manage-row .sub {
+  color: var(--ink-soft);
+  margin: 1px 0 0;
+}
+/* Ricorrenti/Pianificate: righe con testo più grande e più leggibile */
+.template-manage-row .planned-badge {
+  font-size: 13.5px;
+  padding: 4px 10px;
+}
+.chev {
+  color: var(--ink-soft);
+  font-size: 16px;
+}
+.amt {
+  font-weight: 700;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+.planned-row .nm,
+.planned-row .sub {
+  opacity: 0.85;
+}
+.planned-badge {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--ink-soft);
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  padding: 3px 9px;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+/* ---------- Card statistiche in evidenza (evoluzione conto, andamento, ripartizione) ---------- */
+.stat-cards-row {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+}
+.stat-card {
+  flex: 1;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  padding: 14px 10px;
+  text-align: center;
+}
+.stat-card-label {
+  font-size: 11.5px;
+  margin: 0 0 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+}
+.stat-card-label .sw {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+  flex-shrink: 0;
+}
+.stat-card-value {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 21px;
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+}
+/* Ripartizione per conto: grid di card 2 colonne */
+.stat-card-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 10px;
+}
+.stat-card-grid .stat-card {
+  text-align: left;
+  padding: 12px 14px;
+}
+.stat-card-grid .stat-card-label {
+  justify-content: flex-start;
+}
+.stat-card-grid .stat-card-value {
+  font-size: 19px;
+}
+/* alias retro-compatibile */
+.evo-stats-row {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+}
+.evo-stat-card {
+  flex: 1;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  padding: 14px 10px;
+  text-align: center;
+}
+.evo-stat-label {
+  font-size: 11.5px;
+  color: var(--ink-soft);
+  margin: 0 0 6px;
+}
+.evo-stat-value {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 22px;
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+}
+/* ---------- Calendario spese ---------- */
+.calendar-nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  margin-bottom: 12px;
+}
+.month-nav {
+  border-radius: 50%;
+  border: 1px solid var(--line);
+  background: var(--card);
+  color: var(--ink);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.calendar-month-label {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 17px;
+  min-width: 150px;
+  text-align: center;
+  text-transform: capitalize;
+}
+.calendar-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  text-align: center;
+  font-size: 13px;
+  color: var(--ink-soft);
+  margin-bottom: 6px;
+  font-weight: 600;
+}
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 5px;
+}
+.calendar-cell {
+  aspect-ratio: 1;
+  border: 1px solid var(--line);
+  background: var(--card);
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  font-size: 12.5px;
+  color: var(--ink);
+  padding: 2px;
+}
+.calendar-cell.empty {
+  background: none;
+  border: none;
+}
+.calendar-cell.today {
+  border-color: var(--emerald-soft);
+  border-width: 2px;
+  font-weight: 700;
+}
+.cal-day-num {
+  line-height: 1;
+}
+.cal-dots {
+  display: flex;
+  gap: 2px;
+  height: 6px;
+  align-items: center;
+}
+.cal-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.cal-dot.income {
+  background: var(--emerald-soft);
+}
+.cal-dot.planned {
+  background: var(--ink-soft);
+}
+.cal-dot.real {
+  background: var(--navy);
+}
+.cal-dot.recurring {
+  background: #7b55b7;
+}
+.calendar-cell.has-real {
+  background: color-mix(in srgb, var(--navy) 15%, var(--card));
+  border-color: color-mix(in srgb, var(--navy) 38%, var(--line));
+}
+.calendar-cell.has-planned {
+  background: color-mix(in srgb, #d4a83a 17%, var(--card));
+  border-color: color-mix(in srgb, #d4a83a 42%, var(--line));
+}
+.calendar-cell.has-recurring {
+  background: color-mix(in srgb, #7b55b7 17%, var(--card));
+  border-color: color-mix(in srgb, #7b55b7 42%, var(--line));
+}
+.calendar-cell.has-real.has-planned {
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--navy) 17%, var(--card)) 0 50%,
+    color-mix(in srgb, #d4a83a 18%, var(--card)) 50%
+  );
+}
+.calendar-cell.has-real.has-recurring {
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--navy) 17%, var(--card)) 0 50%,
+    color-mix(in srgb, #7b55b7 18%, var(--card)) 50%
+  );
+}
+.calendar-cell.has-planned.has-recurring {
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, #d4a83a 18%, var(--card)) 0 50%,
+    color-mix(in srgb, #7b55b7 18%, var(--card)) 50%
+  );
+}
+.calendar-cell.has-real.has-planned.has-recurring {
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--navy) 17%, var(--card)) 0 33%,
+    color-mix(in srgb, #d4a83a 18%, var(--card)) 33% 66%,
+    color-mix(in srgb, #7b55b7 18%, var(--card)) 66%
+  );
+}
+.calendar-legend {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  margin-top: 16px;
+  font-size: 12px;
+  color: var(--ink-soft);
+  flex-wrap: wrap;
+}
+.cal-leg-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.cal-leg-item .dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+}
+.cal-leg-item .dot.income {
+  background: var(--emerald-soft);
+}
+.cal-leg-item .dot.expense {
+  background: var(--amber-soft);
+}
+.cal-leg-item .dot.planned {
+  background: var(--ink-soft);
+}
+.cal-leg-item .dot.real {
+  background: var(--navy);
+}
+.cal-leg-item .dot.recurring {
+  background: #7b55b7;
+}
+/* ---------- Settings rows ---------- */
+.settings-rows {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  overflow: hidden;
+}
+.settings-row {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 13px 14px;
+  background: none;
+  border: none;
+  font-size: 14px;
+  color: var(--ink);
+  border-bottom: 1px solid var(--line);
+}
+.settings-row:last-child {
+  border-bottom: none;
+}
+.settings-row.danger {
+  color: var(--rust);
+}
+.app-version {
+  text-align: center;
+  font-size: 11.5px;
+  color: var(--ink-soft);
+  margin-top: 22px;
+}
+/* ---------- FAB ---------- */
+.fab {
+  right: calc(50% - 260px + 20px);
+  bottom: calc(86px + env(safe-area-inset-bottom));
+  z-index: 30;
+}
+@media (max-width: 560px) {
+  .fab {
+    right: 20px;
+  }
+}
+/* ---------- Tab bar ---------- */
+.tabbar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  max-width: 520px;
+  margin: 0 auto;
+  border-top: 1px solid var(--line);
+  display: flex;
+  padding: 6px 6px calc(6px + env(safe-area-inset-bottom));
+  z-index: 25;
+}
+.tab {
+  flex: 1;
+  background: none;
+  border: none;
+  border-radius: 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 7px 2px;
+  margin: 0 2px;
+}
+.tab span {
+  font-size: 11px;
+  font-weight: 500;
+}
+/* Ogni tab, quando selezionata/attiva, si riempie del proprio colore */
+.tab[data-view="planned"].active {
+  color: #fff;
+}
+/* ---------- Overlay / sheets ---------- */
+#overlayRoot {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 100;
+}
+.overlay-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(20, 24, 26, 0.42);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  pointer-events: auto;
+}
+.overlay-backdrop.show {
+  opacity: 1;
+}
+.sheet {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  max-width: 520px;
+  margin: 0 auto;
+  background: var(--paper);
+  border-radius: 20px 20px 0 0;
+  padding: 10px 20px calc(24px + env(safe-area-inset-bottom));
+  max-height: 88vh;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  transform: translateY(100%);
+  transition: transform 0.28s cubic-bezier(0.32, 0.72, 0, 1);
+  will-change: transform;
+  pointer-events: auto;
+}
+.sheet.show {
+  transform: translateY(0);
+}
+.sheet.dragging {
+  transition: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.sheet-handle {
+  width: 42px;
+  height: 5px;
+  border-radius: 999px;
+  background: var(--line);
+  margin: 3px auto 11px;
+}
+.sheet-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+}
+.sheet-head h3 {
+  font-family: var(--font-display);
+  font-size: 20px;
+  margin: 0;
+}
+.sheet-close {
+  background: none;
+  border: none;
+  font-size: 16px;
+  color: var(--ink-soft);
+  padding: 6px;
+}
+.sheet-head-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+/* ---------- Form controls ---------- */
+.field-row {
+  margin-bottom: 16px;
+}
+.field-row label {
+  display: block;
+  font-size: 14.5px;
+  color: var(--ink-soft);
+  margin-bottom: 7px;
+  font-weight: 600;
+}
+.text-input {
+  width: 100%;
+  padding: 12px 13px;
+  border-radius: 11px;
+  border: 1px solid var(--line);
+  background: var(--card);
+  color: var(--ink);
+}
+.text-input:focus {
+  outline: 2px solid var(--emerald-soft);
+  outline-offset: 1px;
+}
+.type-toggle {
+  display: flex;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 13px;
+  padding: 5px;
+  margin-bottom: 16px;
+}
+.type-opt {
+  flex: 1;
+  padding: 13px 9px;
+  border: none;
+  background: none;
+  border-radius: 10px;
+  font-size: 17.5px;
+  font-weight: 700;
+  color: var(--ink-soft);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+.type-opt.active {
+  color: #fff;
+  box-shadow: 0 2px 7px rgba(0, 0, 0, 0.16);
+}
+.type-toggle.three .type-opt {
+  font-size: 15.5px;
+  padding: 12px 4px;
+}
+.amount-field {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 6px;
+  margin-bottom: 18px;
+  padding: 10px 0;
+}
+.currency-sign {
+  font-family: var(--font-display);
+  font-size: 32px;
+  font-weight: 600;
+  color: var(--ink-soft);
+}
+.amount-field input {
+  font-family: var(--font-display);
+  font-size: 44px;
+  font-weight: 700;
+  border: none;
+  background: none;
+  width: 2ch;
+  min-width: 2ch;
+  max-width: 220px;
+  text-align: center;
+  color: var(--ink);
+  padding: 0;
+}
+.amount-field input:focus {
+  outline: none;
+}
+.chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+}
+.chip {
+  padding: 11px 16px;
+  border-radius: 13px;
+  border: 1.5px solid var(--line);
+  background: var(--card);
+  font-size: 16.5px;
+  font-weight: 700;
+  color: var(--ink);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.chip .em {
+  font-size: 14px;
+}
+/* Selettori "grandi" tipo pulsante (Statistiche, Ricorrenti, evoluzione conto) */
+.big-chip-row {
+  gap: 8px;
+  margin-bottom: 6px;
+}
+.big-chip-row .chip {
+  padding: 12px 15px;
+  font-size: 16px;
+  border-radius: 14px;
+}
+.chip-groups {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.chip-group-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+  color: var(--ink-soft);
+  margin: 0 0 8px 2px;
+}
+.chip-group .chip-row {
+  gap: 8px;
+}
+.color-row,
+.emoji-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+}
+.color-swatch {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+}
+.color-swatch.active {
+  border-color: var(--ink);
+}
+.emoji-opt {
+  width: 36px;
+  height: 36px;
+  border-radius: 9px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  font-size: 17px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.emoji-opt.active {
+  border-color: var(--ink);
+  background: var(--paper);
+}
+.quick-templates {
+  display: flex;
+  gap: 9px;
+  overflow-x: auto;
+  padding-bottom: 14px;
+  margin-bottom: 2px;
+}
+.quick-tpl-btn {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 13px;
+  padding: 10px 12px;
+  min-width: 74px;
+}
+.quick-tpl-btn .em {
+  font-size: 19px;
+}
+.quick-tpl-btn .lbl {
+  font-size: 13px;
+  font-weight: 600;
+  text-align: center;
+  line-height: 1.2;
+}
+.quick-tpl-btn .amt {
+  font-size: 12.5px;
+  color: var(--ink-soft);
+  font-variant-numeric: tabular-nums;
+}
+.save-template-row {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 13.5px;
+  color: var(--ink-soft);
+  margin-bottom: 20px;
+}
+.primary-btn {
+  width: 100%;
+  padding: 15px;
+  border-radius: 13px;
+  border: none;
+  font-size: 17.5px;
+  font-weight: 600;
+}
+.primary-btn:active {
+  opacity: 0.85;
+}
+.text-danger-btn {
+  width: 100%;
+  padding: 13px;
+  border: none;
+  background: none;
+  color: var(--rust);
+  font-size: 16px;
+  font-weight: 600;
+  margin-top: 10px;
+}
+.tx-detail-body {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 8px;
+}
+.tx-detail-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 14px;
+}
+.tx-detail-row .k {
+  color: var(--ink-soft);
+}
+.tx-detail-row .v {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .sheet,
+  .overlay-backdrop,
+  .budget-bar-fill {
+    transition: none;
+  }
+}
+/* Focus visibility */
+button:focus-visible,
+input:focus-visible {
+  outline: 2px solid var(--emerald-soft);
+  outline-offset: 2px;
+}
+/* Keep hidden form actions hidden even when their layout uses flex. */
+[hidden] {
+  display: none !important;
+}
+.hero-split-value {
+  font-size: 16px;
+}
+.budget-item-name,
+.budget-item-amounts,
+.pie-legend-item .val,
+.account-breakdown-row .name,
+.account-breakdown-row .val {
+  font-size: 15.5px;
+}
+.amt,
+.tx-detail-row .v {
+  font-size: 16px;
+}
+.calendar-cell.today {
+  font-size: 14.5px;
+}
+strong,
+b {
+  font-size: 1.12em;
+}
+.chart-wrap svg {
+  max-width: 100%;
+  height: auto;
+}
+.trend-filter {
+  margin: 0;
+}
+.trend-filter select {
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink);
+  background: var(--card);
+  border: 1.5px solid var(--line);
+  border-radius: 11px;
+  padding: 8px 28px 8px 10px;
+  min-height: 38px;
+  width: auto;
+  max-width: 160px;
+  cursor: pointer;
+}
+.trend-filter select:focus-visible {
+  outline: 2px solid var(--emerald-soft);
+  outline-offset: 2px;
+}
+.stat-cards-row,
+.evo-stats-row {
+  flex-wrap: wrap;
+}
+.stat-card,
+.evo-stat-card {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.stat-cards-row .stat-card {
+  flex: 1 1 90px;
+}
+.section-head {
+  gap: 10px;
+}
+.budget-item-top {
+  gap: 10px;
+  flex-wrap: wrap;
+}
+/* Mobile controls and stable viewport */
+html,
+body {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+  overscroll-behavior: none;
+}
+#app,
+#views,
+.view {
+  min-width: 0;
+  max-width: 100%;
+}
+input,
+select,
+textarea,
+.text-input {
+  font-size: 16px;
+}
+.topbar {
+  gap: 6px;
+  padding-left: 12px;
+  padding-right: 12px;
+}
+.month-nav {
+  width: 48px;
+  height: 48px;
+  min-width: 48px;
+  font-size: 30px;
+}
+.month-label {
+  min-width: 0;
+  width: 100%;
+  min-height: 48px;
+  font-size: 17px;
+  padding: 6px;
+}
+.period-picker {
+  position: relative;
+  min-width: 0;
+  flex: 1;
+  max-width: 280px;
+}
+.period-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(280px, calc(100vw - 24px));
+  padding: 10px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  box-shadow: 0 8px 28px #0003;
+  z-index: 40;
+}
+.period-menu button {
+  display: block;
+  width: 100%;
+  min-height: 48px;
+  padding: 12px;
+  text-align: left;
+  border: 0;
+  border-radius: 10px;
+  color: var(--ink);
+  background: transparent;
+  font-size: 16px;
+}
+.period-menu label {
+  display: block;
+  color: var(--ink-soft);
+  margin: 12px 4px 6px;
+  font-size: 14px;
+}
+.period-menu input {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  min-height: 48px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 8px;
+  color: var(--ink);
+  background: var(--paper);
+}
+.sheet-close {
+  display: none !important;
+}
+.sheet-head h3 {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.sheet-head {
+  gap: 12px;
+}
+.section-head,
+.section-head-actions {
+  flex-wrap: wrap;
+}
+.hero-split {
+  flex-wrap: wrap;
+  gap: 12px 20px;
+}
+.account-info,
+.category-row .info,
+.template-manage-row .info {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.template-manage-row {
+  flex-wrap: wrap;
+}
+.budget-child {
+  border-left: 2px solid var(--line);
+}
+.budget-period-hint {
+  font-size: 13px;
+  color: var(--ink-soft);
+  margin: 0 0 12px;
+}
+.tx-amount.expense,
+.tx-row.planned .tx-amount.expense,
+.amt.expense,
+#expenseAmount,
+.evo-stat-value.neg {
+  color: var(--rust);
+}
+.tx-amount.income,
+.tx-row.planned .tx-amount.income,
+.amt.income,
+#incomeAmount,
+.evo-stat-value.pos {
+  color: var(--emerald);
+}
+.hero {
+  --emerald: #63d4aa;
+  --rust: #ff8d85;
+}
+.stat-card-value.zero,
+.evo-stat-value.zero {
+  color: #fff;
+}
+/* Gli importi restano puliti: nessun riquadro nero per lo zero. */
+.stat-card-value.zero,
+.evo-stat-value.zero,
+.account-balance[style*="#fff"] {
+  background: transparent;
+  border-radius: 0;
+  padding: 0;
+}
+.cal-dot.expense {
+  background: var(--rust);
+}
+.tx-detail-row .v.income {
+  color: var(--emerald);
+}
+.tx-detail-row .v.expense {
+  color: var(--rust);
+}
+.total-balance-card {
+  --emerald: #63d4aa;
+  --rust: #ff8d85;
+}
+.hero-split-item.expense .dot {
+  background: var(--rust);
+}
+.balance-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.balance-hide {
+  border: 0;
+  background: none;
+  color: rgba(255, 255, 255, 0.8);
+}
+.direction-arrow {
+  font-weight: 800;
+  font-size: 17px;
+  line-height: 1;
+}
+.hero-split-item.income .direction-arrow {
+  color: var(--emerald-soft);
+}
+.hero-split-item.expense .direction-arrow {
+  color: var(--rust);
+}
+.rp-estimate {
+  font-family: var(--font-display);
+}
+input[type="date"] {
+  min-width: 0;
+  max-width: 100%;
+}
+.tx-cat,
+.account-name,
+.budget-item-name {
+  overflow-wrap: anywhere;
+}
+.calendar-planned-actions .pill-btn,
+.period-return .pill-btn {
+  min-height: 42px;
+  padding: 9px 12px;
+}
+#dayControl {
+  margin-left: auto;
+}
+#dateField {
+  margin-top: 12px;
+}
+#dateField label {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--ink-soft);
+  font-size: 14px;
+}
+.period-return {
+  max-width: 520px;
+  margin: 0 auto;
+  padding: 4px 16px 0;
+}
+#backFromPlanned {
+  display: inline-flex;
+  min-height: 44px;
+  margin: 0 0 26px;
+  padding: 10px 14px;
+}
+.period-return {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+#dayControl {
+  flex: 0 1 auto;
+  min-width: 0;
+}
+#dateField {
+  max-width: 280px;
+}
+.planned-back-row {
+  padding-bottom: 32px;
+}
+.planned-back-row #backFromPlanned {
+  margin: 0;
+}
+.calendar-planned-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+/* Statistiche: selettore categoria/macrocategoria più compatto. */
+#statsGroupToggle {
+  width: 100%;
+  max-width: none;
+  margin-bottom: 12px;
+}
+/* Pannelli aperti dal "+": controlli più compatti e fermi al dito. */
+.sheet {
+  touch-action: pan-y;
+  overscroll-behavior: contain;
+}
+.sheet .type-toggle {
+  margin-bottom: 12px;
+}
+.sheet .type-opt {
+  font-size: 14.5px;
+  padding: 10px 7px;
+}
+.sheet .chip {
+  border-radius: 11px;
+}
+.sheet .field-row {
+  margin-bottom: 13px;
+}
+.sheet .field-row label {
+  font-size: 13.5px;
+  margin-bottom: 5px;
+}
+.sheet .text-input {
+  padding: 8px 10px;
+  min-height: 38px;
+}
+.sheet input[type="date"] {
+  min-height: 38px;
+  height: 38px;
+  padding: 6px 9px;
+}
+.sheet .text-danger-btn {
+  padding: 11px;
+  font-size: 14.5px;
+}
+.sheet-handle,
+.sheet-head {
+  touch-action: none;
+}
+/* Colore azioni: navy per tutti i comandi, senza cambiare le entrate verdi. */
+.type-opt.active {
+  background: var(--navy);
+  border-color: var(--navy);
+}
+.primary-btn:active {
+  background: var(--navy-soft);
+}
+.tab[data-view].active:active {
+  background: var(--navy);
+  color: #fff;
+}
+.settings-row:active,
+.pill-btn:active {
+  border-color: var(--navy);
+}
+.trend-head {
+  align-items: center;
+}
+.trend-head h2 {
+  white-space: nowrap;
+}
+/* Saldi: bordo navy, anche nella schermata Conti. */
+/* Data e nota sono compatti e affiancati nei moduli movimento. */
+.sheet .form-inline {
+  display: grid;
+  grid-template-columns: minmax(118px, 0.78fr) minmax(0, 1.22fr);
+}
+.sheet .form-inline .field-row {
+  margin-bottom: 13px;
+  min-width: 0;
+}
+.sheet .form-inline .text-input {
+  width: 100%;
+}
+/* L'area sicura evita che il titolo Pianificate finisca sotto la Dynamic Island. */
+#view-planned {
+  padding-top: calc(34px + env(safe-area-inset-top));
+}
+/* Nei pannelli iPhone, data e nota non si sovrappongono. */
+.sheet .form-inline {
+  grid-template-columns: minmax(108px, 0.72fr) minmax(0, 1.28fr);
+}
+.sheet .amount-field input {
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  font-size: 50px;
+}
+.sheet .compact-amount {
+  margin: 0 0 4px;
+  padding: 0;
+  justify-content: flex-start;
+}
+.sheet .compact-amount .currency-sign {
+  font-size: 27px;
+}
+.sheet .compact-amount input {
+  font-size: 38px;
+  text-align: left;
+}
+/* Celle data/nota: larghezze rigide per evitare sovrapposizioni in Safari iPhone. */
+.sheet .form-inline {
+  grid-template-columns: minmax(0, 128px) minmax(0, 1fr);
+  gap: 6px;
+}
+.sheet .form-inline > * {
+  min-width: 0;
+}
+.sheet .form-inline input[type="date"] {
+  width: 100%;
+  min-width: 0;
+  font-size: 12px;
+  padding: 6px 5px;
+  letter-spacing: -0.2px;
+}
+.sheet .form-inline input[type="text"] {
+  min-width: 0;
+  padding: 6px 8px;
+  font-size: 12.5px;
+}
+.sheet .form-inline input[type="date"]::-webkit-date-and-time-value {
+  text-align: left;
+}
+@media (max-width: 380px) {
+  .sheet .form-inline {
+    grid-template-columns: minmax(0, 118px) minmax(0, 1fr);
+  }
+  .sheet .form-inline input[type="date"] {
+    font-size: 11px;
+    padding-left: 4px;
+    padding-right: 3px;
+  }
+  .sheet .form-inline input[type="text"] {
+    font-size: 12px;
+    padding-left: 6px;
+    padding-right: 6px;
+  }
+}
+/* Salvataggio sempre raggiungibile, compatto e a destra. */
+.sheet .primary-btn {
+  position: sticky;
+  bottom: 0;
+  margin-left: auto;
+  width: 48px;
+  min-width: 48px;
+  height: 48px;
+  padding: 0;
+  border-radius: 50%;
+  font-size: 0;
+  z-index: 3;
+  box-shadow: 0 4px 14px #0004;
+}
+.sheet .primary-btn::after {
+  content: "✓";
+  font-size: 25px;
+  font-weight: 800;
+}
+/* Comandi e contorni verde-grigio chiaro. */
+.mini-btn {
+  min-height: 30px !important;
+  padding: 5px 8px !important;
+  font-size: 12px;
+}
+.section-head-actions {
+  margin-left: auto;
+}
+.tx-row.planned .tx-cat {
+  font-style: normal;
+}
+.chip-group-title {
+  font-size: 12.5px;
+}
+.sheet .date-top {
+  display: flex;
+  justify-content: flex-end;
+  margin: -3px 0 9px;
+}
+.sheet .date-top .text-input {
+  width: 132px;
+  min-height: 34px;
+  padding: 5px 7px;
+  font-size: 12px;
+  font-weight: 700;
+}
+.sheet .note-field {
+  width: 100%;
+}
+.sheet .note-field .text-input {
+  min-height: 36px;
+  padding: 7px 9px;
+  font-size: 13px;
+}
+#appToast {
+  position: fixed;
+  left: 50%;
+  bottom: calc(94px + env(safe-area-inset-bottom));
+  transform: translate(-50%, 18px);
+  opacity: 0;
+  pointer-events: none;
+  z-index: 200;
+  background: #a8322d;
+  padding: 11px 15px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 700;
+  white-space: nowrap;
+  transition: 0.18s;
+}
+#appToast.show {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+/* Palette neutra: comandi e bordi grigio chiaro. */
+.type-toggle .type-opt {
+  min-height: 31px;
+  padding: 5px 8px;
+  font-size: 12px;
+}
+.tx-type-toggle,
+.rp-mode-toggle {
+  margin: 7px 0 10px;
+}
+.sheet-head-date {
+  margin-left: auto;
+  width: 126px;
+  min-height: 31px;
+  padding: 4px 6px;
+  font-size: 11.5px;
+  font-weight: 800;
+  border-color: var(--line);
+}
+.sheet-head h3 {
+  flex: 1;
+}
+.trash-restore {
+  min-height: 30px;
+  padding: 5px 8px;
+  font-size: 11px;
+}
+/* Tutti i controlli usano il neutro dei bordi saldo. */
+/* I colori dei tab restano distinti: non sovrascrivere i token per-tab. */
+.app-loader {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.25s;
+}
+.app-loader i {
+  width: 44px;
+  height: 5px;
+  border-radius: 8px;
+  background: var(--line);
+  overflow: hidden;
+  position: relative;
+}
+.app-loader i::after {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 45%;
+  border-radius: inherit;
+  background: var(--navy);
+  animation: load-slide 0.7s ease-in-out infinite alternate;
+}
+@keyframes load-slide {
+  to {
+    transform: translateX(125%);
+  }
+}
+.tab[data-view="home"].active,
+.tab[data-view="recurring"].active,
+.tab[data-view="stats"].active,
+.tab[data-view="accounts"].active,
+.tab[data-view="more"].active {
+  color: #fff;
+}
+#typeToggle .type-opt.active,
+#recurringTypeToggle .type-opt.active,
+#plannedTypeToggle .type-opt.active {
+  background: #b8c1bc !important;
+  border-color: #b8c1bc !important;
+}
+.sheet .chip,
+.sheet .chip-group-title {
+  font-size: 11.5px;
+}
+.sheet .chip {
+  padding: 6px 8px;
+}
+/* Azioni e metadati compatti. */
+#typeToggle .type-opt[data-type="expense"].active,
+#recurringTypeToggle .type-opt[data-type="expense"].active,
+#plannedTypeToggle .type-opt[data-type="expense"].active {
+  background: #a8322d !important;
+  border-color: #a8322d !important;
+}
+#typeToggle .type-opt[data-type="income"].active,
+#recurringTypeToggle .type-opt[data-type="income"].active,
+#plannedTypeToggle .type-opt[data-type="income"].active {
+  background: #1f5d4c !important;
+  border-color: #1f5d4c !important;
+}
+.tx-meta {
+  gap: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  font-size: 10.5px;
+}
+.tx-meta > span:not(:last-child)::after {
+  content: " ·";
+  color: var(--ink-soft);
+}
+.tx-meta .destination-card {
+  padding: 0;
+  border: 0;
+  background: none;
+  font-size: 10.5px;
+}
+/* Stato e carta destinataria nelle liste: colori coerenti con il calendario. */
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  vertical-align: middle;
+  margin-left: 5px;
+  padding: 2px 7px;
+  border-radius: 999px;
+  font-size: 10.5px;
+  font-weight: 800;
+  line-height: 1.3;
+  white-space: nowrap;
+}
+.status-badge.recurring {
+  color: #fff;
+  background: #7b55b7;
+  border: 1px solid #7b55b7;
+}
+.status-badge.planned {
+  color: #23162f;
+  background: #e0bc63;
+  border: 1px solid #d4a83a;
+}
+.destination-card {
+  display: inline-flex;
+  align-items: center;
+  max-width: 130px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding: 2px 6px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: var(--paper);
+  font-size: 10.5px;
+  font-weight: 700;
+  color: var(--ink-soft);
+}
+.tx-sub {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.tx-note {
+  margin: 2px 0 0;
+  color: var(--ink-soft);
+  font-size: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.tx-row.planned {
+  opacity: 1;
+}
+/* Ricorrenti e pianificate hanno la stessa densità su R&P. */
+.template-manage-row {
+  padding: 10px 11px;
+  gap: 9px;
+  min-height: 62px;
+}
+.template-manage-row .ic {
+  width: 32px;
+  height: 32px;
+  font-size: 16px;
+}
+.template-manage-row .nm {
+  font-size: 15px;
+  line-height: 1.25;
+}
+.template-manage-row .sub {
+  font-size: 11.5px;
+  line-height: 1.3;
+}
+.template-manage-row .amt {
+  font-size: 13px;
+}
+.template-manage-row .destination-card {
+  margin-top: 4px;
+}
+.tx-cat,
+.tx-amount,
+.tx-row.planned .tx-cat {
+  font-size: 14px;
+}
+/* Budget Home: macro compatte, categorie chiuse finché non richieste. */
+.budget-item {
+  padding: 8px 10px;
+}
+.budget-macro-toggle {
+  width: 100%;
+  background: none;
+  border: 0;
+  color: var(--ink);
+  text-align: left;
+  position: relative;
+}
+.budget-macro-toggle .budget-item-top {
+  padding: 0 5px;
+}
+.budget-chevron {
+  position: absolute;
+}
+.budget-child .budget-item-top {
+  margin-bottom: 4px;
+}
+/* Ultimi ritocchi iPhone: controlli compatti e palette verde bottiglia. */
+.fab,
+.add-btn {
+  border-color: #1f5d4c !important;
+}
+.primary-btn {
+  background: #1f5d4c !important;
+  border-color: #1f5d4c !important;
+  color: #fff !important;
+}
+.primary-btn {
+  box-shadow: 0 4px 12px rgba(31, 93, 76, 0.28);
+}
+/* Il filtro ricorrenza non deve occupare una riga enorme. */
+#recurringFreqSelect {
+  min-height: 34px !important;
+  height: 34px !important;
+  padding: 4px 9px !important;
+  font-size: 12px !important;
+  line-height: 1.1;
+}
+#sheetRecurringForm #recurringFreqSelect {
+  max-width: 190px;
+}
+/* Nessun vuoto artificiale tra categoria e conto quando si sceglie Entrata. */
+#sheetAddTx .chip-groups,
+#sheetRecurringForm .chip-groups,
+#sheetPlannedForm .chip-groups {
+  min-height: 72px !important;
+}
+/* Categoria e macrocategoria: conferma accanto al titolo, sempre visibile. */
+#sheetCategoryForm .primary-btn,
+#sheetMacroForm .primary-btn {
+  top: 18px;
+  right: 14px;
+  bottom: auto;
+}
+#sheetCategoryForm .sheet-head,
+#sheetMacroForm .sheet-head {
+  min-height: 42px;
+}
+/* Budget: macro e categorie hanno esattamente la stessa gerarchia visiva. */
+.budget-macro-toggle .budget-item-top,
+.budget-child .budget-item-top {
+  min-height: 32px;
+  margin: 0;
+  font-size: 13px;
+}
+.budget-macro-toggle .budget-item-name,
+.budget-macro-toggle .budget-item-amounts,
+.budget-child .budget-item-name,
+.budget-child .budget-item-amounts {
+  font-size: 13px !important;
+  line-height: 1.25;
+}
+.budget-children {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  margin: 8px 0 0;
+  padding: 8px 0 0;
+  border-top: 1px solid var(--line);
+}
+.budget-child {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  padding: 8px 10px;
+  margin: 0;
+}
+.budget-child .budget-item-top {
+  padding: 0 2px;
+}
+.budget-macro-toggle {
+  padding: 4px 34px 4px 2px !important;
+}
+.budget-chevron {
+  right: 7px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--ink) !important;
+  font-size: 21px;
+  font-weight: 800;
+  line-height: 1;
+  z-index: 2;
+}
+.budget-spent {
+  font-weight: 800;
+}
+.budget-limit,
+.budget-word {
+  color: var(--ink);
+}
+/* Saldi Home/Conti: stessa superficie grigio scuro delle card. */
+/* Elenco conti più compatto. */
+.account-card {
+  padding: 12px;
+  gap: 10px;
+}
+.account-name {
+  font-size: 14px !important;
+}
+.account-type {
+  font-size: 11px;
+}
+.account-balance {
+  font-size: 16px !important;
+}
+/* I due filtri principali restano sempre della stessa misura. */
+#statsGroupToggle {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 5px;
+  padding: 5px;
+}
+#rpModeToggle {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 5px;
+}
+#statsGroupToggle .type-opt {
+  width: 100%;
+  min-width: 0;
+  height: 38px;
+  min-height: 38px;
+  padding: 5px 4px;
+  font-size: 13px !important;
+  white-space: nowrap;
+}
+#rpModeToggle .type-opt {
+  width: 100%;
+  min-width: 0;
+  padding: 5px 4px;
+  font-size: 13px !important;
+  white-space: nowrap;
+}
+/* Splash iniziale: icona denaro e caricamento leggero. */
+.loader-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 13px;
+  animation: loader-enter 0.42s cubic-bezier(0.2, 0.8, 0.3, 1) both;
+}
+.loader-money {
+  width: 74px;
+  height: 74px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  background: linear-gradient(145deg, #3aa684, #1f5d4c);
+  border: 4px solid color-mix(in srgb, var(--line) 70%, #fff);
+  font-family: var(--font-display);
+  font-size: 40px;
+  font-weight: 800;
+  box-shadow:
+    0 10px 24px rgba(31, 93, 76, 0.28),
+    inset 0 2px 5px #ffffff44;
+  animation: money-pulse 1.05s ease-in-out infinite alternate;
+}
+.loader-content p {
+  margin: 0;
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 0.1px;
+}
+.app-loader .loader-content i {
+  width: 54px;
+  height: 5px;
+  background: var(--line);
+}
+.app-loader .loader-content i::after {
+  background: #1f5d4c;
+}
+@keyframes loader-enter {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.93);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes money-pulse {
+  to {
+    transform: translateY(-3px) scale(1.035);
+    box-shadow:
+      0 14px 28px rgba(31, 93, 76, 0.35),
+      inset 0 2px 5px #ffffff55;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .loader-content,
+  .loader-money {
+    animation: none;
+  }
+}
+/* Entrate e uscite riconoscibili subito nei pannelli anagrafici. */
+#categoryKindToggle .type-opt[data-kind="expense"].active,
+#macroKindToggle .type-opt[data-kind="expense"].active {
+  background: #a8322d !important;
+  border-color: #a8322d !important;
+  color: #fff !important;
+}
+#categoryKindToggle .type-opt[data-kind="income"].active,
+#macroKindToggle .type-opt[data-kind="income"].active {
+  background: #1f5d4c !important;
+  border-color: #1f5d4c !important;
+  color: #fff !important;
+}
+/* Riepilogo Home per natura e periodo. */
+.budget-kind {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+.budget-kind h3 {
+  margin: 0 2px 2px;
+  font-size: 14px;
+  color: var(--ink-soft);
+}
+.budget-kind.income h3 {
+  color: var(--emerald);
+}
+.budget-earned {
+  color: var(--emerald);
+  font-weight: 800;
+}
+/* Un unico periodo controlla tutte le statistiche. */
+.stats-period-filter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin: -4px 0 18px;
+  padding: 7px 9px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+.stats-period-filter label {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ink-soft);
+}
+.stats-period-filter select {
+  min-width: 128px;
+  height: 34px;
+  padding: 4px 8px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: var(--paper);
+  color: var(--ink);
+  font: 700 12px var(--font-body);
+}
+/* Coerenza completa con il font e i comandi del Bet Tracker. */
+html,
+body,
+button,
+input,
+select,
+textarea,
+.sheet,
+.view,
+.tab,
+.chip,
+.pill-btn,
+.primary-btn,
+.text-danger-btn {
+  font-family:
+    system-ui,
+    -apple-system,
+    "Segoe UI",
+    sans-serif !important;
+}
+.fab {
+  aspect-ratio: 1;
+  border: 0 !important;
+  font-size: 31px !important;
+  font-weight: 700;
+  line-height: 1 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+.add-btn {
+  aspect-ratio: 1;
+  border-radius: 50% !important;
+  background: #e8a33d !important;
+  border: 0 !important;
+  color: #241800 !important;
+  font-weight: 700;
+  line-height: 1 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 0 !important;
+}
+.add-btn {
+  width: 32px !important;
+  height: 32px !important;
+  min-width: 32px !important;
+  font-size: 21px !important;
+  box-shadow: none !important;
+}
+.add-btn:active {
+  background: #f1b54f !important;
+}
+/* Pulsanti, filtri e navigazione: superficie neutra blu-grigio, non verde. */
+.chip.active,
+.period-menu button[aria-pressed="true"],
+#statsGroupToggle .type-opt.active,
+#rpModeToggle .type-opt.active,
+#txTypeToggle .type-opt.active {
+  box-shadow: none !important;
+}
+.tab.active,
+.tab[data-view].active {
+  background: transparent !important;
+  border: 1px solid #e8a33d !important;
+}
+/* Conferma dei pannelli: oro Bet Tracker. Nei form con data resta accanto alla data;
+   nel ricorrente la conferma va in alto a destra senza occupare la colonna centrale. */
+#sheetAddTx .sheet-head,
+#sheetPlannedForm .sheet-head {
+  grid-template-columns: minmax(0, 1fr) 126px 42px;
+  gap: 9px;
+  padding-right: 0 !important;
+}
+#sheetRecurringForm .sheet-head {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) 42px;
+  align-items: start !important;
+  gap: 10px;
+  padding-right: 0 !important;
+}
+#sheetAccountForm .sheet-head,
+#sheetCategoryForm .sheet-head,
+#sheetMacroForm .sheet-head {
+  display: flex !important;
+  align-items: center;
+  gap: 10px;
+  padding-right: 0 !important;
+}
+#sheetAddTx .sheet-head h3,
+#sheetRecurringForm .sheet-head h3,
+#sheetPlannedForm .sheet-head h3,
+#sheetAccountForm .sheet-head h3,
+#sheetCategoryForm .sheet-head h3,
+#sheetMacroForm .sheet-head h3 {
+  min-width: 0;
+  margin: 0;
+}
+#sheetAddTx .sheet-head-date,
+#sheetPlannedForm .sheet-head-date {
+  width: 126px !important;
+  margin: 0 !important;
+  justify-self: end;
+}
+#sheetRecurringForm .primary-btn {
+  justify-self: end;
+  align-self: start;
+}
+#sheetAddTx .primary-btn,
+#sheetRecurringForm .primary-btn,
+#sheetPlannedForm .primary-btn,
+#sheetAccountForm .primary-btn,
+#sheetCategoryForm .primary-btn,
+#sheetMacroForm .primary-btn {
+  position: static !important;
+  display: grid !important;
+  place-items: center;
+  flex: 0 0 42px;
+  width: 42px !important;
+  min-width: 42px !important;
+  height: 42px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 50% !important;
+  background: #e8a33d !important;
+  color: #241800 !important;
+  box-shadow: 0 5px 14px #0004 !important;
+  z-index: 6;
+}
+#sheetAddTx .primary-btn::after,
+#sheetRecurringForm .primary-btn::after,
+#sheetPlannedForm .primary-btn::after,
+#sheetAccountForm .primary-btn::after,
+#sheetCategoryForm .primary-btn::after,
+#sheetMacroForm .primary-btn::after {
+  content: "✓";
+  color: #241800;
+  font-size: 23px;
+  font-weight: 900;
+}
+#sheetAddTx .primary-btn:active,
+#sheetRecurringForm .primary-btn:active,
+#sheetPlannedForm .primary-btn:active,
+#sheetAccountForm .primary-btn:active,
+#sheetCategoryForm .primary-btn:active,
+#sheetMacroForm .primary-btn:active {
+  background: #f1b54f !important;
+}
+/* Scelta tema e relativi filtri: palette Bet Tracker, senza il verde precedente. */
+#themeModeToggle .type-opt.active,
+.theme-toggle-btn {
+  box-shadow: none !important;
+}
+.theme-toggle-btn:active {
+  background: #2f3c47 !important;
+  border-color: #e8a33d !important;
+}
+/* R&P: selettore centrato e riepilogo leggibile, indipendente dalla larghezza schermo. */
+#view-recurring {
+  max-width: 520px;
+  margin-inline: auto;
+}
+#view-recurring .view-title {
+  margin-bottom: 16px;
+}
+#rpModeToggle {
+  width: min(100%, 400px) !important;
+  margin: 0 auto 14px !important;
+  padding: 4px !important;
+  border: 1px solid #2b3640 !important;
+  border-radius: 14px !important;
+}
+#rpModeToggle .type-opt {
+  height: 34px !important;
+  min-height: 34px !important;
+  border-radius: 10px !important;
+}
+.rp-estimate {
+  width: min(100%, 400px);
+  min-height: 52px;
+  margin: 0 auto 18px !important;
+  padding: 14px 16px !important;
+  border: 1px solid #2b3640;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #1b2c3b, #1b232c);
+  color: #f1f5f4 !important;
+  text-align: center;
+  font-size: 15px !important;
+  font-weight: 800 !important;
+  box-shadow: 0 5px 16px #0002;
+}
+/* Azione principale: pulsante geometrico, allineato alla tab bar su ogni schermo. */
+.fab {
+  position: fixed !important;
+  right: max(18px, calc((100vw - 520px) / 2 + 18px)) !important;
+  bottom: calc(94px + env(safe-area-inset-bottom)) !important;
+  width: 56px !important;
+  min-width: 56px !important;
+  height: 56px !important;
+  padding: 0 !important;
+  border-radius: 18px !important;
+  background: #e8a33d !important;
+  color: #241800 !important;
+  box-shadow: 0 8px 20px #0006 !important;
+  transform: none !important;
+}
+.fab:active {
+  background: #f1b54f !important;
+  transform: scale(0.96) !important;
+}
+/* Dashboard essenziale: previsione e prossime scadenze leggibili a colpo d'occhio. */
+.forecast-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 9px;
+  margin: 12px 0 22px;
+}
+.forecast-card {
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid #2b3640;
+  border-radius: 14px;
+}
+.forecast-card.wide {
+  grid-column: 1/-1;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.forecast-card span {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+}
+.forecast-card strong {
+  display: block;
+  margin-top: 5px;
+  font-size: 17px;
+  font-variant-numeric: tabular-nums;
+}
+.tx-search-filter {
+  display: flex;
+  gap: 8px;
+  margin: 0 0 8px;
+}
+.tx-search-filter .text-input {
+  min-width: 0;
+  flex: 1;
+  height: 38px;
+  padding: 7px 10px;
+  font-size: 13px;
+}
+.tx-custom-range {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  gap: 7px;
+  align-items: end;
+  margin: 0 0 12px;
+}
+.tx-custom-range label {
+  font-size: 11px;
+  font-weight: 700;
+}
+.tx-custom-range .text-input {
+  height: 35px;
+  padding: 5px;
+  font-size: 12px;
+}
+.recurring-options {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+  margin: -2px 0 14px;
+}
+.recurring-options label {
+  font-size: 12px;
+  font-weight: 700;
+}
+.recurring-options input[type="date"] {
+  margin-top: 5px;
+  height: 35px;
+  padding: 5px;
+  font-size: 12px;
+}
+.toggle-line {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.toggle-line input {
+  accent-color: #e8a33d;
+}
+.backup-status {
+  margin: 0 0 9px;
+  font-size: 12px;
+}
+#appToast {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+#appToast button {
+  border: 0;
+  border-radius: 8px;
+  padding: 5px 8px;
+  font: 800 12px system-ui;
+}
+.wide-stat {
+  grid-column: 1/-1;
+}
+.stats-top-list {
+  margin: 4px 0 0;
+  font-size: 12px;
+  line-height: 1.5;
+}
+#trendModeToggle {
+  margin: 0 0 12px;
+}
+#trendModeToggle .type-opt {
+  font-size: 11px !important;
+  min-height: 34px !important;
+  padding: 5px 4px !important;
+}
+.stats-nature-toggle {
+  margin: 0 0 8px !important;
+}
+.stats-nature-toggle .type-opt {
+  min-height: 32px !important;
+  padding: 5px !important;
+  font-size: 12px !important;
+}
+#typeToggle .type-opt {
+  min-width: 0;
+  font-size: 10.5px !important;
+  padding: 7px 3px !important;
+  white-space: nowrap;
+}
+/* Grafici: stesso linguaggio Bet Tracker. */
+.chart-wrap {
+  margin-top: 10px;
+  padding: 14px 10px 8px !important;
+  border: 1px solid #2b3640;
+  border-radius: 16px;
+  box-shadow: inset 0 1px 0 #ffffff08;
+}
+.chart-wrap svg.chart {
+  display: block;
+  width: 100%;
+  max-width: 380px;
+  height: auto;
+}
+.chart-wrap .money-donut {
+  max-width: 200px !important;
+}
+.pie-legend {
+  padding: 9px 2px 0;
+}
+.pie-legend-item {
+  padding: 8px 10px;
+  border: 1px solid #2b3640;
+  border-radius: 11px;
+}
+.pie-legend-item .sw {
+  border-radius: 4px;
+}
+.stat-card {
+  box-shadow: inset 0 1px 0 #ffffff08;
+}
+.stat-card-value.pos {
+  color: #55c3a7 !important;
+}
+.stat-card-value.neg {
+  color: #f08b86 !important;
+}
+/* Grafici interattivi e spiegazioni. */
+.chart-info-btn {
+  margin-left: auto;
+  width: 25px;
+  height: 25px;
+  padding: 0;
+  border-radius: 50%;
+  border: 1px solid #2b3640;
+  font: 800 13px system-ui;
+}
+.chart-wrap {
+  position: relative;
+  cursor: zoom-in;
+  touch-action: pan-y;
+}
+.chart-wrap:focus-visible {
+  outline: 2px solid #e8a33d;
+  outline-offset: 3px;
+}
+.chart-point {
+  cursor: crosshair;
+  touch-action: none;
+}
+.chart-tooltip {
+  position: absolute;
+  left: 50%;
+  bottom: 10px;
+  transform: translate(-50%, 8px);
+  opacity: 0;
+  pointer-events: none;
+  min-width: 162px;
+  padding: 9px 11px;
+  border: 1px solid #2b3640;
+  border-radius: 11px;
+  box-shadow: 0 8px 22px #0008;
+  transition: 0.15s;
+  z-index: 2;
+  font-size: 11px;
+}
+.chart-tooltip.show {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+.chart-tooltip strong,
+.chart-tooltip span {
+  display: block;
+  line-height: 1.45;
+}
+.chart-sheet {
+  max-height: 88dvh;
+}
+.chart-sheet-help {
+  margin: 0 0 12px;
+  font-size: 12px;
+}
+.chart-fullscreen-body {
+  min-height: 260px;
+  display: grid;
+  place-items: center;
+  padding: 10px;
+  border: 1px solid #2b3640;
+  border-radius: 16px;
+  position: relative;
+}
+.chart-fullscreen-body svg {
+  width: 100%;
+  height: auto;
+  max-height: 55dvh;
+}
+.chart-fullscreen-body .chart-tooltip {
+  bottom: 16px;
+}
+.chart-info-card {
+  padding: 8px;
+  line-height: 1.6;
+  font-size: 14px;
+}
+.tx-amount.transfer {
+  color: #e8a33d !important;
+}
+@media (max-width: 380px) {
+  .tx-custom-range {
+    grid-template-columns: 1fr 1fr;
+  }
+  .tx-custom-range button {
+    grid-column: 1/-1;
+  }
+}
+/* Navigazione swipe, stima R&P e controllo saldi */
+#views {
+  overflow-x: hidden;
+  touch-action: pan-y;
+}
+.view.view-swipe-next {
+  animation: viewSwipeNext 0.24s cubic-bezier(0.22, 0.72, 0.28, 1) both;
+}
+.view.view-swipe-prev {
+  animation: viewSwipePrev 0.24s cubic-bezier(0.22, 0.72, 0.28, 1) both;
+}
+@keyframes viewSwipeNext {
+  from {
+    opacity: 0.28;
+    transform: translateX(34px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+@keyframes viewSwipePrev {
+  from {
+    opacity: 0.28;
+    transform: translateX(-34px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .view.view-swipe-next,
+  .view.view-swipe-prev {
+    animation: none;
+  }
+}
+.balance-hide {
+  width: 44px !important;
+  height: 44px !important;
+  min-width: 44px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 26px !important;
+  line-height: 1 !important;
+  padding: 0 !important;
+  border-radius: 50% !important;
+  cursor: pointer;
+}
+.rp-combined-estimate {
+  margin: -8px 0 16px;
+  padding: 12px 14px;
+  text-align: center;
+  border: 1px solid var(--line);
+  border-radius: 13px;
+  background: var(--card);
+  color: #e8a33d;
+  font-family: var(--font-display);
+  font-size: 17px;
+  font-weight: 800;
+}
+/* Allineamento schede e azione Duplica */
+#view-home,
+#view-recurring,
+#view-stats,
+#view-accounts,
+#view-more {
+  padding-top: 4px;
+}
+#view-home .view-title,
+#view-recurring .view-title {
+  min-height: 34px;
+  margin: 14px 0 20px;
+  padding: 10px 18px 0;
+  font-family: var(--font-display);
+  font-size: 28px;
+  font-weight: 800;
+  line-height: 1.2;
+  letter-spacing: -0.3px;
+  text-align: center;
+}
+#view-stats .view-title,
+#view-accounts .view-title {
+  min-height: 34px;
+  font-family: var(--font-display);
+  font-weight: 800;
+  letter-spacing: -0.3px;
+  text-align: center;
+}
+#view-more .view-title {
+  min-height: 34px;
+  margin: 14px 0 20px;
+  padding: 10px 18px 0;
+  font-family: var(--font-display);
+  font-size: 28px;
+  font-weight: 800;
+  line-height: 1.2;
+  letter-spacing: -0.3px;
+  text-align: center;
+}
+#view-home .hero,
+#view-stats .stats-period-filter,
+#view-accounts .total-balance-card,
+#view-more > .section-block:first-of-type {
+  margin-top: 0 !important;
+}
+#view-more > .section-block:first-of-type {
+  padding-top: 0;
+}
+/* Card compatte e azioni con pressione prolungata */
+.tx-row,
+.template-manage-row {
+  display: flex !important;
+  overflow: visible;
+  isolation: auto;
+  position: relative;
+}
+.longpress-actionable {
+  -webkit-touch-callout: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+/* Home: movimenti e prossime scadenze come piccole card R&P. */
+#recentTx,
+#upcomingHomeList {
+  gap: 7px;
+}
+#recentTx .tx-row,
+#upcomingHomeList .tx-row {
+  min-height: 52px;
+  padding: 7px 9px;
+  gap: 8px;
+  border: 1px solid #2b3640;
+  border-radius: 12px;
+  background: var(--card);
+  box-shadow: inset 0 1px 0 #ffffff07;
+}
+#recentTx .tx-icon,
+#upcomingHomeList .tx-icon {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  font-size: 14px;
+}
+#recentTx .tx-cat,
+#upcomingHomeList .tx-cat {
+  font-size: 13px;
+  line-height: 1.2;
+}
+#recentTx .tx-sub,
+#upcomingHomeList .tx-sub {
+  font-size: 10px;
+  line-height: 1.2;
+  margin-top: 2px;
+  gap: 4px;
+}
+#recentTx .tx-meta,
+#upcomingHomeList .tx-meta,
+#recentTx .tx-meta .destination-card,
+#upcomingHomeList .tx-meta .destination-card {
+  font-size: 9.8px;
+}
+#recentTx .tx-amount,
+#upcomingHomeList .tx-amount {
+  font-size: 13px;
+  font-weight: 700;
+}
+#recentTx .status-badge,
+#upcomingHomeList .status-badge {
+  font-size: 8.8px;
+  padding: 1px 5px;
+  margin-left: 4px;
+}
+/* R&P: stesse card, ma leggermente più grandi della Home e molto più compatte di prima. */
+#recurringList,
+#plannedListRP {
+  gap: 7px;
+}
+#recurringList .template-manage-row,
+#plannedListRP .template-manage-row {
+  min-height: 56px;
+  padding: 8px 10px;
+  gap: 8px;
+  border-radius: 12px;
+  box-shadow: inset 0 1px 0 #ffffff07;
+}
+#recurringList .template-manage-row .ic,
+#plannedListRP .template-manage-row .ic {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  font-size: 14px;
+}
+#recurringList .template-manage-row .nm,
+#plannedListRP .template-manage-row .nm {
+  font-size: 13.5px;
+  line-height: 1.2;
+}
+#recurringList .template-manage-row .sub,
+#plannedListRP .template-manage-row .sub {
+  font-size: 10.5px;
+  line-height: 1.2;
+}
+#recurringList .template-manage-row .amt,
+#plannedListRP .template-manage-row .amt {
+  font-size: 11.5px;
+}
+#recurringList .template-manage-row .destination-card,
+#plannedListRP .template-manage-row .destination-card {
+  margin-top: 3px;
+  font-size: 9.8px;
+  padding: 1px 5px;
+}
+#recurringList .status-badge,
+#plannedListRP .status-badge {
+  font-size: 8.8px;
+  padding: 1px 5px;
+}
+#recurringList .chev,
+#plannedListRP .chev {
+  font-size: 14px;
+}
+/* Menu contestuale: appare solo dopo pressione prolungata, non con swipe. */
+.movement-action-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 5000;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 16px 12px calc(16px + env(safe-area-inset-bottom));
+  transition: background 0.16s ease;
+}
+.movement-action-menu {
+  width: min(100%, 480px);
+}
+.movement-action-handle {
+  border-radius: 999px;
+}
+.movement-action-title {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.movement-action-btn {
+  width: 100%;
+}
+/* Stime R&P a colpo d'occhio e action sheet ridisegnato. */
+#view-recurring .rp-estimates-grid {
+  width: min(100%, 400px);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+#view-recurring .rp-estimate-card {
+  border: 1px solid #2b3640;
+  flex-direction: column;
+}
+#view-recurring .rp-estimate-card.recurring {
+  background: linear-gradient(145deg, #232c35, #1b232c);
+}
+#view-recurring .rp-estimate-card.planned {
+  background: linear-gradient(145deg, #2a292f, #1b232c);
+}
+.rp-estimate-label {
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+}
+.rp-estimate-value {
+  font-family: var(--font-display);
+  font-size: 24px;
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+.rp-estimate-caption {
+  font-size: 10px;
+  font-weight: 700;
+}
+#view-recurring .rp-combined-estimate {
+  width: min(100%, 400px);
+  min-height: 44px;
+  margin: 0 auto 14px;
+  padding: 10px 13px;
+  border: 1px solid #2b3640;
+  border-radius: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 800;
+}
+#view-recurring .rp-combined-estimate strong {
+  font-family: var(--font-display);
+  font-size: 17px;
+  color: #e8a33d;
+  white-space: nowrap;
+}
+#view-recurring .rp-estimate {
+  display: none !important;
+}
+/* Action sheet più leggero e simile a un menu nativo mobile. */
+.movement-action-overlay {
+  padding: 18px 12px calc(18px + env(safe-area-inset-bottom));
+  background: #0000;
+  backdrop-filter: blur(0);
+  -webkit-backdrop-filter: blur(0);
+  transition:
+    background 0.18s ease,
+    backdrop-filter 0.18s ease;
+}
+.movement-action-overlay.show {
+  background: #080b0dd1;
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+}
+.movement-action-menu {
+  width: min(100%, 430px);
+  padding: 10px;
+  border: 1px solid #34414a;
+  border-radius: 22px;
+  box-shadow: 0 24px 70px #000b;
+  transform: translateY(28px) scale(0.985);
+  opacity: 0;
+  transition:
+    transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1),
+    opacity 0.16s ease;
+}
+.movement-action-overlay.show .movement-action-menu {
+  transform: translateY(0) scale(1);
+  opacity: 1;
+}
+.movement-action-handle {
+  width: 34px;
+  height: 4px;
+  margin: 0 auto 8px;
+}
+.movement-action-title {
+  margin: 1px 12px 11px;
+  font-size: 11px;
+  font-weight: 750;
+  text-align: left;
+}
+.movement-action-buttons {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+.movement-action-buttons:has(.movement-action-btn:nth-child(2):last-child) {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.movement-action-btn {
+  min-height: 78px;
+  padding: 10px 6px 8px;
+  border: 1px solid #34414a;
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  font: 750 11px system-ui;
+  transition:
+    transform 0.1s ease,
+    background 0.1s ease;
+}
+.movement-action-btn:active {
+  transform: scale(0.96);
+  background: #2d3a44;
+}
+.movement-action-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+}
+.movement-action-icon svg {
+  width: 17px;
+  height: 17px;
+  fill: currentColor;
+}
+.movement-action-btn.edit,
+.movement-action-btn.duplicate,
+.movement-action-btn.delete {
+  background: #26323b;
+  color: #eaf0ee;
+}
+.movement-action-cancel {
+  width: 100%;
+  min-height: 43px;
+  margin-top: 9px;
+  border: 1px solid #34414a;
+  border-radius: 14px;
+  font: 800 13px system-ui;
+}
+.movement-action-cancel:active {
+  background: #25313b;
+}
+@media (max-width: 360px) {
+  #view-recurring .rp-estimate-card {
+    min-height: 102px;
+    padding: 12px 10px 10px;
+  }
+  .rp-estimate-value {
+    font-size: 21px;
+  }
+  .movement-action-btn {
+    min-height: 72px;
+  }
+}
+/* R&P: Totali + KPI contestuali */
+#view-recurring .rp-estimates-grid.single {
+  grid-template-columns: minmax(0, 195px);
+  justify-content: center;
+}
+#view-recurring #rpTotalList .template-manage-row {
+  padding: 9px 10px;
+  gap: 8px;
+  min-height: 58px;
+}
+#view-recurring #rpTotalList .template-manage-row .ic {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  font-size: 14px;
+}
+#view-recurring #rpTotalList .template-manage-row .nm {
+  font-size: 13.5px;
+  line-height: 1.2;
+}
+#view-recurring #rpTotalList .template-manage-row .sub {
+  font-size: 10.5px;
+  line-height: 1.2;
+}
+#view-recurring #rpTotalList .template-manage-row .amt {
+  font-size: 11.5px;
+}
+#view-recurring #rpTotalList .template-manage-row .destination-card {
+  margin-top: 3px;
+  font-size: 9.8px;
+  padding: 1px 5px;
+}
+/* Riconciliazione saldo */
+.field-hint {
+  display: block;
+  margin-top: 7px;
+  color: var(--ink-soft);
+  font-size: 0.78rem;
+  line-height: 1.35;
+}
+.sheet-note {
+  margin: 2px 0 16px;
+  color: var(--ink-soft);
+  font-size: 0.86rem;
+  line-height: 1.45;
+}
+#reconcileAccountBtn {
+  width: 100%;
+  margin-top: 10px;
+}
+/* R&P tabs allineati e storico rettifiche separato */
+#view-recurring #rpModeToggle {
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 4px !important;
+  padding: 4px !important;
+  width: 100%;
+}
+#view-recurring #rpModeToggle .type-opt {
+  width: 100% !important;
+  min-width: 0 !important;
+  height: 32px !important;
+  min-height: 32px !important;
+  padding: 4px 2px !important;
+  font-size: 11px !important;
+  line-height: 1 !important;
+  white-space: nowrap !important;
+}
+.balance-adjustment-history {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid #2b3640;
+}
+.balance-adjustment-history-head h4 {
+  margin: 0 0 4px;
+  font-size: 15px;
+}
+.balance-adjustment-history-head p {
+  margin: 0 0 11px;
+  font-size: 10.5px;
+  line-height: 1.35;
+}
+.balance-adjustments-list {
+  display: grid;
+  gap: 7px;
+}
+.balance-adjustment-row {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 9px;
+  padding: 9px 10px;
+  border: 1px solid #2b3640;
+  border-radius: 12px;
+}
+.balance-adjustment-icon {
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+  display: grid;
+  place-items: center;
+  font-size: 14px;
+}
+.balance-adjustment-info {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.balance-adjustment-info strong {
+  font-size: 12.5px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.balance-adjustment-info small {
+  font-size: 9.5px;
+  line-height: 1.25;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.balance-adjustment-amount {
+  font-family: var(--font-display);
+  font-size: 12.5px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+.balance-adjustment-amount.income {
+  color: #55c3a7;
+}
+.balance-adjustment-amount.expense {
+  color: #f08b86;
+}
+@media (max-width: 360px) {
+  #view-recurring #rpModeToggle .type-opt {
+    font-size: 10px !important;
+    padding-inline: 1px !important;
+  }
+}
+/* Ricorrenze a numero di rate */
+.recurring-duration-select {
+  margin-top: 5px;
+}
+.recurring-installments-input {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 5px;
+}
+.recurring-installments-input .text-input {
+  margin: 0;
+  flex: 1;
+  min-width: 0;
+}
+.recurring-installments-input span {
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--muted, #9fb0ab);
+  white-space: nowrap;
+}
+.recurring-options small {
+  display: block;
+  margin-top: 5px;
+  font-size: 11px;
+  line-height: 1.35;
+  font-weight: 600;
+}
+/* =========================================================
+   v1.3.0 — tema consolidato e accessibilità
+   Le regole seguenti sono l'ultimo livello della cascata e usano token
+   semantici; nessuna superficie scura viene più imposta al tema chiaro.
+   ========================================================= */
+/* Superfici principali */
+.hero,
+.total-balance-card,
+.account-card,
+.forecast-card,
+.stats-period-filter {
+  background: var(--card) !important;
+  border-color: var(--line) !important;
+  color: var(--ink) !important;
+  box-shadow: 0 4px 14px var(--shadow-soft) !important;
+}
+#view-recurring .rp-estimate-card {
+  background: var(--card) !important;
+  border-color: var(--line) !important;
+  color: var(--ink) !important;
+}
+#view-recurring .rp-combined-estimate {
+  background: var(--card) !important;
+  border-color: var(--line) !important;
+  color: var(--ink) !important;
+  box-shadow: 0 4px 14px var(--shadow-soft) !important;
+}
+.chart-wrap {
+  color: var(--ink) !important;
+  box-shadow: 0 4px 14px var(--shadow-soft) !important;
+}
+.pie-legend-item,
+.stat-card,
+.balance-adjustment-row {
+  background: var(--card) !important;
+  border-color: var(--line) !important;
+  color: var(--ink) !important;
+  box-shadow: 0 4px 14px var(--shadow-soft) !important;
+}
+:root[data-theme="dark"] .hero,
+:root[data-theme="dark"] .total-balance-card,
+:root[data-theme="dark"] .account-card {
+  background: linear-gradient(
+    135deg,
+    #23433e 0%,
+    #1b2c3b 58%,
+    var(--card) 100%
+  ) !important;
+}
+.hero .hero-label,
+.total-balance-card .hero-label,
+.forecast-card span,
+.rp-estimate-label,
+.rp-estimate-caption,
+.backup-status,
+.stats-top-list,
+.chart-sheet-help,
+.stat-card-label,
+.balance-adjustment-history-head p,
+.balance-adjustment-info small {
+  color: var(--ink-soft) !important;
+}
+.forecast-card strong,
+.rp-estimate-value,
+.pie-legend-item .val,
+.balance-adjustment-history-head h4,
+.balance-adjustment-info strong,
+.chart-info-card,
+.link-btn,
+#editAccountFromEvolutionBtn {
+  color: var(--ink) !important;
+}
+/* Controlli */
+.pill-btn,
+#themeModeToggle .type-opt,
+.theme-toggle-btn {
+  background: var(--card) !important;
+  border-color: var(--line) !important;
+  color: var(--ink) !important;
+}
+.pill-btn .chev {
+  color: var(--ink-soft) !important;
+}
+.chip.active,
+.period-menu button[aria-pressed="true"],
+#statsGroupToggle .type-opt.active,
+#rpModeToggle .type-opt.active,
+#txTypeToggle .type-opt.active,
+#themeModeToggle .type-opt.active {
+  background: var(--surface-strong) !important;
+  border-color: var(--action) !important;
+  color: var(--action) !important;
+}
+#rpModeToggle {
+  background: var(--card) !important;
+  border-color: var(--line) !important;
+}
+#typeToggle .type-opt[data-type="transfer"].active {
+  background: var(--surface-strong) !important;
+  border-color: var(--action) !important;
+  color: var(--action) !important;
+}
+/* Tab: ripristino della palette distintiva per sezione. */
+.tabbar {
+  background: var(--card) !important;
+  border-color: var(--line) !important;
+}
+.tab {
+  color: var(--ink-soft) !important;
+}
+.tab.active,
+.tab[data-view].active {
+  color: #fff !important;
+  border-color: transparent !important;
+}
+.tab[data-view="home"].active {
+  background: var(--tab-home) !important;
+}
+.tab[data-view="recurring"].active {
+  background: var(--tab-recurring) !important;
+}
+.tab[data-view="stats"].active {
+  background: var(--tab-stats) !important;
+}
+.tab[data-view="accounts"].active {
+  background: var(--tab-accounts) !important;
+}
+.tab[data-view="planned"].active {
+  background: var(--tab-planned) !important;
+}
+.tab[data-view="more"].active {
+  background: var(--tab-more) !important;
+}
+/* Grafici e tooltip */
+.chart-wrap,
+.chart-fullscreen-body {
+  background: var(--card) !important;
+  border-color: var(--line) !important;
+}
+.pie-legend-item .sw {
+  box-shadow: 0 0 0 2px var(--paper) !important;
+}
+.chart-info-btn {
+  border-color: var(--line) !important;
+  background: var(--surface-strong) !important;
+  color: var(--action) !important;
+}
+.chart-tooltip {
+  border-color: var(--line) !important;
+  background: var(--overlay-surface) !important;
+  color: var(--ink) !important;
+}
+.chart-tooltip .pos {
+  color: var(--emerald) !important;
+}
+.chart-tooltip .neg {
+  color: var(--rust) !important;
+}
+/* Action sheet contestuale coerente con entrambi i temi. */
+.movement-action-overlay.show {
+  background: var(--overlay-backdrop) !important;
+}
+.movement-action-menu {
+  background: var(--overlay-surface) !important;
+  border-color: var(--line) !important;
+  color: var(--ink) !important;
+}
+.movement-action-title {
+  color: var(--ink-soft) !important;
+}
+.movement-action-handle {
+  background: var(--line) !important;
+}
+.movement-action-btn,
+.movement-action-cancel {
+  background: var(--surface-strong) !important;
+  border-color: var(--line) !important;
+  color: var(--ink) !important;
+}
+.movement-action-icon {
+  background: var(--surface-muted) !important;
+  color: var(--ink) !important;
+}
+.movement-action-btn.edit .movement-action-icon {
+  background: #afc7de !important;
+  color: #243746 !important;
+}
+.movement-action-btn.duplicate .movement-action-icon {
+  background: #bfdccb !important;
+  color: #244238 !important;
+}
+.movement-action-btn.delete .movement-action-icon {
+  background: #e2aaa7 !important;
+  color: #5a2522 !important;
+}
+/* Loader e indicatori */
+.app-loader {
+  background: var(--paper) !important;
+}
+:root[data-theme="dark"] .app-loader {
+  background: radial-gradient(
+    ellipse at center,
+    #23433e 0%,
+    var(--paper) 65%
+  ) !important;
+}
+.backup-status.warning {
+  color: var(--rust) !important;
+  font-weight: 800;
+}
+.load-more-btn {
+  display: block;
+  margin: 12px auto 4px;
+  min-width: 150px;
+}
+.load-more-btn[hidden] {
+  display: none !important;
+}
+.detail-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin: 14px 0 8px;
+}
+.detail-actions:has(> :only-child) {
+  grid-template-columns: 1fr;
+}
+.category-manage-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 7px;
+}
+.category-manage-row .category-row {
+  min-width: 0;
+  width: 100%;
+}
+.reorder-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.reorder-btn {
+  width: 30px;
+  height: 28px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--card);
+  color: var(--ink);
+  font-weight: 900;
+  line-height: 1;
+}
+.reorder-btn:disabled {
+  opacity: 0.28;
+}
+.tx-row:focus-visible,
+.template-manage-row:focus-visible {
+  outline: 2px solid var(--action);
+  outline-offset: 2px;
+  border-radius: 10px;
+}
+/* Rifiniture tema chiaro/scuro per componenti introdotti nelle versioni precedenti. */
+.budget-item,
+.category-row,
+.template-manage-row,
+#recentTx .tx-row,
+#upcomingHomeList .tx-row,
+#recurringList .template-manage-row,
+#plannedListRP .template-manage-row,
+#rpTotalList .template-manage-row {
+  border-color: var(--line) !important;
+}
+.tx-custom-range label,
+.recurring-options label,
+.recurring-options small {
+  color: var(--ink-soft) !important;
+}
+.balance-adjustment-history {
+  border-top-color: var(--line) !important;
+}
+.balance-adjustment-icon {
+  background: var(--surface-strong) !important;
+}
+.budget-spent {
+  color: var(--rust) !important;
+}
+/* v1.3.2 — spaziatura intestazione Movimenti e filtro Periodo */
+#view-transactions > .sticky-head {
+  justify-content: flex-start;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+#view-transactions > .sticky-head #backToHomeTx {
+  flex: 0 0 auto;
+}
+#view-transactions > .sticky-head h2 {
+  flex: 1 1 auto;
+  min-width: 0;
+  line-height: 1.25;
+}
+#view-transactions .tx-custom-range {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+  column-gap: 12px;
+  row-gap: 10px;
+  align-items: end;
+  margin: 4px 0 16px;
+}
+#view-transactions .tx-custom-range label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+#view-transactions .tx-custom-range .text-input {
+  min-width: 0;
+}
+#view-transactions #clearCustomRange {
+  min-height: 35px;
+  padding-left: 12px;
+  padding-right: 12px;
+}
+@media (max-width: 430px) {
+  #view-transactions > .sticky-head {
+    gap: 14px;
+  }
+  /* iPhone/PWA: Dal, Al e Azzera restano sulla stessa riga.
+     Tre colonne uguali, con spazio sia tra i controlli sia dai bordi. */
+  #view-transactions .tx-custom-range {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+    width: 100%;
+    padding: 4px 3px 2px;
+    margin: 4px 0 16px;
+  }
+  #view-transactions .tx-custom-range label,
+  #view-transactions #clearCustomRange {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+  }
+  #view-transactions .tx-custom-range .text-input {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    padding: 5px 4px;
+    font-size: 11px;
+  }
+  #view-transactions #clearCustomRange {
+    grid-column: auto;
+    margin: 0;
+    padding-left: 6px;
+    padding-right: 6px;
+    font-size: 12px;
+  }
+}
+/* v1.3.3 — R&P: elementi pagati nel mese + data di partenza esplicita */
+.rp-paid-section {
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+}
+.rp-paid-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 0 2px 9px;
+  color: var(--ink-soft);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+.rp-paid-head span:last-child {
+  min-width: 24px;
+  padding: 2px 7px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface-strong);
+  color: var(--ink);
+  text-align: center;
+}
+.rp-all-paid-notice {
+  margin: 0 0 11px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface-strong);
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 750;
+  line-height: 1.4;
+}
+.rp-paid-list {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+.rp-paid-list .tx-row {
+  min-height: 54px;
+  padding: 8px 10px;
+  gap: 8px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--card);
+}
+.rp-paid-list .tx-icon {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  font-size: 14px;
+}
+.rp-paid-list .tx-cat {
+  font-size: 13px;
+  line-height: 1.2;
+}
+.rp-paid-list .tx-sub {
+  font-size: 10px;
+  line-height: 1.2;
+  margin-top: 2px;
+  gap: 4px;
+}
+.rp-paid-list .tx-amount {
+  font-size: 13px;
+  font-weight: 750;
+}
+.rp-paid-list .status-badge {
+  font-size: 8.5px;
+  padding: 1px 5px;
+  margin-left: 4px;
+}
+.status-badge.paid {
+  color: var(--emerald);
+  background: var(--surface-strong);
+  border: 1px solid var(--line);
+}
+.recurring-start-field .field-hint {
+  margin-top: 6px;
+}
+.recurring-start-controls {
+  display: flex;
+  align-items: stretch;
+  gap: 10px;
+  width: 100%;
+}
+.recurring-start-controls .text-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  width: auto;
+}
+.recurring-start-controls .pill-btn {
+  flex: 0 0 92px;
+  min-height: 42px;
+  padding: 0 13px;
+  white-space: nowrap;
+}
+/* v1.3.4 — iPhone layout fixes + R&P add chooser */
+@media (max-width: 430px) {
+  .recurring-start-controls {
+    display: flex;
+    gap: 10px;
+    width: 100%;
+    align-items: stretch;
+  }
+  .recurring-start-controls > * {
+    min-width: 0;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+  .recurring-start-controls input[type="date"] {
+    display: block;
+    flex: 1 1 auto;
+    width: auto;
+    min-width: 0;
+    max-width: none;
+    box-sizing: border-box;
+    overflow: hidden;
+  }
+  .recurring-start-controls .pill-btn {
+    flex: 0 0 92px;
+    width: 92px;
+    min-width: 92px;
+    max-width: 92px;
+    padding: 0 8px;
+    margin: 0;
+  }
+  #view-transactions .tx-custom-range {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+    width: 100%;
+    box-sizing: border-box;
+    padding: 4px 8px 2px;
+    margin: 4px 0 16px;
+    align-items: end;
+  }
+  #view-transactions .tx-custom-range label,
+  #view-transactions #clearCustomRange {
+    min-width: 0;
+    max-width: 100%;
+    width: 100%;
+    box-sizing: border-box;
+  }
+  #view-transactions .tx-custom-range input[type="date"] {
+    display: block;
+    min-width: 0;
+    max-width: 100%;
+    width: 100%;
+    box-sizing: border-box;
+    overflow: hidden;
+    padding-left: 4px;
+    padding-right: 4px;
+    font-size: 10.5px;
+  }
+  #view-transactions #clearCustomRange {
+    grid-column: auto !important;
+    min-height: 35px;
+    margin: 0;
+    padding: 5px 6px;
+    align-self: end;
+  }
+}
+/* v1.3.5 — riepilogo R&P, conto principale e titoli sezione */
+#view-stats .view-title,
+#view-accounts .view-title {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  color: var(--ink) !important;
+  margin: 16px 0 22px !important;
+  padding: 10px 12px 0 !important;
+  font-size: 28px !important;
+  line-height: 1.2 !important;
+  position: relative;
+  z-index: 1;
+}
+.rp-estimate-breakdown {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  margin-top: 10px;
+  width: 100%;
+}
+.rp-estimate-breakdown span {
+  min-width: 0;
+  padding: 7px 6px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: color-mix(in srgb, var(--card) 86%, transparent);
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--muted);
+}
+.rp-estimate-breakdown b {
+  display: block;
+  margin-top: 3px;
+  font-size: 12px;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.rp-combined-estimate {
+  display: block !important;
+}
+.rp-combined-estimate > div:first-child {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.rp-combined-breakdown {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 10px;
+  padding-top: 9px;
+  border-top: 1px solid var(--line);
+}
+.rp-combined-breakdown span {
+  font-size: 11px;
+  color: var(--muted);
+  font-weight: 700;
+}
+.rp-combined-breakdown b {
+  float: right;
+  color: var(--ink);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+.hero-liquidity {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.16);
+}
+.hero-liquidity-item {
+  min-width: 0;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.07);
+  padding: 9px 10px;
+  text-align: left;
+  color: inherit;
+}
+button.hero-liquidity-item {
+  appearance: none;
+  font: inherit;
+  cursor: pointer;
+  width: 100%;
+}
+.hero-liquidity-item span {
+  display: block;
+  font-size: 10px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.68);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.hero-liquidity-item strong {
+  display: block;
+  margin-top: 4px;
+  font-size: 15px;
+  color: #fff;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.main-account-notice {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin: -8px 0 18px;
+  padding: 12px;
+  border: 1px solid var(--accent);
+  border-radius: 14px;
+  background: var(--card);
+}
+.main-account-notice[hidden] {
+  display: none !important;
+}
+.main-account-notice div {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+.main-account-notice strong {
+  font-size: 13px;
+  color: var(--ink);
+}
+.main-account-notice span {
+  font-size: 11px;
+  line-height: 1.35;
+  color: var(--muted);
+}
+.main-account-notice .pill-btn {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+.main-account-setting {
+  margin: 0 0 14px;
+  padding: 13px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--card);
+}
+.main-account-setting label {
+  display: block;
+  margin-bottom: 7px;
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 800;
+}
+.main-account-setting select {
+  width: 100%;
+  min-width: 0;
+  margin: 0;
+}
+.main-account-setting small {
+  display: block;
+  margin-top: 7px;
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.35;
+}
+.main-account-badge {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 5px;
+  padding: 2px 6px;
+  border: 1px solid var(--accent);
+  border-radius: 999px;
+  color: var(--accent);
+  font-size: 9px;
+  font-weight: 800;
+  vertical-align: middle;
+}
+@media (max-width: 390px) {
+  .rp-estimate-breakdown {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+  .rp-estimate-breakdown span {
+    padding: 5px 6px;
+  }
+  .hero-liquidity {
+    gap: 6px;
+  }
+  .hero-liquidity-item {
+    padding: 8px;
+  }
+  .hero-liquidity-item strong {
+    font-size: 14px;
+  }
+  .main-account-notice {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .main-account-notice .pill-btn {
+    width: 100%;
+  }
+}
+#view-recurring .rp-estimate-value {
+  margin-top: 7px;
+}
+@media (max-width: 390px) {
+  #view-recurring .rp-estimate-card {
+    min-height: 154px !important;
+  }
+}
+/* v1.3.7 — iPhone/PWA safe-area: titoli di Statistiche, Conti e Altro sotto Dynamic Island */
+#view-stats,
+#view-accounts,
+#view-more {
+  padding-top: calc(18px + env(safe-area-inset-top)) !important;
+}
+#view-stats .view-title,
+#view-accounts .view-title,
+#view-more .view-title {
+  margin-top: 0 !important;
+}
+@supports (padding-top: constant(safe-area-inset-top)) {
+  #view-stats,
+  #view-accounts,
+  #view-more {
+    padding-top: calc(18px + constant(safe-area-inset-top)) !important;
+  }
+}
+/* v1.3.8 — prompt aggiornamento PWA */
+.app-update-prompt {
+  position: fixed;
+  left: 12px;
+  right: 12px;
+  bottom: calc(88px + env(safe-area-inset-bottom));
+  z-index: 320;
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr);
+  gap: 10px 12px;
+  align-items: center;
+  padding: 13px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--surface);
+  color: var(--ink);
+  opacity: 0;
+  transform: translateY(18px);
+  pointer-events: none;
+  transition:
+    opacity 0.18s ease,
+    transform 0.18s ease;
+}
+.app-update-prompt.show {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+.app-update-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 24px;
+  font-weight: 800;
+}
+.app-update-copy {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.app-update-copy strong {
+  font-size: 14px;
+  line-height: 1.2;
+}
+.app-update-copy span {
+  font-size: 12px;
+  line-height: 1.3;
+  color: var(--ink-soft);
+}
+.app-update-actions {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.app-update-actions button {
+  min-height: 44px;
+  border-radius: 12px;
+  font: 800 13px system-ui;
+  border: 1px solid var(--line);
+}
+.app-update-later {
+  background: var(--surface-2);
+  color: var(--ink);
+}
+.app-update-now {
+  background: var(--accent);
+  color: #fff;
+  border-color: transparent !important;
+}
+.app-update-actions button:disabled {
+  opacity: 0.65;
+}
+@media (min-width: 600px) {
+  .app-update-prompt {
+    left: 50%;
+    right: auto;
+    width: min(440px, calc(100% - 32px));
+    transform: translate(-50%, 18px);
+  }
+  .app-update-prompt.show {
+    transform: translate(-50%, 0);
+  }
+}
+/* v1.3.9 — R&P: privacy toggle, account/card breakdown and correct total visibility */
+#view-recurring .rp-title-row {
+  justify-content: space-between;
+  gap: 12px;
+}
+#view-recurring .rp-title-row .view-title {
+  margin-bottom: 0;
+}
+#view-recurring .rp-balance-hide {
+  color: var(--ink) !important;
+  background: var(--card) !important;
+  border: 1px solid var(--line) !important;
+  box-shadow: none !important;
+  flex: 0 0 44px;
+}
+#view-recurring .rp-combined-estimate[hidden] {
+  display: none !important;
+}
+#view-recurring .rp-account-breakdown {
+  margin-top: 10px;
+  padding-top: 9px;
+  border-top: 1px solid var(--line);
+  display: grid;
+  gap: 6px;
+  text-align: left;
+}
+#view-recurring .rp-account-title {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+#view-recurring .rp-account-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-width: 0;
+  font-size: 12px;
+  color: var(--ink-soft);
+}
+#view-recurring .rp-account-row span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+#view-recurring .rp-account-row b {
+  white-space: nowrap;
+  color: var(--ink);
+  font-weight: 800;
+}
+#view-recurring .rp-account-row b.pos {
+  color: var(--green);
+}
+#view-recurring .rp-account-row b.neg {
+  color: var(--red);
+}
+#view-recurring .rp-account-empty {
+  font-size: 11px;
+  color: var(--ink-soft);
+}
+#view-recurring .rp-combined-estimate .rp-account-breakdown {
+  margin-top: 10px;
+}
+/* v1.3.10 — R&P layout, feedback UI e iPhone polish */
+#view-recurring .rp-title-row {
+  position: relative;
+  min-height: 68px;
+  display: grid !important;
+  grid-template-columns: 44px 1fr 44px;
+  align-items: center;
+  margin: 0 0 18px !important;
+  padding: 0 !important;
+}
+#view-recurring .rp-title-row::before {
+  content: "";
+  width: 44px;
+  height: 44px;
+}
+#view-recurring .rp-title-row .view-title {
+  grid-column: 2;
+  margin: 14px 0 0 !important;
+  padding: 10px 0 0 !important;
+  min-height: 44px;
+  text-align: center !important;
+  align-self: center;
+}
+#view-recurring .rp-balance-hide {
+  grid-column: 3;
+  justify-self: end;
+  margin-top: 14px;
+}
+#view-recurring .rp-mode-toggle {
+  margin-top: 0 !important;
+  margin-bottom: 16px !important;
+}
+/* Card R&P: gerarchia centrata e tinte distinguibili, valide in chiaro e scuro. */
+#view-recurring .rp-estimate-card {
+  border-color: color-mix(in srgb, var(--line) 72%, transparent) !important;
+  box-shadow: 0 5px 18px var(--shadow-soft) !important;
+}
+#view-recurring .rp-estimate-card.recurring {
+  background: linear-gradient(
+    145deg,
+    color-mix(in srgb, var(--emerald) 15%, var(--card)),
+    color-mix(in srgb, var(--emerald-soft) 5%, var(--card))
+  ) !important;
+}
+#view-recurring .rp-estimate-card.planned {
+  background: linear-gradient(
+    145deg,
+    color-mix(in srgb, var(--amber) 16%, var(--card)),
+    color-mix(in srgb, var(--amber-soft) 5%, var(--card))
+  ) !important;
+}
+#view-recurring .rp-estimate-label,
+#view-recurring .rp-estimate-value {
+  color: var(--ink) !important;
+}
+#view-recurring .rp-account-breakdown {
+  width: 100%;
+}
+#view-recurring .rp-account-title {
+  text-align: center;
+}
+#view-recurring .rp-combined-estimate {
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--tab-recurring) 10%, var(--card)),
+    var(--card)
+  ) !important;
+  border-color: color-mix(
+    in srgb,
+    var(--tab-recurring) 28%,
+    var(--line)
+  ) !important;
+}
+/* Prompt update: superficie quasi opaca e nettamente leggibile. */
+.app-update-prompt {
+  background: color-mix(
+    in srgb,
+    var(--overlay-surface) 98%,
+    var(--paper)
+  ) !important;
+  border-color: color-mix(in srgb, var(--line) 88%, var(--ink)) !important;
+  box-shadow: 0 14px 38px rgba(0, 0, 0, 0.34) !important;
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+}
+/* Toast operazioni: verde sobrio invece del rosso acceso. */
+#appToast {
+  background: color-mix(in srgb, var(--emerald) 88%, #102a23) !important;
+  color: #fff !important;
+  border: 1px solid color-mix(in srgb, var(--emerald-soft) 56%, transparent) !important;
+  box-shadow: 0 9px 26px rgba(0, 0, 0, 0.28) !important;
+}
+#appToast button {
+  background: rgba(255, 255, 255, 0.94) !important;
+  color: #17493c !important;
+}
+/* v1.3.11 — R&P: card riepilogo orizzontali, compatte e full-width su iPhone */
+#view-recurring .rp-estimates-grid,
+#view-recurring .rp-estimates-grid.single {
+  width: 100% !important;
+  max-width: none !important;
+  margin: 0 0 12px !important;
+  display: grid !important;
+  grid-template-columns: 1fr !important;
+  gap: 10px !important;
+}
+#view-recurring .rp-estimate-card {
+  width: 100% !important;
+  min-height: 0 !important;
+  height: auto !important;
+  aspect-ratio: auto !important;
+  padding: 11px 12px !important;
+  display: grid !important;
+  grid-template-columns: minmax(92px, 0.8fr) minmax(128px, 1fr) minmax(
+      0,
+      1.25fr
+    ) !important;
+  grid-template-rows: auto auto !important;
+  column-gap: 12px !important;
+  row-gap: 4px !important;
+  align-items: center !important;
+  text-align: left !important;
+  justify-content: stretch !important;
+  border-radius: 16px !important;
+}
+#view-recurring .rp-estimate-label {
+  grid-column: 1 !important;
+  grid-row: 1 !important;
+  width: auto !important;
+  margin: 0 !important;
+  text-align: left !important;
+  font-size: 11px !important;
+  line-height: 1.15 !important;
+}
+#view-recurring .rp-estimate-value {
+  grid-column: 1 !important;
+  grid-row: 2 !important;
+  width: auto !important;
+  margin: 0 !important;
+  text-align: left !important;
+  font-size: 22px !important;
+  line-height: 1.05 !important;
+}
+#view-recurring .rp-estimate-breakdown {
+  grid-column: 2 !important;
+  grid-row: 1 / span 2 !important;
+  width: 100% !important;
+  margin: 0 !important;
+  display: grid !important;
+  grid-template-columns: 1fr !important;
+  gap: 5px !important;
+}
+#view-recurring .rp-estimate-breakdown span {
+  min-width: 0 !important;
+  padding: 6px 8px !important;
+  border-radius: 9px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 6px !important;
+  text-align: left !important;
+  font-size: 10px !important;
+}
+#view-recurring .rp-estimate-breakdown b {
+  display: inline !important;
+  margin: 0 !important;
+  font-size: 11px !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
+}
+#view-recurring .rp-estimate-card > .rp-account-breakdown {
+  grid-column: 3 !important;
+  grid-row: 1 / span 2 !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  margin: 0 !important;
+  padding: 0 0 0 10px !important;
+  border-top: 0 !important;
+  border-left: 1px solid var(--line) !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+#view-recurring .rp-estimate-card > .rp-account-breakdown::-webkit-scrollbar {
+  display: none;
+}
+#view-recurring .rp-estimate-card .rp-account-title {
+  flex: 0 0 auto !important;
+  text-align: left !important;
+  white-space: nowrap !important;
+  font-size: 9px !important;
+  writing-mode: horizontal-tb !important;
+}
+#view-recurring .rp-estimate-card .rp-account-row {
+  flex: 0 0 auto !important;
+  min-width: 92px !important;
+  max-width: 130px !important;
+  padding: 6px 8px !important;
+  border: 1px solid color-mix(in srgb, var(--line) 82%, transparent) !important;
+  border-radius: 9px !important;
+  background: color-mix(in srgb, var(--card) 82%, transparent) !important;
+  display: grid !important;
+  gap: 2px !important;
+  align-items: start !important;
+  font-size: 10px !important;
+}
+#view-recurring .rp-estimate-card .rp-account-row span {
+  display: block !important;
+  max-width: 100% !important;
+  font-size: 9px !important;
+}
+#view-recurring .rp-estimate-card .rp-account-row b {
+  display: block !important;
+  font-size: 11px !important;
+}
+#view-recurring .rp-estimate-card .rp-account-empty {
+  flex: 0 0 auto !important;
+  font-size: 10px !important;
+  white-space: nowrap !important;
+}
+/* iPhone stretti: netto + entrate/uscite sopra, conti su seconda riga orizzontale. */
+@media (max-width: 430px) {
+  #view-recurring .rp-estimate-card {
+    grid-template-columns: minmax(98px, 0.85fr) minmax(0, 1.15fr) !important;
+    grid-template-rows: auto auto auto !important;
+    column-gap: 10px !important;
+    padding: 10px 11px !important;
+  }
+  #view-recurring .rp-estimate-label {
+    grid-column: 1 !important;
+    grid-row: 1 !important;
+  }
+  #view-recurring .rp-estimate-value {
+    grid-column: 1 !important;
+    grid-row: 2 !important;
+    font-size: 21px !important;
+  }
+  #view-recurring .rp-estimate-breakdown {
+    grid-column: 2 !important;
+    grid-row: 1 / span 2 !important;
+    gap: 4px !important;
+  }
+  #view-recurring .rp-estimate-card > .rp-account-breakdown {
+    grid-column: 1 / -1 !important;
+    grid-row: 3 !important;
+    margin-top: 5px !important;
+    padding: 7px 0 0 !important;
+    border-left: 0 !important;
+    border-top: 1px solid var(--line) !important;
+  }
+  #view-recurring .rp-estimate-card .rp-account-title {
+    font-size: 9px !important;
+  }
+}
+/* v1.3.12 — R&P: Totali mantiene il layout classico; layout orizzontale solo nelle tab singole. */
+#view-recurring.rp-mode-total .rp-estimates-grid {
+  width: min(100%, 400px) !important;
+  margin: 0 auto 10px !important;
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 10px !important;
+}
+#view-recurring.rp-mode-total .rp-estimate-card {
+  width: auto !important;
+  min-height: 112px !important;
+  height: auto !important;
+  aspect-ratio: 1.18/1 !important;
+  padding: 14px 12px 12px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  text-align: center !important;
+  border-radius: 17px !important;
+}
+#view-recurring.rp-mode-total .rp-estimate-label,
+#view-recurring.rp-mode-total .rp-estimate-value {
+  width: 100% !important;
+  margin: 0 !important;
+  text-align: center !important;
+}
+#view-recurring.rp-mode-total .rp-estimate-value {
+  font-size: 24px !important;
+}
+#view-recurring.rp-mode-total .rp-estimate-breakdown {
+  width: 100% !important;
+  margin: 0 !important;
+  display: grid !important;
+  grid-template-columns: 1fr !important;
+  gap: 5px !important;
+}
+#view-recurring.rp-mode-total .rp-estimate-breakdown span {
+  padding: 0 !important;
+  display: block !important;
+  text-align: center !important;
+  font-size: 10px !important;
+  background: transparent !important;
+}
+#view-recurring.rp-mode-total .rp-estimate-breakdown b {
+  display: block !important;
+  margin-top: 2px !important;
+  font-size: 11px !important;
+}
+#view-recurring.rp-mode-total .rp-estimate-card > .rp-account-breakdown {
+  width: 100% !important;
+  min-width: 0 !important;
+  margin: 8px 0 0 !important;
+  padding: 8px 0 0 !important;
+  border-left: 0 !important;
+  border-top: 1px solid var(--line) !important;
+  display: grid !important;
+  gap: 5px !important;
+  overflow: visible !important;
+}
+#view-recurring.rp-mode-total .rp-estimate-card .rp-account-row {
+  border: 0 !important;
+  background: transparent !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  font-size: 10px !important;
+}
+/* Nelle tab singole si vede e si sviluppa in orizzontale solo la card del tipo selezionato. */
+#view-recurring.rp-mode-recurring #plannedEstimateCard,
+#view-recurring.rp-mode-planned #recurringEstimateCard {
+  display: none !important;
+}
+#view-recurring.rp-mode-recurring #recurringEstimateCard,
+#view-recurring.rp-mode-planned #plannedEstimateCard {
+  display: grid !important;
+}
+#view-recurring.rp-mode-recurring .rp-estimates-grid,
+#view-recurring.rp-mode-planned .rp-estimates-grid {
+  grid-template-columns: 1fr !important;
+  width: 100% !important;
+  max-width: none !important;
+  margin: 0 0 12px !important;
+}
+/* v1.3.13 — Totali R&P: layout dedicato e stabile, separato dalle tab singole. */
+#view-recurring.rp-mode-total #rpEstimatesGrid {
+  width: 100% !important;
+  max-width: none !important;
+  margin: 0 0 12px !important;
+  display: grid !important;
+  grid-template-columns: 1fr !important;
+  gap: 10px !important;
+}
+#view-recurring.rp-mode-total #recurringEstimateCard,
+#view-recurring.rp-mode-total #plannedEstimateCard {
+  width: 100% !important;
+  min-height: 0 !important;
+  height: auto !important;
+  aspect-ratio: auto !important;
+  padding: 13px 14px !important;
+  display: grid !important;
+  grid-template-columns: minmax(105px, 0.9fr) minmax(0, 1.1fr) !important;
+  grid-template-rows: auto auto auto !important;
+  column-gap: 14px !important;
+  row-gap: 6px !important;
+  align-items: center !important;
+  text-align: left !important;
+  border-radius: 16px !important;
+}
+#view-recurring.rp-mode-total #recurringEstimateCard .rp-estimate-label,
+#view-recurring.rp-mode-total #plannedEstimateCard .rp-estimate-label {
+  grid-column: 1 !important;
+  grid-row: 1 !important;
+  width: auto !important;
+  text-align: left !important;
+  font-size: 11px !important;
+}
+#view-recurring.rp-mode-total #recurringEstimateCard .rp-estimate-value,
+#view-recurring.rp-mode-total #plannedEstimateCard .rp-estimate-value {
+  grid-column: 1 !important;
+  grid-row: 2 !important;
+  width: auto !important;
+  text-align: left !important;
+  font-size: 24px !important;
+  line-height: 1.05 !important;
+}
+#view-recurring.rp-mode-total #recurringEstimateCard .rp-estimate-breakdown,
+#view-recurring.rp-mode-total #plannedEstimateCard .rp-estimate-breakdown {
+  grid-column: 2 !important;
+  grid-row: 1 / span 2 !important;
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
+  gap: 7px !important;
+  width: 100% !important;
+  margin: 0 !important;
+}
+#view-recurring.rp-mode-total
+  #recurringEstimateCard
+  .rp-estimate-breakdown
+  span,
+#view-recurring.rp-mode-total #plannedEstimateCard .rp-estimate-breakdown span {
+  display: block !important;
+  padding: 7px 8px !important;
+  border-radius: 10px !important;
+  text-align: center !important;
+  background: color-mix(in srgb, var(--card) 72%, transparent) !important;
+  font-size: 9.5px !important;
+}
+#view-recurring.rp-mode-total #recurringEstimateCard .rp-estimate-breakdown b,
+#view-recurring.rp-mode-total #plannedEstimateCard .rp-estimate-breakdown b {
+  display: block !important;
+  margin-top: 2px !important;
+  font-size: 11px !important;
+}
+#view-recurring.rp-mode-total #recurringEstimateCard > .rp-account-breakdown,
+#view-recurring.rp-mode-total #plannedEstimateCard > .rp-account-breakdown {
+  grid-column: 1 / -1 !important;
+  grid-row: 3 !important;
+  width: 100% !important;
+  margin: 3px 0 0 !important;
+  padding: 8px 0 0 !important;
+  border-left: 0 !important;
+  border-top: 1px solid color-mix(in srgb, var(--line) 80%, transparent) !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 7px !important;
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+#view-recurring.rp-mode-total
+  #recurringEstimateCard
+  > .rp-account-breakdown::-webkit-scrollbar,
+#view-recurring.rp-mode-total
+  #plannedEstimateCard
+  > .rp-account-breakdown::-webkit-scrollbar {
+  display: none;
+}
+#view-recurring.rp-mode-total .rp-estimate-card .rp-account-title {
+  flex: 0 0 auto !important;
+  white-space: nowrap !important;
+  text-align: left !important;
+  font-size: 9px !important;
+}
+#view-recurring.rp-mode-total .rp-estimate-card .rp-account-row {
+  flex: 0 0 auto !important;
+  min-width: 96px !important;
+  max-width: 135px !important;
+  padding: 5px 7px !important;
+  border: 1px solid color-mix(in srgb, var(--line) 80%, transparent) !important;
+  border-radius: 9px !important;
+  background: color-mix(in srgb, var(--card) 78%, transparent) !important;
+  display: grid !important;
+  gap: 1px !important;
+}
+#view-recurring.rp-mode-total .rp-estimate-card .rp-account-row span,
+#view-recurring.rp-mode-total .rp-estimate-card .rp-account-row b {
+  display: block !important;
+  font-size: 9.5px !important;
+}
+#view-recurring.rp-mode-total #rpCombinedEstimateCard {
+  width: 100% !important;
+  min-height: 0 !important;
+  margin: 0 0 12px !important;
+  padding: 13px 14px !important;
+  border: 1px solid #5b5038 !important;
+  border-radius: 16px !important;
+  background: linear-gradient(145deg, #2a2c2f, #1b232c) !important;
+  display: grid !important;
+  grid-template-columns: minmax(105px, 0.9fr) minmax(0, 1.1fr) !important;
+  grid-template-rows: auto auto auto !important;
+  column-gap: 14px !important;
+  row-gap: 6px !important;
+  align-items: center !important;
+  justify-content: stretch !important;
+  text-align: left !important;
+}
+#view-recurring.rp-mode-total #rpCombinedEstimateCard > div:first-child {
+  display: contents !important;
+}
+#view-recurring.rp-mode-total #rpCombinedEstimateCard > div:first-child span {
+  grid-column: 1 !important;
+  grid-row: 1 !important;
+  width: auto !important;
+  text-align: left !important;
+  font-size: 11px !important;
+  color: #c6d0d5 !important;
+  font-weight: 800 !important;
+}
+#view-recurring.rp-mode-total #rpCombinedEstimateCard > div:first-child strong {
+  grid-column: 1 !important;
+  grid-row: 2 !important;
+  width: auto !important;
+  text-align: left !important;
+  font-family: var(--font-display) !important;
+  font-size: 22px !important;
+  line-height: 1.05 !important;
+  color: #e8a33d !important;
+}
+#view-recurring.rp-mode-total #rpCombinedEstimateCard .rp-combined-breakdown {
+  grid-column: 2 !important;
+  grid-row: 1 / span 2 !important;
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
+  gap: 7px !important;
+  width: 100% !important;
+  margin: 0 !important;
+  padding-top: 0 !important;
+  border-top: 0 !important;
+}
+#view-recurring.rp-mode-total
+  #rpCombinedEstimateCard
+  .rp-combined-breakdown
+  span {
+  display: block !important;
+  padding: 7px 8px !important;
+  border-radius: 10px !important;
+  text-align: center !important;
+  background: color-mix(in srgb, var(--card) 72%, transparent) !important;
+  font-size: 9.5px !important;
+  color: #c6d0d5 !important;
+}
+#view-recurring.rp-mode-total #rpCombinedEstimateCard .rp-combined-breakdown b {
+  display: block !important;
+  float: none !important;
+  width: 100% !important;
+  margin-top: 2px !important;
+  text-align: center !important;
+  font-size: 11px !important;
+  color: #f1f5f4 !important;
+}
+#view-recurring.rp-mode-total #rpCombinedEstimateCard .rp-account-breakdown {
+  grid-column: 1 / -1 !important;
+  grid-row: 3 !important;
+  width: 100% !important;
+  margin: 3px 0 0 !important;
+  padding: 8px 0 0 !important;
+  border-top: 1px solid color-mix(in srgb, var(--line) 80%, transparent) !important;
+  border-left: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 7px !important;
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+#view-recurring.rp-mode-total
+  #rpCombinedEstimateCard
+  .rp-account-breakdown::-webkit-scrollbar {
+  display: none;
+}
+#view-recurring.rp-mode-total #rpCombinedEstimateCard .rp-account-title {
+  flex: 0 0 auto !important;
+  white-space: nowrap !important;
+  text-align: left !important;
+  font-size: 9px !important;
+}
+#view-recurring.rp-mode-total #rpCombinedEstimateCard .rp-account-row {
+  flex: 0 0 auto !important;
+  min-width: 96px !important;
+  max-width: 135px !important;
+  padding: 5px 7px !important;
+  border: 1px solid color-mix(in srgb, var(--line) 80%, transparent) !important;
+  border-radius: 9px !important;
+  background: color-mix(in srgb, var(--card) 78%, transparent) !important;
+  display: grid !important;
+  gap: 1px !important;
+}
+#view-recurring.rp-mode-total #rpCombinedEstimateCard .rp-account-row span,
+#view-recurring.rp-mode-total #rpCombinedEstimateCard .rp-account-row b {
+  display: block !important;
+  font-size: 9.5px !important;
+}
+/* Statistiche: Top 5 categorie come grafico a barre orizzontali. */
+.top-categories-card {
+  padding-bottom: 14px !important;
+}
+.top-categories-chart {
+  display: grid;
+  gap: 10px;
+  margin-top: 10px;
+}
+.top-category-row {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+}
+.top-category-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-width: 0;
+  font-size: 11px;
+}
+.top-category-name {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--ink);
+  font-weight: 650;
+}
+.top-category-emoji {
+  flex: 0 0 auto;
+  font-size: 13px;
+}
+.top-category-meta strong {
+  flex: 0 0 auto;
+  color: var(--ink);
+  font-size: 11px;
+}
+.top-category-track {
+  height: 9px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--line) 72%, transparent);
+  overflow: hidden;
+}
+.top-category-bar {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  min-width: 4px;
+}
+.top-categories-empty {
+  padding: 14px 0 2px;
+  color: var(--ink-soft);
+  font-size: 11px;
+  text-align: center;
+}
+@media (min-width: 620px) {
+  #view-recurring.rp-mode-total #rpEstimatesGrid {
+    grid-template-columns: 1fr 1fr !important;
+  }
+}
+/* v1.3.15 — Dettagli più leggibili su movimenti correnti e futuri:
+   separatori su ogni riga e niente grassetto. */
+.tx-detail-body,
+.tx-detail {
+  gap: 0 !important;
+}
+.tx-detail-body .tx-detail-row,
+.tx-detail .tx-detail-row {
+  align-items: center;
+  gap: 14px;
+  padding: 11px 0;
+  border-bottom: 1px solid color-mix(in srgb, var(--line) 88%, transparent);
+}
+.tx-detail-body .tx-detail-row:last-child,
+.tx-detail .tx-detail-row:last-child {
+  border-bottom: 0;
+}
+.tx-detail-body .tx-detail-row .k,
+.tx-detail-body .tx-detail-row .v,
+.tx-detail-body .tx-detail-row .status-badge,
+.tx-detail .tx-detail-row .k,
+.tx-detail .tx-detail-row .v,
+.tx-detail .tx-detail-row .status-badge {
+  font-weight: 400 !important;
+}
+.tx-detail-body .tx-detail-row .v,
+.tx-detail .tx-detail-row .v {
+  text-align: right;
+}
+/* v1.3.17 — Date iOS centrate e selezione diretta, senza pulsante Oggi. */
+#sheetRecurringForm .recurring-start-controls {
+  display: block !important;
+  width: 100% !important;
+}
+#sheetRecurringForm #recurringDateInput {
+  display: block !important;
+  width: 220px !important;
+  max-width: 68% !important;
+  height: 44px !important;
+  min-height: 44px !important;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  line-height: 44px !important;
+  text-align: center !important;
+}
+#sheetPlannedForm #plannedDateInput {
+  height: 42px !important;
+  min-height: 42px !important;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  line-height: 42px !important;
+  text-align: center !important;
+}
+#sheetRecurringForm #recurringDateInput::-webkit-date-and-time-value,
+#sheetPlannedForm #plannedDateInput::-webkit-date-and-time-value {
+  text-align: center !important;
+  line-height: normal !important;
+  min-height: 100% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+#sheetRecurringForm #recurringDateInput::-webkit-datetime-edit,
+#sheetPlannedForm #plannedDateInput::-webkit-datetime-edit {
+  padding: 0 !important;
+  line-height: normal !important;
+}
+/* v1.3.18 — Campo data ricorrente più compatto su iPhone. */
+@media (max-width: 430px) {
+  #sheetRecurringForm #recurringDateInput {
+    width: 210px !important;
+    max-width: 72% !important;
+  }
+}
+/* v1.3.19 — Home: privacy più evidente e forecast più compatti. */
+#view-home .forecast-grid {
+  margin: 10px 0 20px;
+}
+#view-home .forecast-card:not(.wide) {
+  padding: 8px 10px !important;
+  min-height: 58px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+#view-home .forecast-card:not(.wide) strong {
+  margin-top: 3px !important;
+  line-height: 1.05;
+}
+/* v1.3.20 — Home: privacy più grande, uscita più distanziata e cifre forecast più compatte. */
+#view-home #toggleHomeBalance {
+  line-height: 1 !important;
+  font-weight: 700 !important;
+}
+#view-home .forecast-card:not(.wide) strong {
+  font-size: 14px !important;
+}
+/* =========================================================
+   v1.3.21 — Fix review grafica
+   ========================================================= */
+/* 1) Hero Home/Conti in tema chiaro: testi non più bianchi su bianco. */
+:root:not([data-theme="dark"]) .hero .hero-split-label,
+:root:not([data-theme="dark"]) .hero-liquidity-item span {
+  color: var(--ink-soft) !important;
+}
+:root:not([data-theme="dark"]) .hero-liquidity-item strong {
+  color: var(--ink) !important;
+}
+:root:not([data-theme="dark"]) .hero-liquidity {
+  border-top-color: var(--line) !important;
+}
+:root:not([data-theme="dark"]) .hero-liquidity-item {
+  border-color: var(--line) !important;
+  background: var(--paper) !important;
+}
+:root:not([data-theme="dark"]) .balance-hide {
+  color: var(--ink-soft) !important;
+}
+/* 2) Pulsante "nascondi importi": icona a occhio in alto a destra, l'importo resta centrato. */
+.hero,
+.total-balance-card {
+  position: relative;
+}
+.balance-line {
+  justify-content: center !important;
+}
+#view-home #toggleHomeBalance,
+#toggleAccountsBalance {
+  position: absolute !important;
+  top: 10px;
+  right: 10px;
+  width: 44px !important;
+  height: 44px !important;
+  min-width: 44px !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 !important;
+  border-radius: 12px;
+  font-size: 0 !important;
+  color: var(--ink-soft) !important;
+  background: transparent !important;
+}
+.balance-hide svg {
+  width: 24px;
+  height: 24px;
+  display: block;
+}
+.rp-balance-hide {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0 !important;
+  color: var(--ink-soft) !important;
+}
+.hero-split {
+  justify-content: center !important;
+}
+#view-home .hero-split-item.expense .hero-split-value {
+  margin-left: 0 !important;
+}
+/* Mini-card dentro l'hero: etichette su due righe invece di troncarle. */
+.hero-liquidity-item span {
+  white-space: normal !important;
+  line-height: 1.25;
+  display: -webkit-box !important;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+/* 3) Previsioni Home: tre riquadri uguali, stessa struttura e allineamento. */
+#view-home .forecast-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 8px !important;
+}
+#view-home .forecast-card,
+#view-home .forecast-card.wide {
+  grid-column: auto !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: space-between !important;
+  align-items: flex-start !important;
+  min-height: 64px;
+  padding: 9px 10px !important;
+}
+#view-home .forecast-card span {
+  line-height: 1.2;
+}
+#view-home .forecast-card strong,
+#view-home .forecast-card.wide strong {
+  margin-top: 6px !important;
+  font-size: 15px !important;
+  line-height: 1.1 !important;
+  transform: none !important;
+  align-self: flex-start !important;
+}
+/* 4) Spazio sotto i contenuti: il "+" non copre più l'ultima riga. */
+#app {
+  padding-bottom: calc(168px + env(safe-area-inset-bottom)) !important;
+}
+/* 5) Contrasto controlli attivi in tema chiaro (arancio scuro leggibile su sfondo chiaro). */
+:root:not([data-theme="dark"]) .chip.active,
+:root:not([data-theme="dark"]) #statsGroupToggle .type-opt.active,
+:root:not([data-theme="dark"]) #rpModeToggle .type-opt.active,
+:root:not([data-theme="dark"]) #txTypeToggle .type-opt.active,
+:root:not([data-theme="dark"]) #themeModeToggle .type-opt.active,
+:root:not([data-theme="dark"])
+  #typeToggle
+  .type-opt[data-type="transfer"].active {
+  color: #8a5a00 !important;
+  border-color: #c98a1e !important;
+  background: #fbefd9 !important;
+}
+/* 6) Card "Totale R&P" in tema chiaro: testi leggibili. */
+:root:not([data-theme="dark"])
+  #view-recurring.rp-mode-total
+  #rpCombinedEstimateCard
+  .rp-combined-breakdown
+  span {
+  color: var(--ink-soft) !important;
+  background: var(--paper) !important;
+  border: 1px solid var(--line);
+}
+:root:not([data-theme="dark"])
+  #view-recurring.rp-mode-total
+  #rpCombinedEstimateCard
+  .rp-combined-breakdown
+  b {
+  color: var(--ink) !important;
+}
+:root:not([data-theme="dark"])
+  #view-recurring.rp-mode-total
+  #rpCombinedEstimateCard
+  > div:first-child
+  strong {
+  color: #8a5a00 !important;
+}
+/* 7) Pulsanti intestazione sezione Home coordinati. */
+#view-home .section-head {
+  align-items: center !important;
+}
+#view-home .section-head .pill-btn {
+  min-height: 36px !important;
+  padding: 6px 12px !important;
+  font-size: 14px !important;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+#view-home #openCalendarBtn {
+  width: 36px;
+  padding: 0 !important;
+  justify-content: center;
+}
+/* 8) Messaggi "vuoto" più discreti. */
+.empty-hint {
+  font-size: 14px !important;
+}
+:root:not([data-theme="dark"])
+  #view-recurring.rp-mode-total
+  #rpCombinedEstimateCard {
+  background: linear-gradient(145deg, #fbf3e4, var(--card)) !important;
+  border-color: #e2c48c !important;
+}
+:root:not([data-theme="dark"])
+  #view-recurring.rp-mode-total
+  #rpCombinedEstimateCard
+  > div:first-child
+  span {
+  color: var(--ink) !important;
+}
+:root:not([data-theme="dark"])
+  #view-recurring.rp-mode-total
+  #rpCombinedEstimateCard
+  .rp-account-breakdown,
+:root:not([data-theme="dark"])
+  #view-recurring.rp-mode-total
+  #rpCombinedEstimateCard
+  .rp-account-title,
+:root:not([data-theme="dark"])
+  #view-recurring.rp-mode-total
+  #rpCombinedEstimateCard
+  .rp-account-row {
+  color: var(--ink-soft) !important;
+}
+/* v1.4.0 — Sezione Categorie unificata */
+#catHubToggle {
+  margin: 0 0 14px;
+}
+#catHubToggle .type-opt {
+  font-size: 13px;
+  padding: 10px 6px;
+}
+#sheetCategoriesHub [hidden] {
+  display: none !important;
+}
+#catHubToggle .type-opt.active {
+  background: var(--surface-strong) !important;
+  border-color: var(--action) !important;
+  color: var(--action) !important;
+}
+:root:not([data-theme="dark"]) #catHubToggle .type-opt.active {
+  color: #8a5a00 !important;
+  border-color: #c98a1e !important;
+  background: #fbefd9 !important;
+}
+#sheetCategoriesHub {
+  min-height: 82vh;
+}
+/* v1.4.0 — Dialogo di conferma in-app */
+.ask-dialog {
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: var(--card);
+  color: var(--ink);
+  padding: 22px 20px 16px;
+  width: min(340px, calc(100vw - 40px));
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.35);
+}
+.ask-dialog::backdrop {
+  background: rgba(10, 14, 18, 0.55);
+  -webkit-backdrop-filter: blur(3px);
+  backdrop-filter: blur(3px);
+}
+.ask-dialog .ask-msg {
+  margin: 0 0 18px;
+  font-size: 16px;
+  line-height: 1.45;
+}
+.ask-dialog .ask-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.ask-dialog button {
+  min-height: 46px;
+  border-radius: 13px;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 700;
+  border: 1px solid var(--line);
+  background: var(--paper);
+  color: var(--ink);
+}
+.ask-dialog .ask-ok {
+  background: var(--emerald);
+  border-color: var(--emerald);
+  color: #fff;
+}
+:root[data-theme="dark"] .ask-dialog .ask-ok {
+  color: #08201c;
+}
+.ask-dialog .ask-ok.danger {
+  background: var(--rust);
+  border-color: var(--rust);
+  color: #fff;
+}
+:root[data-theme="dark"] .ask-dialog .ask-ok.danger {
+  color: #2a0d0b;
+}
+/* =========================================================
+   v1.5.0
+   ========================================================= */
+/* Barra del mese dentro la scheda, sotto il titolo. */
+.view > .topbar {
+  position: sticky;
+  top: 0;
+  margin: 0 -16px 6px;
+  padding: 6px 12px 8px !important;
+  max-width: none;
+  z-index: 20;
+  background: var(--paper);
+}
+.view > .period-return {
+  padding: 0 0 4px !important;
+  margin: 0 0 12px !important;
+  max-width: none;
+}
+/* Interruttore Mese / Giorno */
+.period-toggle {
+  display: inline-flex;
+  gap: 2px;
+  padding: 3px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--card);
+}
+.period-toggle button {
+  min-height: 36px;
+  min-width: 72px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--ink-soft);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+}
+.period-toggle button.active {
+  background: var(--surface-strong);
+  color: var(--ink);
+  box-shadow: inset 0 0 0 1.5px var(--action);
+}
+:root:not([data-theme="dark"]) .period-toggle button.active {
+  background: #fbefd9;
+  color: #8a5a00;
+  box-shadow: inset 0 0 0 1.5px #c98a1e;
+}
+.period-return #dayControl .pill-btn {
+  min-height: 42px;
+}
+/* Pulsante "Salva" testuale nei pannelli (al posto del solo ✓). */
+#sheetAddTx .sheet-head .primary-btn,
+#sheetRecurringForm .sheet-head .primary-btn,
+#sheetPlannedForm .sheet-head .primary-btn,
+#sheetAccountForm .sheet-head .primary-btn,
+#sheetCategoryForm .sheet-head .primary-btn,
+#sheetMacroForm .sheet-head .primary-btn,
+#sheetBalanceReconcile .sheet-head .primary-btn,
+.sheet .sheet-head .primary-btn {
+  width: auto !important;
+  min-width: 76px !important;
+  height: 42px !important;
+  padding: 0 16px !important;
+  border-radius: 12px !important;
+  font-size: 15px !important;
+  font-weight: 800 !important;
+  flex: 0 0 auto !important;
+  position: static !important;
+}
+#sheetAddTx .sheet-head .primary-btn::after,
+#sheetRecurringForm .sheet-head .primary-btn::after,
+#sheetPlannedForm .sheet-head .primary-btn::after,
+#sheetAccountForm .sheet-head .primary-btn::after,
+#sheetCategoryForm .sheet-head .primary-btn::after,
+#sheetMacroForm .sheet-head .primary-btn::after,
+#sheetBalanceReconcile .sheet-head .primary-btn::after,
+.sheet .sheet-head .primary-btn::after {
+  content: none !important;
+  display: none !important;
+}
+/* Conti: modifica diretta dalla card. */
+.account-card {
+  position: relative;
+}
+.account-edit {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  margin-left: 6px;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  background: var(--paper);
+  color: var(--ink-soft);
+  font-size: 17px;
+  flex: 0 0 auto;
+}
+.account-edit:active {
+  background: var(--surface-strong);
+}
+/* Intestazione pannelli con data: titolo + Salva sulla prima riga, data sotto. */
+#sheetAddTx .sheet-head,
+#sheetPlannedForm .sheet-head {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto !important;
+  align-items: center !important;
+  row-gap: 8px !important;
+  column-gap: 12px !important;
+}
+#sheetAddTx .sheet-head h3,
+#sheetPlannedForm .sheet-head h3 {
+  grid-column: 1;
+  grid-row: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+#sheetAddTx .sheet-head .primary-btn,
+#sheetPlannedForm .sheet-head .primary-btn {
+  grid-column: 2;
+  grid-row: 1;
+}
+#sheetAddTx .sheet-head .sheet-head-date,
+#sheetPlannedForm .sheet-head .sheet-head-date {
+  grid-column: 1 / -1;
+  grid-row: 2;
+  justify-self: start;
+  margin-left: 0 !important;
+  width: 170px !important;
+  max-width: 100% !important;
+}
+#view-transactions .sticky-head{top:0!important;}
+
+/* v1.5.2 — Mese/Giorno senza pulsanti extra: si tocca il mese; in vista giorno una piccola × riporta al mese. */
+.period-toggle{display:none!important;}
+.topbar .period-picker{display:flex;align-items:center;justify-content:center;gap:6px;}
+.topbar .month-label{width:auto!important;}
+.period-x{width:28px;height:28px;min-width:28px;min-height:28px;padding:0;border-radius:50%;border:1px solid var(--line);background:var(--card);color:var(--ink-soft);font-size:17px;line-height:1;display:inline-flex;align-items:center;justify-content:center;}
+.period-x[hidden]{display:none!important;}
+#chooseDay{display:none!important;}
+.view > .period-return{justify-content:center!important;}
+.view > .period-return #dayControl{margin:0 auto!important;text-align:center;}.view > .period-return #dateField{margin-top:0!important;}
+
+/* v1.5.3 — Etichetta del periodo su due righe e pannello "Cosa vuoi vedere?" */
+.topbar .month-label{display:flex!important;flex-direction:column;align-items:center;justify-content:center;gap:1px;line-height:1.15;min-height:48px;padding:4px 10px!important;border-radius:12px;}
+.topbar .month-label .pl-main{font-size:17px;font-weight:800;color:var(--ink);white-space:nowrap;}
+.topbar .month-label .pl-sub{font-size:12px;font-weight:700;color:var(--ink-soft);}
+.topbar .month-label.is-day .pl-sub{color:#8A5A00;}
+:root[data-theme="dark"] .topbar .month-label.is-day .pl-sub{color:var(--action);}
+.topbar .month-label:active{background:var(--surface-strong);}
+#periodReturn{display:none!important;}
+.period-whole-month{display:flex;flex-direction:column;align-items:flex-start;gap:2px;width:100%;padding:12px 14px;margin:0 0 6px;border:1.5px solid var(--line);border-radius:14px;background:var(--card);color:var(--ink);font:inherit;text-align:left;}
+.period-whole-month .ppw-title{font-size:16px;font-weight:800;}
+.period-whole-month .ppw-sub{font-size:13px;color:var(--ink-soft);}
+.period-whole-month.active{border-color:var(--action);background:var(--surface-strong);}
+:root:not([data-theme="dark"]) .period-whole-month.active{border-color:#C98A1E;background:#FBEFD9;}
+.period-or{margin:12px 0 4px;text-align:center;font-size:13px;color:var(--ink-soft);}
+#sheetPeriodPicker .calendar-cell.selected{background:var(--action)!important;color:var(--action-ink)!important;border-color:var(--action)!important;}
+#sheetPeriodPicker .calendar-cell.selected .cal-day-num{color:var(--action-ink)!important;}
+.period-legend{display:flex;align-items:center;justify-content:center;gap:6px;margin:10px 0 0;font-size:12px;color:var(--ink-soft);}
+.period-legend .cal-dot{display:inline-block;}
+.topbar .month-label,.topbar .month-label span{text-transform:none!important;}
+
+/* v1.6.0 — testi dei grafici SVG con lo stesso font dell'app */
+svg text{font-family:var(--font-display);}
+/* R&P: totale del mese sotto l'etichetta del contatore */
+.rp-month-total{display:block;margin-top:3px;font-size:11px;font-weight:600;color:var(--ink-soft);letter-spacing:0;text-transform:none;white-space:normal;line-height:1.25;}
+#view-recurring.rp-mode-total .rp-month-total{font-size:10px;}
+/* v1.6.0 — App installata su iPhone: titolo e barra del mese non finiscono sotto la barra di stato. */
+#view-home,#view-recurring,#view-transactions,#view-planned{padding-top:calc(4px + env(safe-area-inset-top))!important;}
+.view > .topbar{top:env(safe-area-inset-top)!important;}
+#view-transactions .sticky-head{top:env(safe-area-inset-top)!important;}
+#app::before{content:"";position:fixed;top:0;left:0;right:0;height:env(safe-area-inset-top);background:var(--paper);z-index:60;pointer-events:none;}
+
+/* v1.6.0 — Mini popup "tieni premuto" */
+.lp-target{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none;}
+.lp-pressing{opacity:.75;transition:opacity .2s ease;}
+.lp-popup{position:fixed;z-index:400;background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:16px;box-shadow:0 16px 40px rgba(0,0,0,.38);padding:10px 12px 8px;opacity:0;transform:translateY(-4px) scale(.98);transition:opacity .14s ease,transform .14s ease;}
+.lp-popup.show{opacity:1;transform:none;}
+.lp-head{font-size:12px;font-weight:800;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.4px;margin:2px 2px 6px;}
+.lp-row{display:flex;align-items:center;gap:10px;padding:7px 2px;border-top:1px solid var(--line);}
+.lp-row:first-of-type{border-top:0;}
+.lp-ic{width:28px;height:28px;flex:0 0 28px;display:grid;place-items:center;border-radius:9px;background:var(--paper);font-size:15px;}
+.lp-main{flex:1;min-width:0;display:flex;flex-direction:column;}
+.lp-main b{font-size:14px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.lp-main small{font-size:12px;color:var(--ink-soft);}
+.lp-amt{font-size:14px;font-weight:800;font-variant-numeric:tabular-nums;white-space:nowrap;}
+.lp-amt.income{color:var(--emerald);} .lp-amt.expense{color:var(--rust);}
+.lp-empty{margin:6px 2px 8px;font-size:13px;color:var(--ink-soft);}
+
+/* v1.6.1 — Niente titolo di sezione in alto: il contenuto parte subito sotto la barra di stato. */
+.view-title,#view-recurring .rp-title-row{display:none!important;}
+#view-home,#view-recurring,#view-transactions,#view-planned,#view-stats,#view-accounts,#view-more{padding-top:calc(10px + env(safe-area-inset-top))!important;}
+.view > .topbar{margin-top:0!important;}
+/* Occhio di R&P accanto al periodo; visibile solo in R&P. */
+.topbar .period-picker #toggleRPBalance{grid-column:auto!important;margin:0!important;width:40px!important;height:40px!important;min-width:40px!important;flex:0 0 40px!important;border-radius:12px!important;padding:0!important;}
+#view-home .topbar #toggleRPBalance{display:none!important;}
+.topbar .period-picker #toggleRPBalance svg{width:22px;height:22px;}
+#views .view .view-title,#views #view-recurring .rp-title-row{display:none!important;}
+
+/* v1.6.2 — Riquadro data a destra, prima dell'importo */
+.date-box{flex:0 0 auto;display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:46px;padding:5px 6px;margin-left:8px;border-radius:11px;border:1px solid var(--line);background:var(--paper);line-height:1.05;text-align:center;}
+.date-box b{font-size:17px;font-weight:800;color:var(--ink);font-variant-numeric:tabular-nums;}
+.date-box small{font-size:11px;font-weight:700;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.3px;margin-top:1px;}
+.date-box em{font-style:normal;font-size:10px;font-weight:700;color:var(--ink-soft);margin-top:3px;white-space:nowrap;}
+.date-box.is-today{border-color:var(--action);}
+.date-box.is-today em,.date-box.is-future em{color:#8A5A00;}
+:root[data-theme="dark"] .date-box.is-today em,:root[data-theme="dark"] .date-box.is-future em{color:var(--action);}
+.tx-row .tx-amount,.template-manage-row .rp-amt{flex:0 0 auto;margin-left:10px;text-align:right;min-width:64px;}
+.template-manage-row{align-items:center!important;}
+.template-manage-row .info{flex:1 1 auto;min-width:0;}
+.template-manage-row .rp-amt{font-weight:800;font-size:15px;font-variant-numeric:tabular-nums;white-space:nowrap;}
+.template-manage-row .rp-amt.income{color:var(--emerald);} .template-manage-row .rp-amt.expense{color:var(--rust);}
+
+/* v1.6.2 — Popup "tieni premuto": niente grassetto sulle righe */
+.lp-main b{font-weight:500!important;}
+.lp-amt{font-weight:500!important;}
+
+/* v1.6.2 — Occhio di R&P accanto alla freccia "mese successivo": il periodo resta centrato */
+.rp-mode-row{display:flex;align-items:center;gap:8px;margin-bottom:16px;}
+.rp-mode-row #rpModeToggle{flex:1 1 auto;min-width:0;margin:0!important;}
+.rp-mode-row #toggleRPBalance{flex:0 0 46px!important;width:46px!important;height:46px!important;min-width:46px!important;margin:0!important;border-radius:14px!important;position:static!important;transform:none!important;}
+.template-manage-row{flex-wrap:nowrap!important;}
+
+/* v1.6.3 — Riga movimento unica (Home, Movimenti, R&P) */
+.tx-row.mv-row,.template-manage-row.mv-row{
+  display:grid!important;
+  grid-template-columns:38px minmax(0,1fr) auto;
+  grid-template-areas:"ic title amt" "ic meta date";
+  column-gap:12px;row-gap:5px;align-items:center!important;
+  padding:11px 13px!important;
+}
+.mv-row .mv-ic{grid-area:ic;align-self:center;width:38px;height:38px;border-radius:11px;display:grid;place-items:center;font-size:18px;}
+.mv-row .mv-title{grid-area:title;min-width:0;font-size:15px;font-weight:700;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.mv-row .mv-amt{grid-area:amt;justify-self:end;font-size:15px;font-weight:800;font-variant-numeric:tabular-nums;white-space:nowrap;}
+.mv-row .mv-amt.income{color:var(--emerald);} .mv-row .mv-amt.expense{color:var(--rust);} .mv-row .mv-amt.transfer{color:var(--ink-soft);}
+.mv-row .mv-meta{grid-area:meta;min-width:0;display:flex;align-items:center;gap:6px;font-size:12px;color:var(--ink-soft);white-space:nowrap;overflow:hidden;}
+.mv-row .mv-meta > span{flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;}
+.mv-row .mv-meta > span + span:not(.status-badge)::before{content:"·";margin-right:6px;color:var(--ink-soft);}
+.mv-row .mv-meta .status-badge{flex:0 0 auto;margin:0!important;font-size:10.5px!important;padding:2px 7px!important;}
+.mv-row .mv-meta .status-badge + span::before{content:none!important;}
+.mv-row .mv-acc{font-weight:600;}
+.mv-row .mv-date{grid-area:date;justify-self:end;font-size:12px;font-weight:700;color:var(--ink);background:var(--surface-strong);border:1px solid var(--line);border-radius:999px;padding:2px 9px;white-space:nowrap;font-variant-numeric:tabular-nums;}
+.mv-row .mv-date.is-today,.mv-row .mv-date.is-future{border-color:#C98A1E;color:#8A5A00;background:#FBEFD9;}
+:root[data-theme="dark"] .mv-row .mv-date.is-today,:root[data-theme="dark"] .mv-row .mv-date.is-future{border-color:color-mix(in srgb,var(--action) 55%,transparent);color:var(--action);background:color-mix(in srgb,var(--action) 12%,transparent);}
+.mv-row .chev{display:none!important;}
+/* v1.6.3 — etichetta (Ricorrente/Pianificata) accanto al nome, con spazio; categoria e conto sulla seconda riga */
+.mv-row .mv-title{display:flex;align-items:center;gap:8px;white-space:nowrap;overflow:hidden;}
+.mv-row .mv-title .mv-name{min-width:0;overflow:hidden;text-overflow:ellipsis;}
+.mv-row .mv-title .status-badge{flex:0 0 auto;margin:0!important;font-size:10.5px!important;padding:2px 7px!important;line-height:1.3;}
+.mv-row .mv-meta > span:first-child::before{content:none!important;}
+/* v1.6.3 — la data sta nella seconda riga a destra: la prima riga lascia tutto lo spazio a nome ed etichetta */
+.tx-row.mv-row,.template-manage-row.mv-row{grid-template-areas:"ic title amt" "ic meta meta"!important;}
+.mv-row .mv-meta{gap:10px;}
+.mv-row .mv-meta-text{flex:1 1 auto;min-width:0;display:flex;align-items:center;gap:6px;overflow:hidden;}
+.mv-row .mv-meta-text > span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.mv-row .mv-meta-text > span + span::before{content:"·";margin-right:6px;}
+.mv-row .mv-meta > .mv-date{flex:0 0 auto;margin-left:auto;}
+.mv-row .mv-meta > span + span::before{content:none;}
+.mv-row .mv-meta > .mv-date::before{content:none!important;display:none!important;}
+
+/* v1.6.4 — Card movimento più compatte; tipo (ricorrente / pianificata / registrato) come icona nella data */
+.tx-row.mv-row,.template-manage-row.mv-row{grid-template-columns:32px minmax(0,1fr) auto!important;column-gap:10px!important;row-gap:3px!important;padding:9px 12px!important;min-height:0!important;}
+.mv-row .mv-ic{width:32px!important;height:32px!important;border-radius:9px!important;font-size:15px!important;}
+.mv-row .mv-title{font-size:14px!important;font-weight:650!important;}
+.mv-row .mv-amt{font-size:14px!important;font-weight:750!important;}
+.mv-row .mv-meta{font-size:11.5px!important;}
+.mv-row .mv-date{display:inline-flex;align-items:center;gap:4px;font-size:11px!important;font-weight:700;padding:2px 8px!important;color:var(--ink-soft)!important;background:var(--surface-strong)!important;border:1px solid var(--line)!important;}
+.mv-row .mv-date svg{flex:0 0 auto;}
+.mv-row .mv-date.is-future,.mv-row .mv-date.is-today{color:var(--ink)!important;}
+.mv-row .mv-date.is-today{font-weight:800;}
+.mv-row .mv-date.kind-recurring svg{color:#8A6BD6;}
+.mv-row .mv-date.kind-planned svg{color:#D49A2A;}
+.mv-row .mv-date.kind-recurring.is-future,.mv-row .mv-date.kind-recurring.is-today{border-color:color-mix(in srgb,#8A6BD6 55%,transparent)!important;background:color-mix(in srgb,#8A6BD6 12%,transparent)!important;}
+.mv-row .mv-date.kind-planned.is-future,.mv-row .mv-date.kind-planned.is-today{border-color:color-mix(in srgb,#D49A2A 60%,transparent)!important;background:color-mix(in srgb,#D49A2A 14%,transparent)!important;}
+.mv-row .mv-date.is-paid svg{color:var(--emerald);}
+:root:not([data-theme="dark"]) .mv-row .mv-date.kind-recurring svg{color:#6B4FA0;}
+:root:not([data-theme="dark"]) .mv-row .mv-date.kind-planned svg{color:#A8700F;}
+.tx-list,.template-manage-list{gap:7px!important;}
+/* v1.6.5 — importo più piccolo e più staccato dalla data */
+.tx-row.mv-row,.template-manage-row.mv-row{row-gap:6px!important;padding:10px 12px!important;}
+.mv-row .mv-amt{font-size:13px!important;font-weight:700!important;align-self:end;}
+.mv-row .mv-title{align-self:end;}
+.mv-row .mv-meta{align-self:start;}
+
+/* =========================================================
+   v1.6.6
+   ========================================================= */
+/* Importo e data nella stessa colonna, centrati uno sopra l'altro */
+.tx-row.mv-row,.template-manage-row.mv-row{grid-template-areas:"ic title amt" "ic meta date"!important;}
+.mv-row .mv-amt{justify-self:center!important;text-align:center;}
+.mv-row .mv-date{grid-area:date;justify-self:center!important;margin:0!important;}
+/* Banca/conto evidenziato */
+.mv-row .mv-acc{display:inline-block;padding:1px 7px;border-radius:7px;border:1px solid var(--line);background:var(--surface-strong);color:var(--ink)!important;font-weight:700;font-size:11px;line-height:1.45;}
+.mv-row .mv-meta-text > .mv-acc::before{content:none!important;}
+.mv-row .mv-meta-text{gap:7px;}
+/* Bordo colorato in base al tipo: verde = movimento registrato, viola = ricorrente, giallo = pianificato */
+.mv-row.mv-kind-past{border:1.5px solid color-mix(in srgb,#3AA684 60%,transparent)!important;}
+.mv-row.mv-kind-recurring{border:1.5px solid color-mix(in srgb,#8A6BD6 70%,transparent)!important;}
+.mv-row.mv-kind-planned{border:1.5px solid color-mix(in srgb,#D4A83A 75%,transparent)!important;}
+/* Stessi colori nel popup "tieni premuto" */
+.lp-row{border-left:3px solid transparent;padding-left:8px!important;border-radius:4px;}
+.lp-row.lp-kind-past{border-left-color:#3AA684;}
+.lp-row.lp-kind-recurring{border-left-color:#8A6BD6;}
+.lp-row.lp-kind-planned{border-left-color:#D4A83A;}
+#views .mv-row.mv-kind-past,#overlayRoot .mv-row.mv-kind-past{border:1.5px solid color-mix(in srgb,#3AA684 60%,transparent)!important;}
+#views .mv-row.mv-kind-recurring,#overlayRoot .mv-row.mv-kind-recurring{border:1.5px solid color-mix(in srgb,#8A6BD6 70%,transparent)!important;}
+#views .mv-row.mv-kind-planned,#overlayRoot .mv-row.mv-kind-planned{border:1.5px solid color-mix(in srgb,#D4A83A 75%,transparent)!important;}
+
+/* v1.6.7 — Bordo grigio con solo il lato sinistro colorato; testi più piccoli; card più basse */
+#views .mv-row.mv-kind-past,#overlayRoot .mv-row.mv-kind-past,
+#views .mv-row.mv-kind-recurring,#overlayRoot .mv-row.mv-kind-recurring,
+#views .mv-row.mv-kind-planned,#overlayRoot .mv-row.mv-kind-planned{border:1px solid var(--line)!important;border-left-width:4px!important;}
+#views .mv-row.mv-kind-past,#overlayRoot .mv-row.mv-kind-past{border-left-color:#3AA684!important;}
+#views .mv-row.mv-kind-recurring,#overlayRoot .mv-row.mv-kind-recurring{border-left-color:#8A6BD6!important;}
+#views .mv-row.mv-kind-planned,#overlayRoot .mv-row.mv-kind-planned{border-left-color:#D4A83A!important;}
+.tx-row.mv-row,.template-manage-row.mv-row{grid-template-columns:28px minmax(0,1fr) auto!important;column-gap:10px!important;row-gap:4px!important;padding:7px 11px 7px 10px!important;}
+.mv-row .mv-ic{width:28px!important;height:28px!important;border-radius:8px!important;font-size:14px!important;}
+.mv-row .mv-title{font-size:13px!important;}
+.mv-row .mv-amt{font-size:12px!important;}
+.mv-row .mv-meta{font-size:10.5px!important;}
+.mv-row .mv-acc{font-size:10px!important;padding:0 6px!important;border-radius:6px!important;}
+.mv-row .mv-date{font-size:10px!important;padding:1px 7px!important;}
+.mv-row .mv-date svg{width:11px;height:11px;}
+.mv-row .mv-meta-text{gap:5px!important;}
+.mv-row .mv-meta-text > span::before{content:none!important;display:none!important;}
+.mv-row .mv-sep{flex:0 0 auto!important;color:var(--ink-soft);font-weight:700;}
+
+/* =========================================================
+   v1.6.8
+   ========================================================= */
+/* Card movimenti: testi ancora un'unità più piccoli */
+.mv-row .mv-title{font-size:12px!important;}
+.mv-row .mv-amt{font-size:11px!important;}
+.mv-row .mv-meta{font-size:9.5px!important;}
+.mv-row .mv-acc{font-size:9px!important;}
+.mv-row .mv-date{font-size:9px!important;padding:1px 6px!important;}
+.mv-row .mv-date svg{width:10px;height:10px;}
+.mv-row .mv-ic{width:26px!important;height:26px!important;font-size:13px!important;}
+.tx-row.mv-row,.template-manage-row.mv-row{grid-template-columns:26px minmax(0,1fr) auto!important;row-gap:3px!important;padding:6px 11px 6px 10px!important;}
+/* Home: tre riquadri compatti, etichetta su una riga e importo sotto */
+#view-home .forecast-card,#view-home .forecast-card.wide{min-height:0!important;padding:7px 9px!important;justify-content:flex-start!important;}
+#view-home .forecast-card span{font-size:10px!important;white-space:nowrap!important;overflow:hidden;text-overflow:ellipsis;max-width:100%;letter-spacing:-.1px;}
+#view-home .forecast-card strong,#view-home .forecast-card.wide strong{margin-top:3px!important;font-size:14px!important;}
+#view-home .forecast-grid{margin:8px 0 16px!important;gap:6px!important;}
+/* R&P: titoli dei riquadri su una riga */
+#view-recurring .rp-estimate-label,#view-recurring #rpCombinedEstimateCard > div:first-child > span{font-size:10px!important;white-space:nowrap!important;overflow:hidden;text-overflow:ellipsis;max-width:100%;}
+#views #view-recurring #recurringEstimateCard .rp-estimate-label,#views #view-recurring #plannedEstimateCard .rp-estimate-label,#views #view-recurring #rpCombinedEstimateCard > div:first-child > span{font-size:10px!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;}
+#views #view-home .forecast-card span{font-size:9.5px!important;letter-spacing:-.15px!important;}
+/* v1.6.9 — spazio di respiro tra testo e importo/data quando nome o categoria+banca sono lunghi */
+.tx-row.mv-row,.template-manage-row.mv-row{column-gap:10px!important;}
+.mv-row .mv-title,.mv-row .mv-meta{padding-right:14px!important;}
+
+/* =========================================================
+   v1.7.0
+   ========================================================= */
+/* Card movimento: colonna destra di larghezza fissa; data a tutta larghezza della colonna, importo centrato sopra.
+   Così importo e data sono allineati in tutte le liste (Home, Tutti i movimenti, R&P). */
+.tx-row.mv-row,.template-manage-row.mv-row{grid-template-columns:26px minmax(0,1fr) minmax(66px,auto)!important;}
+.mv-row .mv-date{justify-self:stretch!important;justify-content:center;text-align:center;}
+.mv-row .mv-amt{justify-self:center!important;}
+#views .mv-row,#overlayRoot .mv-row{border-radius:12px!important;margin:0!important;}
+#allTx,#allTxPlanned{display:flex;flex-direction:column;gap:7px;}
+/* Home: pulsanti "Vedi tutti" e "Vedi R&P" più piccoli */
+#view-home .section-head .pill-btn{min-height:30px!important;padding:4px 10px!important;font-size:12px!important;}
+/* Barra del periodo: niente frecce, si sceglie dal calendario; in Home c'è il pulsante calendario a destra */
+.topbar #prevMonth,.topbar #nextMonth{display:none!important;}
+.view > .topbar{justify-content:center!important;min-height:52px;}
+.topbar .topbar-cal-btn{position:absolute!important;right:12px;top:50%;transform:translateY(-50%);width:40px!important;height:40px!important;min-width:40px!important;padding:0!important;border-radius:12px!important;display:inline-flex!important;align-items:center;justify-content:center;border:1px solid var(--line)!important;background:var(--card)!important;color:var(--ink)!important;}
+#view-recurring .topbar .topbar-cal-btn{display:none!important;}
+/* Selettore periodo */
+.pp-title{border:0;background:transparent;color:var(--ink);font:inherit;font-size:17px;font-weight:800;padding:6px 10px;border-radius:10px;}
+.pp-title:active{background:var(--surface-strong);}
+.pp-caret{font-size:12px;color:var(--ink-soft);}
+.pp-months{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:8px 0 4px;}
+.pp-month{min-height:48px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--ink);font:inherit;font-size:14px;font-weight:700;}
+.pp-month.today{border-color:var(--action);}
+.pp-month.selected{background:var(--action);color:var(--action-ink);border-color:var(--action);}
+#sheetPeriodPicker .calendar-cell.in-range{background:color-mix(in srgb,var(--action) 22%,transparent)!important;border-color:color-mix(in srgb,var(--action) 40%,transparent)!important;}
+.pp-footer{margin-top:12px;padding-top:10px;border-top:1px solid var(--line);}
+.pp-hint{margin:0 0 10px;font-size:13px;color:var(--ink-soft);text-align:center;min-height:18px;}
+.pp-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.pp-btn{min-height:46px;border-radius:13px;border:1.5px solid var(--line);background:var(--card);color:var(--ink);font:inherit;font-size:15px;font-weight:700;}
+.pp-btn.active{border-color:var(--action);}
+.pp-btn.primary{background:var(--action);border-color:var(--action);color:var(--action-ink);}
+.pp-btn.primary:disabled{opacity:.4;}
+/* Tutti i movimenti: ricerca + pulsante periodo sulla stessa riga */
+#view-transactions .tx-search-filter{display:flex!important;gap:8px;align-items:center;}
+#view-transactions #txSearchInput{flex:1 1 auto;min-width:0;}
+.period-chip{flex:0 0 auto;display:inline-flex;align-items:center;gap:6px;max-width:52%;min-height:44px;padding:0 12px;border-radius:12px;border:1.5px solid var(--line);background:var(--card);color:var(--ink);font:inherit;font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;}
+.period-chip span{overflow:hidden;text-overflow:ellipsis;}
+#view-transactions .tx-type-toggle{margin-top:0!important;}
+/* Evidenziazione della ricerca */
+mark.hl{background:color-mix(in srgb,var(--action) 45%,transparent);color:inherit;border-radius:3px;padding:0 1px;}
+/* R&P: ricerca e "Mostra tutti" */
+.rp-search{margin:0 0 14px;}
+.rp-search input{width:100%;}
+.rp-more-btn{display:block;width:100%;min-height:40px;margin-top:2px;border-radius:12px;border:1px dashed var(--line);background:transparent;color:var(--ink-soft);font:inherit;font-size:13px;font-weight:700;}
+
+/* v1.7.1 — Calendari: niente frecce, si naviga toccando il titolo (giorni → mesi → anni); altezza sempre uguale */
+#ppPrev,#ppNext,#calPrevMonth,#calNextMonth{display:none!important;}
+.pp-nav,#sheetCalendar .calendar-nav{justify-content:center!important;}
+.pp-months{height:var(--pp-h,auto);grid-auto-rows:1fr;align-content:stretch;}
+.pp-months.is-years{grid-auto-rows:52px;align-content:start;overflow-y:auto;}
+.rp-list-head{display:flex;align-items:center;justify-content:space-between;margin:4px 0 8px!important;}
+.rp-list-head h2{font-size:15px!important;margin:0!important;}
+.rp-paid-head{display:flex;align-items:center;gap:8px;}
+.rp-paid-head .rp-see-all{margin-left:auto;}
+.rp-see-all{min-height:30px!important;padding:4px 10px!important;font-size:12px!important;}
+
+/* =========================================================
+   v1.8.0 — Estetica più moderna
+   Superfici morbide e senza bordi pesanti, raggi più ampi, tipografia più leggera,
+   barra di navigazione fluttuante "a vetro", badge numerici.
+   ========================================================= */
+:root{--radius-xl:18px;--radius-lg:14px;--hairline:color-mix(in srgb,var(--line) 70%,transparent);--glass:color-mix(in srgb,var(--card) 78%,transparent);}
+#view-rpall{padding-top:calc(10px + env(safe-area-inset-top))!important;}
+
+/* Tipografia */
+#views .section-head h2{font-size:17px!important;font-weight:700!important;letter-spacing:-.2px;}
+.rp-list-head h2{font-size:15px!important;}
+#views{letter-spacing:-.05px;}
+
+/* Superfici: raggi ampi, bordo sottile, ombra leggera */
+#views .hero,#views .total-balance-card{border-radius:22px!important;border-width:1px!important;border-color:var(--hairline)!important;}
+#views .forecast-card,#views .rp-estimate-card,#views .rp-combined-estimate,#views .account-card,#views .stat-card,#views .chart-wrap,#views .budget-item,#views .settings-rows,#views .main-account-setting,#views .stats-period-filter{border-radius:var(--radius-xl)!important;border-color:var(--hairline)!important;}
+:root:not([data-theme="dark"]) #views .forecast-card,:root:not([data-theme="dark"]) #views .mv-row,:root:not([data-theme="dark"]) #views .account-card{box-shadow:0 1px 2px rgba(20,24,26,.05),0 6px 18px rgba(20,24,26,.05)!important;}
+#views .mv-row,#overlayRoot .mv-row{border-radius:var(--radius-lg)!important;border-top-color:var(--hairline)!important;border-right-color:var(--hairline)!important;border-bottom-color:var(--hairline)!important;}
+
+/* Pulsanti secondari "fantasma" e badge numerici */
+#views .section-head .pill-btn,.rp-see-all{border:0!important;background:color-mix(in srgb,var(--ink) 7%,transparent)!important;color:var(--ink)!important;border-radius:999px!important;font-weight:700!important;display:inline-flex!important;align-items:center;gap:5px;}
+.count-badge{display:inline-flex;align-items:center;justify-content:center;min-width:20px;height:18px;padding:0 6px;border-radius:999px;background:var(--action);color:var(--action-ink);font-size:11px;font-weight:800;line-height:1;font-variant-numeric:tabular-nums;}
+.count-badge:empty{display:none;}
+.rp-list-head .count-badge{margin-left:8px;margin-right:auto;}
+
+/* Controlli segmentati in stile iOS */
+#views .type-toggle{border:0!important;background:color-mix(in srgb,var(--ink) 7%,transparent)!important;border-radius:14px!important;padding:3px!important;}
+#views .type-toggle .type-opt{border-radius:11px!important;border:0!important;}
+#views .type-toggle .type-opt.active{box-shadow:0 1px 3px rgba(0,0,0,.18)!important;}
+
+/* Campi di ricerca */
+#views input[type="search"].text-input{border-radius:14px!important;border:0!important;background:color-mix(in srgb,var(--ink) 7%,transparent)!important;min-height:44px;padding-left:14px!important;}
+.period-chip{border:0!important;background:color-mix(in srgb,var(--ink) 7%,transparent)!important;border-radius:14px!important;}
+
+/* Barra di navigazione fluttuante "a vetro" */
+.tabbar{left:12px!important;right:12px!important;bottom:calc(8px + env(safe-area-inset-bottom))!important;max-width:496px!important;border-radius:24px!important;border:1px solid var(--hairline)!important;background:var(--glass)!important;-webkit-backdrop-filter:saturate(1.6) blur(18px);backdrop-filter:saturate(1.6) blur(18px);box-shadow:0 10px 30px rgba(0,0,0,.25)!important;padding:6px!important;}
+.tabbar .tab{border-radius:18px!important;}
+.tabbar .tab.active,.tabbar .tab[data-view].active{color:#fff!important;}
+#app{padding-bottom:calc(150px + env(safe-area-inset-bottom))!important;}
+.fab{bottom:calc(96px + env(safe-area-inset-bottom))!important;border-radius:20px!important;box-shadow:0 10px 24px rgba(232,163,61,.35),0 4px 10px rgba(0,0,0,.25)!important;}
+
+/* Pannelli (sheet) più morbidi */
+.sheet{border-radius:26px 26px 0 0!important;}
+/* v1.8.0 — rifiniture */
+#rpTotalPaidCount,#recurringPaidCount,#plannedPaidCount{display:none!important;}
+#views .rp-paid-head{margin:18px 0 8px!important;}
+#views .rp-paid-head > span:first-child{font-size:15px!important;font-weight:700!important;text-transform:none!important;letter-spacing:-.2px!important;color:var(--ink)!important;}
+.rp-see-all .chev,#views .section-head .pill-btn .chev{background:none!important;border:0!important;width:auto!important;height:auto!important;margin:0!important;padding:0!important;color:var(--ink-soft)!important;}
+#view-rpall .type-toggle .type-opt{font-size:13px!important;padding:9px 6px!important;}
+#view-rpall .type-toggle{margin-bottom:12px!important;}
+#view-rpall .rp-list-head{margin:16px 0 8px!important;}
+#view-rpall .rp-list-head:first-of-type{margin-top:4px!important;}
+#view-rpall .template-manage-list,#view-rpall .tx-list{display:flex;flex-direction:column;gap:7px;}
+
+/* =========================================================
+   v1.9.0 — Navigazione indietro, badge compatti, colori e trasparenze
+   ========================================================= */
+
+/* "Vedi tutti" + badge: spaziatura fissa e indipendente dalle cifre */
+#views .section-head .pill-btn,.rp-see-all{gap:6px!important;padding:4px 9px 4px 12px!important;white-space:nowrap;}
+.pill-btn .sa-label{line-height:1;}
+.pill-btn .count-badge,.rp-list-head .pill-btn .count-badge,.rp-paid-head .pill-btn .count-badge{margin:0!important;min-width:18px;height:18px;padding:0 5px;}
+.rp-list-head > .count-badge{margin-left:8px;margin-right:auto;}
+.pill-btn .chev{margin-left:-1px!important;}
+
+/* Pulsante indietro nelle sotto-pagine */
+.tx-search-filter{display:flex!important;gap:8px;align-items:center;}
+.tx-search-filter .text-input{flex:1 1 auto;min-width:0;}
+.tx-search-filter .period-chip{max-width:44%;}
+.nav-back-btn{flex:0 0 44px;width:44px;height:44px;padding:0;border:0;border-radius:14px;display:inline-flex;align-items:center;justify-content:center;color:var(--ink);background:color-mix(in srgb,var(--ink) 7%,transparent);cursor:pointer;-webkit-tap-highlight-color:transparent;transition:transform .15s ease,background .15s ease;}
+.nav-back-btn:active{transform:scale(.92);background:color-mix(in srgb,var(--ink) 13%,transparent);}
+.nav-back-btn svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round;}
+
+/* Transizioni tra pagina e sotto-pagina + swipe indietro */
+@keyframes mtViewPush{from{transform:translateX(26%);opacity:0;}to{transform:none;opacity:1;}}
+@keyframes mtViewPop{from{transform:translateX(-16%);opacity:0;}to{transform:none;opacity:1;}}
+.view.view-push{animation:mtViewPush .3s cubic-bezier(.2,.8,.2,1);}
+.view.view-pop{animation:mtViewPop .28s cubic-bezier(.2,.8,.2,1);}
+.view.view-dragging{transition:none!important;will-change:transform,opacity;box-shadow:-18px 0 40px rgba(0,0,0,.22);}
+#views{overflow-x:clip;}
+html.back-swiping,html.back-swiping body{overflow-x:hidden;}
+#view-transactions,#view-rpall{touch-action:pan-y;}
+.movement-action-menu{touch-action:none;}
+@media (prefers-reduced-motion:reduce){.view.view-push,.view.view-pop{animation:none;}}
+
+/* ---------- Sfondo ambientale con bagliori colorati ---------- */
+:root{
+  --kind-past:#3AA684;--kind-recurring:#8A6BD6;--kind-planned:#D4A83A;
+  --glow-a:rgba(58,166,132,.16);--glow-b:rgba(138,107,214,.13);--glow-c:rgba(232,163,61,.13);
+  --glass-card:color-mix(in srgb,var(--card) 74%,transparent);
+  --glass-row:color-mix(in srgb,var(--card) 80%,transparent);
+  --glass-edge:rgba(255,255,255,.75);
+  --glass-shadow:0 1px 2px rgba(20,24,26,.04),0 10px 28px -12px rgba(20,24,26,.16);
+}
+:root[data-theme="dark"]{
+  --glow-a:rgba(58,166,132,.24);--glow-b:rgba(138,107,214,.20);--glow-c:rgba(232,163,61,.12);
+  --glass-card:color-mix(in srgb,var(--card) 62%,transparent);
+  --glass-row:color-mix(in srgb,var(--card) 70%,transparent);
+  --glass-edge:rgba(255,255,255,.07);
+  --glass-shadow:0 12px 30px -14px rgba(0,0,0,.55);
+}
+html{background:var(--paper)!important;}
+body{background:transparent!important;}
+body::before{content:"";position:fixed;inset:-10vh -10vw;z-index:-1;pointer-events:none;
+  background:
+    radial-gradient(42% 32% at 12% 6%,var(--glow-a),transparent 70%),
+    radial-gradient(38% 30% at 96% 30%,var(--glow-b),transparent 70%),
+    radial-gradient(46% 34% at 30% 88%,var(--glow-c),transparent 72%),
+    var(--paper);}
+#app::before{background:color-mix(in srgb,var(--paper) 72%,transparent)!important;-webkit-backdrop-filter:blur(16px) saturate(1.6);backdrop-filter:blur(16px) saturate(1.6);}
+
+/* ---------- Superfici in vetro ---------- */
+#views .forecast-card,#views .rp-estimate-card,#views .account-card,#views .stat-card,#views .chart-wrap,#views .budget-item,#views .settings-rows,#views .main-account-setting,#views .stats-period-filter,#views .total-balance-card{
+  background:var(--glass-card)!important;border:1px solid var(--glass-edge)!important;box-shadow:var(--glass-shadow)!important;
+  -webkit-backdrop-filter:blur(14px) saturate(1.5);backdrop-filter:blur(14px) saturate(1.5);}
+#views .mv-row,#overlayRoot .mv-row{background-color:var(--glass-row)!important;border-top-color:var(--glass-edge)!important;border-right-color:var(--glass-edge)!important;border-bottom-color:var(--glass-edge)!important;box-shadow:var(--glass-shadow)!important;transition:transform .15s ease;}
+#views .mv-row:active{transform:scale(.985);}
+/* Velatura colorata dal bordo sinistro, per tipo di movimento */
+#views .mv-row.mv-kind-past,#overlayRoot .mv-row.mv-kind-past{background-image:linear-gradient(90deg,color-mix(in srgb,var(--kind-past) 13%,transparent),transparent 38%)!important;}
+#views .mv-row.mv-kind-recurring,#overlayRoot .mv-row.mv-kind-recurring{background-image:linear-gradient(90deg,color-mix(in srgb,var(--kind-recurring) 15%,transparent),transparent 38%)!important;}
+#views .mv-row.mv-kind-planned,#overlayRoot .mv-row.mv-kind-planned{background-image:linear-gradient(90deg,color-mix(in srgb,var(--kind-planned) 15%,transparent),transparent 38%)!important;}
+
+/* Card principale: gradiente con bagliore */
+#views .hero{
+  background:
+    radial-gradient(120% 90% at 0% 0%,rgba(58,166,132,.22),transparent 60%),
+    radial-gradient(90% 80% at 100% 100%,rgba(138,107,214,.16),transparent 60%),
+    var(--glass-card)!important;
+  border:1px solid var(--glass-edge)!important;
+  box-shadow:0 18px 40px -20px rgba(58,166,132,.55),var(--glass-shadow)!important;
+  -webkit-backdrop-filter:blur(18px) saturate(1.6);backdrop-filter:blur(18px) saturate(1.6);}
+:root[data-theme="dark"] #views .hero{
+  background:
+    radial-gradient(120% 90% at 0% 0%,rgba(58,166,132,.34),transparent 60%),
+    radial-gradient(90% 80% at 100% 100%,rgba(138,107,214,.26),transparent 62%),
+    var(--glass-card)!important;}
+/* Card totale R&P: tinta ambra */
+#views .rp-combined-estimate{
+  background:radial-gradient(120% 100% at 0% 0%,rgba(232,163,61,.24),transparent 62%),var(--glass-card)!important;
+  border:1px solid color-mix(in srgb,var(--action) 35%,transparent)!important;
+  box-shadow:0 16px 36px -20px rgba(232,163,61,.55),var(--glass-shadow)!important;
+  -webkit-backdrop-filter:blur(14px) saturate(1.5);backdrop-filter:blur(14px) saturate(1.5);}
+
+/* ---------- Accenti colorati ---------- */
+.count-badge{background:linear-gradient(135deg,#f6c46a,#e8932c)!important;color:#2a1a00!important;box-shadow:0 2px 8px -2px rgba(232,147,44,.65);}
+#views .type-toggle{background:color-mix(in srgb,var(--ink) 6%,transparent)!important;border:1px solid var(--glass-edge)!important;-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);}
+#views#views .type-toggle .type-opt.active{background:linear-gradient(135deg,#3fb38e,#1f7a62)!important;color:#fff!important;box-shadow:0 6px 16px -6px rgba(58,166,132,.75),inset 0 1px 0 rgba(255,255,255,.22)!important;}
+.fab{background:linear-gradient(145deg,#f7c463,#e48d24)!important;color:#241800!important;box-shadow:0 14px 30px -8px rgba(232,147,44,.65),inset 0 1px 0 rgba(255,255,255,.35)!important;}
+.fab:active{transform:scale(.94);}
+#views .section-head .pill-btn,.rp-see-all,.period-chip,#views input[type="search"].text-input{-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);}
+
+/* Barra di navigazione: vetro più trasparente con evidenziazione colorata */
+.tabbar{background:color-mix(in srgb,var(--card) 58%,transparent)!important;border:1px solid var(--glass-edge)!important;-webkit-backdrop-filter:saturate(1.8) blur(24px)!important;backdrop-filter:saturate(1.8) blur(24px)!important;box-shadow:0 14px 36px -10px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.08)!important;}
+.tabbar .tab{transition:transform .15s ease,background .2s ease,box-shadow .2s ease;}
+.tabbar .tab:active{transform:scale(.94);}
+.tabbar .tab.active{background-image:linear-gradient(180deg,rgba(255,255,255,.22),rgba(255,255,255,0))!important;}
+.tabbar .tab[data-view="home"].active{box-shadow:0 8px 20px -8px var(--tab-home)!important;}
+.tabbar .tab[data-view="recurring"].active{box-shadow:0 8px 20px -8px var(--tab-recurring)!important;}
+.tabbar .tab[data-view="stats"].active{box-shadow:0 8px 20px -8px var(--tab-stats)!important;}
+.tabbar .tab[data-view="accounts"].active{box-shadow:0 8px 20px -8px var(--tab-accounts)!important;}
+.tabbar .tab[data-view="more"].active{box-shadow:0 8px 20px -8px var(--tab-more)!important;}
+
+/* Pannelli: vetro smerigliato e sfondo sfocato */
+.sheet{background:color-mix(in srgb,var(--paper) 86%,transparent)!important;-webkit-backdrop-filter:blur(26px) saturate(1.6);backdrop-filter:blur(26px) saturate(1.6);border-top:1px solid var(--glass-edge);box-shadow:0 -16px 40px -12px rgba(0,0,0,.35);}
+.overlay-backdrop{-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);}
+.sheet-handle{background:color-mix(in srgb,var(--ink) 25%,transparent)!important;}
+.lp-popup,.movement-action-menu{-webkit-backdrop-filter:blur(22px) saturate(1.6);backdrop-filter:blur(22px) saturate(1.6);}
+.lp-popup{background:color-mix(in srgb,var(--card) 82%,transparent)!important;border-color:var(--glass-edge)!important;}
+.rp-paid-head .rp-see-all .chev,.rp-see-all .chev{min-width:0!important;}
+.rp-paid-head .rp-see-all{text-transform:none!important;letter-spacing:0!important;font-size:12px!important;}
+
+/* v1.9.1 — Calendari: grassetto solo su titolo, mese/anno; spazi ridotti */
+#overlayRoot :is(#sheetPeriodPicker,#sheetCalendar) :is(.calendar-weekdays span,.calendar-cell,.cal-day-num,.pp-months button,.pp-months button *,.pp-hint,.calendar-legend,.cal-leg-item){font-weight:400!important;}
+#overlayRoot #sheetPeriodPicker .pp-btn{font-weight:500!important;}
+#overlayRoot :is(#sheetPeriodPicker,#sheetCalendar) .sheet-head h3{font-weight:700!important;}
+#overlayRoot :is(#sheetPeriodPicker,#sheetCalendar) :is(.pp-title,.calendar-month-label){font-weight:700!important;}
+#overlayRoot #sheetPeriodPicker .pp-footer{margin-top:8px!important;padding-top:8px!important;}
+#overlayRoot #sheetPeriodPicker .pp-hint{margin:0 0 8px!important;}
+#overlayRoot #sheetCalendar .calendar-legend{margin-top:10px!important;}
+
+/* v1.9.2 — Filtri Uscite/Entrate con colori propri (rosso / verde brillante) */
+#views#views :is(#statsNatureToggle [data-stats-nature="expense"],#txTypeToggle [data-tx-type="expense"]).active{background:linear-gradient(135deg,#f2665f,#b8322c)!important;color:#fff!important;box-shadow:0 6px 16px -6px rgba(220,70,62,.75),inset 0 1px 0 rgba(255,255,255,.22)!important;}
+#views#views :is(#statsNatureToggle [data-stats-nature="income"],#txTypeToggle [data-tx-type="income"]).active{background:linear-gradient(135deg,#5fd36f,#1f8f3c)!important;color:#fff!important;box-shadow:0 6px 16px -6px rgba(60,180,80,.75),inset 0 1px 0 rgba(255,255,255,.22)!important;}
+
+/* v1.9.2 — Barra del periodo senza stacco dalla barra di stato dell'iPhone:
+   la barra del periodo è trasparente (stesso sfondo della pagina) e la copertura
+   della barra di stato sfuma verso il basso invece di avere un bordo netto. */
+#view-home,#view-recurring{padding-top:0!important;}
+#views .view > .topbar{top:0!important;margin-top:0!important;padding-top:calc(6px + env(safe-area-inset-top))!important;background:transparent!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important;border:0!important;box-shadow:none!important;}
+#app::before{height:calc(env(safe-area-inset-top) + 14px)!important;background:color-mix(in srgb,var(--paper) 88%,transparent)!important;
+  -webkit-mask-image:linear-gradient(to bottom,#000 calc(100% - 14px),transparent);mask-image:linear-gradient(to bottom,#000 calc(100% - 14px),transparent);}
+#views .view > .topbar .topbar-cal-btn{top:calc(50% + (env(safe-area-inset-top) - 2px) / 2)!important;}
+/* Copertura della barra di stato visibile solo quando la pagina è scorsa */
+#app::before{transition:opacity .2s ease;}
+html:not(.is-scrolled) #app::before{opacity:0;}
+
+/* =========================================================
+   v1.10.0 — Pannelli con lo stesso stile moderno delle pagine,
+   grafico dell'evoluzione del conto rifatto, niente etichetta colore sui conti.
+   ========================================================= */
+:root{--evo-line:#1F8A6B;}
+:root[data-theme="dark"]{--evo-line:#3BA888;}
+
+/* Conti: rimossa la barra colorata, nome e saldo allineati */
+#accountsList .account-swatch{display:none!important;}
+#accountsList .account-card{padding-left:16px!important;}
+#accountsList .account-balance{font-variant-numeric:tabular-nums;}
+
+/* Controlli nei pannelli: come nelle pagine */
+#overlayRoot .sheet .text-input,#overlayRoot .sheet input[type="text"],#overlayRoot .sheet input[type="number"],#overlayRoot .sheet input[type="date"],#overlayRoot .sheet input[type="search"],#overlayRoot .sheet select,#overlayRoot .sheet textarea{
+  background:color-mix(in srgb,var(--ink) 6%,transparent)!important;border:1px solid transparent!important;border-radius:14px!important;box-shadow:none!important;}
+#overlayRoot .sheet .text-input:focus,#overlayRoot .sheet input:focus,#overlayRoot .sheet select:focus,#overlayRoot .sheet textarea:focus{border-color:color-mix(in srgb,var(--action) 60%,transparent)!important;outline:none;}
+#overlayRoot .sheet .amount-field{background:transparent!important;border:0!important;}
+#overlayRoot .sheet .amount-field input{background:transparent!important;border:0!important;}
+#overlayRoot .sheet .field-row > label,#overlayRoot .sheet .chip-group-title,#overlayRoot .sheet .chip-groups > p{font-size:12px!important;font-weight:600!important;letter-spacing:.02em;color:var(--ink-soft)!important;text-transform:none!important;}
+#overlayRoot .sheet .chip{background:color-mix(in srgb,var(--ink) 6%,transparent)!important;border:1px solid var(--glass-edge)!important;border-radius:999px!important;color:var(--ink)!important;box-shadow:none!important;transition:transform .15s ease;}
+#overlayRoot .sheet .chip:active{transform:scale(.95);}
+#overlayRoot .sheet .chip.active{background:linear-gradient(135deg,#3fb38e,#1f7a62)!important;border-color:transparent!important;color:#fff!important;box-shadow:0 6px 16px -6px rgba(58,166,132,.7),inset 0 1px 0 rgba(255,255,255,.22)!important;}
+#overlayRoot .sheet .type-toggle{background:color-mix(in srgb,var(--ink) 6%,transparent)!important;border:1px solid var(--glass-edge)!important;border-radius:14px!important;padding:3px!important;}
+#overlayRoot .sheet .type-toggle .type-opt{border:0!important;border-radius:11px!important;background:transparent!important;color:var(--ink-soft)!important;}
+#overlayRoot .sheet .type-toggle .type-opt.active{background:linear-gradient(135deg,#3fb38e,#1f7a62)!important;color:#fff!important;box-shadow:0 6px 16px -6px rgba(58,166,132,.75),inset 0 1px 0 rgba(255,255,255,.22)!important;}
+#overlayRoot .sheet .type-toggle .type-opt.active[data-type="expense"],#overlayRoot .sheet .type-toggle .type-opt.active[data-kind="expense"]{background:linear-gradient(135deg,#f2665f,#b8322c)!important;box-shadow:0 6px 16px -6px rgba(220,70,62,.75),inset 0 1px 0 rgba(255,255,255,.22)!important;}
+#overlayRoot .sheet .type-toggle .type-opt.active[data-type="income"],#overlayRoot .sheet .type-toggle .type-opt.active[data-kind="income"]{background:linear-gradient(135deg,#5fd36f,#1f8f3c)!important;box-shadow:0 6px 16px -6px rgba(60,180,80,.75),inset 0 1px 0 rgba(255,255,255,.22)!important;}
+#overlayRoot .sheet .type-toggle .type-opt.active[data-type="transfer"]{background:linear-gradient(135deg,#6f9dff,#3b62c9)!important;box-shadow:0 6px 16px -6px rgba(80,120,230,.75),inset 0 1px 0 rgba(255,255,255,.22)!important;}
+#overlayRoot .sheet .primary-btn,#overlayRoot .sheet .add-btn{background:linear-gradient(145deg,#f7c463,#e48d24)!important;color:#241800!important;border:0!important;border-radius:14px!important;box-shadow:0 8px 20px -8px rgba(232,147,44,.75),inset 0 1px 0 rgba(255,255,255,.3)!important;}
+#overlayRoot .sheet .primary-btn:active,#overlayRoot .sheet .add-btn:active{transform:scale(.96);}
+#overlayRoot .sheet .sheet-close{border:0!important;border-radius:50%!important;background:color-mix(in srgb,var(--ink) 8%,transparent)!important;color:var(--ink-soft)!important;}
+#overlayRoot .sheet .settings-rows,#overlayRoot .sheet .template-manage-list > *,#overlayRoot .sheet .category-list > *{border-color:var(--glass-edge)!important;}
+#overlayRoot .sheet h3{letter-spacing:-.3px;}
+
+/* Evoluzione del conto */
+#sheetAccountEvolution .evo-summary{margin:2px 0 14px;}
+.evo-kicker{margin:0;font-size:13px;font-weight:600;color:var(--ink-soft);}
+.evo-hero{margin:2px 0 6px;font-size:34px;font-weight:800;letter-spacing:-1px;color:var(--ink);font-variant-numeric:tabular-nums;line-height:1.1;}
+.evo-delta{margin:0;font-size:13px;color:var(--ink-soft);display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.evo-delta-pill{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:999px;font-weight:700;color:var(--ink);font-variant-numeric:tabular-nums;background:color-mix(in srgb,var(--ink) 8%,transparent);}
+.evo-delta.up .evo-delta-pill{background:color-mix(in srgb,#2fb36a 20%,transparent);}
+.evo-delta.down .evo-delta-pill{background:color-mix(in srgb,#e2554e 20%,transparent);}
+#sheetAccountEvolution .evo-range{margin:0 0 12px!important;display:grid!important;grid-template-columns:repeat(4,1fr);}
+#sheetAccountEvolution .evo-range .type-opt{font-size:13px!important;padding:8px 4px!important;}
+.evo-chart{position:relative;margin:0 -4px;padding:10px 4px 4px;border-radius:20px;background:color-mix(in srgb,var(--ink) 4%,transparent);border:1px solid var(--glass-edge);touch-action:pan-y;}
+.evo-svg{display:block;width:100%;height:auto;overflow:visible;}
+.evo-grid{stroke:color-mix(in srgb,var(--ink) 10%,transparent);stroke-width:1;}
+.evo-zero{stroke:color-mix(in srgb,var(--ink) 35%,transparent);stroke-width:1;stroke-dasharray:3 4;}
+.evo-ylab{font-size:10px;fill:var(--ink-soft);font-family:inherit;font-variant-numeric:tabular-nums;}
+.evo-xlab{font-size:10.5px;fill:var(--ink-soft);font-family:inherit;}
+.evo-line{fill:none;stroke:var(--evo-line);stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round;}
+.evo-stop-a{stop-color:var(--evo-line);stop-opacity:.32;}
+.evo-stop-b{stop-color:var(--evo-line);stop-opacity:0;}
+.evo-last,.evo-hover{fill:var(--evo-line);stroke:var(--paper);stroke-width:2.5;}
+.evo-cross{stroke:color-mix(in srgb,var(--ink) 35%,transparent);stroke-width:1;stroke-dasharray:2 3;transition:opacity .15s ease;}
+.evo-hit{cursor:crosshair;}
+.evo-tip{position:absolute;top:-6px;display:grid;gap:1px;padding:7px 10px;border-radius:12px;background:color-mix(in srgb,var(--card) 92%,transparent);border:1px solid var(--glass-edge);box-shadow:0 10px 24px -8px rgba(0,0,0,.45);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);pointer-events:none;white-space:nowrap;font-size:12px;color:var(--ink-soft);z-index:2;}
+.evo-tip b{color:var(--ink);font-size:12px;}
+.evo-tip-val{color:var(--ink);font-size:15px;font-weight:800;font-variant-numeric:tabular-nums;}
+.evo-tip-delta{font-weight:700;color:var(--ink-soft);}
+.evo-tip-delta.up::first-letter{color:#2fb36a;}
+.evo-tip-delta.down::first-letter{color:#e2554e;}
+#sheetAccountEvolution #editAccountFromEvolutionBtn{margin-top:14px!important;}
+.evo-anchor{stroke:var(--action);stroke-width:1.5;stroke-dasharray:3 3;opacity:.85;}
+.evo-anchor-lab{font-size:10.5px;font-weight:700;fill:var(--ink-soft);font-family:inherit;}
+/* v1.10.2 — più orizzonti temporali + periodo dal calendario */
+#sheetAccountEvolution .evo-range{grid-template-columns:repeat(4,1fr)!important;row-gap:3px;}
+#sheetAccountEvolution .evo-range .evo-custom{grid-column:span 2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+/* v1.10.3 — card dei conti più compatte; periodo del grafico scelto solo dal calendario */
+#accountsList{gap:7px!important;}
+#views #accountsList .account-card{padding:9px 10px 9px 14px!important;min-height:0!important;gap:8px;margin:0 0 7px!important;}
+#views #accountsList .account-name{font-size:14px!important;font-weight:650!important;line-height:1.2;}
+#views #accountsList .account-type{font-size:11px!important;margin-top:1px!important;}
+#views #accountsList .account-balance{font-size:15px!important;font-weight:750!important;}
+#views #accountsList .account-edit{width:32px!important;height:32px!important;font-size:14px!important;border-radius:10px!important;border:0!important;background:color-mix(in srgb,var(--ink) 7%,transparent)!important;margin-left:4px!important;}
+#views #accountsList .main-account-badge{font-size:10px!important;padding:1px 6px!important;}
+#sheetAccountEvolution .evo-period{display:inline-flex!important;align-items:center;gap:7px;min-height:38px!important;max-width:100%!important;margin:0 0 12px;padding:0 14px!important;font-size:13.5px!important;}
+#sheetAccountEvolution .evo-period svg{flex:0 0 auto;opacity:.8;}
+#sheetAccountEvolution .evo-period span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+/* v1.10.4 — Saldo nascosto = tutti gli importi nascosti (Home, R&P, Movimenti, Statistiche) */
+html.amounts-hidden :is(.mv-amt,.budget-spent,.budget-limit,.budget-earned,.stat-card-value,.top-category-meta strong,.pie-legend-item .val,.tx-amount,.rp-amt){font-size:0!important;letter-spacing:0!important;}
+html.amounts-hidden :is(.mv-amt,.stat-card-value,.tx-amount,.rp-amt)::after{content:"••••";font-size:15px;letter-spacing:1px;color:var(--ink);}
+html.amounts-hidden :is(.budget-spent,.budget-limit,.budget-earned,.top-category-meta strong,.pie-legend-item .val)::after{content:"••••";font-size:13px;letter-spacing:1px;color:var(--ink);}
+html.amounts-hidden .stat-card-value::after{font-size:20px;}
+/* Le etichette dei grafici restano visibili; le cifre sono sostituite da pallini nel codice. */
+/* v1.10.6 — icona libera con emoji (anche più di una) */
+.emoji-field{display:grid;gap:8px;}
+.emoji-input-wrap{position:relative;display:flex;align-items:center;}
+#overlayRoot .sheet .emoji-input{font-size:26px!important;letter-spacing:2px;min-height:54px;padding:8px 44px 8px 14px!important;width:100%;}
+#overlayRoot .sheet .emoji-input::placeholder{font-size:15px;letter-spacing:0;}
+.emoji-clear{position:absolute;right:8px;width:32px;height:32px;border-radius:50%;border:0;background:color-mix(in srgb,var(--ink) 10%,transparent);color:var(--ink-soft);font-size:13px;}
+.emoji-hint{margin:0;font-size:12px;color:var(--ink-soft);}
+.emoji-suggest{max-height:118px;overflow-y:auto;}
+.mv-ic-n2{font-size:13px!important;letter-spacing:-3px;}
+.mv-ic-n3,.mv-ic-n4{font-size:10px!important;letter-spacing:-3px;}
+.mv-ic-n2,.mv-ic-n3,.mv-ic-n4{white-space:nowrap;overflow:hidden;justify-content:center;}
+.mv-ic-n3,.mv-ic-n4{font-size:9.5px!important;letter-spacing:-2.5px;}
+:is(#views,#overlayRoot) .mv-row .mv-ic.mv-ic-n2{font-size:12px!important;letter-spacing:-2px!important;}
+:is(#views,#overlayRoot) .mv-row .mv-ic.mv-ic-n3,:is(#views,#overlayRoot) .mv-row .mv-ic.mv-ic-n4{font-size:8.5px!important;letter-spacing:-2px!important;}
+/* v1.10.7 — scelta del "+" (movimento, ricorrente, pianificato, prelievo ATM) e azioni "rendi ricorrente/pianifica" */
+.movement-action-buttons.add-choice-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;}
+.add-choice-grid .movement-action-btn{min-height:84px;font-size:12.5px;}
+.movement-action-btn.recurring .movement-action-icon,.movement-action-btn.edit[data-add-kind="recurring"] .movement-action-icon{background:#cbbcf0!important;color:#3b2a6b!important;}
+.movement-action-btn.planned .movement-action-icon,.movement-action-btn.duplicate[data-add-kind="planned"] .movement-action-icon{background:#f0dca6!important;color:#5c4510!important;}
+.movement-action-btn.add-recent .movement-action-icon{background:linear-gradient(145deg,#f7c463,#e48d24)!important;color:#241800!important;font-size:20px;font-weight:800;}
+.movement-action-btn.add-atm .movement-action-icon{background:#b9d3f2!important;color:#1f3a5c!important;font-size:18px;}
+#sheetAtm .atm-total{margin:-4px 2px 10px;font-weight:650;color:var(--ink);}
+.fab.is-hidden{display:none!important;}
+
+/* =========================================================
+   Noi Due 1.0.0 — aggiunte per le spese di coppia
+   (stessi token e stesso vetro di Bilancio 1.10.7)
+   ========================================================= */
+:root{--tab-coppia:#c25b9e;}
+:root[data-theme="dark"]{--tab-coppia:#e08cc3;}
+.tab[data-view="coppia"].active{background:var(--tab-coppia)!important;color:#fff!important;}
+.tab[data-view="coppia"].active:active{background:var(--tab-coppia);}
+.tabbar .tab[data-view="coppia"].active{box-shadow:0 8px 20px -8px var(--tab-coppia)!important;}
+/* Sei schede: etichette su una riga senza allargare la barra */
+.tabbar .tab{min-width:0;flex:1 1 0;}
+.tabbar .tab span{max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:10.5px;}
+
+#view-coppia{padding-top:calc(10px + env(safe-area-inset-top))!important;}
+#view-coppia .hero{margin-top:0!important;text-align:center;}
+#views #view-coppia .hero{
+  background:
+    radial-gradient(120% 90% at 0% 0%,color-mix(in srgb,var(--ca,#3AA684) 26%,transparent),transparent 60%),
+    radial-gradient(100% 90% at 100% 100%,color-mix(in srgb,var(--cb,#C25B9E) 24%,transparent),transparent 62%),
+    var(--glass-card)!important;}
+#view-coppia #toggleCoupleBalance{position:absolute!important;top:10px;right:10px;width:44px!important;height:44px!important;min-width:44px!important;display:flex;align-items:center;justify-content:center;padding:0!important;border-radius:12px;font-size:0!important;color:var(--ink-soft)!important;background:transparent!important;}
+.couple-people{display:flex;align-items:center;justify-content:center;margin:2px 0 8px;}
+.couple-people .pill-btn{position:absolute;top:12px;left:12px;}
+.couple-avs{display:inline-flex;align-items:center;}
+.couple-av{width:38px;height:38px;border-radius:50%;display:inline-grid;place-items:center;font-weight:700;font-size:16px;color:#fff;border:2.5px solid var(--card);box-shadow:0 4px 12px -4px var(--shadow-soft);}
+.couple-av.b{margin-left:-11px;}
+.couple-av.sm{width:30px;height:30px;font-size:13px;border-width:2px;}
+.couple-av.sm.b{margin-left:-9px;}
+.couple-tug{position:relative;height:10px;border-radius:999px;margin:16px 8px 8px;background:linear-gradient(90deg,var(--ca,#3AA684) 0 50%,var(--cb,#C25B9E) 50% 100%);}
+.couple-knot{position:absolute;top:50%;left:50%;width:24px;height:24px;margin:-12px 0 0 -12px;border-radius:50%;background:var(--card);border:3px solid var(--ink);box-shadow:0 3px 10px var(--shadow-soft);transition:left .7s cubic-bezier(.3,1.4,.5,1);}
+.couple-tug-names{display:flex;justify-content:space-between;margin:0 2px;font-size:13px;font-weight:600;color:var(--ink-soft);}
+.couple-settle{width:100%;margin-top:16px;min-height:46px;}
+@media (prefers-reduced-motion:reduce){.couple-knot{transition:none;}}
+
+#view-coppia .forecast-grid{grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:6px!important;margin:8px 0 16px!important;}
+#view-coppia .forecast-card,#view-coppia .forecast-card.wide{grid-column:auto!important;display:flex!important;flex-direction:column!important;justify-content:flex-start!important;align-items:flex-start!important;min-height:0!important;padding:7px 9px!important;}
+#view-coppia .forecast-card span{font-size:10px!important;white-space:nowrap!important;overflow:hidden;text-overflow:ellipsis;max-width:100%;}
+#view-coppia .forecast-card strong{margin-top:3px!important;font-size:14px!important;line-height:1.1!important;}
+
+.couple-shares{display:grid;gap:10px;padding:14px;border-radius:var(--radius-card);background:var(--glass-card,var(--card));border:1px solid var(--glass-edge,var(--line));box-shadow:var(--glass-shadow,none);}
+.cs-lbl{display:flex;justify-content:space-between;align-items:baseline;font-size:13px;margin-bottom:5px;}
+.cs-lbl strong{font-variant-numeric:tabular-nums;font-size:14px;}
+.cs-bar{height:8px;border-radius:999px;background:var(--surface-strong);overflow:hidden;}
+.cs-bar i{display:block;height:100%;border-radius:999px;transition:width .4s ease;}
+.cs-note{margin:2px 0 0;}
+.couple-shares .empty-hint{margin:0;}
+
+.couple-strip{display:flex;align-items:center;gap:12px;width:100%;margin:10px 0 2px;padding:11px 14px;border-radius:var(--radius-card);border:1px solid var(--glass-edge,var(--line));background:var(--glass-card,var(--card));box-shadow:var(--glass-shadow,none);color:var(--ink);text-align:left;font:inherit;-webkit-backdrop-filter:blur(14px) saturate(1.5);backdrop-filter:blur(14px) saturate(1.5);}
+.couple-strip-text{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px;}
+.couple-strip-text span{font-size:12.5px;color:var(--ink-soft);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.couple-strip-text strong{font-size:18px;font-variant-numeric:tabular-nums;}
+.couple-strip .chev{font-size:22px;color:var(--ink-soft);}
+
+.split-field .split-chips[hidden],.split-field .split-custom[hidden]{display:none!important;}
+.split-custom{display:flex;align-items:center;gap:10px;margin-top:10px;font-size:13px;font-variant-numeric:tabular-nums;}
+.split-custom span{white-space:nowrap;min-width:0;}
+.split-custom input[type=range]{flex:1;min-width:60px;accent-color:var(--action);}
+.split-hint{margin:8px 2px 0;min-height:1em;}
+.split-hint:empty{display:none;}
+.settle-hint{text-align:center;margin:-4px 0 12px;}
+.mv-split{font-weight:600;color:var(--ink-soft);}
+
+/* Scelta del "+": il rimborso occupa tutta la riga */
+.add-choice-grid .movement-action-btn.add-settle{grid-column:1/-1;min-height:56px;flex-direction:row;gap:10px;}
+.amounts-hidden .cs-lbl strong{letter-spacing:1px;}
+
+/* v1.10.8 — Il "+" ha cinque scelte: Movimento, Ricorrente e Pianificato sopra; Trasferimento e Prelievo ATM sotto. */
+.movement-action-buttons.add-choice-grid{grid-template-columns:repeat(6,minmax(0,1fr))!important;}
+.add-choice-grid .movement-action-btn{grid-column:span 2;}
+.add-choice-grid .movement-action-btn.add-transfer,.add-choice-grid .movement-action-btn.add-atm{grid-column:span 3;}
+.movement-action-btn.add-transfer .movement-action-icon{background:linear-gradient(145deg,#6aa8f0,#2f6fc7)!important;color:#fff!important;font-size:19px;font-weight:800;}
+#sheetTransfer .sheet-head h3{white-space:nowrap;margin-right:8px;font-size:clamp(17px,5vw,21px);flex:0 1 auto;min-width:0;}
+#sheetTransfer .sheet-head .sheet-head-date{min-width:0;flex:1 1 auto;}
+
+/* Noi Due 1.1.0 — Gruppi con saldo proprio */
+.couple-total-note{margin:6px 0 0;font-size:12px;color:var(--ink-soft);}
+.couple-groups-block{margin-top:14px;}
+.couple-groups{display:grid;gap:8px;}
+.group-card{display:grid;grid-template-columns:auto 1fr auto auto;align-items:center;gap:12px;width:100%;padding:11px 12px;border-radius:var(--radius-card);border:1px solid var(--glass-edge,var(--line));background:var(--glass-row,var(--card));box-shadow:var(--glass-shadow,none);color:var(--ink);text-align:left;font:inherit;-webkit-backdrop-filter:blur(14px) saturate(1.5);backdrop-filter:blur(14px) saturate(1.5);}
+.group-card .mv-ic{width:42px;height:42px;border-radius:14px;display:grid;place-items:center;font-size:21px;}
+.group-card-text{min-width:0;display:flex;flex-direction:column;gap:2px;}
+.group-card-text strong{font-size:15px;}
+.group-card-text span{font-size:12px;color:var(--ink-soft);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.group-card-amt{font-weight:800;font-size:16px;font-variant-numeric:tabular-nums;}
+.group-card .chev{font-size:20px;color:var(--ink-soft);}
+.group-detail-hero{text-align:center;padding:14px 14px 16px;margin:4px 0 12px;border-radius:var(--radius-card);border:1px solid var(--glass-edge,var(--line));background:radial-gradient(120% 100% at 0% 0%,color-mix(in srgb,var(--gc,#6B7FD7) 26%,transparent),transparent 62%),var(--glass-card,var(--card));}
+.group-detail-hero .hero-label{margin:0;font-size:13px;color:var(--ink-soft);}
+.group-detail-hero .hero-amount{margin:2px 0 0;font-size:38px;font-weight:800;letter-spacing:-.5px;font-variant-numeric:tabular-nums;}
+.group-detail-grid{grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:6px!important;margin:0 0 4px!important;}
+.group-detail-grid .forecast-card{grid-column:auto!important;padding:7px 9px!important;}
+.group-detail-grid .forecast-card span{font-size:10px!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.group-detail-grid .forecast-card strong{font-size:14px!important;margin-top:3px!important;}
+.gd-month{margin:0 2px 12px;}
+.gd-sub{margin:6px 2px 8px;font-size:15px;}
+#sheetGroupDetail .sheet-head .pill-btn{margin-left:auto;}
+.scope-amt{margin-left:6px;opacity:.75;font-variant-numeric:tabular-nums;font-weight:600;}
+.split-field .group-chips[hidden],.split-field .grp-lbl[hidden],.split-field .split-lbl[hidden]{display:none!important;}
+.split-field .split-lbl{display:block;margin-top:12px;}
+#settleDirToggle[hidden]{display:none!important;}
+.gd-settle{width:100%;margin-top:16px;min-height:46px;border:0;border-radius:14px;background:linear-gradient(180deg,color-mix(in srgb,var(--navy) 88%,#fff),var(--navy));color:#fff;font:inherit;font-weight:700;font-size:15px;box-shadow:0 10px 22px -12px var(--navy);}
+
+/* Noi Due 1.2.0 — Liste della spesa */
+.couple-lists-block{margin-top:4px;}
+.list-card .group-card-text span:last-child{font-size:11.5px;opacity:.85;}
+.list-count{min-width:28px;height:28px;padding:0 8px;border-radius:999px;display:grid;place-items:center;font-weight:800;font-size:14px;background:linear-gradient(145deg,#f7c463,#e48d24);color:#241800;font-variant-numeric:tabular-nums;}
+.list-count.zero{background:var(--surface-strong);color:var(--ink-soft);}
+.list-add{display:grid;grid-template-columns:1fr 74px 46px;gap:8px;margin:2px 0 12px;}
+.list-add .text-input{min-width:0;}
+.list-price-input{text-align:center;}
+.list-add-btn{border:0;border-radius:14px;background:linear-gradient(145deg,#f7c463,#e48d24);color:#241800;font-size:24px;font-weight:800;line-height:1;}
+.list-items{display:grid;gap:6px;}
+.list-item{display:grid;grid-template-columns:auto 1fr auto auto;align-items:center;gap:10px;padding:10px 10px 10px 12px;border-radius:14px;border:1px solid var(--glass-edge,var(--line));background:var(--glass-row,var(--card));cursor:pointer;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none;}
+.list-check{width:24px;height:24px;border-radius:50%;border:2px solid var(--ink-soft);display:grid;place-items:center;font-size:14px;font-weight:800;color:#fff;transition:background .15s ease,border-color .15s ease;}
+.list-item.done .list-check{background:var(--emerald-soft);border-color:var(--emerald-soft);}
+.list-text{min-width:0;font-size:15px;overflow-wrap:anywhere;}
+.list-item.done .list-text{text-decoration:line-through;color:var(--ink-soft);}
+.list-price{font-size:13px;font-weight:600;color:var(--ink-soft);font-variant-numeric:tabular-nums;}
+.list-del{border:0;background:transparent;color:var(--ink-soft);font-size:15px;width:32px;height:32px;border-radius:10px;}
+.list-done-head{display:flex;align-items:center;justify-content:space-between;margin-top:14px;}
+.list-total{text-align:center;margin:12px 0 0;min-height:1em;}
+.list-total:empty{display:none;}
+#sheetListDetail .sheet-head .pill-btn,#sheetListDetail .list-done-head .pill-btn{margin-left:auto;}
+@media (prefers-reduced-motion:reduce){.list-check{transition:none;}}
+.home-lists{display:flex;gap:8px;overflow-x:auto;margin:8px 0 2px;padding:2px 1px 4px;scrollbar-width:none;}
+.home-lists::-webkit-scrollbar{display:none;}
+.home-lists[hidden]{display:none;}
+.home-list-chip{flex:0 0 auto;display:inline-flex;align-items:center;gap:8px;padding:7px 8px 7px 12px;border-radius:999px;border:1px solid var(--glass-edge,var(--line));background:var(--glass-card,var(--card));color:var(--ink);font:inherit;font-size:14px;font-weight:600;-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);}
+.home-list-chip .list-count{min-width:24px;height:24px;font-size:12.5px;}
+
+/* Noi Due 1.3.0 — Prodotti con foto e codice a barre; importazione con scelta */
+.list-add{grid-template-columns:1fr 64px 44px 44px;}
+.list-scan-btn{border:1px solid var(--glass-edge,var(--line));border-radius:14px;background:var(--glass-card,var(--card));font-size:20px;line-height:1;}
+.list-item{grid-template-columns:auto auto 1fr auto auto;}
+.list-thumb{display:block;}
+.list-thumb:empty{display:block;width:0;margin-left:-10px;}
+.list-thumb img{display:block;width:38px;height:38px;border-radius:10px;object-fit:cover;background:#fff;}
+.list-code{display:block;font-size:11px;color:var(--ink-soft);font-variant-numeric:tabular-nums;margin-top:1px;}
+.list-del{font-size:22px;}
+.scan-video-wrap{position:relative;border-radius:18px;overflow:hidden;background:#000;aspect-ratio:4/3;margin:4px 0 10px;}
+.scan-video-wrap video{width:100%;height:100%;object-fit:cover;display:block;}
+.scan-frame{position:absolute;left:12%;right:12%;top:30%;bottom:30%;border:3px solid #E8A33D;border-radius:14px;box-shadow:0 0 0 999px rgba(0,0,0,.35);}
+.scan-video-wrap[hidden]{display:none;}
+.scan-status{text-align:center;margin:4px 0 12px;}
+.scan-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin:0 0 14px;}
+.scan-actions .pill-btn{min-height:40px;padding:8px 14px;}
+.scan-code-row{display:grid;grid-template-columns:1fr 46px;gap:8px;}
+.scan-code-row .list-add-btn{font-size:18px;}
+.scan-card{padding:14px;border-radius:var(--radius-card);border:1px solid var(--glass-edge,var(--line));background:var(--glass-card,var(--card));margin-top:6px;}
+.scan-img{display:block;max-width:100%;max-height:180px;margin:0 auto 10px;border-radius:12px;object-fit:contain;background:#fff;}
+.scan-found{margin:0 0 10px;text-align:center;font-weight:700;font-size:14px;}
+.item-links{display:flex;flex-wrap:wrap;gap:8px;margin:4px 0 14px;}
+.item-links:empty{display:none;}
+.item-link{text-decoration:none;color:var(--ink);font-size:13px;min-height:34px;padding:6px 12px;display:inline-flex;align-items:center;}
+.item-photo{text-align:center;margin:0 0 12px;}
+.item-photo[hidden]{display:none;}
+.item-photo img{max-width:100%;max-height:220px;border-radius:14px;object-fit:contain;background:#fff;}
+.import-compare{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:6px 0 8px;}
+.ic-card{display:flex;flex-direction:column;gap:3px;padding:12px;border-radius:var(--radius-card);border:1px solid var(--glass-edge,var(--line));background:var(--glass-card,var(--card));font-size:12.5px;min-width:0;}
+.ic-card strong{font-size:15px;margin-bottom:2px;}
+.ic-card span{color:var(--ink-soft);overflow-wrap:anywhere;}
+.ic-card small{color:var(--ink-soft);opacity:.8;margin-top:3px;}
+.import-diff{text-align:center;margin:4px 0 12px;}
+.import-opt{display:flex;flex-direction:column;align-items:flex-start;gap:3px;width:100%;margin:0 0 8px;padding:13px 14px;border-radius:var(--radius-card);border:1px solid var(--glass-edge,var(--line));background:var(--glass-row,var(--card));color:var(--ink);font:inherit;text-align:left;}
+.import-opt strong{font-size:15.5px;}
+.import-opt span{font-size:12.5px;color:var(--ink-soft);}
+.import-opt.recommended{border-color:color-mix(in srgb,#E8A33D 70%,transparent);background:radial-gradient(120% 100% at 0% 0%,rgba(232,163,61,.18),transparent 62%),var(--glass-row,var(--card));}
+.import-opt.recommended strong::after{content:"  consigliato";font-size:11px;font-weight:700;color:#c47f14;}
+.import-prefer-row{margin:-2px 0 14px;}

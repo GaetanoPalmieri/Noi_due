@@ -4,11 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
 <title>Noi Due — Spese di coppia</title>
-<meta name="app-version" content="1.7.0">
+<meta name="app-version" content="1.8.0">
 <meta name="description" content="Spese di coppia: chi ha pagato, chi deve a chi, budget e statistiche.">
 
 <!-- PWA / iOS home screen -->
-<link rel="manifest" href="manifest.json?v=1.7.0">
+<link rel="manifest" href="manifest.json?v=1.8.0">
 <meta name="theme-color" content="#12181F">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -16,9 +16,9 @@
 <!-- iPhone: icona nella cartella principale, senza ?v=, con la dimensione dichiarata (la legge anche Safari più vecchio). -->
 <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
 <link rel="apple-touch-icon-precomposed" sizes="180x180" href="apple-touch-icon-precomposed.png">
-<link rel="icon" href="icons/icon-192.png?v=1.7.0">
+<link rel="icon" href="icons/icon-192.png?v=1.8.0">
 
-<link rel="stylesheet" href="style.css?v=1.7.0">
+<link rel="stylesheet" href="style.css?v=1.8.0">
 </head>
 <body>
 
@@ -96,7 +96,7 @@
         <p class="empty-hint" id="budgetEmptyHint" hidden>Nessuna categoria di spesa.</p>
       </div>
 
-      <p class="app-version">Versione 1.7.0</p>
+      <p class="app-version">Versione 1.8.0</p>
     </section>
 
     <!-- ===== COPPIA ===== -->
@@ -393,7 +393,7 @@
         </div>
       </div>
 
-      <p class="app-version">Noi Due v1.7.0 · dati salvati solo su questo dispositivo</p>
+      <p class="app-version">Noi Due v1.8.0 · dati salvati solo su questo dispositivo</p>
     </section>
 
   </main>
@@ -625,13 +625,15 @@
     <div class="list-tools">
       <button type="button" class="pill-btn mini-btn" id="listPasteBtn">📋 Incolla</button>
       <button type="button" class="pill-btn mini-btn" id="listSortBtn">↕︎ In ordine</button>
+      <button type="button" class="pill-btn mini-btn" id="listFavBtn">★ Preferiti</button>
       <button type="button" class="pill-btn mini-btn" id="listBaseBtn" hidden>⭐ Lista base</button>
     </div>
     <div class="list-suggest" id="listSuggest" hidden></div>
     <div id="listTodo" class="list-items"></div>
     <p class="empty-hint" id="listEmpty" hidden>La lista è vuota. Scrivi qui sopra cosa comprare.</p>
     <div id="listDoneWrap" hidden>
-      <div class="list-done-head"><h4 class="gd-sub">Nel carrello</h4><button type="button" class="pill-btn mini-btn" id="listClearDone">Togli</button></div>
+      <div class="list-done-head"><h4 class="gd-sub" id="listDoneTitle">Nel carrello</h4><button type="button" class="pill-btn mini-btn" id="listClearDone">Togli</button></div>
+      <p class="field-hint list-done-hint" id="listDoneHint" hidden>Quando esci dalla lista tornano da comprare.</p>
       <div id="listDone" class="list-items"></div>
     </div>
     <p class="field-hint list-total" id="listTotal"></p>
@@ -669,6 +671,7 @@
       <div class="field-row"><label>Quantità</label><div class="qty-stepper"><button type="button" id="itemQtyMinus" aria-label="Meno">−</button><span id="itemQty">1</span><button type="button" id="itemQtyPlus" aria-label="Più">+</button></div></div>
       <div class="field-row"><label>Prezzo cad. (facoltativo)</label><input type="text" id="itemPriceInput" class="text-input" inputmode="decimal" placeholder="€" autocomplete="off"></div>
     </div>
+    <button type="button" class="shared-switch item-fav-switch" id="itemFavSwitch" aria-pressed="false"><span class="shared-knob" aria-hidden="true"></span><span class="shared-switch-text"><strong>★ Nei preferiti</strong><small>Lo ritrovi in “★ Preferiti” per rimetterlo in lista con un tocco</small></span></button>
     <div class="field-row"><label>Per chi</label><div class="chip-row" id="itemForChips"></div></div>
     <div class="field-row"><label>Reparto</label><div class="chip-row" id="itemAisleChips"></div></div>
     <div class="field-row"><label>Link del prodotto (facoltativo)</label>
@@ -723,6 +726,16 @@
   </div>
 </template>
 
+<template id="tpl-favorites">
+  <div class="sheet" id="sheetFavorites">
+    <div class="sheet-handle"></div>
+    <div class="sheet-head"><h3>★ Preferiti</h3><button class="primary-btn" id="favAddBtn" aria-label="Aggiungi i preferiti scelti">Aggiungi</button></div>
+    <div class="fav-add-row"><input type="text" id="favNewInput" class="text-input" maxlength="120" placeholder="Nuovo preferito, es. Caffè" autocomplete="off"><button type="button" class="list-add-btn" id="favNewBtn" aria-label="Aggiungi ai preferiti">＋</button></div>
+    <div id="favList" class="fav-list"></div>
+    <p class="empty-hint" id="favEmpty" hidden>Nessun preferito. Scrivilo qui sopra oppure apri un articolo e attiva “★ Nei preferiti”.</p>
+  </div>
+</template>
+
 <template id="tpl-list-form">
   <div class="sheet" id="sheetListForm">
     <div class="sheet-handle"></div>
@@ -732,10 +745,13 @@
     <div class="field-row"><label>Nome lista</label><input type="text" id="listNameInput" class="text-input" maxlength="40" placeholder="es. Spesa, Per la casa, Farmacia…"></div>
     <div class="field-row"><label>Icona</label><div class="emoji-row" id="listEmojiRow"></div></div>
     <div class="field-row"><label>Gruppo della spesa</label><div class="chip-row" id="listGroupChips"></div><small class="field-hint">Quando registri gli acquisti, la spesa va in questo gruppo.</small></div>
+    <div class="field-row" id="listRestockRow">
+      <button type="button" class="shared-switch" id="listRestockSwitch" aria-pressed="false"><span class="shared-knob" aria-hidden="true"></span><span class="shared-switch-text"><strong>Lista della spesa fissa</strong><small>Al supermercato spunti i prodotti; quando esci dalla lista tornano tutti da comprare. Elimini solo a mano.</small></span></button>
+    </div>
     <div class="field-row" id="listBaseRow" hidden>
       <label>Lista base</label>
       <small class="field-hint" id="listBaseInfo"></small>
-      <div class="scan-actions"><button type="button" class="pill-btn" id="listBaseSave">⭐ Salva gli articoli attuali come lista base</button><button type="button" class="pill-btn" id="listBaseClear" hidden>Togli la lista base</button></div>
+      <div class="list-base-actions"><button type="button" class="pill-btn" id="listBaseSave">⭐ Salva gli articoli attuali come lista base</button><button type="button" class="pill-btn" id="listBaseClear" hidden>Togli la lista base</button></div>
     </div>
     <button class="text-danger-btn" id="deleteListBtn" hidden>Elimina lista</button>
   </div>
@@ -1153,6 +1169,6 @@
   </div>
 </template>
 
-<script src="app.js?v=1.7.0"></script>
+<script src="app.js?v=1.8.0"></script>
 </body>
 </html>

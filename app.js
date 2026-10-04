@@ -321,8 +321,11 @@ function sanitizeCouple(data){
       photo:/^data:image\/(jpeg|png|webp);base64,/.test(String(i.photo||""))&&String(i.photo).length<300000?String(i.photo):"",
       qty:Math.min(99,Math.max(1,Math.round(Number(i.qty)||1))),aisle:typeof i.aisle==="string"?i.aisle.slice(0,20):"",forWhom:["a","b"].includes(i.forWhom)?i.forWhom:"both"})),
     sortMode:l.sortMode==="manual"?"manual":"aisle",
+    restockOnExit:typeof l.restockOnExit==="boolean"?l.restockOnExit:/spesa|supermercat/i.test(String(l.name||"")),
     template:(Array.isArray(l.template)?l.template:[]).map(t=>String(t||"").slice(0,120)).filter(Boolean).slice(0,200),
     history:Object.fromEntries(Object.entries(l.history&&typeof l.history==="object"?l.history:{}).filter(([k,v])=>k&&v&&v.text).slice(-300).map(([k,v])=>[k.slice(0,120),{text:String(v.text).slice(0,120),count:Math.max(1,Number(v.count)||1),last:String(v.last||"").slice(0,10),aisle:typeof v.aisle==="string"?v.aisle.slice(0,20):""}]))}));
+  // Preferiti: prodotti da rimettere in lista con un tocco (comuni a tutte le liste).
+  data.favorites=(Array.isArray(data.favorites)?data.favorites:[]).filter(f=>f&&f.text).map(f=>({id:String(f.id||uid()).slice(0,120),text:String(f.text).slice(0,120),aisle:typeof f.aisle==="string"?f.aisle.slice(0,20):""})).slice(0,300);
   // Elementi eliminati (liste, articoli, gruppi, conti, categorie): servono a unire i backup senza farli ricomparire.
   const del=data.deleted&&typeof data.deleted==="object"?data.deleted:{};
   const cut=new Date(); cut.setDate(cut.getDate()-180); const cutISO=`${cut.getFullYear()}-${pad2(cut.getMonth()+1)}-${pad2(cut.getDate())}`;
@@ -331,8 +334,8 @@ function sanitizeCouple(data){
 function defaultLists(groups){
   const casa=(groups.find(g=>/casa/i.test(g.name))||groups[0])?.id, coppia=(groups.find(g=>/coppia/i.test(g.name))||groups[0])?.id;
   return [
-    {id:uid(),name:"Spesa",emoji:"🛒",groupId:coppia,items:[]},
-    {id:uid(),name:"Per la casa",emoji:"🏠",groupId:casa,items:[]},
+    {id:uid(),name:"Spesa",emoji:"🛒",groupId:coppia,items:[],restockOnExit:true,sortMode:"aisle",template:[],history:{}},
+    {id:uid(),name:"Per la casa",emoji:"🏠",groupId:casa,items:[],restockOnExit:false,sortMode:"aisle",template:[],history:{}},
   ];
 }
 function defaultGroups(){
@@ -1073,19 +1076,13 @@ function buildEmojiField(row, initial, onChange){
   input.autocomplete="off";input.setAttribute("autocorrect","off");input.setAttribute("autocapitalize","off");input.spellcheck=false;
   const clear=document.createElement("button");clear.type="button";clear.className="emoji-clear";clear.textContent="✕";clear.setAttribute("aria-label","Svuota icona");
   wrap.append(input,clear);
-  const hint=document.createElement("p");hint.className="field-hint emoji-hint";hint.textContent="Sulla tastiera tocca 🌐 o 😀 per le emoji. Puoi metterne fino a 4.";
-  const sugg=document.createElement("div");sugg.className="emoji-row emoji-suggest";
-  const used=[...new Set([...state.categories,...state.macroCategories].flatMap(c=>emojiGraphemes(c.emoji||"")).filter(Boolean))];
-  [...new Set([...used,...EMOJIS])].slice(0,36).forEach(em=>{
-    const b=document.createElement("button");b.type="button";b.className="emoji-opt";b.textContent=em;
-    b.addEventListener("click",()=>{input.value=cleanEmoji(input.value+em);commit();});
-    sugg.appendChild(b);
-  });
+  // Solo emoji dalla tastiera del telefono, niente icone suggerite.
+  const hint=document.createElement("p");hint.className="field-hint emoji-hint";hint.textContent="Tocca il campo e sulla tastiera premi 😀 (o 🌐) per scegliere l'emoji. Puoi metterne fino a 4.";
   const commit=()=>{const v=cleanEmoji(input.value);onChange(v||EMOJIS[0]);};
   input.addEventListener("input",()=>{const v=cleanEmoji(input.value);if(v!==input.value&&!input.value.endsWith("\u200D"))input.value=v;commit();});
   input.addEventListener("blur",()=>{input.value=cleanEmoji(input.value);commit();});
   clear.addEventListener("click",()=>{input.value="";input.focus();onChange(EMOJIS[0]);});
-  row.append(wrap,hint,sugg);
+  row.append(wrap,hint);
   commit();
 }
 function movementRowHtml({emoji,color,title,badges="",meta="",amountHtml,type,date,relative=true,kind=null,paid=false}){
@@ -2746,6 +2743,46 @@ function showActionToast(message,label,fn){
   toast.querySelector("button").onclick=()=>{ fn(); toast.classList.remove("show"); };
   clearTimeout(toast._timer); toast._timer=setTimeout(()=>{ toast.classList.remove("show"); toast.style.pointerEvents=""; },4500);
 }
+function isFavorite(text){ const k=normName(parseQty(text).text); return (state.favorites||[]).some(f=>normName(f.text)===k); }
+function setFavorite(text,on,aisle=""){
+  if(!Array.isArray(state.favorites)) state.favorites=[];
+  const clean=parseQty(text).text, k=normName(clean);
+  const idx=state.favorites.findIndex(f=>normName(f.text)===k);
+  if(on && idx<0) state.favorites.push({id:uid(),text:clean,aisle:aisle||guessAisle(clean)});
+  if(!on && idx>=0){ markDeleted(state.favorites[idx].id); state.favorites.splice(idx,1); }
+}
+function openFavorites(listId,onAdded){
+  openSheet("tpl-favorites",(node,close)=>{
+    const box=node.querySelector("#favList"), addBtn=node.querySelector("#favAddBtn"), newInput=node.querySelector("#favNewInput");
+    const picked=new Set();
+    function paint(){
+      const l=state.lists.find(x=>x.id===listId);
+      const inList=new Set((l?.items||[]).filter(i=>!i.done).map(i=>normName(i.text)));
+      const favs=(state.favorites||[]).slice().sort((a,b)=>a.text.localeCompare(b.text,"it"));
+      node.querySelector("#favEmpty").hidden=favs.length>0;
+      box.innerHTML="";
+      favs.forEach(f=>{
+        const there=inList.has(normName(f.text));
+        const row=document.createElement("div"); row.className="fav-row"+(there?" in-list":"")+(picked.has(f.id)?" picked":"");
+        row.innerHTML=`<button type="button" class="fav-pick" aria-pressed="${picked.has(f.id)}"><span class="list-check" aria-hidden="true">${picked.has(f.id)?"✓":""}</span><span class="fav-text">${escapeHtml(aisleInfo(f.aisle||guessAisle(f.text)).emoji)} ${escapeHtml(f.text)}${there?`<small>già in lista</small>`:""}</span></button><button type="button" class="fav-remove" aria-label="Togli ${escapeHtml(f.text)} dai preferiti">✕</button>`;
+        row.querySelector(".fav-pick").addEventListener("click",()=>{ if(there) return; picked.has(f.id)?picked.delete(f.id):picked.add(f.id); paint(); });
+        row.querySelector(".fav-remove").addEventListener("click",()=>{ picked.delete(f.id); setFavorite(f.text,false); persist(); paint(); });
+        box.appendChild(row);
+      });
+      addBtn.textContent=picked.size?`Aggiungi ${picked.size}`:"Aggiungi";
+    }
+    const addNew=()=>{ const t=newInput.value.trim(); if(!t){ newInput.focus(); return; } setFavorite(t,true); const f=state.favorites.find(x=>normName(x.text)===normName(parseQty(t).text)); if(f) picked.add(f.id); newInput.value=""; persist(); paint(); newInput.focus(); };
+    node.querySelector("#favNewBtn").addEventListener("click",addNew);
+    newInput.addEventListener("keydown",e=>{ if(e.key==="Enter"){ e.preventDefault(); addNew(); } });
+    addBtn.addEventListener("click",()=>{
+      const l=state.lists.find(x=>x.id===listId); if(!l) return close();
+      const favs=(state.favorites||[]).filter(f=>picked.has(f.id));
+      favs.forEach(f=>l.items.push(newListItem(f.text,{aisle:f.aisle||guessAisle(f.text)})));
+      persist(); close(); onAdded&&onAdded(favs.length);
+    });
+    paint();
+  });
+}
 function openListDetail(listId){
   openSheet("tpl-list-detail",(node,close)=>{
     const input=node.querySelector("#listItemInput"), priceInput=node.querySelector("#listPriceInput");
@@ -2765,7 +2802,7 @@ function openListDetail(listId){
       row.innerHTML=`<span class="list-swipe-bg" aria-hidden="true"><span>${it.done?"↩︎ Da comprare":"✓ Nel carrello"}</span><span>🗑️ Elimina</span></span>
         <span class="list-check" aria-hidden="true">${it.done?"✓":""}</span>
         <span class="list-thumb">${pic?`<img src="${escapeHtml(pic)}" alt="" loading="lazy" referrerpolicy="no-referrer">`:""}</span>
-        <span class="list-text">${it.qty>1?`<b class="list-qty">${it.qty}×</b> `:""}${escapeHtml(it.text)}${who}</span>
+        <span class="list-text">${it.qty>1?`<b class="list-qty">${it.qty}×</b> `:""}${escapeHtml(it.text)}${isFavorite(it.text)?` <span class="list-fav" aria-label="preferito">★</span>`:""}${who}</span>
         <span class="list-price">${it.price?(balancesHidden?"••••":fmt(it.price*(it.qty||1))):""}</span>
         <button type="button" class="list-del" aria-label="Dettagli di ${escapeHtml(it.text)}">›</button>`;
       row.querySelector("img")?.addEventListener("error",e=>{ e.target.remove(); });
@@ -2816,6 +2853,10 @@ function openListDetail(listId){
       const reg=node.querySelector("#listRegisterBtn");
       reg.hidden=!done.length;
       reg.textContent=`🧾 Registra come spesa (${done.length})`;
+      const fixed=!!l.restockOnExit;
+      node.querySelector("#listDoneTitle").textContent=fixed?"Presi":"Nel carrello";
+      node.querySelector("#listDoneHint").hidden=!fixed;
+      node.querySelector("#listClearDone").textContent=fixed?"↩︎ Rimetti":"Togli";
       node.querySelector("#listSortBtn").textContent=l.sortMode==="manual"?"🗂️ Per reparto":"↕︎ In ordine";
       const baseBtn=node.querySelector("#listBaseBtn"); baseBtn.hidden=!(l.template&&l.template.length);
       // Comprati spesso
@@ -2862,7 +2903,20 @@ function openListDetail(listId){
       save(); showToast("Aggiunto alla lista");
     }));
     [input,priceInput].forEach(el=>el.addEventListener("keydown",e=>{ if(e.key==="Enter"){ e.preventDefault(); add(); } }));
-    node.querySelector("#listClearDone").addEventListener("click",()=>{ const l=list(), done=l.items.filter(i=>i.done); recordPurchased(l,done); markDeleted(done.map(i=>i.id)); l.items=l.items.filter(i=>!i.done); save(); showToast("Tolti gli articoli nel carrello"); });
+    node.querySelector("#listClearDone").addEventListener("click",()=>{ const l=list(), done=l.items.filter(i=>i.done);
+      if(l.restockOnExit){ done.forEach(i=>{ i.done=false; }); save(); showToast("Rimessi tutti da comprare"); return; }
+      recordPurchased(l,done); markDeleted(done.map(i=>i.id)); l.items=l.items.filter(i=>!i.done); save(); showToast("Tolti gli articoli nel carrello"); });
+    node.querySelector("#listFavBtn").addEventListener("click",()=>openFavorites(listId,n=>{ save(); if(n) showToast(`${n} ${n===1?"preferito aggiunto":"preferiti aggiunti"}`); }));
+    // Lista della spesa fissa: uscendo dalla lista i prodotti presi tornano "da comprare".
+    const restockWatch=setInterval(()=>{
+      if(node.isConnected) return;
+      clearInterval(restockWatch);
+      const l=state.lists.find(x=>x.id===listId);
+      if(!l||!l.restockOnExit) return;
+      const done=l.items.filter(i=>i.done); if(!done.length) return;
+      recordPurchased(l,done); done.forEach(i=>{ i.done=false; });
+      persist(); renderCoupleLists();
+    },400);
     node.querySelector("#listEditBtn").addEventListener("click",()=>{ close(); openListForm(listId); });
     node.querySelector("#listRegisterBtn").addEventListener("click",()=>{
       const l=list(), done=l.items.filter(i=>i.done);
@@ -2883,7 +2937,7 @@ function openListDetail(listId){
           state.transactions.push({id:uid(),date:date||todayISO(),amount,type:"expense",name:`${l.name} – solo ${personName(who)}`,categoryId:listCategoryFor(l),
             accountId:payer==="joint"?payerAcc:payerAcc,toAccountId:null,note:its.map(label).join(", ").slice(0,500),split:{mode,pctA:50},groupId:l.groupId});
         });
-        if(cur){ recordPurchased(cur,done); markDeleted([...ids]); cur.items=cur.items.filter(i=>!ids.has(i.id)); }
+        if(cur){ recordPurchased(cur,done); if(cur.restockOnExit) cur.items.forEach(i=>{ if(ids.has(i.id)) i.done=false; }); else { markDeleted([...ids]); cur.items=cur.items.filter(i=>!ids.has(i.id)); } }
         persist(); renderAll();
         showToast(missingPrice.length?`Registrata. Gli articoli solo di ${missingPrice.join(" e ")} non avevano prezzo: aggiungili a mano`:"Spesa registrata: articoli tolti dalla lista");
       };
@@ -2892,7 +2946,7 @@ function openListDetail(listId){
         // Solo articoli personali: si chiede solo chi ha pagato tramite il modulo, con importo personale.
         const who=personal[0].forWhom, amount=sum(personal);
         openAddTransaction(null,{split:{mode:"personal",pctA:50},name:`${l.name} – solo ${personName(who)}`,amount,categoryId:listCategoryFor(l),groupId:l.groupId,note:personal.map(label).join(", ").slice(0,500),
-          onSaved:t=>{ const cur=state.lists.find(x=>x.id===listId); if(cur){ recordPurchased(cur,done); markDeleted([...ids]); cur.items=cur.items.filter(i=>!ids.has(i.id)); } }});
+          onSaved:t=>{ const cur=state.lists.find(x=>x.id===listId); if(cur){ recordPurchased(cur,done); if(cur.restockOnExit) cur.items.forEach(i=>{ if(ids.has(i.id)) i.done=false; }); else { markDeleted([...ids]); cur.items=cur.items.filter(i=>!ids.has(i.id)); } } }});
         return;
       }
       const amount=sum(shared);
@@ -2986,6 +3040,8 @@ function openListForm(listId=null){
       chips.querySelectorAll("[data-group]").forEach(b=>b.addEventListener("click",()=>{draft.groupId=b.dataset.group;paintGroups();}));
     };
     paintGroups();
+    draft.restock=l?!!l.restockOnExit:false;
+    { const sw=node.querySelector("#listRestockSwitch"); const p=()=>{ sw.classList.toggle("on",draft.restock); sw.setAttribute("aria-pressed",String(draft.restock)); }; sw.addEventListener("click",()=>{ draft.restock=!draft.restock; p(); }); p(); }
     if(l){
       const row=node.querySelector("#listBaseRow"), info=node.querySelector("#listBaseInfo"), clr=node.querySelector("#listBaseClear");
       row.hidden=false;
@@ -3007,8 +3063,8 @@ function openListForm(listId=null){
     node.querySelector("#saveListBtn").addEventListener("click",()=>{
       const name=nameInput.value.trim();
       if(!name){ showToast("Inserisci il nome della lista"); nameInput.focus(); return; }
-      if(l){ Object.assign(l,{name,emoji:draft.emoji,groupId:draft.groupId}); persist(); renderAll(); close(); showToast("Lista aggiornata"); }
-      else{ const nl={id:uid(),name,emoji:draft.emoji,groupId:draft.groupId,items:[]}; state.lists.push(nl); persist(); renderAll(); close(); openListDetail(nl.id); }
+      if(l){ Object.assign(l,{name,emoji:draft.emoji,groupId:draft.groupId,restockOnExit:draft.restock}); persist(); renderAll(); close(); showToast("Lista aggiornata"); }
+      else{ const nl={id:uid(),name,emoji:draft.emoji,groupId:draft.groupId,items:[],restockOnExit:draft.restock,sortMode:"aisle",template:[],history:{}}; state.lists.push(nl); persist(); renderAll(); close(); openListDetail(nl.id); }
     });
   });
 }
@@ -3491,6 +3547,11 @@ function openListItem(listId,itemId){
     const paintAisle=()=>{ aisleBox.innerHTML=[...AISLES.map(a=>a[0]),"altro"].map(k=>{ const a=aisleInfo(k); return `<button type="button" class="chip${draft.aisle===k?" active":""}" data-aisle="${k}"><span class="em">${a.emoji}</span>${escapeHtml(a.name)}</button>`; }).join("");
       aisleBox.querySelectorAll("[data-aisle]").forEach(b=>b.addEventListener("click",()=>{ draft.aisle=b.dataset.aisle; paintAisle(); })); };
     paintFor(); paintAisle();
+    draft.fav=isFavorite(it.text);
+    const favSw=node.querySelector("#itemFavSwitch");
+    const paintFav=()=>{ favSw.classList.toggle("on",draft.fav); favSw.setAttribute("aria-pressed",String(draft.fav)); };
+    favSw.addEventListener("click",()=>{ draft.fav=!draft.fav; paintFav(); });
+    paintFav();
     const urlInput=node.querySelector("#itemUrlInput"), urlHint=node.querySelector("#itemUrlHint");
     urlInput.value=it.url||"";
     async function fetchFromUrl(){
@@ -3553,6 +3614,7 @@ function openListItem(listId,itemId){
       if(!text){ showToast("Scrivi il nome"); nameInput.focus(); return; }
       const price=parseAmount(priceInput.value);
       Object.assign(it,{text:text.slice(0,120),price:price>0?Math.round(price*100)/100:null,code:cleanCode(codeInput.value),photo:draft.photo,image:draft.image,url:draft.url,qty:draft.qty,aisle:draft.aisle,forWhom:draft.forWhom});
+      if(draft.fav!==isFavorite(it.text)) setFavorite(it.text,draft.fav,draft.aisle);
       if(!persist()){ showToast("Spazio pieno: togli qualche foto dalle liste"); return; }
       renderCoupleLists(); if(listDetailRefresh) listDetailRefresh(); close();
     });
@@ -4890,6 +4952,7 @@ function mergeStates(local,inc,prefer){
   out.transactions.forEach(t=>{ const key=t.recurringId?`r|${t.recurringId}|${t.date}`:t.plannedId?`p|${t.plannedId}|${t.date}`:null; if(!key) return; const prev=seen.get(key); if(!prev||(!preferIds.has(prev.id)&&preferIds.has(t.id))) seen.set(key,t); });
   out.transactions=out.transactions.filter(t=>{ const key=t.recurringId?`r|${t.recurringId}|${t.date}`:t.plannedId?`p|${t.plannedId}|${t.date}`:null; return !key||seen.get(key)===t; });
   out.planned=out.planned.filter(p=>!out.transactions.some(t=>t.plannedId===p.id&&t.date===p.date));
+  { const seenF=new Set(); out.favorites=[...(second.favorites||[]),...(first.favorites||[])].filter(f=>{ const k=normName(f.text); if(!k||seenF.has(k)||gone(f.id)) return false; seenF.add(k); return true; }); }
   out.deleted=tomb;
   out.couple={...second.couple,lastGroupId:local.couple?.lastGroupId||null};
   out.mainAccountId=out.accounts.some(a=>a.id===local.mainAccountId)?local.mainAccountId:(out.accounts.some(a=>a.id===second.mainAccountId)?second.mainAccountId:null);

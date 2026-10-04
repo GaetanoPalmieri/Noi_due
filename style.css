@@ -6342,3 +6342,35 @@ html.amounts-hidden .stat-card-value::after{font-size:20px;}
 #itemAisleChips{max-height:120px;overflow-y:auto;}
 .nd-welcome{margin:-4px 0 12px;}
 #listBaseRow[hidden]{display:none;}
+
+/* Noi Due 1.8.0 — Preferiti, lista della spesa fissa, allineamenti */
+.list-base-actions{display:flex;flex-direction:column;align-items:flex-start;gap:8px;margin-top:10px;}
+.list-base-actions .pill-btn{width:auto;max-width:100%;min-height:40px;padding:8px 14px;text-align:left;}
+.list-base-actions .pill-btn[hidden]{display:none;}
+#listBaseInfo{display:block;margin:2px 0 0;}
+#listRestockRow{margin-bottom:14px;}
+#listRestockSwitch.on .shared-knob,.item-fav-switch.on .shared-knob{background:#e48d24;}
+.item-fav-switch{margin:0 0 14px;}
+.list-fav{color:#e48d24;font-size:.85em;}
+.fav-add-row{display:grid;grid-template-columns:1fr 46px;gap:8px;margin:0 0 12px;}
+.fav-list{display:grid;gap:6px;}
+.fav-row{display:grid;grid-template-columns:1fr auto;align-items:center;border-radius:14px;border:1px solid var(--glass-edge,var(--line));background:var(--glass-row,var(--card));}
+.fav-row.picked{border-color:#e48d24;}
+.fav-row.in-list{opacity:.55;}
+.fav-pick{display:flex;align-items:center;gap:12px;padding:10px 12px;border:0;background:transparent;color:var(--ink);font:inherit;text-align:left;min-width:0;}
+.fav-row.picked .list-check{background:#e48d24;border-color:#e48d24;}
+.fav-text{min-width:0;font-size:15px;}
+.fav-text small{display:block;font-size:11px;color:var(--ink-soft);}
+.fav-remove{width:40px;height:40px;margin-right:4px;border:0;border-radius:10px;background:transparent;color:var(--ink-soft);font-size:15px;}
+
+/* Interruttori (come in Bilancio) */
+.shared-switch{display:flex;align-items:center;gap:12px;width:100%;padding:11px 12px;border-radius:14px;border:1px solid var(--glass-edge,var(--line));background:var(--glass-row,var(--card));color:var(--ink);font:inherit;text-align:left;}
+.shared-knob{position:relative;flex:none;width:44px;height:26px;border-radius:999px;background:var(--surface-strong);transition:background .2s ease;}
+.shared-knob::after{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.25);transition:transform .2s ease;}
+.shared-switch.on .shared-knob{background:#8E7CC3;}
+.shared-switch.on .shared-knob::after{transform:translateX(18px);}
+.shared-switch-text{display:flex;flex-direction:column;gap:1px;}
+.shared-switch-text strong{font-size:15px;}
+.shared-switch-text small{font-size:12px;color:var(--ink-soft);}
+#listRestockSwitch .shared-switch-text small{line-height:1.35;}
+.list-done-hint{margin:-4px 2px 8px;}

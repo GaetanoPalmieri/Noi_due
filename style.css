@@ -6211,3 +6211,13 @@ html.amounts-hidden .stat-card-value::after{font-size:20px;}
 .add-choice-grid .movement-action-btn.add-recent,.add-choice-grid .movement-action-btn.add-settle-small,.add-choice-grid .movement-action-btn.add-list{grid-column:span 2;}
 .movement-action-btn.add-settle-small .movement-action-icon{background:linear-gradient(145deg,#e7a3cf,#c25b9e)!important;color:#fff!important;font-size:19px;}
 .movement-action-btn.add-list .movement-action-icon{background:linear-gradient(145deg,#9fd8c2,#3aa684)!important;color:#fff!important;font-size:19px;}
+
+/* Noi Due 1.5.0 — solo spese e rimborsi, niente macrocategorie né budget, tutto in Home */
+.mv-amt.expense,.tx-detail-row .v.expense{color:var(--ink)!important;}
+#statsGroupToggle,#catHubToggle[hidden],#categoryKindToggle[hidden]{display:none!important;}
+.nd-explain{font-weight:500;color:var(--ink-soft);font-size:.92em;}
+.chip-group-title .nd-explain{text-transform:none;letter-spacing:0;}
+.nd-groups-hint{margin:-4px 2px 10px;}
+.scan-actions .pill-btn{flex:1 1 auto;}
+.period-x{display:inline-grid;}
+.period-x[hidden]{display:none!important;}

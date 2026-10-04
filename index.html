@@ -4,11 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
 <title>Noi Due — Spese di coppia</title>
-<meta name="app-version" content="1.4.1">
+<meta name="app-version" content="1.5.0">
 <meta name="description" content="Spese di coppia: chi ha pagato, chi deve a chi, budget e statistiche.">
 
 <!-- PWA / iOS home screen -->
-<link rel="manifest" href="manifest.json?v=1.4.1">
+<link rel="manifest" href="manifest.json?v=1.5.0">
 <meta name="theme-color" content="#12181F">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -16,9 +16,9 @@
 <!-- iPhone: icona nella cartella principale, senza ?v=, con la dimensione dichiarata (la legge anche Safari più vecchio). -->
 <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
 <link rel="apple-touch-icon-precomposed" sizes="180x180" href="apple-touch-icon-precomposed.png">
-<link rel="icon" href="icons/icon-192.png?v=1.4.1">
+<link rel="icon" href="icons/icon-192.png?v=1.5.0">
 
-<link rel="stylesheet" href="style.css?v=1.4.1">
+<link rel="stylesheet" href="style.css?v=1.5.0">
 </head>
 <body>
 
@@ -57,7 +57,7 @@
         </div>
         <div class="hero-liquidity">
           <div class="hero-liquidity-item"><span>Cassa comune</span><strong id="ndPaidJoint">€0</strong></div>
-          <div class="hero-liquidity-item"><span>Budget rimasto</span><strong id="ndBudgetLeft">—</strong></div>
+          <div class="hero-liquidity-item"><span>Rimborsi tra voi</span><strong id="ndBudgetLeft">€0</strong></div>
         </div>
       </div>
       <button type="button" class="couple-strip" id="homeCoupleStrip" aria-label="Apri Saldi">
@@ -89,14 +89,14 @@
         <p class="empty-hint" id="txEmptyHint" hidden>Nessun movimento questo mese. Tocca + per aggiungerne uno.</p>
       </div>
 
-      <div class="section-block">
+      <div class="section-block nd-legacy" hidden>
         <div class="section-head"><h2>Budget e spese per categoria</h2></div>
         <p id="budgetPeriodHint" class="budget-period-hint">Budget mensili</p>
         <div id="budgetList" class="budget-list"></div>
         <p class="empty-hint" id="budgetEmptyHint" hidden>Nessuna categoria di spesa.</p>
       </div>
 
-      <p class="app-version">Versione 1.4.1</p>
+      <p class="app-version">Versione 1.5.0</p>
     </section>
 
     <!-- ===== COPPIA ===== -->
@@ -117,10 +117,11 @@
 
       <div class="section-block couple-groups-block">
         <div class="section-head"><h2>Gruppi</h2><button type="button" class="pill-btn mini-btn" id="addGroupBtn">＋ Nuovo</button></div>
+        <p class="field-hint nd-groups-hint">Ogni gruppo è un conto separato tra voi, con il suo saldo (es. Casa, Viaggio a Lisbona). Il numero grande qui sopra è la somma di tutti i gruppi.</p>
         <div id="coupleGroups" class="couple-groups"></div>
       </div>
 
-      <div class="forecast-grid" aria-label="Chi ha pagato questo mese">
+      <div class="forecast-grid" aria-label="Chi ha pagato in tutto">
         <div class="forecast-card"><span id="couplePaidALabel">Ha pagato</span><strong id="couplePaidA">€0</strong></div>
         <div class="forecast-card"><span id="couplePaidBLabel">Ha pagato</span><strong id="couplePaidB">€0</strong></div>
         <div class="forecast-card wide"><span>Cassa comune</span><strong id="couplePaidJoint">€0</strong></div>
@@ -132,9 +133,9 @@
       </div>
 
       <div class="section-block">
-        <div class="section-head"><h2>Spese divise questo mese</h2></div>
+        <div class="section-head"><h2>Ultime spese divise</h2></div>
         <div id="coupleSharedTx" class="tx-list"></div>
-        <p class="empty-hint" id="coupleSharedEmpty" hidden>Nessuna spesa divisa questo mese. Paga con una carta personale e scegli come dividere.</p>
+        <p class="empty-hint" id="coupleSharedEmpty" hidden>Nessuna spesa divisa. Quando uno dei due paga, scegli come dividere.</p>
       </div>
 
       <div class="section-block">
@@ -356,7 +357,7 @@
             <span>Conti</span><span class="chev">›</span>
           </button>
           <button class="settings-row" id="openCategoriesHubBtn">
-            <span>Categorie, macrocategorie e budget</span><span class="chev">›</span>
+            <span>Categorie di spesa</span><span class="chev">›</span>
           </button>
           <button class="settings-row" id="openTrashBtn">
             <span>Cestino</span><span class="chev">›</span>
@@ -387,7 +388,7 @@
         </div>
       </div>
 
-      <p class="app-version">Noi Due v1.4.1 · dati salvati solo su questo dispositivo</p>
+      <p class="app-version">Noi Due v1.5.0 · dati salvati solo su questo dispositivo</p>
     </section>
 
   </main>
@@ -636,8 +637,10 @@
     <div class="scan-actions">
       <button type="button" class="pill-btn" id="scanLiveBtn">▦ Inquadra il codice</button>
       <button type="button" class="pill-btn" id="scanPhotoBtn">📷 Scatta una foto</button>
+      <button type="button" class="pill-btn" id="scanGalleryBtn">🖼️ Dalla galleria</button>
     </div>
     <input type="file" accept="image/*" capture="environment" id="scanPhotoInput" hidden>
+    <input type="file" accept="image/*" id="scanGalleryInput" hidden>
     <div class="field-row"><label>Codice a barre o codice prodotto</label>
       <div class="scan-code-row"><input type="text" id="scanCodeInput" class="text-input" inputmode="numeric" placeholder="es. 8076809513753" autocomplete="off" enterkeyhint="search"><button type="button" class="list-add-btn" id="scanCodeBtn" aria-label="Cerca il codice">🔎</button></div>
     </div>
@@ -657,10 +660,12 @@
     </div>
     <div class="item-links" id="itemLinks"></div>
     <div class="scan-actions">
-      <button type="button" class="pill-btn" id="itemPhotoBtn">📷 Foto del prodotto</button>
+      <button type="button" class="pill-btn" id="itemPhotoBtn">📷 Scatta foto</button>
+      <button type="button" class="pill-btn" id="itemGalleryBtn">🖼️ Dalla galleria</button>
       <button type="button" class="pill-btn" id="itemPhotoRemove" hidden>Togli foto</button>
     </div>
     <input type="file" accept="image/*" capture="environment" id="itemPhotoInput" hidden>
+    <input type="file" accept="image/*" id="itemGalleryInput" hidden>
     <button class="text-danger-btn" id="deleteItemBtn">Elimina articolo</button>
   </div>
 </template>
@@ -750,7 +755,7 @@
     <div class="sheet-head">
       <h3 id="categoryFormTitle">Nuova categoria</h3><button class="primary-btn" id="saveCategoryBtn" aria-label="Salva categoria">Salva</button>
     </div>
-    <div class="type-toggle" id="categoryKindToggle">
+    <div class="type-toggle" id="categoryKindToggle" hidden>
       <button class="type-opt active" data-kind="expense">Uscita</button>
       <button class="type-opt" data-kind="income">Entrata</button>
     </div>
@@ -758,7 +763,7 @@
       <label>Nome categoria</label>
       <input type="text" id="categoryNameInput" class="text-input" placeholder="es. Spesa, Trasporti, Bollette…">
     </div>
-    <div class="field-row">
+    <div class="field-row" hidden>
       <label>Macrocategoria (opzionale)</label>
       <div class="chip-row" id="categoryMacroChips"></div>
     </div>
@@ -766,11 +771,11 @@
       <label>Icona</label>
       <div class="emoji-row" id="categoryEmojiRow"></div>
     </div>
-    <div class="field-row">
+    <div class="field-row" hidden>
       <label>Colore</label>
       <div class="color-row" id="categoryColorRow"></div>
     </div>
-    <div class="field-row">
+    <div class="field-row" hidden>
       <label>Budget mensile (opzionale)</label>
       <input type="text" inputmode="decimal" id="categoryBudgetInput" class="text-input" placeholder="es. 250">
     </div>
@@ -941,7 +946,7 @@
         <button class="sheet-close" data-close aria-label="Chiudi pannello">✕</button>
       </div>
     </div>
-    <div class="type-toggle three" id="catHubToggle" role="tablist">
+    <div class="type-toggle three" id="catHubToggle" role="tablist" hidden>
       <button class="type-opt active" data-hub="categories" role="tab">Categorie</button>
       <button class="type-opt" data-hub="macro" role="tab">Macro</button>
       <button class="type-opt" data-hub="graph" role="tab">Struttura</button>
@@ -1117,6 +1122,6 @@
   </div>
 </template>
 
-<script src="app.js?v=1.4.1"></script>
+<script src="app.js?v=1.5.0"></script>
 </body>
 </html>

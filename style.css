@@ -6279,3 +6279,66 @@ html.amounts-hidden .stat-card-value::after{font-size:20px;}
   font-weight:700;
 }
 #views .couple-settle:active,.gd-settle:active{background:color-mix(in srgb, var(--emerald) 26%, var(--glass-card, var(--card)))!important;}
+
+/* Popup di aggiornamento al centro dello schermo */
+.app-update-prompt{display:none!important;}
+.app-update-modal{position:fixed;inset:0;z-index:1000;display:grid;place-items:center;padding:24px;background:rgba(8,12,16,.45);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);opacity:0;pointer-events:none;transition:opacity .2s ease;}
+.app-update-modal.show{opacity:1;pointer-events:auto;}
+.app-update-card{width:min(340px,100%);padding:22px 20px 18px;border-radius:22px;text-align:center;background:color-mix(in srgb,var(--card) 82%,transparent);border:1px solid var(--glass-edge,var(--line));box-shadow:0 24px 60px rgba(0,0,0,.35);-webkit-backdrop-filter:blur(20px) saturate(1.5);backdrop-filter:blur(20px) saturate(1.5);transform:scale(.96);transition:transform .2s ease;}
+.app-update-modal.show .app-update-card{transform:none;}
+.app-update-card .app-update-icon{width:46px;height:46px;margin:0 auto 10px;border-radius:50%;display:grid;place-items:center;font-size:22px;font-weight:800;background:color-mix(in srgb,var(--emerald) 18%,transparent);color:var(--emerald);}
+.app-update-card h3{margin:0 0 6px;font-size:18px;color:var(--ink);}
+.app-update-card p{margin:0 0 16px;font-size:14px;line-height:1.45;color:var(--ink-soft);}
+.app-update-card .app-update-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.app-update-card button{min-height:44px;border-radius:14px;font:inherit;font-weight:700;font-size:15px;border:1px solid var(--glass-edge,var(--line));background:transparent;color:var(--ink);}
+.app-update-card .app-update-now{border:0;background:linear-gradient(145deg,#f7c463,#e48d24);color:#241800;}
+.app-update-card .app-update-now:disabled{opacity:.7;}
+@media (prefers-reduced-motion:reduce){.app-update-modal,.app-update-card{transition:none;}}
+/* Noi Due 1.5.4 — calendario della coppia */
+.calendar-cell.nd-cal{display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:1px;padding-top:4px;}
+.nd-cal .cal-amt{font-size:9.5px;font-weight:700;color:var(--ink-soft);line-height:1;font-variant-numeric:tabular-nums;}
+.nd-cal .cal-dots{display:flex;gap:2px;justify-content:center;align-items:center;min-height:8px;}
+.nd-cal .cal-dot{width:6px;height:6px;border-radius:50%;display:inline-block;}
+.nd-cal .cal-dot.settle{width:auto;height:auto;background:none;font-size:8px;line-height:1;}
+#calLegend{display:flex;flex-wrap:wrap;gap:10px 14px;justify-content:center;}
+#calLegend .dot{width:9px;height:9px;border-radius:50%;display:inline-block;margin-right:5px;vertical-align:middle;}
+.cal-month-total{text-align:center;margin:10px 0 0;}
+
+/* Noi Due 1.6.0 — Spese fisse */
+.add-choice-grid .movement-action-btn.add-recent,.add-choice-grid .movement-action-btn.add-settle-small,.add-choice-grid .movement-action-btn.add-fixed,.add-choice-grid .movement-action-btn.add-list{grid-column:span 3!important;}
+.movement-action-btn.add-fixed .movement-action-icon{background:linear-gradient(145deg,#c9c0f0,#8e7cc3)!important;color:#fff!important;font-size:18px;}
+.nd-fixed-total{margin:-4px 2px 10px;}
+.nd-fixed-total[hidden]{display:none;}
+.fixed-card.paused{opacity:.55;}
+.fixed-card .group-card-text span:last-child{font-size:11.5px;}
+#recurringTypeToggle[hidden]{display:none!important;}
+
+/* Noi Due 1.7.0 — Liste migliorate */
+.list-tools{display:flex;flex-wrap:wrap;gap:8px;margin:-4px 0 12px;}
+.list-suggest{margin:0 0 12px;}
+.list-suggest[hidden]{display:none;}
+.list-suggest-title{margin:0 2px 6px;font-size:12px;font-weight:700;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.04em;}
+.list-suggest-chips{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none;}
+.list-suggest-chips::-webkit-scrollbar{display:none;}
+.list-suggest-chips .chip{flex:0 0 auto;}
+.list-aisle{margin:12px 2px 6px;font-size:12.5px;font-weight:700;color:var(--ink-soft);}
+.list-aisle:first-child{margin-top:0;}
+.list-qty{font-weight:800;color:#e48d24;}
+.list-for{display:block;font-size:11px;font-weight:700;margin-top:1px;}
+.list-item{position:relative;overflow:hidden;transform:translateX(0);}
+.list-item.swiping{transform:translateX(var(--dx,0));transition:none;}
+.list-item:not(.swiping){transition:transform .18s ease;}
+.list-swipe-bg{position:absolute;inset:0;display:none;align-items:center;justify-content:space-between;padding:0 16px;font-size:13px;font-weight:700;pointer-events:none;}
+.list-item.swiping .list-swipe-bg{display:flex;}
+.list-item.swipe-right .list-swipe-bg{background:color-mix(in srgb,var(--emerald) 30%,transparent);color:var(--ink);}
+.list-item.swipe-right .list-swipe-bg span:last-child{visibility:hidden;}
+.list-item.swipe-left .list-swipe-bg{background:color-mix(in srgb,var(--rust) 30%,transparent);color:var(--ink);}
+.list-item.swipe-left .list-swipe-bg span:first-child{visibility:hidden;}
+.list-item > :not(.list-swipe-bg){position:relative;}
+.item-qty-row{display:grid;grid-template-columns:auto 1fr;gap:12px;align-items:end;}
+.qty-stepper{display:inline-flex;align-items:center;gap:4px;border:1px solid var(--glass-edge,var(--line));border-radius:14px;padding:3px;background:var(--glass-row,var(--card));}
+.qty-stepper button{width:38px;height:38px;border:0;border-radius:11px;background:transparent;color:var(--ink);font:inherit;font-size:20px;font-weight:700;}
+.qty-stepper span{min-width:26px;text-align:center;font-weight:800;font-variant-numeric:tabular-nums;}
+#itemAisleChips{max-height:120px;overflow-y:auto;}
+.nd-welcome{margin:-4px 0 12px;}
+#listBaseRow[hidden]{display:none;}

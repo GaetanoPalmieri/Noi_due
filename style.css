@@ -6192,3 +6192,22 @@ html.amounts-hidden .stat-card-value::after{font-size:20px;}
 .import-opt.recommended{border-color:color-mix(in srgb,#E8A33D 70%,transparent);background:radial-gradient(120% 100% at 0% 0%,rgba(232,163,61,.18),transparent 62%),var(--glass-row,var(--card));}
 .import-opt.recommended strong::after{content:"  consigliato";font-size:11px;font-weight:700;color:#c47f14;}
 .import-prefer-row{margin:-2px 0 14px;}
+
+/* Noi Due 1.4.0 — Solo le sezioni della coppia: Home, Saldi, Liste, Grafici, Altro */
+:root{--tab-liste:#d9902a;}
+:root[data-theme="dark"]{--tab-liste:#eaa94a;}
+.tab[data-view="liste"].active{background:var(--tab-liste)!important;color:#fff!important;}
+.tabbar .tab[data-view="liste"].active{box-shadow:0 8px 20px -8px var(--tab-liste)!important;}
+.tabbar .tab span{font-size:11px;}
+.nd-legacy,.nd-legacy[hidden]{display:none!important;}
+.nd-settle-acc{display:none!important;}
+#statsNatureToggle,[data-trend-mode="balance"]{display:none!important;}
+#typeToggle[hidden]{display:none!important;}
+.nd-paid-split .hero-split-item{display:inline-flex;align-items:center;gap:7px;}
+.nd-dot{width:10px;height:10px;border-radius:50%;flex:none;}
+.nd-home-hero .hero-liquidity-item{cursor:default;}
+#view-liste{padding-top:calc(10px + env(safe-area-inset-top))!important;}
+.nd-lists-hint{margin:-4px 2px 12px;}
+.add-choice-grid .movement-action-btn.add-recent,.add-choice-grid .movement-action-btn.add-settle-small,.add-choice-grid .movement-action-btn.add-list{grid-column:span 2;}
+.movement-action-btn.add-settle-small .movement-action-icon{background:linear-gradient(145deg,#e7a3cf,#c25b9e)!important;color:#fff!important;font-size:19px;}
+.movement-action-btn.add-list .movement-action-icon{background:linear-gradient(145deg,#9fd8c2,#3aa684)!important;color:#fff!important;font-size:19px;}

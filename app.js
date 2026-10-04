@@ -63,9 +63,9 @@ function seedState(){
     groups: seedGroups,
     lists: defaultLists(seedGroups),
     accounts: [
-      { id: accId.a, name: "Carta Persona 1", balance: 0, color: "#3AA684", owner: "a" },
-      { id: accId.b, name: "Carta Persona 2", balance: 0, color: "#C25B9E", owner: "b" },
-      { id: accId.joint, name: "Conto comune", balance: 0, color: "#D4A83A", owner: "joint" },
+      { id: accId.a, name: "Persona 1", balance: 0, color: "#3AA684", owner: "a" },
+      { id: accId.b, name: "Persona 2", balance: 0, color: "#C25B9E", owner: "b" },
+      { id: accId.joint, name: "Cassa comune", balance: 0, color: "#D4A83A", owner: "joint" },
     ],
     macroCategories: [
       { id: macroId.casa, name: "Casa e utenze", emoji: "🏠", color: PALETTE[4], budget: null, kind:"expense" },
@@ -292,6 +292,20 @@ function sanitizeCouple(data){
   const person=(p,def)=>({name:String(p?.name||def.name).trim().slice(0,24)||def.name,color:safeColor(p?.color,def.color)});
   data.couple={a:person(c.a,COUPLE_DEFAULT.a),b:person(c.b,COUPLE_DEFAULT.b),defaultSplit:c.defaultSplit==="personal"?"personal":"half",lastGroupId:c.lastGroupId?String(c.lastGroupId):null};
   (data.accounts||[]).forEach(a=>{ if(!["a","b","joint"].includes(a.owner)) a.owner="joint"; });
+  if(["a","b","joint"].includes(c.lastPayer)) data.couple.lastPayer=c.lastPayer;
+  // Noi Due 1.4.0: niente conti. Ci sono solo tre "pagatori": persona 1, persona 2 e cassa comune.
+  // I conti in più di una stessa persona vengono uniti; i giroconti tra di loro spariscono.
+  if(!Array.isArray(data.accounts)) data.accounts=[];
+  const canon={};
+  ["a","b","joint"].forEach(o=>{ const first=data.accounts.find(a=>a.owner===o); if(first) canon[o]=first.id; else { const acc={id:uid(),name:"",balance:0,color:"#D4A83A",owner:o}; data.accounts.push(acc); canon[o]=acc.id; } });
+  const remap={}; data.accounts.forEach(a=>{ if(canon[a.owner]!==a.id) remap[a.id]=canon[a.owner]; });
+  if(Object.keys(remap).length){
+    const m=id=>remap[id]||id;
+    ["transactions","recurring","planned"].forEach(k=>{ data[k]=(data[k]||[]).map(t=>({...t,accountId:m(t.accountId),toAccountId:t.toAccountId?m(t.toAccountId):t.toAccountId})).filter(t=>!(t.type==="transfer"&&t.accountId===t.toAccountId)); });
+    if(data.mainAccountId) data.mainAccountId=m(data.mainAccountId);
+  }
+  data.accounts=["a","b","joint"].map(o=>{ const acc=data.accounts.find(a=>a.id===canon[o]); return {...acc,owner:o,name:o==="joint"?"Cassa comune":data.couple[o].name,color:o==="joint"?"#D4A83A":data.couple[o].color}; });
+  data.mainAccountId=canon.joint;
   // Gruppi (Casa, Spese di coppia, …): ognuno ha il suo saldo; il totale è la somma.
   data.groups=(Array.isArray(data.groups)?data.groups:[]).filter(g=>g&&g.id).map(g=>({id:String(g.id).slice(0,120),name:String(g.name||"Gruppo").slice(0,40),emoji:cleanEmoji(String(g.emoji||"👥"))||"👥",color:safeColor(g.color,PALETTE[4]),defaultSplit:g.defaultSplit==="personal"?"personal":"half"}));
   if(!data.groups.length) data.groups=defaultGroups();
@@ -326,6 +340,10 @@ function defaultGroups(){
   ];
 }
 function groupsById(){ return Object.fromEntries(state.groups.map(g=>[g.id,g])); }
+function defaultPayerId(){
+  const o=["a","b","joint"].includes(state.couple?.lastPayer)?state.couple.lastPayer:"a";
+  return state.accounts.find(a=>a.owner===o)?.id || state.accounts[0]?.id || null;
+}
 function defaultGroupId(){
   const last=state.couple.lastGroupId;
   if(last && state.groups.some(g=>g.id===last)) return last;
@@ -333,7 +351,7 @@ function defaultGroupId(){
 }
 function groupOf(t){ return state.groups.some(g=>g.id===t.groupId) ? t.groupId : (state.groups.find(g=>/coppia/i.test(g.name))||state.groups[0])?.id; }
 function groupLabel(gid){ const g=groupsById()[gid]; return g?`${g.emoji} ${g.name}`:"Gruppo"; }
-function personName(k){ return k==="a"||k==="b" ? state.couple[k].name : "Conto comune"; }
+function personName(k){ return k==="a"||k==="b" ? state.couple[k].name : "Cassa comune"; }
 function personColor(k){ return k==="a"||k==="b" ? state.couple[k].color : "#D4A83A"; }
 function personInitial(k){ return (personName(k).trim()[0]||(k==="a"?"1":"2")).toUpperCase(); }
 function otherPerson(k){ return k==="a"?"b":"a"; }
@@ -454,7 +472,7 @@ function mountSplitPicker(node, afterRow, {account, toAccount=()=>null, type, am
     renderGroups(true);
     if(owner!=="a"&&owner!=="b"){
       chips.hidden=true; custom.hidden=true; label.hidden=true;
-      hint.textContent="Dal conto comune: non cambia il saldo tra voi."; return;
+      hint.textContent="Dalla cassa comune: non cambia il saldo tra voi."; return;
     }
     const cur=mode||defaultSplitFor(t,groupId), other=otherPerson(owner);
     const opts=[["half","A metà"],["pct","Percentuale"],["other",`Tutto a ${personName(other)}`],["personal",`Solo ${personName(owner)}`]];
@@ -774,6 +792,31 @@ function setEyeIcon(btn,hidden,showLabel,hideLabel){
   btn.setAttribute("aria-label",hidden?(showLabel||"Mostra importi"):(hideLabel||"Nascondi importi"));
 }
 
+/* ---------------- Noi Due: card principale della Home (spese e chi ha pagato) ---------------- */
+function renderNdHome(){
+  const el=id=>document.getElementById(id);
+  if(!el("ndMonthSpent")) return;
+  const tx=periodTx("home").filter(t=>t.type==="expense"&&!t.isBalanceAdjustment);
+  const paid={a:0,b:0,joint:0};
+  tx.forEach(t=>{ const o=accOwner(t.accountId); paid[o==="a"||o==="b"?o:"joint"]+=t.amount; });
+  const total=paid.a+paid.b+paid.joint, show=v=>balancesHidden?"••••":fmt(v);
+  el("ndMonthSpent").textContent=show(total);
+  el("ndMonthSpent").style.color="var(--ink)";
+  ["a","b"].forEach(k=>{ const K=k.toUpperCase(); el("ndPaid"+K+"Label").textContent=personName(k); el("ndPaid"+K).textContent=show(paid[k]); el("ndDot"+K).style.background=personColor(k); });
+  el("ndPaidJoint").textContent=show(paid.joint);
+  // Budget rimasto: budget delle macrocategorie, più quello delle categorie la cui macro non ne ha uno.
+  const left=el("ndBudgetLeft");
+  if(periodModes.home!=="month"){ left.textContent="—"; left.style.color=""; return; }
+  let budget=0; const counted=new Set();
+  state.macroCategories.filter(m=>m.kind!=="income"&&Number(m.budget)>0).forEach(m=>{ budget+=Number(m.budget); state.categories.filter(c=>c.macroCategoryId===m.id).forEach(c=>counted.add(c.id)); });
+  state.categories.filter(c=>c.kind==="expense"&&Number(c.budget)>0&&!counted.has(c.id)).forEach(c=>{ budget+=Number(c.budget); counted.add(c.id); });
+  if(!(budget>0)){ left.textContent="Nessuno"; left.style.color=""; return; }
+  const spent=tx.filter(t=>counted.has(t.categoryId)).reduce((s,t)=>s+t.amount,0);
+  const rest=budget-spent;
+  left.textContent=balancesHidden?"••••":(rest>=0?fmt(rest):`−${fmt(-rest)}`);
+  left.style.color=rest<0?"var(--rust)":"var(--emerald)";
+}
+
 /* ---------------- Rendering: Home ---------------- */
 function renderHome(){
   const { income, expense, net } = sumTransactions(periodTx("home"));
@@ -796,7 +839,8 @@ function renderHome(){
   renderHomeLists();
 
   {const c=document.getElementById("seeAllTxCount"); if(c) c.textContent=periodTx("home").filter(t=>!t.isBalanceAdjustment).length;}
-  document.querySelector("#view-home .hero-label").textContent=periodModes.home==="day"?"Saldo netto del giorno":periodModes.home==="range"?"Saldo netto del periodo":"Saldo netto del mese";
+  document.querySelector("#view-home .hero-label").textContent=periodModes.home==="day"?"Spese del giorno":periodModes.home==="range"?"Spese del periodo":"Spese del mese";
+  renderNdHome();
   const today=todayISO(), monthEnd=`${viewYear}-${pad2(viewMonth+1)}-31`;
   const future=plannedItemsForMonth(viewYear,viewMonth).filter(t=>t.date>=today && t.date<=monthEnd);
   const futureNet=future.reduce((s,t)=>s+(t.type==="income"?t.amount:-t.amount),0);
@@ -1462,7 +1506,7 @@ function renderStats(){
   const days=Math.max(1,Math.ceil((new Date(viewYear,viewMonth+1,0)-new Date(viewYear,viewMonth,1))/86400000)+1);
   const cats=categoriesById(), byCat={};tx.filter(t=>t.type==="expense").forEach(t=>{byCat[t.categoryId]=(byCat[t.categoryId]||0)+t.amount;});
   const topEntries=Object.entries(byCat).sort((a,b)=>b[1]-a[1]).slice(0,5);
-  document.getElementById("statsInsights").innerHTML=`<div class="stat-card"><p class="stat-card-label">Media spese/giorno</p><p class="stat-card-value neg">${fmt(expense/days)}</p></div><div class="stat-card"><p class="stat-card-label">Saldo periodo</p><p class="stat-card-value ${income-expense<0?"neg":"pos"}">${fmtSigned(income-expense)}</p></div><div class="stat-card wide-stat top-categories-card"><p class="stat-card-label">Top 5 categorie</p>${renderTopCategoriesChart(topEntries,cats)}</div>`;
+  document.getElementById("statsInsights").innerHTML=`<div class="stat-card"><p class="stat-card-label">Media spese/giorno</p><p class="stat-card-value neg">${fmt(expense/days)}</p></div><div class="stat-card"><p class="stat-card-label">Spese del periodo</p><p class="stat-card-value neg">${fmt(expense)}</p></div><div class="stat-card wide-stat top-categories-card"><p class="stat-card-label">Top 5 categorie</p>${renderTopCategoriesChart(topEntries,cats)}</div>`;
   renderPie();
   renderTrendSection();
   renderAccountBreakdown();
@@ -1653,7 +1697,7 @@ function renderAccountBreakdown(){
   container.className = "stat-card-grid";
   container.innerHTML = "";
   state.accounts.forEach(a=>{
-    const net = tx.reduce((s,t)=>s+(t.type==="transfer"?(t.accountId===a.id?-t.amount:t.toAccountId===a.id?t.amount:0):(t.accountId===a.id?(t.type==="income"?t.amount:-t.amount):0)),0);
+    const net = -tx.reduce((s,t)=>s+(t.type==="expense"&&!t.isBalanceAdjustment&&t.accountId===a.id?t.amount:0),0);
     const card = document.createElement("div");
     card.className = "stat-card";
     card.innerHTML = `
@@ -2528,7 +2572,7 @@ function coupleDetailRows(t){
       <div class="tx-detail-row"><span class="k">${t.settleAlloc?"Gruppi":"Gruppo"}</span><span class="v">${escapeHtml(alloc)}</span></div>`;
   }
   const owner=accOwner(t.accountId), v=txDebt(t);
-  const payer=owner==="a"||owner==="b"?personName(owner):"Conto comune";
+  const payer=owner==="a"||owner==="b"?personName(owner):"Cassa comune";
   return `<div class="tx-detail-row"><span class="k">Gruppo</span><span class="v">${escapeHtml(groupLabel(groupOf(t)))}</span></div>
     <div class="tx-detail-row"><span class="k">${t.type==="income"?"Ricevuto da":"Pagato da"}</span><span class="v">${escapeHtml(payer)}</span></div>
     <div class="tx-detail-row"><span class="k">Divisione</span><span class="v">${escapeHtml(splitLabel(t))}</span></div>
@@ -2587,7 +2631,7 @@ function renderCouple(){
   document.getElementById("coupleShares").innerHTML = (st.paid.a+st.paid.b)>0
     ? bar(`Quota di ${personName("a")}`,st.quota.a,personColor("a"))+bar(`Pagato da ${personName("a")}`,st.paid.a,personColor("a"),true)
       +bar(`Quota di ${personName("b")}`,st.quota.b,personColor("b"))+bar(`Pagato da ${personName("b")}`,st.paid.b,personColor("b"),true)
-      +`<p class="field-hint cs-note">La quota è la parte di spese personali che spetta a ciascuno; le spese dal conto comune non sono incluse.</p>`
+      +`<p class="field-hint cs-note">La quota è la parte di spese personali che spetta a ciascuno; le spese dalla cassa comune non sono incluse.</p>`
     : `<p class="empty-hint">Nessuna spesa con carte personali questo mese.</p>`;
   const shared=st.shared.slice().sort((a,b)=>b.date.localeCompare(a.date)||String(b.id).localeCompare(String(a.id))).slice(0,8);
   renderTxRows(document.getElementById("coupleSharedTx"),shared);
@@ -2961,6 +3005,7 @@ document.getElementById("homeCoupleStrip")?.addEventListener("click",()=>switchV
 document.getElementById("settleBtn")?.addEventListener("click",()=>openSettleForm("all"));
 document.getElementById("addGroupBtn")?.addEventListener("click",()=>openGroupForm());
 document.getElementById("addListBtn")?.addEventListener("click",()=>openListForm());
+document.getElementById("openCoupleSettingsBtn")?.addEventListener("click",()=>openCoupleForm());
 document.getElementById("editCoupleBtn")?.addEventListener("click",openCoupleForm);
 document.getElementById("toggleCoupleBalance")?.addEventListener("click",toggleBalances);
 
@@ -3214,7 +3259,7 @@ function openAddTransaction(txId,prefill=null){
   if(existing?.type==="transfer") return existing.atm ? openAtmWithdrawal(txId) : openTransferForm(txId);
   txType = existing?.type || "expense";
   selectedCategoryId = existing?.categoryId || prefill?.categoryId || null;
-  selectedAccountId = existing?.accountId || null;
+  selectedAccountId = existing?.accountId || defaultPayerId();
   let destinationAccountId = existing?.toAccountId || null;
 
   openSheet("tpl-add-transaction", (node, close)=>{
@@ -3284,6 +3329,7 @@ function openAddTransaction(txId,prefill=null){
 
     renderAccChips();
     renderTypeFields();
+    { const tt=node.querySelector("#typeToggle"); if(tt) tt.hidden=txType!=="income"; }
     const split=mountSplitPicker(node, destinationRow, {account:()=>selectedAccountId, toAccount:()=>destinationAccountId, type:()=>txType, amount:()=>parseAmount(amountInput.value), initial:existing?.split, initialGroup:existing?.groupId || prefill?.groupId});
 
     node.querySelector("#saveTxBtn").addEventListener("click", ()=>{
@@ -3304,6 +3350,7 @@ function openAddTransaction(txId,prefill=null){
       t.groupId=transfer?null:split.getGroup();
       if(!editing) state.transactions.push(t);
       if(!editing && typeof prefill?.onSaved==="function") prefill.onSaved(t);
+      state.couple.lastPayer=accOwner(t.accountId);
       persist();
       const d = new Date(t.date+"T00:00:00");
       viewYear = d.getFullYear(); viewMonth = d.getMonth();
@@ -3324,22 +3371,16 @@ function openAddChoice(){
       <div class="movement-action-handle" aria-hidden="true"></div>
       <p class="movement-action-title">Cosa vuoi aggiungere?</p>
       <div class="movement-action-buttons add-choice-grid">
-        <button type="button" class="movement-action-btn add-recent" data-add-kind="tx"><span class="movement-action-icon" aria-hidden="true">＋</span><span>Movimento</span></button>
-        <button type="button" class="movement-action-btn edit" data-add-kind="recurring"><span class="movement-action-icon" aria-hidden="true">↻</span><span>Ricorrente</span></button>
-        <button type="button" class="movement-action-btn duplicate" data-add-kind="planned"><span class="movement-action-icon" aria-hidden="true">◷</span><span>Pianificato</span></button>
-        <button type="button" class="movement-action-btn add-transfer" data-add-kind="transfer"><span class="movement-action-icon" aria-hidden="true">↔</span><span>Trasferimento</span></button>
-        <button type="button" class="movement-action-btn add-atm" data-add-kind="atm"><span class="movement-action-icon" aria-hidden="true">🏧</span><span>Prelievo ATM</span></button>
-        <button type="button" class="movement-action-btn add-settle" data-add-kind="settle"><span class="movement-action-icon" aria-hidden="true">🤝</span><span>Rimborso tra voi</span></button>
+        <button type="button" class="movement-action-btn add-recent" data-add-kind="tx"><span class="movement-action-icon" aria-hidden="true">＋</span><span>Spesa</span></button>
+        <button type="button" class="movement-action-btn add-settle-small" data-add-kind="settle"><span class="movement-action-icon" aria-hidden="true">🤝</span><span>Rimborso</span></button>
+        <button type="button" class="movement-action-btn add-list" data-add-kind="list"><span class="movement-action-icon" aria-hidden="true">🛒</span><span>Da comprare</span></button>
       </div>
       <button type="button" class="movement-action-cancel">Annulla</button>
     </div>`;
   const go=fn=>()=>{overlay.remove();fn();};
   overlay.querySelector('[data-add-kind="tx"]').addEventListener("click",go(()=>openAddTransaction()));
-  overlay.querySelector('[data-add-kind="recurring"]').addEventListener("click",go(()=>openRecurringForm(null)));
-  overlay.querySelector('[data-add-kind="planned"]').addEventListener("click",go(()=>openPlannedForm(null)));
-  overlay.querySelector('[data-add-kind="transfer"]').addEventListener("click",go(()=>openTransferForm()));
-  overlay.querySelector('[data-add-kind="atm"]').addEventListener("click",go(()=>openAtmWithdrawal()));
-  overlay.querySelector('[data-add-kind="settle"]').addEventListener("click",go(()=>openSettleForm()));
+  overlay.querySelector('[data-add-kind="settle"]').addEventListener("click",go(()=>openSettleForm("all")));
+  overlay.querySelector('[data-add-kind="list"]').addEventListener("click",go(()=>{ if(state.lists.length===1) openListDetail(state.lists[0].id); else switchView("liste"); }));
   overlay.querySelector(".movement-action-cancel").addEventListener("click",()=>overlay.remove());
   overlay.addEventListener("click",e=>{if(e.target===overlay) overlay.remove();});
   document.body.appendChild(overlay);
@@ -3508,7 +3549,7 @@ function openTxDetail(txId){
     const destination=accountsById()[t.toAccountId] || {name:"Conto eliminato"};
     node.querySelector("#txDetailBody").innerHTML = `
       <div class="tx-detail-row"><span class="k">Importo</span><span class="v ${t.type}">${transfer?"↔":t.type==="income"?"+":"−"}${fmt(t.amount)}</span></div>
-      ${transfer?`<div class="tx-detail-row"><span class="k">Da conto</span><span class="v">${escapeHtml(acc.name)}</span></div><div class="tx-detail-row"><span class="k">A conto</span><span class="v">${escapeHtml(destination.name)}</span></div>`:`<div class="tx-detail-row"><span class="k">Categoria</span><span class="v">${escapeHtml(cat.emoji)} ${escapeHtml(cat.name)}</span></div><div class="tx-detail-row"><span class="k">Conto</span><span class="v">${escapeHtml(acc.name)}</span></div>`}
+      ${transfer?`<div class="tx-detail-row"><span class="k">Da conto</span><span class="v">${escapeHtml(acc.name)}</span></div><div class="tx-detail-row"><span class="k">A conto</span><span class="v">${escapeHtml(destination.name)}</span></div>`:`<div class="tx-detail-row"><span class="k">Categoria</span><span class="v">${escapeHtml(cat.emoji)} ${escapeHtml(cat.name)}</span></div>`}
       ${coupleDetailRows(t)}
       <div class="tx-detail-row"><span class="k">Data</span><span class="v">${t.date.split("-").reverse().join("/")}</span></div>
       ${t.recurringId?`<div class="tx-detail-row"><span class="k">Origine</span><span class="v">Movimento ricorrente</span></div>`:t.plannedId?`<div class="tx-detail-row"><span class="k">Origine</span><span class="v">Movimento pianificato</span></div>`:""}

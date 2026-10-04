@@ -4,11 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
 <title>Noi Due — Spese di coppia</title>
-<meta name="app-version" content="1.5.0">
+<meta name="app-version" content="1.5.1">
 <meta name="description" content="Spese di coppia: chi ha pagato, chi deve a chi, budget e statistiche.">
 
 <!-- PWA / iOS home screen -->
-<link rel="manifest" href="manifest.json?v=1.5.0">
+<link rel="manifest" href="manifest.json?v=1.5.1">
 <meta name="theme-color" content="#12181F">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -16,9 +16,9 @@
 <!-- iPhone: icona nella cartella principale, senza ?v=, con la dimensione dichiarata (la legge anche Safari più vecchio). -->
 <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
 <link rel="apple-touch-icon-precomposed" sizes="180x180" href="apple-touch-icon-precomposed.png">
-<link rel="icon" href="icons/icon-192.png?v=1.5.0">
+<link rel="icon" href="icons/icon-192.png?v=1.5.1">
 
-<link rel="stylesheet" href="style.css?v=1.5.0">
+<link rel="stylesheet" href="style.css?v=1.5.1">
 </head>
 <body>
 
@@ -96,7 +96,7 @@
         <p class="empty-hint" id="budgetEmptyHint" hidden>Nessuna categoria di spesa.</p>
       </div>
 
-      <p class="app-version">Versione 1.5.0</p>
+      <p class="app-version">Versione 1.5.1</p>
     </section>
 
     <!-- ===== COPPIA ===== -->
@@ -116,8 +116,7 @@
       </div>
 
       <div class="section-block couple-groups-block">
-        <div class="section-head"><h2>Gruppi</h2><button type="button" class="pill-btn mini-btn" id="addGroupBtn">＋ Nuovo</button></div>
-        <p class="field-hint nd-groups-hint">Ogni gruppo è un conto separato tra voi, con il suo saldo (es. Casa, Viaggio a Lisbona). Il numero grande qui sopra è la somma di tutti i gruppi.</p>
+        <div class="section-head"><h2>Gruppi <button type="button" class="nd-info" data-nd-info="gruppi" aria-label="Cosa sono i gruppi">i</button></h2><button type="button" class="pill-btn mini-btn" id="addGroupBtn">＋ Nuovo</button></div>
         <div id="coupleGroups" class="couple-groups"></div>
       </div>
 
@@ -149,8 +148,7 @@
     <section class="view" id="view-liste" data-view="liste">
       <h1 class="view-title">Liste</h1>
       <div class="section-block">
-        <div class="section-head"><h2>Cosa comprare</h2><button type="button" class="pill-btn mini-btn" id="addListBtn">＋ Nuova lista</button></div>
-        <p class="field-hint nd-lists-hint">Tocca una lista per aggiungere articoli, anche con 📷 foto o codice a barre. Spunta quello che metti nel carrello e registralo come spesa.</p>
+        <div class="section-head"><h2>Cosa comprare <button type="button" class="nd-info" data-nd-info="liste" aria-label="Come funzionano le liste">i</button></h2><button type="button" class="pill-btn mini-btn" id="addListBtn">＋ Nuova lista</button></div>
         <div id="coupleLists" class="couple-groups"></div>
       </div>
     </section>
@@ -388,7 +386,7 @@
         </div>
       </div>
 
-      <p class="app-version">Noi Due v1.5.0 · dati salvati solo su questo dispositivo</p>
+      <p class="app-version">Noi Due v1.5.1 · dati salvati solo su questo dispositivo</p>
     </section>
 
   </main>
@@ -617,6 +615,7 @@
       <button type="button" class="list-scan-btn" id="listScanBtn" aria-label="Cerca un prodotto con foto o codice a barre">📷</button>
       <button type="button" class="list-add-btn" id="listAddBtn" aria-label="Aggiungi alla lista">＋</button>
     </div>
+    <div class="list-tools"><button type="button" class="pill-btn mini-btn" id="listPasteBtn">📋 Incolla una lista</button></div>
     <div id="listTodo" class="list-items"></div>
     <p class="empty-hint" id="listEmpty" hidden>La lista è vuota. Scrivi qui sopra cosa comprare.</p>
     <div id="listDoneWrap" hidden>
@@ -631,17 +630,17 @@
 <template id="tpl-scan">
   <div class="sheet" id="sheetScan">
     <div class="sheet-handle"></div>
-    <div class="sheet-head"><h3>Cerca prodotto</h3></div>
-    <div class="scan-video-wrap" id="scanVideoWrap" hidden><video id="scanVideo" playsinline muted autoplay></video><div class="scan-frame" aria-hidden="true"></div></div>
-    <p class="field-hint scan-status" id="scanStatus">Inquadra il codice a barre, scatta una foto o scrivi il codice.</p>
+    <div class="sheet-head"><h3>Aggiungi con una foto</h3></div>
+    <div class="scan-video-wrap" id="scanVideoWrap" hidden><video id="scanVideo" playsinline muted autoplay></video></div>
+    <p class="field-hint scan-status" id="scanStatus">Scatta una foto del prodotto o sceglila dalla galleria.</p>
     <div class="scan-actions">
-      <button type="button" class="pill-btn" id="scanLiveBtn">▦ Inquadra il codice</button>
+      <button type="button" class="pill-btn" id="scanLiveBtn" hidden>▦ Inquadra il codice</button>
       <button type="button" class="pill-btn" id="scanPhotoBtn">📷 Scatta una foto</button>
       <button type="button" class="pill-btn" id="scanGalleryBtn">🖼️ Dalla galleria</button>
     </div>
     <input type="file" accept="image/*" capture="environment" id="scanPhotoInput" hidden>
     <input type="file" accept="image/*" id="scanGalleryInput" hidden>
-    <div class="field-row"><label>Codice a barre o codice prodotto</label>
+    <div class="field-row" hidden><label>Codice a barre o codice prodotto</label>
       <div class="scan-code-row"><input type="text" id="scanCodeInput" class="text-input" inputmode="numeric" placeholder="es. 8076809513753" autocomplete="off" enterkeyhint="search"><button type="button" class="list-add-btn" id="scanCodeBtn" aria-label="Cerca il codice">🔎</button></div>
     </div>
     <div id="scanResult"></div>
@@ -655,7 +654,7 @@
     <div class="item-photo" id="itemPhoto"></div>
     <div class="field-row"><label>Nome</label><input type="text" id="itemNameInput" class="text-input" maxlength="120"></div>
     <div class="field-row"><label>Prezzo stimato (facoltativo)</label><input type="text" id="itemPriceInput" class="text-input" inputmode="decimal" placeholder="€" autocomplete="off"></div>
-    <div class="field-row"><label>Codice a barre (facoltativo)</label>
+    <div class="field-row" hidden><label>Codice a barre (facoltativo)</label>
       <div class="scan-code-row"><input type="text" id="itemCodeInput" class="text-input" inputmode="numeric" autocomplete="off"><button type="button" class="list-add-btn" id="itemLookupBtn" aria-label="Cerca il prodotto online">🔎</button></div>
     </div>
     <div class="item-links" id="itemLinks"></div>
@@ -691,6 +690,15 @@
     <button type="button" class="import-opt" data-import="replace"><strong>Usa solo il backup</strong><span>Sostituisce tutti i dati di questo telefono con quelli del backup.</span></button>
     <button type="button" class="import-opt" data-import="keep"><strong>Tieni solo questo telefono</strong><span>Non importa niente.</span></button>
     <p class="field-hint">Prima di unire o sostituire viene salvata una copia dei dati attuali: puoi tornare indietro da Altro › Annulla ultima importazione.</p>
+  </div>
+</template>
+
+<template id="tpl-list-paste">
+  <div class="sheet" id="sheetListPaste">
+    <div class="sheet-handle"></div>
+    <div class="sheet-head"><h3>Incolla una lista</h3><button class="primary-btn" id="pasteAddBtn" aria-label="Aggiungi alla lista">Aggiungi</button></div>
+    <textarea id="pasteText" class="text-input paste-text" rows="8" placeholder="Una cosa per riga, es.&#10;Latte&#10;Pane&#10;2 pacchi di pasta"></textarea>
+    <p class="field-hint paste-hint" id="pasteHint">Scrivi o incolla: ogni riga diventa un articolo. Puoi separare anche con la virgola.</p>
   </div>
 </template>
 
@@ -1122,6 +1130,6 @@
   </div>
 </template>
 
-<script src="app.js?v=1.5.0"></script>
+<script src="app.js?v=1.5.1"></script>
 </body>
 </html>

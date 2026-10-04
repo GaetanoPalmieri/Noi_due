@@ -6221,3 +6221,16 @@ html.amounts-hidden .stat-card-value::after{font-size:20px;}
 .scan-actions .pill-btn{flex:1 1 auto;}
 .period-x{display:inline-grid;}
 .period-x[hidden]{display:none!important;}
+
+/* Noi Due 1.5.1 */
+.nd-info{display:inline-grid;place-items:center;width:20px;height:20px;margin-left:6px;padding:0;border-radius:50%;border:1px solid var(--line);background:transparent;color:var(--ink-soft);font:inherit;font-size:12px;font-weight:800;font-style:italic;line-height:1;vertical-align:middle;cursor:pointer;}
+.section-head h2 .nd-info{width:22px;height:22px;font-size:13px;}
+.chip-group-title .nd-info{text-transform:none;}
+.list-done-head{margin:16px 0 10px!important;}
+.list-tools{display:flex;justify-content:flex-start;margin:-4px 0 12px;}
+.list-tools .pill-btn{min-height:34px;}
+.paste-text{width:100%;min-height:180px;resize:vertical;line-height:1.5;font:inherit;padding:12px 14px;}
+.paste-hint{margin:8px 2px 0;}
+.scan-video-wrap[hidden]{display:none!important;}
+.nd-info-sheet #chartFullscreenBody{min-height:0!important;height:auto!important;flex:0 0 auto!important;display:block!important;padding:14px 16px!important;font-size:15px;line-height:1.5;}
+.nd-info-sheet{height:auto!important;max-height:70vh!important;}

@@ -440,8 +440,8 @@ function coupleMonthStats(y,m,gid=null){
 function mountSplitPicker(node, afterRow, {account, toAccount=()=>null, type, amount, initial, initialGroup=null}){
   const row=document.createElement("div");
   row.className="field-row split-field";
-  row.innerHTML=`<label class="grp-lbl">Gruppo <span class="nd-explain">· in quale saldo tra voi finisce</span></label><div class="chip-row group-chips"></div>
-    <label class="split-lbl">Come dividere <span class="nd-explain">· quanto spetta a ciascuno</span></label><div class="chip-row split-chips"></div>
+  row.innerHTML=`<label class="grp-lbl">Gruppo <button type="button" class="nd-info" data-nd-info="gruppo" aria-label="A cosa serve il gruppo">i</button></label><div class="chip-row group-chips"></div>
+    <label class="split-lbl">Come dividere <button type="button" class="nd-info" data-nd-info="dividi" aria-label="Come funziona la divisione">i</button></label><div class="chip-row split-chips"></div>
     <div class="split-custom" hidden><span class="sc-a"></span><input type="range" min="0" max="100" step="5" aria-label="Percentuale a carico della persona 1"><span class="sc-b"></span></div>
     <p class="field-hint split-hint"></p>`;
   afterRow.after(row);
@@ -550,7 +550,7 @@ function renderCategoryPicker(container, kind, getSelected, onSelect){
 
   const catWrap = document.createElement("div");
   catWrap.className = "chip-group";
-  catWrap.innerHTML = `<p class="chip-group-title">Categoria <span class="nd-explain">· cosa avete comprato (per i grafici)</span></p>`;
+  catWrap.innerHTML = `<p class="chip-group-title">Categoria <button type="button" class="nd-info" data-nd-info="categoria" aria-label="A cosa serve la categoria">i</button></p>`;
   const catRow = document.createElement("div");
   catRow.className = "chip-row";
   const currentList = activeMacro==="all" ? cats : (groups.get(activeMacro) || []);
@@ -2746,6 +2746,21 @@ function openListDetail(listId){
       save(); input.focus();
     }
     node.querySelector("#listAddBtn").addEventListener("click",add);
+    // Incolla una lista: ogni riga (o voce separata da virgole) diventa un articolo.
+    function addMany(lines){
+      const l=list(); if(!l||!lines.length) return 0;
+      const existing=new Set(l.items.filter(i=>!i.done).map(i=>normName(i.text)));
+      let n=0;
+      lines.forEach(text=>{ const k=normName(text); if(!k||existing.has(k)) return; existing.add(k); l.items.push({id:uid(),text:text.slice(0,120),price:null,done:false,code:"",image:"",url:"",photo:""}); n++; });
+      if(n) save();
+      return n;
+    }
+    input.addEventListener("paste",e=>{
+      const txt=(e.clipboardData||window.clipboardData)?.getData("text")||"";
+      const lines=parseShoppingLines(txt);
+      if(lines.length>1){ e.preventDefault(); const n=addMany(lines); showToast(n?`${n} articoli aggiunti`:"Erano già tutti nella lista"); input.value=""; }
+    });
+    node.querySelector("#listPasteBtn").addEventListener("click",()=>openListPaste(lines=>{ const n=addMany(lines); showToast(n?`${n} ${n===1?"articolo aggiunto":"articoli aggiunti"}`:"Erano già tutti nella lista"); }));
     node.querySelector("#listScanBtn").addEventListener("click",()=>openProductScan(item=>{
       list().items.push({id:uid(),done:false,price:null,code:"",image:"",url:"",photo:"",...item});
       save(); showToast("Aggiunto alla lista");
@@ -2764,6 +2779,27 @@ function openListDetail(listId){
       if(!(amount>0)) setTimeout(()=>showToast("Inserisci l'importo dello scontrino"),400);
     });
     listDetailRefresh=paint;
+    paint();
+  });
+}
+function parseShoppingLines(text){
+  let parts=String(text||"").replace(/\r/g,"").split("\n");
+  if(parts.filter(p=>p.trim()).length<=1) parts=String(text||"").split(/[,;]/);
+  return parts.map(p=>p.replace(/^\s*(?:[-*•·◦▪▫–—]|\d+[.)]|\[[ xX✓]?\]|☐|☑|✅)\s*/,"").replace(/\s+/g," ").trim()).filter(Boolean).slice(0,200);
+}
+function openListPaste(onAdd){
+  openSheet("tpl-list-paste",(node,close)=>{
+    const area=node.querySelector("#pasteText"), hint=node.querySelector("#pasteHint"), btn=node.querySelector("#pasteAddBtn");
+    const paint=()=>{ const n=parseShoppingLines(area.value).length; btn.textContent=n?`Aggiungi ${n}`:"Aggiungi"; hint.textContent=n?`${n} ${n===1?"articolo":"articoli"} pronti. Ogni riga diventa un articolo.`:"Scrivi o incolla: ogni riga diventa un articolo. Puoi separare anche con la virgola."; };
+    area.addEventListener("input",paint);
+    // Prova a leggere subito gli appunti (l'iPhone può chiedere conferma con "Incolla").
+    if(navigator.clipboard?.readText){ navigator.clipboard.readText().then(t=>{ if(t && !area.value){ area.value=t; paint(); } }).catch(()=>{}); }
+    setTimeout(()=>area.focus(),300);
+    btn.addEventListener("click",()=>{
+      const lines=parseShoppingLines(area.value);
+      if(!lines.length){ showToast("Scrivi almeno una cosa da comprare"); area.focus(); return; }
+      onAdd(lines); close();
+    });
     paint();
   });
 }
@@ -3018,6 +3054,8 @@ document.getElementById("settleBtn")?.addEventListener("click",()=>openSettleFor
 document.getElementById("addGroupBtn")?.addEventListener("click",()=>openGroupForm());
 document.getElementById("addListBtn")?.addEventListener("click",()=>openListForm());
 document.getElementById("openCoupleSettingsBtn")?.addEventListener("click",()=>openCoupleForm());
+// Pulsanti "i": spiegazioni a richiesta invece di testi sempre visibili.
+document.addEventListener("click",e=>{ const b=e.target.closest("[data-nd-info]"); if(!b) return; e.preventDefault(); e.stopPropagation(); openChartInfo(b.dataset.ndInfo); },true);
 document.getElementById("editCoupleBtn")?.addEventListener("click",openCoupleForm);
 document.getElementById("toggleCoupleBalance")?.addEventListener("click",toggleBalances);
 
@@ -3165,7 +3203,7 @@ function openProductScan(onAdd){
       status.textContent=`Codice ${code}: cerco il prodotto…`;
       if(navigator.vibrate) navigator.vibrate(40);
       const p=await lookupProduct(code);
-      status.textContent=p?"Prodotto trovato. Controlla il nome e aggiungilo.":navigator.onLine===false?"Sei offline: aggiungi il prodotto con il codice e cercalo più tardi.":"Non l'ho trovato: scrivi il nome e usa i link per cercarlo online.";
+      status.textContent=p?"Ho letto il codice a barre e trovato il prodotto. Controlla il nome e aggiungilo.":"Scrivi il nome del prodotto e aggiungilo.";
       showProduct(p,{code,photo});
       busy=false;
     }
@@ -3209,7 +3247,7 @@ function openProductScan(onAdd){
       let code=null;
       try{ code=await decodeBarcodeFromFile(file); }catch(e){ /* lettore non caricato */ }
       if(code){ handleCode(code,{photo:""}); return; }
-      status.textContent="Nessun codice a barre nella foto: la tengo come foto del prodotto. Scrivi il nome e usa i link per cercarlo.";
+      status.textContent="Scrivi il nome del prodotto: la foto resta sull'articolo.";
       showProduct(null,{photo});
     }
   });
@@ -3672,12 +3710,18 @@ function openChartFullscreen(title,help,svg,data){
   });
 }
 function openChartInfo(kind){
+  const ndTitle={categoria:"Categoria",gruppo:"Gruppo",dividi:"Come dividere",gruppi:"Gruppi",liste:"Liste"}[kind];
   const text={
+    categoria:"Dice cosa avete comprato (Spesa, Ristoranti, Bollette…). Serve per i grafici e per cercare i movimenti; non cambia chi deve soldi a chi.",
+    gruppo:"Dice in quale conto tra voi finisce la spesa (es. Casa, Spese di coppia, Viaggi). Ogni gruppo ha il suo saldo; in Saldi vedi il totale e il saldo di ciascun gruppo.",
+    dividi:"Quanto della spesa spetta a ciascuno. A metà, con una percentuale, tutta all'altra persona oppure solo a chi ha pagato (spesa personale). Dalla cassa comune non si crea nessun debito.",
+    gruppi:"Ogni gruppo è un conto separato tra voi, con il suo saldo (es. Casa, Viaggio a Lisbona). Il numero grande in alto è la somma di tutti i gruppi. Tocca un gruppo per vederne i movimenti o saldarlo.",
+    liste:"Tocca una lista per aggiungere articoli: scrivendoli, incollando una lista (ogni riga diventa un articolo) o con una foto. Spunta quello che metti nel carrello e registralo come spesa.",
     ripartizione:"Mostra come entrate o uscite del periodo selezionato sono distribuite fra categorie o macrocategorie. Non considera i trasferimenti fra conti.",
     andamento:"Entrate/Uscite mostra i flussi del periodo. Saldo cumulato mostra il saldo reale, partendo dal saldo presente prima dell’inizio del periodo. Tieni premuto un punto per leggere il giorno.",
     conti:"Mostra la variazione netta di ciascun conto nel periodo scelto. I trasferimenti compaiono come uscita nel conto di origine e entrata in quello di destinazione."
   }[kind]||"";
-  openSheet("tpl-chart-fullscreen",node=>{node.querySelector("#chartFullscreenTitle").textContent="Come leggere il grafico";node.querySelector("#chartFullscreenHelp").hidden=true;node.querySelector("#chartFullscreenBody").innerHTML=`<div class="chart-info-card">${escapeHtml(text)}</div>`;});
+  openSheet("tpl-chart-fullscreen",node=>{node.querySelector("#chartFullscreenTitle").textContent=ndTitle||"Come leggere il grafico";if(ndTitle)node.classList.add("nd-info-sheet");node.querySelector("#chartFullscreenHelp").hidden=true;node.querySelector("#chartFullscreenBody").innerHTML=`<div class="chart-info-card">${escapeHtml(text)}</div>`;});
 }
 
 function isoAddDays(iso,n){const d=new Date(iso+"T12:00:00");d.setDate(d.getDate()+n);return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;}

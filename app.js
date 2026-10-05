@@ -942,7 +942,7 @@ function emojiGraphemes(str){
   try{ if(typeof Intl!=="undefined" && Intl.Segmenter) return [...new Intl.Segmenter("it",{granularity:"grapheme"}).segment(t)].map(x=>x.segment); }catch(e){}
   return Array.from(t);
 }
-function cleanEmoji(str,max=4){
+function cleanEmoji(str,max=2){
   const isEmoji=g=>/\p{Extended_Pictographic}|\p{Regional_Indicator}|[\u20E3\uFE0F]/u.test(g);
   return emojiGraphemes(str).filter(g=>g.trim() && isEmoji(g)).slice(0,max).join("");
 }
@@ -956,7 +956,7 @@ function buildEmojiField(row, initial, onChange){
   const clear=document.createElement("button");clear.type="button";clear.className="emoji-clear";clear.textContent="✕";clear.setAttribute("aria-label","Svuota icona");
   wrap.append(input,clear);
   // Solo emoji dalla tastiera del telefono, niente icone suggerite.
-  const hint=document.createElement("p");hint.className="field-hint emoji-hint";hint.textContent="Tocca il campo e sulla tastiera premi 😀 (o 🌐) per scegliere l'emoji. Puoi metterne fino a 4.";
+  const hint=document.createElement("p");hint.className="field-hint emoji-hint";hint.textContent="Tocca il campo e sulla tastiera premi 😀 (o 🌐) per scegliere l'emoji. Puoi metterne fino a 2.";
   const commit=()=>{const v=cleanEmoji(input.value);onChange(v||EMOJIS[0]);};
   input.addEventListener("input",()=>{const v=cleanEmoji(input.value);if(v!==input.value&&!input.value.endsWith("\u200D"))input.value=v;commit();});
   input.addEventListener("blur",()=>{input.value=cleanEmoji(input.value);commit();});
@@ -965,11 +965,11 @@ function buildEmojiField(row, initial, onChange){
   commit();
 }
 function emojiIconHtml(emoji){
-  const grs=emojiGraphemes(emoji).slice(0,4);
+  const grs=emojiGraphemes(emoji).slice(0,2);
   return (grs.length?grs:[emoji]).map(g=>`<span class="mv-ic-item">${escapeHtml(g)}</span>`).join("");
 }
 function movementRowHtml({emoji,color,title,badges="",meta="",amountHtml,type,date,relative=true,kind=null,paid=false}){
-  const nEm=Math.max(1,Math.min(4,emojiGraphemes(emoji).length||1));
+  const nEm=Math.max(1,Math.min(2,emojiGraphemes(emoji).length||1));
   return `<span class="mv-ic${nEm>1?` mv-ic-n${nEm}`:""}">${emojiIconHtml(emoji)}</span>
     <span class="mv-title"><span class="mv-name">${hlText(title)}</span></span>
     <span class="mv-amt ${type}">${amountHtml}</span>

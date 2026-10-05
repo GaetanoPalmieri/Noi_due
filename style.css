@@ -451,13 +451,14 @@ button:active {
   color: var(--ink);
 }
 .category-row .ic {
-  width: 30px;
+  width: auto;
+  min-width: 30px;
   min-height: 30px;
   height: auto;
   border-radius: 8px;
   background: none!important;
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
   justify-content: center;
   gap: 1px;
@@ -466,10 +467,11 @@ button:active {
   flex-shrink: 0;
 }
 .template-manage-row .ic {
+  width: auto;
   border-radius: 8px;
   background: none!important;
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
   justify-content: center;
   gap: 1px;
@@ -1496,7 +1498,8 @@ input[type="date"] {
   min-height: 62px;
 }
 .template-manage-row .ic {
-  width: 32px;
+  width: auto;
+  min-width: 32px;
   height: 32px;
   font-size: 16px;
 }
@@ -3339,7 +3342,8 @@ svg text {
   grid-area: ic;
   align-self: center;
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
+  width: auto;
   align-items: center;
   justify-content: center;
   gap: 1px;
@@ -3634,7 +3638,8 @@ svg text {
   height: 10px;
 }
 .mv-row .mv-ic {
-  width: 28px!important;
+  width: auto!important;
+  min-width: 28px;
   min-height: 26px;
   height: auto!important;
   font-size: 16px!important;
@@ -3683,7 +3688,7 @@ svg text {
 /* Card movimento: colonna destra di larghezza fissa; data a tutta larghezza della colonna, importo centrato sopra.
    Così importo e data sono allineati in tutte le liste (Home, Tutti i movimenti, R&P). */
 .tx-row.mv-row,.template-manage-row.mv-row {
-  grid-template-columns: 28px minmax(0,1fr) minmax(66px,auto)!important;
+  grid-template-columns: minmax(28px,auto) minmax(0,1fr) minmax(66px,auto)!important;
 }
 .mv-row .mv-date {
   justify-self: stretch!important;
@@ -4829,13 +4834,14 @@ html.amounts-hidden .stat-card-value::after {
   backdrop-filter: blur(14px) saturate(1.5);
 }
 .group-card .mv-ic {
-  width: 42px;
+  width: auto;
+  min-width: 42px;
   min-height: 42px;
   height: auto;
   border-radius: 14px;
   background: none!important;
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
   justify-content: center;
   gap: 1px;

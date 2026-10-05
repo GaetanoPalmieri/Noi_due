@@ -260,7 +260,7 @@
         var rev0 = A.rev;
         var body = { data: await opts.getLocal(), updated_at: now() };
         if (opts.scope === 'couple' && typeof opts.editorTag === 'function') {
-          try { body.updated_by = opts.editorTag() || null; } catch (e) {}
+          try { body.updated_by_person = opts.editorTag() || null; } catch (e) {}
         }
         var res;
         if (row) {
@@ -268,7 +268,7 @@
           if (!res.length) return 'conflict';
         } else {
           var ins = {}; for (var k in ref.insert) ins[k] = ref.insert[k]; ins.data = body.data; ins.updated_at = body.updated_at;
-          if (body.updated_by !== undefined) ins.updated_by = body.updated_by;
+          if (body.updated_by_person !== undefined) ins.updated_by_person = body.updated_by_person;
           try { res = await api('/rest/v1/' + ref.table, { method: 'POST', json: ins, headers: { Prefer: 'return=representation' } }); }
           catch (e) { if (e.status === 409) return 'conflict'; throw e; }
         }

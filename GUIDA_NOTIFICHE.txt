@@ -1,0 +1,63 @@
+NOI DUE — ATTIVARE LE NOTIFICHE "IL TUO PARTNER HA AGGIUNTO/RIMOSSO QUALCOSA"
+(si fa una volta sola, tutto dal sito di Supabase, niente programmi da installare)
+
+Usa lo stesso progetto Supabase di Bilancio: la tabella delle notifiche (push_subscriptions)
+esiste già, qui viene solo estesa. Se non hai mai attivato le notifiche di Bilancio, va bene
+lo stesso: i passi sotto creano tutto il necessario.
+
+Cosa serve prima
+- iPhone con iOS 16.4 o successivo, Noi Due aperto dall'icona sulla schermata Home (su ENTRAMBI i telefoni).
+- Accesso fatto in Altro › Sincronizzazione su entrambi i telefoni (stessa email e password per la coppia).
+- Su entrambi i telefoni toccato "Chi usa questo telefono" (serve per sapere a chi mandare l'avviso:
+  se non lo fai, le notifiche funzionano comunque ma potrebbero arrivare anche a chi ha appena scritto).
+
+PASSO 1 — Carica la nuova versione
+Carica su GitHub i file di questa cartella come sempre (comprese le due cartelle "supabase/...").
+Apri Noi Due su entrambi i telefoni e tocca "Aggiorna".
+
+PASSO 2 — Colonne e trigger nel database
+Supabase › il tuo progetto (quello di Bilancio) › SQL Editor › New query.
+Apri il file supabase/notifiche.sql, sostituisci INCOLLA_QUI_NOIDUE_TRIGGER_SECRET con una
+password a caso che inventi tu adesso (scrivila anche da parte: la userai anche al passo 3).
+Incolla tutto il contenuto e premi Run. Deve dire "Success".
+
+PASSO 3 — Segreti
+Supabase › Edge Functions › Secrets.
+Aggiungi questi quattro (nomi diversi da quelli di Bilancio, anche se il progetto è lo stesso):
+  NOIDUE_VAPID_PUBLIC_KEY   = BKczfpgprh7HLU-bzY9QFsHNGZTjh624LyPo3CvI97dn0F_TjlQjKR3tJbzQuEtBLkapU54HFEOpozXVfNIePNk
+  NOIDUE_VAPID_PRIVATE_KEY  = 7dlmwI6b14Q-czrJhi6YAMbKwb9QrM94_rZlhAUvisQ
+  NOIDUE_VAPID_SUBJECT      = mailto: seguito dalla tua email (es. mailto:nome@gmail.com)
+  NOIDUE_TRIGGER_SECRET     = la stessa password che hai inventato al passo 2
+
+PASSO 4 — Funzione che invia le notifiche
+Supabase › Edge Functions › crea una nuova funzione con l'editor del sito.
+  Nome: notify-noidue   (esattamente così, controlla che l'indirizzo generato finisca
+  davvero per /notify-noidue e non con un nome a caso: se è diverso, cambialo prima di salvare)
+  Contenuto: tutto il file supabase/functions/notify-noidue/index.ts
+Pubblica (Deploy). Poi, nelle impostazioni della funzione, DISATTIVA la verifica JWT
+("Verify JWT" / "Enforce JWT verification"): i controlli di sicurezza sono già dentro la funzione.
+
+PASSO 5 — Sul telefono (su entrambi!)
+Noi Due › Altro › Notifiche › "🔔 Attiva notifiche" › Consenti.
+Tocca "Invia una prova": deve arrivare una notifica di prova su tutti i telefoni della coppia.
+
+Come funziona
+- Ogni volta che un telefono salva (dopo aver aggiunto o rimosso un movimento, o un articolo da una
+  lista), il database confronta cosa c'era prima e dopo e avvisa SOLO i telefoni dell'ALTRA persona
+  (non quelli di chi ha appena scritto). Se non cambia nulla di aggiunto/rimosso, non arriva nulla.
+- Riguarda movimenti e articoli delle liste della spesa. Modifiche (es. segnare un articolo come
+  comprato, cambiare l'importo di un movimento) non generano un avviso: solo aggiunte e rimozioni.
+- Toccando la notifica si apre l'app.
+
+Se qualcosa non va
+- "Su Supabase manca la colonna/tabella delle notifiche…": rifai il passo 2.
+- "Su Supabase manca la funzione notify-noidue…": controlla il nome e l'indirizzo (passo 4).
+- "Accesso non valido": la verifica JWT è ancora attiva (passo 4) oppure rifai l'accesso.
+- Pulsante grigio "Notifiche bloccate": Impostazioni iPhone › Notifiche › Noi Due › Consenti.
+- Arrivano anche a chi ha appena scritto: controlla che su entrambi i telefoni sia stato scelto
+  "Chi usa questo telefono" (una persona diversa su ciascuno) in Altro.
+- Per controllare se la funzione gira: SQL Editor →
+    select status_code, content from net._http_response order by created desc limit 5;
+  Un 401 vuol dire che NOIDUE_TRIGGER_SECRET nel trigger (passo 2) non è uguale a quello dei
+  Secrets (passo 3).
+- Su ogni telefono le notifiche vanno attivate a parte. Se togli l'app dalla Home, riattivale.

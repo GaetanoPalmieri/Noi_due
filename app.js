@@ -400,7 +400,7 @@ function askWhoAmI(){
   if(!window.SuiteSync||document.querySelector(".noidue-me-modal")) return;
   SuiteSync.modal(`<h3>Chi usa questo telefono?</h3><p class="suite-modal-text">Così nelle liste vedi cosa ha aggiunto l'altra persona e ricevi un avviso quando aggiunge qualcosa.</p><div class="app-update-actions"><button type="button" class="noidue-me-btn" data-me="a" style="border-color:${safeColor(personColor("a"))}">${escapeHtml(personName("a"))}</button><button type="button" class="noidue-me-btn" data-me="b" style="border-color:${safeColor(personColor("b"))}">${escapeHtml(personName("b"))}</button></div>`,(wrap,close)=>{
     wrap.classList.add("noidue-me-modal");
-    wrap.querySelectorAll("[data-me]").forEach(b=>b.addEventListener("click",()=>{ safeSetLocalStorage("noidue_me",b.dataset.me,{notify:false}); close(); renderAll(); if(typeof listDetailRefresh==="function") listDetailRefresh(); showToast(`Ok: su questo telefono sei ${personName(b.dataset.me)}`); }));
+    wrap.querySelectorAll("[data-me]").forEach(b=>b.addEventListener("click",()=>{ safeSetLocalStorage("noidue_me",b.dataset.me,{notify:false}); close(); renderAll(); if(typeof listDetailRefresh==="function") listDetailRefresh(); if(typeof renderPushCard==="function") renderPushCard(); showToast(`Ok: su questo telefono sei ${personName(b.dataset.me)}`); }));
   });
 }
 function personName(k){ return k==="a"||k==="b" ? state.couple[k].name : "Cassa comune"; }
@@ -4126,6 +4126,7 @@ function uploadedSet(){ try{ return new Set(JSON.parse(localStorage.getItem(UPLO
 function markUploaded(key){ const s=uploadedSet(); s.add(key); safeSetLocalStorage(UPLOADED_KEY,JSON.stringify([...s].slice(-2000)),{notify:false}); }
 var syncNoiDue = window.SuiteSync ? SuiteSync.register({
   app:"noidue", name:"Noi Due", scope:"couple",
+  editorTag:()=>myPerson(),
   getLocal:()=>state,
   hasLocalData:()=>state.transactions.length>0||allListItems(state).length>0,
   localUpdatedAt:()=>state.updatedAt||null,
@@ -4153,8 +4154,133 @@ var syncNoiDue = window.SuiteSync ? SuiteSync.register({
       markUploaded(key);
     }
   },
+  onStatus:()=>{ if(typeof pushOnSyncStatus==="function") pushOnSyncStatus(); },
 }) : null;
 (function(){ const slot=document.getElementById("suiteSyncSlot"); if(slot&&window.SuiteSync) slot.innerHTML=SuiteSync.cardHtml("noidue",{cls:"section-block suite-sync-block",h:"h2"}); })();
+
+/* ---------------- v1.13.0 — Notifiche push "Il tuo partner ha aggiunto/rimosso qualcosa" ----------------
+   Il telefono si iscrive (permesso + indirizzo push salvato in Supabase, tabella push_subscriptions,
+   con couple_id e la persona "a"/"b" di questo telefono). Ogni volta che un telefono salva, la funzione
+   notify-noidue su Supabase confronta i dati prima/dopo e avvisa SOLO i telefoni dell'altra persona.
+   Guida completa: GUIDA_NOTIFICHE.txt */
+const PUSH_VAPID_PUBLIC="BKczfpgprh7HLU-bzY9QFsHNGZTjh624LyPo3CvI97dn0F_TjlQjKR3tJbzQuEtBLkapU54HFEOpozXVfNIePNk";
+const PUSH_FN="/functions/v1/notify-noidue";
+let pushState={sub:null,row:null,busy:false,msg:"",err:false,loaded:false};
+function pushSupported(){ return "serviceWorker" in navigator && "PushManager" in window && "Notification" in window; }
+function pushIsIOS(){ return /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform==="MacIntel" && navigator.maxTouchPoints>1); }
+function pushStandalone(){ return window.navigator.standalone===true || (window.matchMedia && matchMedia("(display-mode: standalone)").matches); }
+function b64uToUint8(str){
+  const pad="=".repeat((4-str.length%4)%4), b=atob((str+pad).replace(/-/g,"+").replace(/_/g,"/"));
+  return Uint8Array.from(b,c=>c.charCodeAt(0));
+}
+function pushErrText(e){
+  const t=String(e&&e.message||e||"");
+  if(/push_subscriptions/.test(t) && /(does not exist|42P01|PGRST205|schema cache)/.test(t)) return "Su Supabase manca la colonna/tabella delle notifiche: esegui il passo 2 della guida.";
+  if(/notify-noidue|404/.test(t) && /function|not found|NOT_FOUND/i.test(t)) return "Su Supabase manca la funzione notify-noidue: esegui il passo 4 della guida.";
+  if(e&&e.auth) return "Rifai l'accesso alla sincronizzazione qui sopra.";
+  return t.replace(/^Errore \d+:\s*/,"").slice(0,160) || "Qualcosa non ha funzionato.";
+}
+async function pushRegistration(){
+  if(!("serviceWorker" in navigator)) return null;
+  return (await navigator.serviceWorker.getRegistration()) || null;
+}
+async function refreshPushState(){
+  if(!pushSupported()){ pushState.loaded=true; renderPushCard(); return; }
+  try{
+    const reg=await pushRegistration();
+    pushState.sub=reg?await reg.pushManager.getSubscription():null;
+    pushState.row=null;
+    if(pushState.sub && window.SuiteSync && SuiteSync.signedIn){
+      const rows=await SuiteSync.api(`/rest/v1/push_subscriptions?select=enabled&app=eq.noidue&endpoint=eq.${encodeURIComponent(pushState.sub.endpoint)}`);
+      pushState.row=rows[0]||null;
+    }
+  }catch(e){ pushState.msg=pushErrText(e); pushState.err=true; }
+  pushState.loaded=true;
+  renderPushCard();
+}
+function renderPushCard(){
+  const card=document.getElementById("pushCard"); if(!card) return;
+  const on=!!(pushState.sub && pushState.row && pushState.row.enabled!==false);
+  let dot="off", status, inner="";
+  if(!pushSupported()){
+    status=pushIsIOS() && !pushStandalone()
+      ? "Per ricevere le notifiche apri Noi Due dall'icona sulla schermata Home (iPhone con iOS 16.4 o successivo)."
+      : "Questo browser non supporta le notifiche push.";
+  } else if(!(window.SuiteSync && SuiteSync.signedIn)){
+    status="Collega prima la sincronizzazione qui sopra: le notifiche partono dal server.";
+  } else if(!myPerson()){
+    status="Tocca prima \"Chi usa questo telefono\" qui sotto: serve per sapere a chi mandare gli avvisi.";
+  } else if(!pushState.loaded){
+    status="Controllo…"; dot="busy";
+  } else if(on){
+    dot="on";
+    status="Attive su questo telefono: ti avviso quando il tuo partner aggiunge o rimuove un movimento o un articolo da una lista.";
+    inner=`<div class="suite-sync-actions"><button type="button" class="suite-sync-primary primary" id="pushTestBtn"${pushState.busy?" disabled":""}>Invia una prova</button><button type="button" id="pushOffBtn"${pushState.busy?" disabled":""}>Disattiva</button></div>`;
+  } else {
+    status=Notification.permission==="denied"
+      ? "Notifiche bloccate per Noi Due: riattivale in Impostazioni › Notifiche › Noi Due, poi torna qui."
+      : "Ricevi un avviso quando il tuo partner aggiunge o rimuove un movimento o un articolo da una lista.";
+    inner=`<button type="button" class="suite-sync-primary primary push-on-btn" id="pushOnBtn"${pushState.busy||Notification.permission==="denied"?" disabled":""}>🔔 Attiva notifiche</button>`;
+  }
+  const msg=pushState.msg?`<p class="push-msg${pushState.err?" err":""}">${escapeHtml(pushState.msg)}</p>`:"";
+  card.innerHTML=`<h2>Notifiche</h2><p class="suite-sync-status"><span class="suite-sync-dot ${dot}" aria-hidden="true"></span>${escapeHtml(status)}</p>${inner}${msg}`;
+}
+let pushLastSigned=null;
+function pushOnSyncStatus(){
+  const signed=!!(window.SuiteSync && SuiteSync.signedIn);
+  if(signed!==pushLastSigned){ pushLastSigned=signed; refreshPushState(); } else renderPushCard();
+}
+function pushSay(text,err=false){ pushState.msg=text; pushState.err=err; renderPushCard(); }
+async function pushSaveRow(){
+  if(syncNoiDue) await syncNoiDue.rowRef(); // assicura che coupleId sia risolto
+  const j=pushState.sub.toJSON();
+  await SuiteSync.api("/rest/v1/push_subscriptions?on_conflict=endpoint",{method:"POST",
+    headers:{Prefer:"resolution=merge-duplicates,return=minimal"},
+    json:{user_id:SuiteSync.userId,app:"noidue",couple_id:syncNoiDue?syncNoiDue.coupleId:null,person:myPerson()||null,
+      endpoint:j.endpoint,p256dh:j.keys.p256dh,auth:j.keys.auth,
+      tz:(Intl.DateTimeFormat().resolvedOptions().timeZone||"Europe/Rome"),device:navigator.userAgent.slice(0,120),
+      enabled:true,updated_at:new Date().toISOString()}});
+}
+async function pushEnable(){
+  if(pushState.busy) return;
+  pushState.busy=true; pushSay("");
+  try{
+    // Il permesso va chiesto subito dopo il tocco (regola di iOS).
+    const perm=await Notification.requestPermission();
+    if(perm!=="granted"){ pushState.busy=false; pushSay(perm==="denied"?"Permesso negato. Puoi riattivarlo in Impostazioni › Notifiche › Noi Due.":"Permesso non concesso.",true); return; }
+    const reg=await pushRegistration();
+    if(!reg) throw new Error("Service worker non attivo: riapri l'app e riprova.");
+    pushState.sub=(await reg.pushManager.getSubscription()) || (await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:b64uToUint8(PUSH_VAPID_PUBLIC)}));
+    await pushSaveRow();
+    pushState.row={enabled:true};
+    pushState.busy=false; pushSay("Fatto. Tocca \"Invia una prova\" per controllare che arrivino.");
+  }catch(e){ pushState.busy=false; pushSay(pushErrText(e),true); }
+}
+async function pushDisable(){
+  if(pushState.busy||!pushState.sub) return;
+  pushState.busy=true; renderPushCard();
+  const endpoint=pushState.sub.endpoint;
+  try{ await SuiteSync.api(`/rest/v1/push_subscriptions?endpoint=eq.${encodeURIComponent(endpoint)}`,{method:"DELETE"}); }catch(e){}
+  try{ await pushState.sub.unsubscribe(); }catch(e){}
+  pushState.sub=null; pushState.row=null; pushState.busy=false;
+  pushSay("Notifiche disattivate su questo telefono.");
+}
+async function pushTest(){
+  if(pushState.busy) return;
+  pushState.busy=true; pushSay("Invio la prova…");
+  try{
+    const r=await SuiteSync.api(PUSH_FN,{method:"POST",json:{test:true}});
+    pushState.busy=false;
+    pushSay(r&&r.sent?"Prova inviata: dovrebbe arrivare tra pochi secondi su tutti i telefoni della coppia.":"La prova non è partita: disattiva e riattiva le notifiche.",!(r&&r.sent));
+  }catch(e){ pushState.busy=false; pushSay(pushErrText(e),true); }
+}
+document.getElementById("pushCard")?.addEventListener("click",e=>{
+  const id=e.target.closest("button")?.id;
+  if(id==="pushOnBtn") pushEnable();
+  else if(id==="pushOffBtn") pushDisable();
+  else if(id==="pushTestBtn") pushTest();
+});
+setTimeout(refreshPushState,1500);
 
 /* v1.12.0 — Avviso quando l'altra persona aggiunge qualcosa (dopo la sincronizzazione). */
 function notifyPartnerChanges(beforeItems,beforeTx){

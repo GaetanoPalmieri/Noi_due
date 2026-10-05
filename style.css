@@ -6205,7 +6205,7 @@ html.amounts-hidden .stat-card-value::after {
   font-weight: 800!important;
 }
 .noidue-me-row {
-  margin: -6px 0 18px;
+  margin: 16px 0 18px;
   display: flex;
   justify-content: center;
 }

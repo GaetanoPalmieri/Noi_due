@@ -186,7 +186,6 @@ function restoreTrashItem(trashId){
   state.trash=state.trash.filter(x=>x.id!==trashId);
   sanitizeLoadedState(state);
   if(entry.kind==="recurring") refreshRecurringTransactions(String(entry.data.id));
-  if(entry.kind==="planned") generatePlannedTransactions();
   persist();renderAll();
 }
 
@@ -223,10 +222,8 @@ let txSearchQuery="", txDateFrom="", txDateTo="";
 const TX_PAGE_SIZE=50;
 let txVisibleLimit=TX_PAGE_SIZE;
 let txSearchTimer=null;
-let rpMode = "total";
 let viewDay = now.getDate();
 const periodModes = {home:"all", recurring:"month", stats:"month", transactions:"all", rpall:"month"};
-let rpAllKind="total", rpAllQuery="";
 function selectedDate(){return `${viewYear}-${pad2(viewMonth+1)}-${pad2(viewDay)}`;}
 /* v1.7.0 — Periodo: mese intero, singolo giorno oppure intervallo di giorni (anche tra mesi diversi). */
 let periodRange={from:null,to:null};
@@ -251,27 +248,11 @@ function periodLabel(view){
   return `${MESI[viewMonth]} ${viewYear}`;
 }
 function periodSubLabel(view){const m=periodModes[view]||"month";return m==="all"?"Filtra per mese o giorno":m==="day"?"Solo questo giorno":m==="range"?"Periodo scelto":"Tutto il mese";}
-function monthsInPeriod(view){
-  const b=periodBounds(view); const out=[];
-  let d=new Date(b.from+"T00:00:00"); d=new Date(d.getFullYear(),d.getMonth(),1);
-  const end=new Date(b.to+"T00:00:00");
-  while(d<=end && out.length<36){out.push([d.getFullYear(),d.getMonth()]);d=new Date(d.getFullYear(),d.getMonth()+1,1);}
-  return out;
-}
-function plannedItemsInPeriod(view){
-  return monthsInPeriod(view).flatMap(([y,m])=>plannedItemsForMonth(y,m)).filter(t=>inPeriod(view,t.date));
-}
 function periodTx(view){
   if(periodModes[view]==="all") return state.transactions.slice();
   if((periodModes[view]||"month")==="month") return monthTx();
   return state.transactions.filter(t=>inPeriod(view,t.date));
 }
-function sumTransactions(tx){
-  const income=tx.filter(t=>t.type==="income").reduce((s,t)=>s+t.amount,0);
-  const expense=tx.filter(t=>t.type==="expense").reduce((s,t)=>s+t.amount,0);
-  return {income,expense,net:income-expense};
-}
-function moneyColor(value){return value>0?"var(--emerald)":value<0?"var(--rust)":"var(--ink)";}
 
 /* ---------------- Noi Due — logica di coppia ----------------
    Ogni conto appartiene a una persona ("a", "b") o è "joint" (comune).
@@ -362,7 +343,6 @@ function personColor(k){ return k==="a"||k==="b" ? state.couple[k].color : "#D4A
 function personInitial(k){ return (personName(k).trim()[0]||(k==="a"?"1":"2")).toUpperCase(); }
 function otherPerson(k){ return k==="a"?"b":"a"; }
 function accOwner(id){ return state.accounts.find(a=>a.id===id)?.owner || "joint"; }
-function ownerLabel(owner){ return owner==="a"||owner==="b" ? `Di ${personName(owner)}` : "Comune"; }
 function defaultSplitFor(type,gid=null){
   if(type==="income") return "personal";
   const g=gid?groupsById()[gid]:null;
@@ -580,15 +560,6 @@ function monthTx(y=viewYear, m=viewMonth){
   const prefix = `${y}-${pad2(m+1)}`;
   return state.transactions.filter(t=>t.date.startsWith(prefix));
 }
-function sortedMonthTx(y=viewYear,m=viewMonth){
-  return monthTx(y,m).slice().sort((a,b)=> b.date.localeCompare(a.date) || b.id.localeCompare(a.id));
-}
-function monthTotals(y=viewYear,m=viewMonth){
-  const tx = monthTx(y,m);
-  let income=0, expense=0;
-  tx.forEach(t=>{ if(t.type==="income") income+=t.amount; else if(t.type==="expense") expense+=t.amount; });
-  return { income, expense, net: income-expense };
-}
 function accountBalance(accId){
   if(balanceCache.has(accId)) return balanceCache.get(accId);
   const start = state.accounts.find(a=>a.id===accId)?.balance || 0;
@@ -603,19 +574,6 @@ function accountBalance(accId){
 }
 function totalBalance(){
   return state.accounts.reduce((sum,a)=> sum + accountBalance(a.id), 0);
-}
-function accountBalanceAt(accId, y, m){
-  // Saldo del conto al termine del mese y-m (incluso).
-  const acc = state.accounts.find(a=>a.id===accId);
-  if(!acc) return 0;
-  const cutoff = `${y}-${pad2(m+1)}-31`;
-  const delta = state.transactions.reduce((sum,t)=>{
-    if(t.date>cutoff) return sum;
-    if(t.type==="transfer") return sum + (t.accountId===accId ? -t.amount : t.toAccountId===accId ? t.amount : 0);
-    if(t.accountId!==accId) return sum;
-    return sum + (t.type==="income" ? t.amount : -t.amount);
-  },0);
-  return acc.balance + delta;
 }
 function accountBalanceAtDate(accId, iso){
   // Saldo del conto al termine della giornata iso (incluso).
@@ -701,68 +659,6 @@ function removeRecurring(recurringId){
   state.transactions = state.transactions.filter(t=>t.recurringId!==recurringId || t.date<today);
 }
 
-/* ---------------- Spese pianificate (una tantum + proiezione ricorrenti future) ---------------- */
-function generatePlannedTransactions(){
-  // Quando arriva la data prevista (compreso oggi), la pianificata diventa un movimento reale.
-  // Il plannedId resta sul movimento per poterla mostrare nello storico "Pagati nel mese".
-  const todayStr = todayISO();
-  let changed = false;
-  state.planned = state.planned.filter(p=>{
-    if(p.date <= todayStr){
-      if(!state.transactions.some(t=>t.plannedId===p.id && t.date===p.date)){
-        state.transactions.push({
-          id: uid(), date: p.date, amount: p.amount, type: p.type,
-          categoryId: p.categoryId, accountId: p.accountId, name:p.name || "", note: p.note || "",
-          plannedId: p.id, split: p.split || null, groupId: p.groupId || null,
-        });
-      }
-      changed = true;
-      return false;
-    }
-    return true;
-  });
-  if(changed) persist();
-}
-function recurringOccurrencesInMonth(r, y, m){
-  if(r.active===false) return [];
-  // Date (future, non ancora generate) in cui un ricorrente cadrà nel mese y-m.
-  const monthStart = `${y}-${pad2(m+1)}-01`;
-  const monthEnd = `${y}-${pad2(m+1)}-31`;
-  const dates = [];
-  let d = r.nextDate;
-  let safety = 0;
-  while(d && d<=monthEnd && safety<500){
-    if(!recurringDateWithinLimits(r,d)) break;
-    if(d>=monthStart) dates.push(d);
-    d = stepDateISO(d, r.freq, r.startDate);
-    safety++;
-  }
-  return dates;
-}
-function plannedItemsForMonth(y=viewYear, m=viewMonth){
-  // Elenco "virtuale" (non incide sul saldo) delle spese pianificate visibili nel mese y-m:
-  // una tantum con data in quel mese + prossime occorrenze dei ricorrenti che cadono in quel mese.
-  const prefix = `${y}-${pad2(m+1)}`;
-  const once = state.planned.filter(p=>p.date.startsWith(prefix)).map(p=>({
-    id: "planned_"+p.id, plannedId: p.id, date: p.date, amount: p.amount, type: p.type,
-    categoryId: p.categoryId, accountId: p.accountId, name:p.name || "", note: p.note || "", planned: true,
-  }));
-  const recurringOcc = [];
-  state.recurring.forEach(r=>{
-    recurringOccurrencesInMonth(r,y,m).forEach(date=>{
-      recurringOcc.push({
-        id: "rec_"+r.id+"_"+date, recurringId: r.id, date, amount: r.amount, type: r.type,
-        categoryId: r.categoryId, accountId: r.accountId, name:r.name || "", note: r.note || "", planned: true,
-      });
-    });
-  });
-  return [...once, ...recurringOcc];
-}
-function plannedItemsForDate(iso){
-  const y = parseInt(iso.slice(0,4),10), m = parseInt(iso.slice(5,7),10)-1;
-  return plannedItemsForMonth(y,m).filter(t=>t.date===iso);
-}
-
 /* ---------------- Rendering: header ---------------- */
 function renderHeader(){
   const daily=periodModes[activeView]==="day";
@@ -781,16 +677,6 @@ function renderHeader(){
   document.getElementById("prevMonth").setAttribute("aria-label",daily?"Giorno precedente":"Mese precedente");
   document.getElementById("nextMonth").setAttribute("aria-label",daily?"Giorno successivo":"Mese successivo");
   document.querySelectorAll("[data-period]").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.period===periodModes[activeView])));
-}
-
-function isStandalonePWA(){
-  return Boolean(window.matchMedia?.("(display-mode: standalone)")?.matches || window.navigator.standalone===true);
-}
-function renderMainAccountSetupNotice(){
-  const notice=document.getElementById("mainAccountSetupNotice");
-  if(!notice) return;
-  const missing=!state.mainAccountId || !state.accounts.some(a=>a.id===state.mainAccountId);
-  notice.hidden=!(missing && isStandalonePWA() && state.accounts.length>0);
 }
 
 /* Icona occhio per mostra/nascondi importi (v1.3.21). */
@@ -832,93 +718,17 @@ function renderNdHome(){
 
 /* ---------------- Rendering: Home ---------------- */
 function renderHome(){
-  const { income, expense, net } = sumTransactions(periodTx("home"));
-  document.getElementById("netAmount").textContent = balancesHidden ? "••••" : fmt(net);
-  document.getElementById("netAmount").style.color = moneyColor(net);
-  document.getElementById("incomeAmount").textContent = balancesHidden ? "••••" : fmt(income);
-  document.getElementById("expenseAmount").textContent = balancesHidden ? "••••" : fmt(expense);
   setEyeIcon(document.getElementById("toggleHomeBalance"),balancesHidden);
-  const mainAccount=state.accounts.find(a=>a.id===state.mainAccountId) || null;
-  const mainBalance=mainAccount?accountBalance(mainAccount.id):null;
-  const allAccountsBalance=totalBalance();
-  const mainName=document.getElementById("homeMainAccountName");
-  const mainAmount=document.getElementById("homeMainAccountBalance");
-  const allAmount=document.getElementById("homeAllAccountsBalance");
-  if(mainName) mainName.textContent=mainAccount?`Conto principale · ${mainAccount.name}`:"Conto principale non impostato";
-  if(mainAmount){mainAmount.textContent=mainAccount?(balancesHidden?"••••":fmt(mainBalance)):"Imposta";mainAmount.style.color=mainAccount?moneyColor(mainBalance):"";}
-  if(allAmount){allAmount.textContent=balancesHidden?"••••":fmt(allAccountsBalance);allAmount.style.color=moneyColor(allAccountsBalance);}
-  renderMainAccountSetupNotice();
   renderCoupleStrip();
   renderHomeLists();
-
   {const c=document.getElementById("seeAllTxCount"); if(c) c.textContent=periodTx("home").filter(t=>!t.isBalanceAdjustment).length;}
   document.querySelector("#view-home .hero-label").textContent=periodModes.home==="all"?"Spese totali":periodModes.home==="day"?"Spese del giorno":periodModes.home==="range"?"Spese del periodo":"Spese del mese";
   renderNdHome();
-  const today=todayISO(), monthEnd=`${viewYear}-${pad2(viewMonth+1)}-31`;
-  const future=plannedItemsForMonth(viewYear,viewMonth).filter(t=>t.date>=today && t.date<=monthEnd);
-  const futureNet=future.reduce((s,t)=>s+(t.type==="income"?t.amount:-t.amount),0);
-  const current=totalBalance(), forecast=current+futureNet;
-  const show=v=>balancesHidden?"••••":fmt(v);
-  document.getElementById("currentBalanceAmount").textContent=show(current);
-  document.getElementById("forecastBalanceAmount").textContent=show(forecast);
-  document.getElementById("upcomingImpactAmount").textContent=balancesHidden?"••••":`${futureNet>=0?"+":"−"}${fmt(Math.abs(futureNet))}`;
-  document.getElementById("forecastBalanceAmount").style.color=moneyColor(forecast);
-  document.getElementById("upcomingImpactAmount").style.color=moneyColor(futureNet);
-  renderUnifiedBudgets();
-
-  // Recent tx
   const recent = periodTx("home").filter(t=>!t.isBalanceAdjustment).slice().sort((a,b)=>b.date.localeCompare(a.date)||b.id.localeCompare(a.id)).slice(0,5);
   renderTxRows(document.getElementById("recentTx"), recent);
-  document.getElementById("txEmptyHint").hidden = recent.length>0;
-  document.getElementById("txEmptyHint").textContent=periodModes.home==="all"?"Nessun movimento. Tocca + per aggiungere una spesa.":periodModes.home==="day"?"Nessun movimento in questo giorno.":periodModes.home==="range"?"Nessun movimento nel periodo.":"Nessun movimento questo mese.";
-  const upcoming=future.sort((a,b)=>a.date.localeCompare(b.date)).slice(0,3);
-  renderTxRows(document.getElementById("upcomingHomeList"),upcoming);
-  document.getElementById("upcomingHomeEmpty").hidden=upcoming.length>0;
-}
-
-const budgetExpanded = {};
-function renderUnifiedBudgets(){
-  const list=document.getElementById("budgetList");list.innerHTML="";
-  const tx=periodTx("home");
-  function renderKind(kind,title,icon){
-    const cats=state.categories.filter(c=>c.kind===kind);
-    const groups=state.macroCategories
-      .filter(m=>m.kind===kind || cats.some(c=>c.macroCategoryId===m.id))
-      .map(m=>({...m,cats:cats.filter(c=>c.macroCategoryId===m.id)}));
-    const orphan=cats.filter(c=>!state.macroCategories.some(m=>m.id===c.macroCategoryId));
-    if(orphan.length) groups.push({id:`none-${kind}`,name:"Senza macrocategoria",emoji:"🏷️",cats:orphan,budget:null});
-    if(!groups.some(g=>g.cats.length || g.budget>0)) return false;
-    const section=document.createElement("section");section.className=`budget-kind ${kind}`;
-    section.innerHTML=`<h3>${icon} ${title}</h3>`;
-    const spentFor=c=>tx.filter(t=>t.type===kind && t.categoryId===c.id).reduce((s,t)=>s+t.amount,0);
-    const row=(name,emoji,total,budget,child)=>{
-      const limit=kind==="expense" && Number(budget)>0?Number(budget):0;
-      const totalClass=kind==="income"?"budget-earned":"budget-spent";
-      const word=kind==="income"?"entrate":"spesi";
-      const pct=limit?Math.round(total/limit*100):0, tone=pct>=100?"var(--rust)":pct>=80?"#E8A33D":"var(--emerald)";
-      return `<div class="${child?"budget-child":"budget-parent"}"><div class="budget-item-top"><span class="budget-item-name">${escapeHtml(emoji||"")} ${escapeHtml(name)}</span><span class="budget-item-amounts"><span class="${totalClass}">${fmt(total)}</span>${limit?` <span class="budget-limit">/ ${fmt(limit)} · ${pct}%</span>`:` <span class="budget-word">${word}</span>`}</span></div>${limit?`<div class="budget-bar-track"><div class="budget-bar-fill" style="width:${Math.min(100,pct)}%;background:${tone}"></div></div>`:""}</div>`;
-    };
-    groups.filter(g=>g.cats.length || g.budget>0).forEach(g=>{
-      const total=g.cats.reduce((s,c)=>s+spentFor(c),0), key=`${kind}-${g.id||g.name}`;
-      const item=document.createElement("div");item.className="budget-item";
-      item.innerHTML=`<button type="button" class="budget-macro-toggle" aria-expanded="${Boolean(budgetExpanded[key])}">${row(g.name,g.emoji,total,g.budget,false)}<span class="budget-chevron" aria-hidden="true">${budgetExpanded[key]?"▴":"▾"}</span></button><div class="budget-children" ${budgetExpanded[key]?"":"hidden"}>${g.cats.map(c=>row(c.name,c.emoji,spentFor(c),c.budget,true)).join("")}</div>`;
-      const macroBtn=item.querySelector(".budget-macro-toggle");
-      macroBtn.addEventListener("click",()=>{budgetExpanded[key]=!budgetExpanded[key];renderUnifiedBudgets();});
-      // v1.10.5: tieni premuto su una macrocategoria o su una categoria per vedere gli ultimi 5 movimenti.
-      const catIds=new Set(g.cats.map(c=>c.id));
-      bindLongPress(macroBtn,()=>showLongPressPopup(macroBtn,`Ultimi 5 · ${g.name}`,lpLastMovements(t=>t.type===kind&&catIds.has(t.categoryId)),{emptyText:"Nessun movimento in questa macrocategoria."}));
-      item.querySelectorAll(".budget-children .budget-child").forEach((el,i)=>{
-        const c=g.cats[i]; if(!c) return;
-        bindLongPress(el,()=>showLongPressPopup(el,`Ultimi 5 · ${c.name}`,lpLastMovements(t=>t.type===kind&&t.categoryId===c.id),{emptyText:"Nessun movimento in questa categoria."}));
-      });
-      section.appendChild(item);
-    });
-    list.appendChild(section);return true;
-  }
-  const expenses=renderKind("expense","Uscite per macrocategoria","↓");
-  const income=renderKind("income","Entrate per macrocategoria","↑");
-  document.getElementById("budgetEmptyHint").hidden=expenses||income;
-  document.getElementById("budgetPeriodHint").textContent=periodModes.home==="range"?"Totali del periodo selezionato · budget mensili":periodModes.home==="day"?"Totali del giorno selezionato · budget mensili":"Totali e budget del mese selezionato";
+  const hint=document.getElementById("txEmptyHint");
+  hint.hidden = recent.length>0;
+  hint.textContent=periodModes.home==="all"?"Nessun movimento. Tocca + per aggiungere una spesa.":periodModes.home==="day"?"Nessun movimento in questo giorno.":periodModes.home==="range"?"Nessun movimento nel periodo.":"Nessun movimento questo mese.";
 }
 
 /* v1.4.0 — Conferma in-app al posto del confirm() del browser. */
@@ -1018,6 +828,10 @@ function enableLongPressActions(row,{title,onEdit,onDelete,onDuplicate,onRecurri
   row.addEventListener("touchcancel",cancel,{passive:true});
   row.addEventListener("contextmenu",e=>{e.preventDefault();row._skipClick=true;openMovementActionMenu({title,onEdit,onDelete,onDuplicate,onRecurring,onPlanned});setTimeout(()=>row._skipClick=false,250);});
 }
+function futureFromTx(t){
+  const d=nextMonthSameDay(t.date);
+  return {name:t.name||"",amount:t.amount,type:t.type,categoryId:t.categoryId,accountId:t.accountId,note:t.note||"",split:t.split||null,groupId:t.groupId||null,freq:"monthly",startDate:d,date:d,active:true};
+}
 function duplicateTransaction(t){
   if(!t || t.planned || t.isBalanceAdjustment) return null;
   const copy={...t,id:uid(),date:todayISO(),planned:false};
@@ -1101,10 +915,6 @@ function nextMonthSameDay(iso){
   while(out<=todayISO()){const m=new Date(out+"T12:00:00");const k=new Date(m.getFullYear(),m.getMonth()+1,1);k.setDate(Math.min(day,new Date(k.getFullYear(),k.getMonth()+1,0).getDate()));out=`${k.getFullYear()}-${pad2(k.getMonth()+1)}-${pad2(k.getDate())}`;}
   return out;
 }
-function futureFromTx(t){
-  const d=nextMonthSameDay(t.date);
-  return {name:t.name||"",amount:t.amount,type:t.type,categoryId:t.categoryId,accountId:t.accountId,note:t.note||"",split:t.split||null,groupId:t.groupId||null,freq:"monthly",startDate:d,date:d,active:true};
-}
 function transferName(fromId,toId){
   const accs=accountsById();
   return `${accs[fromId]?.name||"Conto"} → ${accs[toId]?.name||"Conto"}`;
@@ -1151,10 +961,8 @@ function renderTxRows(container, list, {paidLabel=false}={}){
       onDuplicate:canDuplicate?()=>duplicateTransaction(t):null,
       // v1.10.7: un movimento registrato può diventare ricorrente o essere pianificato di nuovo.
       onRecurring:canDuplicate&&!isTransfer&&!t.recurringId?()=>openRecurringForm(null,futureFromTx(t)):null,
-      onPlanned:canDuplicate&&!isTransfer?()=>openPlannedForm(null,futureFromTx(t)):null,
       onEdit:()=>{
         if(t.recurringId && state.recurring.some(r=>r.id===t.recurringId)) openRecurringForm(t.recurringId);
-        else if(t.planned) openPlannedForm(t.plannedId);
         else openAddTransaction(t.id);
       },
       onDelete:()=>{
@@ -1205,279 +1013,9 @@ function renderTransactionsView(){
   document.getElementById("allTxEmptyHint").hidden = all.length>0;
   document.getElementById("allTxEmptyHint").textContent=periodModes.transactions==="all"?"Nessun movimento.":periodModes.transactions==="day"?"Nessun movimento in questo giorno.":periodModes.transactions==="range"?"Nessun movimento nel periodo.":"Nessun movimento questo mese.";
 
-  const planned = plannedItemsInPeriod("transactions").filter(t=>matches(t)).sort((a,b)=> a.date.localeCompare(b.date));
-  const plannedWrap = document.getElementById("allTxPlannedWrap");
-  const ph=plannedWrap.querySelector("h2"); if(ph) ph.textContent=periodModes.transactions==="month"?"In arrivo questo mese":periodModes.transactions==="day"?"In arrivo in questo giorno":"In arrivo nel periodo";
-  if(planned.length){
-    plannedWrap.hidden = false;
-    withHighlight(txSearchQuery,()=>renderTxRows(document.getElementById("allTxPlanned"), planned));
-  } else {
-    plannedWrap.hidden = true;
-  }
+  const plannedWrap = document.getElementById("allTxPlannedWrap"); if(plannedWrap) plannedWrap.hidden=true;
 }
 
-function rpEstimatesForMonth(y=viewYear,m=viewMonth){
-  const prefix=`${y}-${pad2(m+1)}`;
-  const future=plannedItemsForMonth(y,m);
-  const itemsForOrigin=(origin)=>[
-    ...state.transactions.filter(t=>t[origin] && t.date.startsWith(prefix)),
-    ...future.filter(t=>t[origin])
-  ];
-  const summarize=(items)=>{
-    const income=items.filter(t=>t.type==="income").reduce((sum,t)=>sum+t.amount,0);
-    const expense=items.filter(t=>t.type==="expense").reduce((sum,t)=>sum+t.amount,0);
-    const byAccount={};
-    items.forEach(t=>{
-      if(!t.accountId || !["income","expense"].includes(t.type)) return;
-      if(!byAccount[t.accountId]) byAccount[t.accountId]={income:0,expense:0,net:0};
-      byAccount[t.accountId][t.type]+=t.amount;
-      byAccount[t.accountId].net += t.type==="income"?t.amount:-t.amount;
-    });
-    return {income,expense,net:income-expense,byAccount};
-  };
-  // v1.6.0: i contatori principali mostrano solo ciò che è ANCORA da registrare;
-  // quando una voce diventa movimento esce dal contatore. Il totale del mese resta come riferimento.
-  const pending=(origin)=>future.filter(t=>t[origin]);
-  const recurring=summarize(pending("recurringId"));
-  const planned=summarize(pending("plannedId"));
-  const total=summarize([...pending("recurringId"),...pending("plannedId")]);
-  recurring.month=summarize(itemsForOrigin("recurringId"));
-  planned.month=summarize(itemsForOrigin("plannedId"));
-  total.month=summarize([...itemsForOrigin("recurringId"),...itemsForOrigin("plannedId")]);
-  return {recurring,planned,total};
-}
-function updateRPEstimates(){
-  const estimates=rpEstimatesForMonth();
-  const setMoney=(id,value,{signed=false}={})=>{
-    const el=document.getElementById(id); if(!el) return;
-    el.textContent=balancesHidden?"••••":(signed?fmtSigned(value):fmt(value));
-    if(signed) el.className=`rp-estimate-value ${value<0?"neg":value>0?"pos":"zero"}`;
-  };
-  const renderAccounts=(id,summary)=>{
-    const el=document.getElementById(id); if(!el) return;
-    const rows=state.accounts
-      .map(a=>({account:a,values:summary.byAccount[a.id]}))
-      .filter(x=>x.values && (x.values.income || x.values.expense))
-      .sort((a,b)=>Math.abs(b.values.net)-Math.abs(a.values.net));
-    el.innerHTML=rows.length
-      ? `<div class="rp-account-title">Per conto/carta</div>${rows.map(({account,values})=>`<div class="rp-account-row"><span>${escapeHtml(account.name)}</span><b class="${values.net<0?"neg":values.net>0?"pos":""}">${balancesHidden?"••••":fmtSigned(values.net)}</b></div>`).join("")}`
-      : `<div class="rp-account-empty">Nessun importo per conto/carta</div>`;
-  };
-  const setLabel=(sel,title,summary)=>{
-    const el=document.querySelector(sel); if(!el) return;
-    const m=summary.month;
-    const done=m.net-summary.net;
-    el.innerHTML=title;
-  };
-  setLabel("#recurringEstimateCard .rp-estimate-label","Ricorrenti · da registrare",estimates.recurring);
-  setLabel("#plannedEstimateCard .rp-estimate-label","Pianificate · da registrare",estimates.planned);
-  setLabel("#rpCombinedEstimateCard > div:first-child > span","Totale R&amp;P · da registrare",estimates.total);
-  setMoney("recurringEstimate",estimates.recurring.net,{signed:true});
-  // v1.6.5: Entrate/Uscite = totale del mese; il numero grande e "per conto/carta" = ancora da registrare.
-  setMoney("recurringIncomeEstimate",estimates.recurring.month.income);
-  setMoney("recurringExpenseEstimate",estimates.recurring.month.expense);
-  setMoney("plannedEstimate",estimates.planned.net,{signed:true});
-  setMoney("plannedIncomeEstimate",estimates.planned.month.income);
-  setMoney("plannedExpenseEstimate",estimates.planned.month.expense);
-  setMoney("rpCombinedEstimate",estimates.total.net,{signed:true});
-  setMoney("rpCombinedIncomeEstimate",estimates.total.month.income);
-  setMoney("rpCombinedExpenseEstimate",estimates.total.month.expense);
-  renderAccounts("recurringAccountBreakdown",estimates.recurring);
-  renderAccounts("plannedAccountBreakdown",estimates.planned);
-  renderAccounts("rpCombinedAccountBreakdown",estimates.total);
-  const toggle=document.getElementById("toggleRPBalance");
-  if(toggle){setEyeIcon(toggle,balancesHidden,"Mostra importi R&P","Nascondi importi R&P");}
-}
-
-
-function formatRPDate(iso){
-  const d=new Date(iso+"T00:00:00");
-  return `${d.getDate()} ${MESI_BREVI[d.getMonth()]} ${d.getFullYear()}`;
-}
-function recurringDatesForMonth(r,y=viewYear,m=viewMonth){
-  const prefix=`${y}-${pad2(m+1)}`;
-  const actual=state.transactions.filter(t=>t.recurringId===r.id && t.date.startsWith(prefix)).map(t=>t.date);
-  const projected=recurringOccurrencesInMonth(r,y,m);
-  return [...new Set([...actual,...projected])].sort();
-}
-function rpDateMatchesPeriod(iso){
-  return inPeriod("recurring",iso);
-}
-function recurringProjectedDatesForPeriod(r){
-  return monthsInPeriod("recurring").flatMap(([y,m])=>recurringOccurrencesInMonth(r,y,m)).filter(iso=>inPeriod("recurring",iso));
-}
-function paidScheduledTransactionsForPeriod(kind,y=viewYear,m=viewMonth){
-  const key=kind==="recurring"?"recurringId":"plannedId";
-  return state.transactions
-    .filter(t=>t[key] && rpDateMatchesPeriod(t.date,y,m))
-    .slice()
-    .sort((a,b)=>b.date.localeCompare(a.date)||String(b.id).localeCompare(String(a.id)));
-}
-function formatRecurringDatesLabel(dates,m=viewMonth){
-  if(!dates.length) return "";
-  if(dates.length===1) return formatRPDate(dates[0]);
-  const days=dates.map(iso=>parseInt(iso.slice(8,10),10)).join(", ");
-  return `${days} ${MESI_BREVI[m]} ${dates[0].slice(0,4)}`;
-}
-function recurringDateLabel(r,y=viewYear,m=viewMonth,datesOverride=null){
-  const dates=datesOverride || recurringDatesForMonth(r,y,m);
-  return formatRecurringDatesLabel(dates,m);
-}
-function plannedForRPMonth(){
-  return state.planned.filter(p=>p.date && inPeriod("recurring",p.date));
-}
-function renderRPPaidSection({sectionId,noticeId,countId,listId,paid,hasUpcoming}){
-  const section=document.getElementById(sectionId);
-  const notice=document.getElementById(noticeId);
-  const count=document.getElementById(countId);
-  const list=document.getElementById(listId);
-  if(!section || !list) return;
-  section.hidden=paid.length===0;
-  if(notice) notice.hidden=paid.length===0 || hasUpcoming;
-  if(count) count.textContent=paid.length ? `${paid.length}` : "";
-  if(paid.length){const lim=rpLimited(listId,paid);withHighlight(rpSearchQuery,()=>renderTxRows(list,lim.shown,{paidLabel:true}));rpAppendMore(list,listId,lim.hidden);}
-  else list.innerHTML="";
-}
-
-/* v1.7.0 — R&P: ricerca e liste brevi (prossimi 5 / ultimi 5 pagati, con "Mostra tutti"). */
-let rpSearchQuery="";
-const rpShowAll={};
-const RP_LIMIT=5;
-function rpMatches(name,categoryId,accountId){
-  const q=rpSearchQuery.trim().toLocaleLowerCase("it"); if(!q) return true;
-  const cats=categoriesById(), accs=accountsById();
-  return [name,cats[categoryId]?.name,accs[accountId]?.name].filter(Boolean).join(" ").toLocaleLowerCase("it").includes(q);
-}
-function rpLimited(listId,items){
-  const searching=!!rpSearchQuery.trim(), total=items.length;
-  // v1.7.1: pulsante "Vedi tutti ›" nell'intestazione della lista, come in Home.
-  const pill=document.querySelector(`[data-see-all="${listId}"]`);
-  if(pill){
-    pill.hidden=total===0;
-    pill.innerHTML=`<span class="sa-label">Vedi tutti</span><span class="count-badge">${total}</span><span class="chev">›</span>`;
-  }
-  if(total<=RP_LIMIT) return {shown:items,hidden:0};
-  return {shown:items.slice(0,RP_LIMIT),hidden:total-RP_LIMIT};
-}
-function rpAppendMore(){}
-document.querySelectorAll("[data-see-all]").forEach(b=>b.addEventListener("click",()=>{
-  // v1.8.0: "Vedi tutti" in R&P apre un pannello dedicato, come in Home.
-  const id=b.dataset.seeAll;
-  rpAllKind=/recurring/i.test(id)?"recurring":/planned/i.test(id)?"planned":"total";
-  periodModes.rpall=periodModes.recurring; rpAllQuery=""; const inp=document.getElementById("rpAllSearchInput"); if(inp) inp.value="";
-  openSubView("rpall");
-}));
-/* ---------------- Rendering: Ricorrenti ---------------- */
-function renderRecurringList(){
-  const container = document.getElementById("recurringList");
-  container.innerHTML = "";
-  const upcoming=state.recurring
-    .map(r=>({r,dates:recurringProjectedDatesForPeriod(r)}))
-    .filter(x=>x.dates.length>0 && rpMatches(x.r.name,x.r.categoryId,x.r.accountId))
-    .sort((a,b)=>a.dates[0].localeCompare(b.dates[0]));
-  const lim=rpLimited("recurringList",upcoming);
-  withHighlight(rpSearchQuery,()=>lim.shown.forEach(({r,dates})=>container.appendChild(recurringRowElement(r,{dates}))));
-  rpAppendMore(container,"recurringList",lim.hidden);
-
-  const paid=paidScheduledTransactionsForPeriod("recurring").filter(t=>rpMatches(t.name,t.categoryId,t.accountId));
-  const empty=document.getElementById("recurringEmptyHint");
-  if(empty){
-    empty.hidden=upcoming.length>0 || paid.length>0;
-    empty.textContent=periodModes.recurring==="range"?"Nessun movimento ricorrente nel periodo.":periodModes.recurring==="day"?"Nessun movimento ricorrente nel giorno selezionato.":"Nessun movimento ricorrente nel mese selezionato.";
-  }
-  renderRPPaidSection({
-    sectionId:"recurringPaidSection",noticeId:"recurringAllPaidNotice",countId:"recurringPaidCount",listId:"recurringPaidList",
-    paid,hasUpcoming:upcoming.length>0
-  });
-  updateRPEstimates();
-}
-
-/* ---------------- Rendering: Spese pianificate ---------------- */
-function plannedRowElement(p,{compact=true}={}){
-  const cats=categoriesById(), accs=accountsById();
-  const cat=cats[p.categoryId]||{};
-  const acc=accs[p.accountId]||{name:"Conto eliminato"};
-  const d=p.date?new Date(p.date+"T00:00:00"):null;
-  const whenLabel=d?`${d.getDate()} ${MESI_BREVI[d.getMonth()]} ${d.getFullYear()}`:"—";
-  const days=d?Math.ceil((d-new Date(todayISO()+"T00:00:00"))/86400000):null;
-  const relative=days===0?"oggi":days===1?"domani":days>1?`tra ${days} giorni`:"";
-  const row=document.createElement("div");
-  row.setAttribute("role","button");row.tabIndex=0;
-  row.className="template-manage-row planned-row mv-row mv-kind-planned";
-  row.dataset.sortDate=p.date||"";
-  row.innerHTML=movementRowHtml({emoji:cat.emoji||"📌",color:cat.color,title:p.name||cat.name||"Pianificata",
-    badges:`<span class="status-badge planned">Pianificata</span>`,
-    meta:`<span>${hlText(cat.name||"Senza categoria")}</span><span class="mv-sep" aria-hidden="true">·</span><span class="mv-acc">${hlText(acc.name)}</span>`,
-    amountHtml:`${p.type==="income"?"+":"−"}${fmt(p.amount)}`,type:p.type,date:p.date,kind:"planned"});
-  const openRow=()=>{if(!row._skipClick) openScheduledDetail("planned",p.id);};
-  row.addEventListener("click",openRow);activateRowFromKeyboard(row,openRow);
-  enableLongPressActions(row,{title:p.name||cat.name||"Pianificata",onEdit:()=>openPlannedForm(p.id),onDelete:()=>{const item=state.planned.find(x=>x.id===p.id);if(item)moveToTrash("planned",item);const deleted=state.trash[0]?.id;state.planned=state.planned.filter(x=>x.id!==p.id);persist();renderAll();if(deleted)showUndo("Pianificata eliminata",deleted);}});
-  return row;
-}
-function recurringRowElement(r,{dates=null}={}){
-  const cats=categoriesById(),accs=accountsById();
-  const cat=cats[r.categoryId]||{},acc=accs[r.accountId]||{name:"Conto eliminato"};
-  const row=document.createElement("div");
-  row.setAttribute("role","button");row.tabIndex=0;row.className="template-manage-row mv-row mv-kind-recurring";
-  const displayDates=dates || recurringDatesForMonth(r,viewYear,viewMonth);
-  row.dataset.sortDate=displayDates[0]||"";
-  const extra=displayDates.length>1?`<span class="mv-sep" aria-hidden="true">·</span><span>anche ${displayDates.slice(1).map(x=>parseInt(x.slice(8,10),10)).join(", ")}</span>`:"";
-  row.innerHTML=movementRowHtml({emoji:cat.emoji||"🔁",color:cat.color,title:r.name,
-    badges:`<span class="status-badge recurring">Ricorrente</span>`,
-    meta:`<span>${hlText(cat.name||"Senza categoria")}</span><span class="mv-sep" aria-hidden="true">·</span><span class="mv-acc">${hlText(acc.name)}</span>${extra}`,
-    amountHtml:`${r.type==="income"?"+":"−"}${fmt(r.amount)}`,type:r.type,date:displayDates[0],kind:"recurring"});
-  const openRow=()=>{if(!row._skipClick)openScheduledDetail("recurring",r.id,displayDates[0]);};
-  row.addEventListener("click",openRow);activateRowFromKeyboard(row,openRow);
-  enableLongPressActions(row,{title:r.name,onEdit:()=>openRecurringForm(r.id),onDelete:()=>{moveToTrash("recurring",r);const deleted=state.trash[0]?.id;removeRecurring(r.id);persist();renderAll();if(deleted)showUndo("Ricorrente eliminato",deleted);}});
-  return row;
-}
-function renderPlannedList(){
-  const allContainer=document.getElementById("plannedList");
-  const rpContainer=document.getElementById("plannedListRP");
-  const allItems=state.planned.slice().sort((a,b)=>(a.date||"").localeCompare(b.date||""));
-  const rpItems=plannedForRPMonth().filter(p=>rpMatches(p.name,p.categoryId,p.accountId)).slice().sort((a,b)=>(a.date||"").localeCompare(b.date||""));
-  if(allContainer){allContainer.innerHTML="";allItems.forEach(p=>allContainer.appendChild(plannedRowElement(p)));}
-  if(rpContainer){rpContainer.innerHTML="";const lim=rpLimited("plannedListRP",rpItems);withHighlight(rpSearchQuery,()=>lim.shown.forEach(p=>rpContainer.appendChild(plannedRowElement(p))));rpAppendMore(rpContainer,"plannedListRP",lim.hidden);}
-  const allHint=document.getElementById("plannedEmptyHint");if(allHint)allHint.hidden=allItems.length>0;
-
-  const paid=paidScheduledTransactionsForPeriod("planned").filter(t=>rpMatches(t.name,t.categoryId,t.accountId));
-  const rpHint=document.getElementById("plannedEmptyHintRP");
-  if(rpHint){
-    rpHint.hidden=rpItems.length>0 || paid.length>0;
-    rpHint.textContent=periodModes.recurring==="range"?"Nessun movimento pianificato nel periodo.":periodModes.recurring==="day"?"Nessun movimento pianificato nel giorno selezionato.":"Nessun movimento pianificato nel mese selezionato.";
-  }
-  renderRPPaidSection({
-    sectionId:"plannedPaidSection",noticeId:"plannedAllPaidNotice",countId:"plannedPaidCount",listId:"plannedPaidList",
-    paid,hasUpcoming:rpItems.length>0
-  });
-  renderRPTotalList();
-  updateRPEstimates();
-}
-function renderRPTotalList(){
-  const container=document.getElementById("rpTotalList");if(!container)return;
-  container.innerHTML="";
-  const recs=state.recurring
-    .map(r=>({r,dates:recurringProjectedDatesForPeriod(r)}))
-    .filter(x=>x.dates.length>0 && rpMatches(x.r.name,x.r.categoryId,x.r.accountId));
-  const planned=plannedForRPMonth().filter(p=>rpMatches(p.name,p.categoryId,p.accountId));
-  const rows=withHighlight(rpSearchQuery,()=>[...recs.map(({r,dates})=>recurringRowElement(r,{dates})),...planned.map(p=>plannedRowElement(p))])
-    .sort((a,b)=>(a.dataset.sortDate||"").localeCompare(b.dataset.sortDate||""));
-  const lim=rpLimited("rpTotalList",rows);
-  lim.shown.forEach(row=>container.appendChild(row));
-  rpAppendMore(container,"rpTotalList",lim.hidden);
-
-  const paid=[...paidScheduledTransactionsForPeriod("recurring"),...paidScheduledTransactionsForPeriod("planned")].filter(t=>rpMatches(t.name,t.categoryId,t.accountId))
-    .sort((a,b)=>b.date.localeCompare(a.date)||String(b.id).localeCompare(String(a.id)));
-  const hint=document.getElementById("rpTotalEmptyHint");
-  if(hint){
-    hint.hidden=rows.length>0 || paid.length>0;
-    hint.textContent=periodModes.recurring==="range"?"Nessun movimento R&P nel periodo.":periodModes.recurring==="day"?"Nessun movimento R&P nel giorno selezionato.":"Nessun movimento R&P nel mese selezionato.";
-  }
-  renderRPPaidSection({
-    sectionId:"rpTotalPaidSection",noticeId:"rpTotalAllPaidNotice",countId:"rpTotalPaidCount",listId:"rpTotalPaidList",
-    paid,hasUpcoming:rows.length>0
-  });
-}
 
 /* ---------------- Rendering: Stats ---------------- */
 let statsTrendRange = "1m", trendMode="flow";
@@ -1715,93 +1253,6 @@ function renderAccountBreakdown(){
   });
 }
 
-/* ---------------- Rendering: Accounts ---------------- */
-function renderAccounts(){
-  const totalEl = document.getElementById("totalBalanceAmount");
-  const total = totalBalance();
-  totalEl.textContent = balancesHidden ? "••••" : fmt(total);
-  setEyeIcon(document.getElementById("toggleAccountsBalance"),balancesHidden);
-  totalEl.style.color = moneyColor(total);
-  const mainSelect=document.getElementById("mainAccountSelect");
-  if(mainSelect){
-    mainSelect.innerHTML=`<option value="">Seleziona il conto principale</option>`+state.accounts.map(a=>`<option value="${escapeHtml(a.id)}">${escapeHtml(a.name)}</option>`).join("");
-    mainSelect.value=state.accounts.some(a=>a.id===state.mainAccountId)?state.mainAccountId:"";
-    mainSelect.onchange=()=>{
-      state.mainAccountId=mainSelect.value || null;
-      persist();renderAll();
-      showToast(state.mainAccountId?"Conto principale impostato":"Conto principale rimosso");
-    };
-  }
-
-  const container = document.getElementById("accountsList");
-  container.innerHTML = "";
-  state.accounts.forEach(a=>{
-    const bal = accountBalance(a.id);
-    const card = document.createElement("button");
-    card.className = "account-card";
-    card.innerHTML = `
-      <span class="account-info">
-        <p class="account-name">${escapeHtml(a.name)}${a.id===state.mainAccountId?` <span class="main-account-badge">Principale</span>`:""}</p>
-        <p class="account-type">${escapeHtml(ownerLabel(a.owner))} · Saldo attuale</p>
-      </span>
-      <span class="account-balance" style="color:${balancesHidden?"var(--ink)":moneyColor(bal)}">${balancesHidden?"••••":fmt(bal)}</span>
-      <span class="account-edit" role="button" tabindex="0" aria-label="Modifica ${escapeHtml(a.name)}">✎</span>
-    `;
-    card.addEventListener("click", (e)=>{
-      if(e.target.closest(".account-edit")){ e.stopPropagation(); openAccountForm(a.id); return; }
-      openAccountEvolution(a.id);
-    });
-    card.querySelector(".account-edit").addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();e.stopPropagation();openAccountForm(a.id);}});
-    container.appendChild(card);
-  });
-}
-
-function renderAccountsManageList(){
-  const container = document.getElementById("accountsManageList");
-  if(!container) return;
-  container.innerHTML = "";
-  state.accounts.forEach(a=>{
-    const bal = accountBalance(a.id);
-    const row = document.createElement("button");
-    row.className = "category-row";
-    row.innerHTML = `
-      <span class="ic" style="background:${safeColor(a.color)}22;">●</span>
-      <span class="info">
-        <p class="nm">${escapeHtml(a.name)}${a.id===state.mainAccountId?` <span class="main-account-badge">Principale</span>`:""}</p>
-        <p class="sub">Saldo attuale: <span class="amt">${fmt(bal)}</span></p>
-      </span>
-      <span class="chev">›</span>
-    `;
-    row.querySelector(".ic").style.color = safeColor(a.color);
-    row.addEventListener("click", ()=> openAccountForm(a.id));
-    container.appendChild(row);
-  });
-}
-
-function renderBalanceAdjustmentHistory(){
-  const container=document.getElementById("balanceAdjustmentsList");
-  const empty=document.getElementById("balanceAdjustmentsEmpty");
-  if(!container) return;
-  const accs=accountsById();
-  const items=state.transactions.filter(t=>t.isBalanceAdjustment).slice().sort((a,b)=>b.date.localeCompare(a.date)||b.id.localeCompare(a.id));
-  container.innerHTML="";
-  items.forEach(t=>{
-    const row=document.createElement("div");
-    row.className="balance-adjustment-row";
-    const d=new Date(t.date+"T00:00:00");
-    const sign=t.type==="income"?"+":"−";
-    row.innerHTML=`
-      <span class="balance-adjustment-icon">⚖️</span>
-      <span class="balance-adjustment-info">
-        <strong>${escapeHtml(accs[t.accountId]?.name||"Conto eliminato")}</strong>
-        <small>${d.getDate()} ${MESI_BREVI[d.getMonth()]} ${d.getFullYear()}${t.note?` · ${escapeHtml(t.note)}`:""}</small>
-      </span>
-      <span class="balance-adjustment-amount ${t.type}">${sign}${fmt(t.amount)}</span>`;
-    container.appendChild(row);
-  });
-  if(empty) empty.hidden=items.length>0;
-}
-
 /* ---------------- Rendering: More (macrocategorie, categorie, grafo, dati) ---------------- */
 function moveCategory(id,delta){
   const index=state.categories.findIndex(c=>c.id===id); if(index<0) return;
@@ -1812,12 +1263,6 @@ function moveCategory(id,delta){
   if(targetPos<0 || targetPos>=peerIndexes.length) return;
   const targetIndex=peerIndexes[targetPos];
   [state.categories[index],state.categories[targetIndex]]=[state.categories[targetIndex],state.categories[index]];
-  persist();renderAll();
-}
-function moveMacroCategory(id,delta){
-  const index=state.macroCategories.findIndex(m=>m.id===id), target=index+delta;
-  if(index<0 || target<0 || target>=state.macroCategories.length) return;
-  [state.macroCategories[index],state.macroCategories[target]]=[state.macroCategories[target],state.macroCategories[index]];
   persist();renderAll();
 }
 function reorderControls(label,onUp,onDown,canUp,canDown){
@@ -1874,31 +1319,6 @@ function renderCategories(){
   }
 }
 
-function renderMacroCategories(){
-  const container = document.getElementById("macroCategoriesList");
-  if(!container) return;
-  container.innerHTML = "";
-  state.macroCategories.forEach((m,index)=>{
-    const count = state.categories.filter(c=>c.macroCategoryId===m.id).length;
-    const wrap=document.createElement("div");wrap.className="category-manage-row";
-    const row = document.createElement("button");
-    row.className = "category-row";
-    row.innerHTML = `
-      <span class="ic" style="background:${safeColor(m.color)}22;">${escapeHtml(m.emoji)}</span>
-      <span class="info">
-        <p class="nm">${escapeHtml(m.name)}</p>
-        <p class="sub">${count} categori${count===1?"a":"e"} associat${count===1?"a":"e"}${m.budget?` · budget <span class="amt">${fmt(m.budget)}</span>`:""}</p>
-      </span>
-      <span class="chev">›</span>`;
-    row.addEventListener("click", ()=> openMacroForm(m.id));
-    wrap.appendChild(row);
-    wrap.appendChild(reorderControls(`macrocategoria ${m.name}`,()=>moveMacroCategory(m.id,-1),()=>moveMacroCategory(m.id,1),index>0,index<state.macroCategories.length-1));
-    container.appendChild(wrap);
-  });
-  const hint = document.getElementById("macroEmptyHint");
-  if(hint) hint.hidden = state.macroCategories.length>0;
-}
-
 function renderCategoryGraph(){
   const container = document.getElementById("categoryGraph");
   if(!container) return;
@@ -1943,22 +1363,13 @@ function renderAll(){
   document.documentElement.classList.toggle("amounts-hidden",!!balancesHidden);
   // Mantiene coerente lo stato anche se l'app resta aperta o torna in primo piano
   // dopo la data di scadenza: ciò che è dovuto entra subito nei Movimenti.
-  generatePlannedTransactions();
   generateRecurringTransactions(false);
   renderHeader();
   renderHome();
   renderCouple();
   renderTransactionsView();
-  renderRecurringList();
-  renderPlannedList();
   renderStats();
-  renderAccounts();
-  renderAccountsManageList();
-  renderMacroCategories();
   renderCategories();
-  renderCategoryGraph();
-  setRPMode(rpMode);
-  renderRPAllView();
   renderBackupStatus();
 }
 function renderBackupStatus(){
@@ -2053,7 +1464,7 @@ function switchView(view,{animate=false,direction=0,nav=null,restore=null}={}){
    "Vedi tutti" apre una sotto-pagina; si torna alla sezione da cui è stata
    aperta con il pulsante ‹, con uno swipe verso destra o con il tasto
    Indietro di Android. Periodo e posizione di scorrimento vengono ripristinati. */
-const SUBVIEW_PARENT={transactions:"home",rpall:"recurring",planned:"home"};
+const SUBVIEW_PARENT={transactions:"home"};
 var subNav=null, ignoreNextPop=false;
 try{if("scrollRestoration" in history) history.scrollRestoration="manual";}catch(e){}
 function isSubView(v){return Object.prototype.hasOwnProperty.call(SUBVIEW_PARENT,v);}
@@ -2088,25 +1499,6 @@ window.addEventListener("popstate",()=>{
   if(subNav || isSubView(activeView)) performBack();
 });
 document.querySelectorAll("[data-nav-back]").forEach(b=>b.addEventListener("click",goBack));
-function setRPMode(mode){
-  rpMode=mode;
-  const rpView=document.getElementById("view-recurring");
-  if(rpView){
-    rpView.classList.remove("rp-mode-total","rp-mode-recurring","rp-mode-planned");
-    rpView.classList.add(`rp-mode-${mode}`);
-  }
-  const total=document.getElementById("rpTotalSection"), recurring=document.getElementById("rpRecurringSection"), planned=document.getElementById("rpPlannedSection");
-  if(total) total.hidden=mode!=="total";
-  if(recurring) recurring.hidden=mode!=="recurring";
-  if(planned) planned.hidden=mode!=="planned";
-  const recurringCard=document.getElementById("recurringEstimateCard"),plannedCard=document.getElementById("plannedEstimateCard"),combined=document.getElementById("rpCombinedEstimateCard"),grid=document.getElementById("rpEstimatesGrid");
-  if(recurringCard) recurringCard.hidden=mode==="planned";
-  if(plannedCard) plannedCard.hidden=mode==="recurring";
-  if(combined) combined.hidden=mode!=="total";
-  if(grid) grid.classList.toggle("single",mode!=="total");
-  document.querySelectorAll("#rpModeToggle [data-rp-mode]").forEach(btn=>btn.classList.toggle("active",btn.dataset.rpMode===mode));
-}
-document.querySelectorAll("#rpModeToggle [data-rp-mode]").forEach(btn=>btn.addEventListener("click",()=>setRPMode(btn.dataset.rpMode)));
 document.querySelectorAll(".tab").forEach(tab=>{
   tab.addEventListener("click", ()=> switchView(tab.dataset.view));
 });
@@ -2380,7 +1772,6 @@ document.getElementById("periodDate").addEventListener("change",e=>{
   const [y,m,d]=e.target.value.split("-").map(Number);viewYear=y;viewMonth=m-1;viewDay=d;
   periodModes[activeView]="day";closeDatePicker();renderAll();
 });
-document.getElementById("backFromPlanned").addEventListener("click",()=>switchView("home"));
 function movePeriod(delta){
   txVisibleLimit=TX_PAGE_SIZE;
   if(periodModes[activeView]==="day"){
@@ -3628,7 +3019,7 @@ function openAddTransaction(txId,prefill=null){
   const existing=editing ? state.transactions.find(t=>t.id===txId) : null;
   if(editing && !existing) return;
   // Trasferimenti e prelievi hanno il proprio pannello, anche in modifica.
-  if(existing?.type==="transfer") return existing.atm ? openAtmWithdrawal(txId) : openTransferForm(txId);
+  if(existing?.type==="transfer") return openTransferForm(txId);
   txType = existing?.type || "expense";
   selectedCategoryId = existing?.categoryId || prefill?.categoryId || null;
   selectedAccountId = existing?.accountId || defaultPayerId();
@@ -3731,7 +3122,6 @@ function openAddTransaction(txId,prefill=null){
     });
   });
 }
-function openRPAddChoice(){ openAddChoice(); }
 /* v1.10.7 — Il "+" apre sempre la stessa scelta, in tutte le sezioni tranne Altro. */
 function openAddChoice(){
   document.getElementById("movementActionOverlay")?.remove();
@@ -3760,70 +3150,6 @@ function openAddChoice(){
   document.body.appendChild(overlay);
   bindOverlaySwipeDismiss(overlay);
   requestAnimationFrame(()=>overlay.classList.add("show"));
-}
-/* v1.10.7 — Prelievo ATM: trasferimento da una carta/conto ai contanti, con commissione facoltativa
-   registrata come uscita sulla carta (categoria "Costi bancari"/"Commissioni", creata se manca). */
-function feeCategoryId(){
-  let c=state.categories.find(c=>c.kind==="expense"&&/costi bancari|commission/i.test(c.name));
-  if(!c){c={id:uid(),name:"Commissioni bancarie",emoji:"🏧",color:"#4FA8C9",kind:"expense",budget:null,macroCategoryId:(state.macroCategories.find(m=>/abbonament|banc/i.test(m.name)&&m.kind!=="income")||{}).id||null};state.categories.push(c);}
-  return c.id;
-}
-/* v1.10.8 — Il prelievo si può anche modificare: si apre con i dati salvati (commissione compresa). */
-function openAtmWithdrawal(txId=null){
-  const existing=txId?state.transactions.find(t=>t.id===txId&&t.type==="transfer"):null;
-  const existingFee=existing?.atmGroup?state.transactions.find(t=>t.atmGroup===existing.atmGroup&&t.type==="expense"):null;
-  const cash=state.accounts.find(a=>/contant|cash/i.test(a.name));
-  let fromId=existing?.accountId||state.accounts.find(a=>a.id===state.mainAccountId&&a.id!==cash?.id)?.id||state.accounts.find(a=>a.id!==cash?.id)?.id||null;
-  let toId=existing?.toAccountId||cash?.id||null;
-  openSheet("tpl-atm-withdrawal",(node,close)=>{
-    const amountInput=node.querySelector("#atmAmountInput"), feeInput=node.querySelector("#atmFeeInput"), dateInput=node.querySelector("#atmDateInput"), noteInput=node.querySelector("#atmNoteInput");
-    const fromChips=node.querySelector("#atmFromChips"), toChips=node.querySelector("#atmToChips"), total=node.querySelector("#atmTotal");
-    dateInput.value=existing?.date||todayISO();
-    dateInput.max=todayISO();
-    if(existing){
-      
-      amountInput.value=String(existing.amount).replace(".",",");
-      feeInput.value=existingFee?String(existingFee.amount).replace(".",","):"";
-      noteInput.value=existing.note&&existing.note!=="Prelievo ATM"?existing.note:"";
-    }
-    if(typeof autoGrowAmountInput==="function") autoGrowAmountInput(amountInput);
-    const chips=(wrap,getSel,setSel,exclude)=>{
-      wrap.innerHTML="";
-      state.accounts.filter(a=>a.id!==exclude).forEach(a=>{
-        const b=document.createElement("button");b.type="button";b.className="chip"+(getSel()===a.id?" active":"");
-        b.innerHTML=`<span class="em">●</span>${escapeHtml(a.name)}`;b.querySelector(".em").style.color=safeColor(a.color);
-        b.addEventListener("click",()=>{setSel(a.id);paint();});wrap.appendChild(b);
-      });
-    };
-    const paint=()=>{
-      if(toId===fromId) toId=state.accounts.find(a=>a.id!==fromId&&/contant|cash/i.test(a.name))?.id||null;
-      chips(fromChips,()=>fromId,v=>{fromId=v;},null);
-      chips(toChips,()=>toId,v=>{toId=v;},fromId);
-      const amt=parseAmount(amountInput.value), fee=parseAmount(feeInput.value);
-      total.textContent=amt>0?`Dalla carta escono ${fmt(amt+fee)}${fee>0?` (${fmt(amt)} prelievo + ${fmt(fee)} commissione)`:""}`:"";
-    };
-    amountInput.addEventListener("input",paint);feeInput.addEventListener("input",paint);
-    node.querySelector("#saveAtmBtn").addEventListener("click",()=>{
-      const amt=parseAmount(amountInput.value), fee=parseAmount(feeInput.value);
-      if(!(amt>0)){showToast("Inserisci l'importo prelevato");amountInput.focus();return;}
-      if(!fromId||!toId||fromId===toId){showToast("Scegli la carta e il conto contanti");return;}
-      const date=dateInput.value||todayISO();
-      if(date>todayISO()){showToast("Un prelievo non può avere una data futura");dateInput.focus();return;}
-      const group=existing?.atmGroup||uid();
-      const t=existing||{id:uid()};
-      Object.assign(t,{date,amount:amt,type:"transfer",name:transferName(fromId,toId),categoryId:null,accountId:fromId,toAccountId:toId,note:noteInput.value.trim()||"Prelievo ATM",atm:true,atmGroup:group});
-      if(!existing) state.transactions.push(t);
-      if(fee>0){
-        if(existingFee) Object.assign(existingFee,{date,amount:fee,accountId:fromId});
-        else state.transactions.push({id:uid(),date,amount:fee,type:"expense",name:"Commissione prelievo ATM",categoryId:feeCategoryId(),accountId:fromId,toAccountId:null,note:"",atmGroup:group});
-      } else if(existingFee){
-        state.transactions=state.transactions.filter(x=>x.id!==existingFee.id);
-      }
-      persist();renderAll();close();
-      showToast(existing?"Prelievo aggiornato":fee>0?`Prelievo di ${fmt(amt)} + commissione ${fmt(fee)} registrati`:`Prelievo di ${fmt(amt)} registrato`);
-    });
-    paint();
-  });
 }
 /* v1.10.8 — Trasferimento come sezione a sé dal "+": stesso stile del Prelievo ATM.
    Resta un movimento reale di tipo "transfer" (compare nei Movimenti recenti). */
@@ -3895,8 +3221,6 @@ document.getElementById("fabAdd").addEventListener("click", e=>{
   openAddChoice();
 });
 document.getElementById("toggleHomeBalance").addEventListener("click",toggleBalances);
-document.getElementById("toggleAccountsBalance").addEventListener("click",toggleBalances);
-document.getElementById("toggleRPBalance")?.addEventListener("click",toggleBalances);
 
 function openTrash(){
   openSheet("tpl-trash", (node)=>{
@@ -3958,7 +3282,6 @@ function openScheduledDetail(kind, id, occurrenceDate){
   });
 }
 
-/* ---------------- Evoluzione saldo conto ---------------- */
 function buildLineSVG(data, color){
   const w=320, h=150, padL=6, padB=22, padT=14;
   const vals = data.map(d=>d.balance);
@@ -4039,330 +3362,6 @@ function openChartInfo(kind){
   }[kind]||"";
   openSheet("tpl-chart-fullscreen",node=>{node.querySelector("#chartFullscreenTitle").textContent=ndTitle||"Come leggere il grafico";if(ndTitle)node.classList.add("nd-info-sheet");node.querySelector("#chartFullscreenHelp").hidden=true;node.querySelector("#chartFullscreenBody").innerHTML=`<div class="chart-info-card">${escapeHtml(text)}</div>`;});
 }
-
-function isoAddDays(iso,n){const d=new Date(iso+"T12:00:00");d.setDate(d.getDate()+n);return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;}
-function isoDiffDays(a,b){return Math.round((new Date(b+"T12:00:00")-new Date(a+"T12:00:00"))/864e5);}
-function evolutionRangeDates(range,custom){
-  // v1.10.2: "ultimi N mesi" finiscono oggi; "Periodo" usa le date scelte nel calendario.
-  const today=todayISO();
-  if(range==="custom"&&custom) return {from:custom.from,to:custom.to};
-  const n={"1m":1,"2m":2,"3m":3,"6":6,"12":12,"24":24}[range]||12;
-  const d=new Date(today+"T12:00:00");d.setMonth(d.getMonth()-n);
-  return {from:isoAddDays(`${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`,1),to:today};
-}
-function evolutionSeries(accountId,from,to){
-  const days=Math.max(0,isoDiffDays(from,to));
-  const step=days<=92?1:days<=430?7:15;
-  const out=[];
-  const point=iso=>{const d=new Date(iso+"T12:00:00");const m=d.getMonth();
-    return {date:iso,label:days>430?`${MESI_BREVI[m]} ${String(d.getFullYear()).slice(2)}`:`${d.getDate()} ${MESI_BREVI[m].toLowerCase()}`,full:`${d.getDate()} ${MESI[m].toLowerCase()} ${d.getFullYear()}`,balance:accountBalanceAtDate(accountId,iso)};};
-  for(let i=0;i<=days;i+=step) out.push(point(isoAddDays(from,i)));
-  if(!out.length||out[out.length-1].date!==to) out.push(point(to));
-  return out;
-}
-function renderAccountEvolution(node, accountId, range, custom){
-  const acc = state.accounts.find(a=>a.id===accountId);
-  if(!acc) return;
-  const {from,to}=evolutionRangeDates(range,custom);
-  const data=evolutionSeries(accountId,from,to);
-  const wrap=node.querySelector("#accountEvolutionChartWrap");
-  // v1.10.1: la variazione parte da quando hai registrato il saldo reale del conto (prima rettifica manuale del saldo),
-  // non dallo zero precedente. Se quella data è prima dell'inizio del periodo, si parte dall'inizio del periodo.
-  const anchorDay = realBalanceDate(accountId);
-  const startDay = data[0].date;
-  let base = data[0].balance, sinceText = null, anchorIndex = -1;
-  if(anchorDay && anchorDay > startDay){
-    base = accountBalanceAtDate(accountId, anchorDay);
-    anchorIndex = data.findIndex(d=>d.date>=anchorDay);
-    const dt=new Date(anchorDay+"T12:00:00");
-    sinceText = `dal ${dt.getDate()} ${MESI_BREVI[dt.getMonth()].toLowerCase()}${dt.getFullYear()!==new Date().getFullYear()?" "+dt.getFullYear():""}, quando hai registrato il saldo reale`;
-  }
-  buildAreaChart(wrap, data, {anchorIndex});
-  const current = data[data.length-1].balance;
-  const diff = current-base;
-  const pct = base>0 ? Math.round((diff/base)*100) : null;
-  const periodText = sinceText || (range==="custom" ? (evolutionRangeLabel({from,to}).includes("–")||from===to ? `dal ${shortDate(from)} al ${shortDate(to,true)}` : `in ${evolutionRangeLabel({from,to}).toLowerCase()}`) : ({"1m":"nell'ultimo mese","2m":"negli ultimi 2 mesi","3m":"negli ultimi 3 mesi","6":"negli ultimi 6 mesi","12":"nell'ultimo anno","24":"negli ultimi 2 anni"}[range]||"nel periodo"));
-  node.querySelector("#accountEvolutionLegend").innerHTML = `
-    <p class="evo-kicker">${to===todayISO()?"Saldo attuale":`Saldo al ${shortDate(to,true)}`}</p>
-    <p class="evo-hero">${balancesHidden?"••••":fmt(current)}</p>
-    <p class="evo-delta ${diff<0?"down":diff>0?"up":"flat"}"><span class="evo-delta-pill">${diff===0?"Nessuna variazione":`${diff>0?"▲":"▼"} ${balancesHidden?(pct!==null?`${pct>0?"+":""}${pct}%`:"••••"):`${fmtSigned(diff)}${pct!==null?` · ${pct>0?"+":""}${pct}%`:""}`}`}</span> ${periodText}</p>`;
-}
-
-/* v1.10.0 — Grafico ad area moderno: linea morbida, sfumatura, griglia leggera,
-   mirino con fumetto al tocco. Un solo colore (il saldo), testi con i colori del tema. */
-function realBalanceDate(accountId){
-  const adj=state.transactions.filter(t=>t.isBalanceAdjustment && t.accountId===accountId && (t.setsRealBalance || /^Saldo aggiornato manualmente/.test(t.note||"")));
-  if(!adj.length) return null;
-  return adj.map(t=>t.date).sort()[0];
-}
-function niceStep(range,count){
-  const raw=range/Math.max(1,count), mag=Math.pow(10,Math.floor(Math.log10(raw||1))), n=raw/mag;
-  return (n<=1?1:n<=2?2:n<=2.5?2.5:n<=5?5:10)*mag;
-}
-function compactEuro(v,step=1000){
-  const a=Math.abs(v), s=v<0?"−":"";
-  // Etichette sempre distinte: in "k" solo se il passo della griglia è di almeno 500 €.
-  if(a>=1000 && step>=500){const dec=step>=1000&&(a>=10000||step%1000===0)?0:1;return `${s}€${(a/1000).toFixed(dec).replace(".",",").replace(/,0$/,"")}k`;}
-  return `${s}€${Math.round(a).toLocaleString("it-IT")}`;
-}
-function monotonePath(pts){
-  const n=pts.length; if(n<2) return n?`M${pts[0].x},${pts[0].y}`:"";
-  const dx=[],dy=[],m=[],t=[];
-  for(let i=0;i<n-1;i++){dx[i]=pts[i+1].x-pts[i].x;dy[i]=pts[i+1].y-pts[i].y;m[i]=dy[i]/(dx[i]||1);}
-  t[0]=m[0];t[n-1]=m[n-2];
-  for(let i=1;i<n-1;i++) t[i]=(m[i-1]*m[i]<=0)?0:(3*(dx[i-1]+dx[i]))/((2*dx[i]+dx[i-1])/m[i-1]+(dx[i]+2*dx[i-1])/m[i]);
-  let d=`M${pts[0].x.toFixed(1)},${pts[0].y.toFixed(1)}`;
-  for(let i=0;i<n-1;i++){
-    const c1x=pts[i].x+dx[i]/3,c1y=pts[i].y+t[i]*dx[i]/3,c2x=pts[i+1].x-dx[i]/3,c2y=pts[i+1].y-t[i+1]*dx[i]/3;
-    d+=`C${c1x.toFixed(1)},${c1y.toFixed(1)} ${c2x.toFixed(1)},${c2y.toFixed(1)} ${pts[i+1].x.toFixed(1)},${pts[i+1].y.toFixed(1)}`;
-  }
-  return d;
-}
-function buildAreaChart(wrap,data,opts={}){
-  if(!wrap||!data.length) return;
-  const w=Math.max(280,Math.round(wrap.clientWidth||320)), h=200, padL=8, padR=12, padT=22, padB=26;
-  const vals=data.map(d=>d.balance);
-  let lo=Math.min(...vals), hi=Math.max(...vals);
-  if(lo===hi){lo-=Math.max(1,Math.abs(lo)*0.1);hi+=Math.max(1,Math.abs(hi)*0.1);}
-  const step=niceStep(hi-lo,3);
-  lo=Math.floor(lo/step)*step; hi=Math.ceil(hi/step)*step;
-  const X=i=>padL+(data.length>1?i*(w-padL-padR)/(data.length-1):(w-padL-padR)/2);
-  const Y=v=>padT+(h-padT-padB)*(1-(v-lo)/((hi-lo)||1));
-  const pts=data.map((d,i)=>({x:X(i),y:Y(d.balance)}));
-  const line=monotonePath(pts);
-  const base=Y(lo);
-  const area=`${line}L${pts[pts.length-1].x.toFixed(1)},${base.toFixed(1)}L${pts[0].x.toFixed(1)},${base.toFixed(1)}Z`;
-  let grid="";
-  for(let v=lo; v<=hi+step/2; v+=step){
-    const y=Y(v).toFixed(1), zero=Math.abs(v)<step/1000;
-    grid+=`<line x1="${padL}" x2="${w-padR}" y1="${y}" y2="${y}" class="${zero?"evo-zero":"evo-grid"}"/><text x="${padL}" y="${(Y(v)-5).toFixed(1)}" class="evo-ylab">${balancesHidden?"•••":compactEuro(v,step)}</text>`;
-  }
-  const k=Math.min(data.length,5); let xl="";
-  const used=new Set();
-  for(let j=0;j<k;j++){
-    const i=k===1?0:Math.round(j*(data.length-1)/(k-1)); if(used.has(i)) continue; used.add(i);
-    const anchor=j===0?"start":j===k-1?"end":"middle";
-    xl+=`<text x="${pts[i].x.toFixed(1)}" y="${h-7}" text-anchor="${anchor}" class="evo-xlab">${escapeHtml(data[i].label)}</text>`;
-  }
-  const last=pts[pts.length-1], gid="evoGrad"+Math.random().toString(36).slice(2,7);
-  wrap.innerHTML=`<svg class="evo-svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" role="img" aria-label="Andamento del saldo">
-    <defs><linearGradient id="${gid}" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" class="evo-stop-a"/><stop offset="100%" class="evo-stop-b"/></linearGradient></defs>
-    ${grid}
-    <path d="${area}" fill="url(#${gid})"/>
-    <path d="${line}" class="evo-line"/>
-    ${opts.anchorIndex>=0&&pts[opts.anchorIndex]?`<line class="evo-anchor" x1="${pts[opts.anchorIndex].x.toFixed(1)}" x2="${pts[opts.anchorIndex].x.toFixed(1)}" y1="${padT-4}" y2="${h-padB}"/><text class="evo-anchor-lab" x="${(pts[opts.anchorIndex].x+(pts[opts.anchorIndex].x>w*0.7?-4:4)).toFixed(1)}" y="${padT-8}" text-anchor="${pts[opts.anchorIndex].x>w*0.7?"end":"start"}">Saldo reale</text>`:""}
-    <line class="evo-cross" x1="0" x2="0" y1="${padT-6}" y2="${h-padB}" opacity="0"/>
-    <circle class="evo-last" cx="${last.x.toFixed(1)}" cy="${last.y.toFixed(1)}" r="5"/>
-    <circle class="evo-hover" cx="0" cy="0" r="5" opacity="0"/>
-    ${xl}
-    <rect class="evo-hit" x="0" y="0" width="${w}" height="${h}" fill="transparent"/>
-  </svg><div class="evo-tip" hidden></div>`;
-  const svg=wrap.querySelector("svg"), tip=wrap.querySelector(".evo-tip"), cross=svg.querySelector(".evo-cross"), dot=svg.querySelector(".evo-hover");
-  const show=e=>{
-    const r=svg.getBoundingClientRect(), x=(e.clientX-r.left)*(w/r.width);
-    let i=0,best=Infinity; pts.forEach((p,j)=>{const d=Math.abs(p.x-x); if(d<best){best=d;i=j;}});
-    const p=pts[i], d=data[i], prev=data[i-1];
-    cross.setAttribute("x1",p.x);cross.setAttribute("x2",p.x);cross.setAttribute("opacity","1");
-    dot.setAttribute("cx",p.x);dot.setAttribute("cy",p.y);dot.setAttribute("opacity","1");
-    const delta=prev?d.balance-prev.balance:null;
-    tip.innerHTML=`<b>${escapeHtml(d.full||d.label)}</b><span class="evo-tip-val">${balancesHidden?"••••":fmt(d.balance)}</span>${delta!==null&&!balancesHidden?`<span class="evo-tip-delta ${delta<0?"down":delta>0?"up":""}">${delta===0?"Invariato":`${delta>0?"▲":"▼"} ${fmtSigned(delta)}`}</span>`:""}`;
-    tip.hidden=false;
-    const px=p.x*(r.width/w), tw=tip.offsetWidth;
-    tip.style.left=Math.max(0,Math.min(r.width-tw,px-tw/2))+"px";
-  };
-  const hide=()=>{tip.hidden=true;cross.setAttribute("opacity","0");dot.setAttribute("opacity","0");};
-  svg.addEventListener("pointerdown",e=>{show(e);});
-  svg.addEventListener("pointermove",e=>{if(e.pointerType==="mouse"||e.buttons) show(e);});
-  svg.addEventListener("pointerleave",e=>{if(e.pointerType==="mouse") hide();});
-  wrap.addEventListener("pointerup",e=>{if(e.pointerType!=="mouse") setTimeout(hide,1800);});
-}
-
-function evolutionDefaultRange(){
-  // Default: il mese (o il periodo) selezionato in Home / R&P. Il mese in corso arriva fino a oggi.
-  const today=todayISO();
-  if(periodModes.home==="range"&&periodRange.from) return {from:periodRange.from,to:periodRange.to>today?today:periodRange.to};
-  const from=`${viewYear}-${pad2(viewMonth+1)}-01`, last=`${viewYear}-${pad2(viewMonth+1)}-${pad2(new Date(viewYear,viewMonth+1,0).getDate())}`;
-  return {from, to: from<=today&&last>today?today:last};
-}
-function evolutionRangeLabel(r){
-  const a=new Date(r.from+"T12:00:00"), b=new Date(r.to+"T12:00:00");
-  const lastDay=new Date(b.getFullYear(),b.getMonth()+1,0).getDate();
-  if(a.getDate()===1 && a.getFullYear()===b.getFullYear() && a.getMonth()===b.getMonth() && (b.getDate()===lastDay || r.to===todayISO())) return `${MESI[a.getMonth()]} ${a.getFullYear()}`;
-  if(r.from===r.to) return shortDate(r.from,true);
-  return `${shortDate(r.from,a.getFullYear()!==b.getFullYear())} – ${shortDate(r.to,true)}`;
-}
-function openAccountEvolution(accountId){
-  const acc = state.accounts.find(a=>a.id===accountId);
-  if(!acc) return;
-  openSheet("tpl-account-evolution", (node)=>{
-    node.querySelector("#accountEvolutionTitle").textContent = `Evoluzione — ${acc.name}`;
-    let custom = evolutionDefaultRange();
-    const btn=node.querySelector("#evolutionPeriodBtn");
-    const paint=()=>{
-      btn.innerHTML=`<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.9"/><path d="M4 10h16M9 3v4M15 3v4" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg><span>${escapeHtml(evolutionRangeLabel(custom))}</span>`;
-      renderAccountEvolution(node, accountId, "custom", custom);
-    };
-    btn.addEventListener("click",()=>openPeriodPicker(null,{from:custom.from,to:custom.to,onApply:(r)=>{
-      const today=todayISO();
-      custom={from:r.from>today?today:r.from,to:r.to>today?today:r.to};
-      paint();
-    }}));
-    paint();
-  });
-}
-
-function openBalanceReconcileForm(accountId){
-  const acc=state.accounts.find(a=>a.id===accountId); if(!acc) return;
-  openSheet("tpl-balance-reconcile", (node, close)=>{
-    let kind="income";
-    const amountInput=node.querySelector("#reconcileAmountInput");
-    const dateInput=node.querySelector("#reconcileDateInput");
-    const noteInput=node.querySelector("#reconcileNoteInput");
-    dateInput.value=todayISO();
-    node.querySelectorAll("#reconcileTypeToggle .type-opt").forEach(btn=>btn.addEventListener("click",()=>{
-      node.querySelectorAll("#reconcileTypeToggle .type-opt").forEach(b=>b.classList.remove("active"));
-      btn.classList.add("active"); kind=btn.dataset.type;
-    }));
-    node.querySelector("#saveBalanceReconcileBtn").addEventListener("click",()=>{
-      const amount=parseAmount(amountInput.value); if(amount<=0){showToast("Inserisci un importo valido");amountInput.focus();return;}
-      const signed=kind==="income"?amount:-amount;
-      // Sposta la variazione dal saldo-base allo storico senza cambiare il saldo attuale del conto.
-      acc.balance = Math.round((acc.balance - signed)*100)/100;
-      state.transactions.push({
-        id:uid(), date:dateInput.value||todayISO(), amount, type:kind, name:"Rettifica saldo",
-        categoryId:null, accountId:acc.id, toAccountId:null,
-        note:noteInput.value.trim() || "Variazione di saldo registrata successivamente",
-        isBalanceAdjustment:true
-      });
-      persist();renderAll();renderBalanceAdjustmentHistory();close();showToast("Rettifica registrata senza modificare il saldo attuale");
-    });
-  });
-}
-
-/* ---------------- Account form ---------------- */
-function openAccountForm(accountId){
-  const editing = !!accountId;
-  const acc = editing ? state.accounts.find(a=>a.id===accountId) : null;
-
-  openSheet("tpl-account-form", (node, close)=>{
-    node.querySelector("#accountFormTitle").textContent = editing ? "Modifica conto" : "Nuovo conto";
-    const nameInput = node.querySelector("#accountNameInput");
-    const balInput = node.querySelector("#accountBalanceInput");
-    const colorRow = node.querySelector("#accountColorRow");
-    const deleteBtn = node.querySelector("#deleteAccountBtn");
-    let chosenColor = acc?.color || PALETTE[0];
-    let chosenOwner = acc?.owner || "joint";
-    const ownerChips=node.querySelector("#accountOwnerChips");
-    function renderOwnerChips(){
-      ownerChips.innerHTML="";
-      [["a",personName("a")],["b",personName("b")],["joint","Comune"]].forEach(([k,label])=>{
-        const chip=document.createElement("button");
-        chip.type="button"; chip.className="chip"+(chosenOwner===k?" active":"");
-        chip.innerHTML=`<span class="em">●</span>${escapeHtml(label)}`;
-        chip.querySelector(".em").style.color=safeColor(personColor(k));
-        chip.addEventListener("click",()=>{chosenOwner=k;renderOwnerChips();});
-        ownerChips.appendChild(chip);
-      });
-    }
-    renderOwnerChips();
-
-    nameInput.value = acc?.name || "";
-    if(editing){
-      node.querySelector("#accountBalanceLabel").textContent = "Saldo attuale";
-      node.querySelector("#accountBalanceHint").textContent = "Se cambi questo valore, l’app registra automaticamente la differenza come Rettifica saldo.";
-      balInput.value = String(accountBalance(acc.id)).replace(".",",");
-      node.querySelector("#reconcileAccountBtn").hidden = false;
-    } else {
-      balInput.value = "";
-    }
-
-    PALETTE.forEach(color=>{
-      const sw = document.createElement("button");
-      sw.className = "color-swatch" + (color===chosenColor?" active":"");
-      sw.style.background = color;
-      sw.addEventListener("click", ()=>{
-        chosenColor = color;
-        colorRow.querySelectorAll(".color-swatch").forEach(s=>s.classList.remove("active"));
-        sw.classList.add("active");
-      });
-      colorRow.appendChild(sw);
-    });
-
-    if(editing) deleteBtn.hidden = false;
-    deleteBtn.addEventListener("click", async ()=>{
-      const hasTx = state.transactions.some(t=>t.accountId===accountId);
-      const msg = hasTx
-        ? "Questo conto ha movimenti associati. Eliminandolo verranno eliminati anche i suoi movimenti. Continuare?"
-        : "Eliminare questo conto?";
-      if(!await askConfirm(msg)) return;
-      markDeleted(accountId, state.transactions.filter(t=>t.accountId===accountId).map(t=>t.id));
-      state.accounts = state.accounts.filter(a=>a.id!==accountId);
-      if(state.mainAccountId===accountId) state.mainAccountId=null;
-      state.transactions = state.transactions.filter(t=>t.accountId!==accountId);
-      persist(); renderAll(); close();
-    });
-
-    node.querySelector("#reconcileAccountBtn").addEventListener("click", ()=>{
-      if(!editing) return;
-      close();
-      openBalanceReconcileForm(accountId);
-    });
-
-    node.querySelector("#saveAccountBtn").addEventListener("click", ()=>{
-      const name = nameInput.value.trim();
-      if(!name) { nameInput.focus(); return; }
-      const balance = parseAmount(balInput.value) * (balInput.value.trim().startsWith("-") ? -1 : 1);
-      if(editing){
-        const before = accountBalance(acc.id);
-        const delta = Math.round((balance - before) * 100) / 100;
-        acc.name = name; acc.color = chosenColor; acc.owner = chosenOwner;
-        if(Math.abs(delta) >= 0.01){
-          state.transactions.push({
-            id:uid(), date:todayISO(), amount:Math.abs(delta),
-            type:delta>0?"income":"expense", name:"Rettifica saldo",
-            categoryId:null, accountId:acc.id, toAccountId:null,
-            note:`Saldo aggiornato manualmente da ${fmt(before)} a ${fmt(balance)}`,
-            isBalanceAdjustment:true, setsRealBalance:true
-          });
-        }
-      } else {
-        state.accounts.push({ id: uid(), name, balance, color: chosenColor, owner: chosenOwner });
-      }
-      persist(); renderAll(); renderBalanceAdjustmentHistory(); close();
-    });
-  });
-}
-/* ---------------- Pannelli di gestione (Altro) ---------------- */
-function openAccountsPanel(){
-  openSheet("tpl-accounts-panel", (node)=>{
-    renderAccountsManageList();
-    renderBalanceAdjustmentHistory();
-    node.querySelector("#addAccountBtn").addEventListener("click", ()=> openAccountForm(null));
-  });
-}
-document.getElementById("openAccountsPanelBtn").addEventListener("click", openAccountsPanel);
-
-function openMacroPanel(){
-  openSheet("tpl-macro-panel", (node)=>{
-    renderMacroCategories();
-    node.querySelector("#addMacroCategoryBtn").addEventListener("click", ()=> openMacroForm(null));
-  });
-}
-
-
-function openCategoriesPanel(){
-  openSheet("tpl-categories-panel", (node)=>{
-    renderCategories();
-    node.querySelector("#addCategoryBtn").addEventListener("click", ()=> openCategoryForm(null));
-  });
-}
-
-
-function openGraphPanel(){
-  openSheet("tpl-graph-panel", (node)=>{
-    renderCategoryGraph();
-  });
-}
 /* v1.4.0 — Un'unica sezione per categorie, macrocategorie e struttura. */
 function openCategoriesHub(startMode){
   openSheet("tpl-categories-hub", (node)=>{
@@ -4376,11 +3375,10 @@ function openCategoriesHub(startMode){
       addBtn.hidden=(m==="graph");
       if(labels[m]) addBtn.setAttribute("aria-label",labels[m]);
       if(m==="categories") renderCategories();
-      else if(m==="macro") renderMacroCategories();
       else renderCategoryGraph();
     }
     node.querySelectorAll("[data-hub]").forEach(b=>b.addEventListener("click",()=>setMode(b.dataset.hub)));
-    addBtn.addEventListener("click",()=>{ if(mode==="macro") openMacroForm(null); else openCategoryForm(null); });
+    addBtn.addEventListener("click",()=>openCategoryForm(null));
     setMode(mode);
   });
 }
@@ -4467,75 +3465,6 @@ function openCategoryForm(categoryId){
         cat.name=name; cat.emoji=chosenEmoji; cat.color=chosenColor; cat.kind=chosenKind; cat.budget=budget; cat.macroCategoryId=chosenMacroId;
       } else {
         state.categories.push({ id: uid(), name, emoji: chosenEmoji, color: chosenColor, kind: chosenKind, budget, macroCategoryId: chosenMacroId });
-      }
-      persist(); renderAll(); close();
-    });
-  });
-}
-/* ---------------- Macro category form ---------------- */
-function openMacroForm(macroId){
-  const editing = !!macroId;
-  const macro = editing ? state.macroCategories.find(m=>m.id===macroId) : null;
-
-  openSheet("tpl-macro-form", (node, close)=>{
-    node.querySelector("#macroFormTitle").textContent = editing ? "Modifica macrocategoria" : "Nuova macrocategoria";
-    const nameInput = node.querySelector("#macroNameInput");
-    const emojiRow = node.querySelector("#macroEmojiRow");
-    const colorRow = node.querySelector("#macroColorRow");
-    const budgetInput = node.querySelector("#macroBudgetInput");
-    const deleteBtn = node.querySelector("#deleteMacroBtn");
-    const kindToggle = node.querySelector("#macroKindToggle");
-
-    let chosenEmoji = macro?.emoji || EMOJIS[0];
-    let chosenColor = macro?.color || PALETTE[0];
-    let chosenKind = macro?.kind || "expense";
-
-    nameInput.value = macro?.name || "";
-    budgetInput.value = macro?.budget ? String(macro.budget).replace(".",",") : "";
-
-    kindToggle.querySelectorAll(".type-opt").forEach(opt=>{
-      opt.classList.toggle("active",opt.dataset.kind===chosenKind);
-      opt.addEventListener("click",()=>{
-        chosenKind=opt.dataset.kind;
-        kindToggle.querySelectorAll(".type-opt").forEach(o=>o.classList.toggle("active",o===opt));
-      });
-    });
-
-    buildEmojiField(emojiRow, chosenEmoji, v=>{ chosenEmoji=v; });
-
-    PALETTE.forEach(color=>{
-      const sw = document.createElement("button");
-      sw.className = "color-swatch" + (color===chosenColor?" active":"");
-      sw.style.background = color;
-      sw.addEventListener("click", ()=>{
-        chosenColor = color;
-        colorRow.querySelectorAll(".color-swatch").forEach(s=>s.classList.remove("active"));
-        sw.classList.add("active");
-      });
-      colorRow.appendChild(sw);
-    });
-
-    if(editing) deleteBtn.hidden = false;
-    deleteBtn.addEventListener("click", async ()=>{
-      const hasCats = state.categories.some(c=>c.macroCategoryId===macroId);
-      const msg = hasCats
-        ? "Le categorie associate resteranno, ma senza macrocategoria. Continuare?"
-        : "Eliminare questa macrocategoria?";
-      if(!await askConfirm(msg)) return;
-      markDeleted(macroId);
-      state.macroCategories = state.macroCategories.filter(m=>m.id!==macroId);
-      state.categories.forEach(c=>{ if(c.macroCategoryId===macroId) c.macroCategoryId=null; });
-      persist(); renderAll(); close();
-    });
-
-    node.querySelector("#saveMacroBtn").addEventListener("click", ()=>{
-      const name = nameInput.value.trim();
-      if(!name){ nameInput.focus(); return; }
-      const budget = budgetInput.value.trim() ? parseAmount(budgetInput.value) : null;
-      if(editing){
-        macro.name=name; macro.emoji=chosenEmoji; macro.color=chosenColor; macro.budget=budget; macro.kind=chosenKind;
-      } else {
-        state.macroCategories.push({ id: uid(), name, emoji: chosenEmoji, color: chosenColor, budget, kind:chosenKind });
       }
       persist(); renderAll(); close();
     });
@@ -4648,94 +3577,6 @@ function openRecurringForm(recurringId,prefill=null){
   });
 }
 
-/* ---------------- Spese pianificate: form una tantum ---------------- */
-let plannedTxType = "expense", plannedSelectedCategoryId = null, plannedSelectedAccountId = null;
-function openPlannedForm(plannedId,prefill=null){
-  const editing = !!plannedId;
-  const p = editing ? state.planned.find(x=>x.id===plannedId) : (prefill||null);
-  plannedTxType = p?.type || "expense";
-  plannedSelectedCategoryId = p?.categoryId || null;
-  plannedSelectedAccountId = p?.accountId || null;
-
-  openSheet("tpl-planned-form", (node, close)=>{
-    node.querySelector("#plannedFormTitle").textContent = editing ? "Modifica pianificata" : "Nuova pianificata";
-    const amountInput = node.querySelector("#plannedAmountInput");
-    const nameInput = node.querySelector("#plannedNameInput");
-    const dateInput = node.querySelector("#plannedDateInput");
-    const noteInput = node.querySelector("#plannedNoteInput");
-    const catChipsGrouped = node.querySelector("#plannedCategoryChipsGrouped");
-    const accChips = node.querySelector("#plannedAccountChips");
-    const typeToggle = node.querySelector("#plannedTypeToggle");
-    const deleteBtn = node.querySelector("#deletePlannedBtn");
-
-    amountInput.value = p ? String(p.amount).replace(".",",") : "";
-    nameInput.value=p?.name || "";
-    autoGrowAmountInput(amountInput);
-    noteInput.value = p?.note || "";
-    if(p?.date){
-      dateInput.value = p.date;
-    } else {
-      dateInput.value = todayISO();
-    }
-
-    typeToggle.querySelectorAll(".type-opt").forEach(opt=>{
-      opt.classList.toggle("active", opt.dataset.type===plannedTxType);
-      opt.addEventListener("click", ()=>{
-        typeToggle.querySelectorAll(".type-opt").forEach(o=>o.classList.remove("active"));
-        opt.classList.add("active");
-        plannedTxType = opt.dataset.type;
-        plannedSelectedCategoryId = null;
-        catChipsGrouped._activeMacro = null;
-        renderCatChips();
-      });
-    });
-
-    function renderCatChips(){
-      renderCategoryPicker(catChipsGrouped, plannedTxType, ()=>plannedSelectedCategoryId, id=>{ plannedSelectedCategoryId=id; });
-    }
-    function renderAccChips(){
-      accChips.innerHTML = "";
-      state.accounts.forEach(a=>{
-        const chip = document.createElement("button");
-        chip.className = "chip" + (plannedSelectedAccountId===a.id ? " active":"");
-        chip.innerHTML = `<span class="em">●</span>${escapeHtml(a.name)}`;
-        chip.querySelector(".em").style.color = safeColor(a.color);
-        chip.addEventListener("click", ()=>{ plannedSelectedAccountId=a.id; renderAccChips(); });
-        accChips.appendChild(chip);
-      });
-      if(!plannedSelectedAccountId) plannedSelectedAccountId = state.accounts[0]?.id || null;
-    }
-    renderCatChips();
-    renderAccChips();
-    const split=mountSplitPicker(node, accChips.closest(".field-row"), {account:()=>plannedSelectedAccountId, type:()=>plannedTxType, amount:()=>parseAmount(amountInput.value), initial:p?.split, initialGroup:p?.groupId});
-
-    if(editing) deleteBtn.hidden = false;
-    deleteBtn.addEventListener("click", async ()=>{
-      if(!await askConfirm("Eliminare questa spesa pianificata?")) return;
-      moveToTrash("planned",p); const deleted=state.trash[0]?.id; state.planned = state.planned.filter(x=>x.id!==plannedId);
-      persist(); renderAll(); close(); if(deleted) showUndo("Pianificata eliminata",deleted);
-    });
-
-    node.querySelector("#savePlannedBtn").addEventListener("click", ()=>{
-      const amount = parseAmount(amountInput.value);
-      const missing=[];if(!nameInput.value.trim()) missing.push("nome");if(amount<=0) missing.push("importo");if(!plannedSelectedCategoryId) missing.push("categoria");if(!plannedSelectedAccountId) missing.push("conto");if(!dateInput.value) missing.push("data");
-      if(missing.length){showToast("Inserisci: "+missing.join(", "));if(amount<=0) amountInput.focus();return;}
-      const date = dateInput.value;
-      if(editing){
-        p.name=nameInput.value.trim(); p.amount=amount; p.type=plannedTxType; p.categoryId=plannedSelectedCategoryId;
-        p.accountId=plannedSelectedAccountId; p.date=date; p.note=noteInput.value.trim(); p.split=split.get(); p.groupId=split.getGroup();
-      } else {
-        state.planned.push({
-          id: uid(), name:nameInput.value.trim(), amount, type: plannedTxType, categoryId: plannedSelectedCategoryId,
-          accountId: plannedSelectedAccountId, date, note: noteInput.value.trim(), split:split.get(), groupId:split.getGroup(),
-        });
-      }
-      generatePlannedTransactions();
-      persist(); renderAll(); close();
-    });
-  });
-}
-document.getElementById("addPlannedBtn").addEventListener("click", ()=> openPlannedForm(null));
 
 /* ---------------- Calendario spese ---------------- */
 let calYear, calMonth;
@@ -4831,9 +3672,7 @@ function openDayDetail(iso){
   const d = new Date(iso+"T00:00:00");
   openSheet("tpl-day-detail", (node)=>{
     node.querySelector("#dayDetailTitle").textContent = `Movimenti — ${d.getDate()} ${MESI[d.getMonth()]} ${d.getFullYear()}`;
-    const real = state.transactions.filter(t=>t.date===iso);
-    const planned = plannedItemsForDate(iso);
-    const all = [...real, ...planned].sort((a,b)=> a.date.localeCompare(b.date));
+    const all = state.transactions.filter(t=>t.date===iso).sort((a,b)=> a.date.localeCompare(b.date));
     renderTxRows(node.querySelector("#dayDetailList"), all);
     node.querySelector("#dayDetailEmptyHint").hidden = all.length>0;
   });
@@ -5046,7 +3885,6 @@ document.addEventListener("visibilitychange",()=>{
   if(document.visibilityState!=="visible") return;
   balancesHidden=true;
   safeSetLocalStorage("noidue_hide_balances","1",{notify:false});
-  generatePlannedTransactions();
   generateRecurringTransactions(false);
   renderAll();
 });
@@ -5135,12 +3973,7 @@ appLoader.className="app-loader";
 appLoader.innerHTML='<div class="loader-content" role="status" aria-label="Caricamento Noi Due"><div class="loader-money" aria-hidden="true">💑</div><p>Noi Due</p><i></i></div>';
 document.body.appendChild(appLoader);
 
-document.getElementById("goSetMainAccountBtn")?.addEventListener("click",()=>switchView("accounts"));
-document.getElementById("homeMainAccountCard")?.addEventListener("click",()=>{
-  if(state.mainAccountId) openAccountEvolution(state.mainAccountId); else switchView("accounts");
-});
 activeView="home";
-generatePlannedTransactions();
 generateRecurringTransactions(false);
 // La Home è già attiva nel markup: forziamo inoltre la sua visibilità sia
 // prima sia dopo il primo frame, evitando una Home bianca al rientro dallo splash.
@@ -5163,171 +3996,9 @@ setTimeout(()=>{
   setTimeout(()=>{appLoader.remove();renderAll();},300);
 },650);
 
-/* =========================================================
-   v1.6.0 — Tieni premuto su un saldo: mini popup con gli ultimi 5 movimenti
-   (Home) o i prossimi 5 in arrivo (R&P e previsioni).
-   ========================================================= */
-function lpCategory(t){return state.categories.find(c=>c.id===t.categoryId)||null;}
-function lpLastMovements(filter){
-  const today=todayISO();
-  return state.transactions
-    .filter(t=>t.date<=today && t.type!=="transfer" && (!filter || filter(t)))
-    .slice()
-    .sort((a,b)=>b.date.localeCompare(a.date)||String(b.id).localeCompare(String(a.id)))
-    .slice(0,5);
-}
-function lpNextScheduled(filter){
-  const today=todayISO();
-  const out=[];
-  const now=new Date();
-  for(let k=0;k<13 && out.length<5;k++){
-    const d=new Date(now.getFullYear(),now.getMonth()+k,1);
-    plannedItemsForMonth(d.getFullYear(),d.getMonth())
-      .filter(t=>t.date>=today && (!filter || filter(t)))
-      .sort((a,b)=>a.date.localeCompare(b.date))
-      .forEach(t=>{ if(out.length<5) out.push(t); });
-  }
-  return out;
-}
-function showLongPressPopup(anchor,title,items,{emptyText="Niente da mostrare.",future=false}={}){
-  closeLongPressPopup();
-  const pop=document.createElement("div");
-  pop.className="lp-popup";pop.id="lpPopup";pop.setAttribute("role","dialog");pop.setAttribute("aria-label",title);
-  const rows=items.map(t=>{
-    const c=lpCategory(t);
-    const name=t.name || c?.name || (t.type==="income"?"Entrata":"Uscita");
-    const d=new Date(t.date+"T00:00:00");
-    const when=`${d.getDate()} ${MESI_BREVI[d.getMonth()]}`;
-    const kind=t.recurringId?"Ricorrente":t.plannedId?"Pianificata":"";
-    const amount=balancesHidden?"••••":(t.type==="income"?"+":"−")+fmt(t.amount);
-    const lpKind=future?(t.recurringId?"recurring":"planned"):"past";
-    return `<div class="lp-row lp-kind-${lpKind}"><span class="lp-ic">${escapeHtml(c?.emoji||(t.type==="income"?"↑":"↓"))}</span><span class="lp-main"><b>${escapeHtml(name)}</b><small>${when}${future&&kind?` · ${kind}`:""}</small></span><span class="lp-amt ${t.type}">${amount}</span></div>`;
-  }).join("");
-  pop.innerHTML=`<div class="lp-head">${escapeHtml(title)}</div>${rows||`<p class="lp-empty">${escapeHtml(emptyText)}</p>`}`;
-  document.body.appendChild(pop);
-  const r=anchor.getBoundingClientRect(), vw=window.innerWidth, vh=window.innerHeight;
-  const w=Math.min(330,vw-24); pop.style.width=w+"px";
-  let left=Math.min(Math.max(12,r.left+r.width/2-w/2),vw-w-12);
-  const ph=pop.offsetHeight;
-  let top=r.bottom+8;
-  if(top+ph>vh-90) top=Math.max(12,r.top-ph-8);
-  pop.style.left=left+"px"; pop.style.top=top+"px";
-  requestAnimationFrame(()=>pop.classList.add("show"));
-  setTimeout(()=>{
-    document.addEventListener("pointerdown",lpOutside,true);
-    window.addEventListener("scroll",closeLongPressPopup,{once:true,capture:true});
-  },0);
-}
-function lpOutside(e){ if(!e.target.closest("#lpPopup")) closeLongPressPopup(); }
-function closeLongPressPopup(){
-  document.getElementById("lpPopup")?.remove();
-  document.removeEventListener("pointerdown",lpOutside,true);
-}
-let lpSuppressClick=false;
-document.addEventListener("click",e=>{ if(lpSuppressClick){ e.preventDefault(); e.stopPropagation(); lpSuppressClick=false; } },true);
-function bindLongPress(el,handler){
-  if(!el || el.dataset.lpBound) return;
-  el.dataset.lpBound="1"; el.classList.add("lp-target");
-  let timer=null,x=0,y=0;
-  const cancel=()=>{clearTimeout(timer);timer=null;el.classList.remove("lp-pressing");};
-  el.addEventListener("pointerdown",e=>{
-    if(e.button!==undefined && e.button!==0) return;
-    x=e.clientX;y=e.clientY;el.classList.add("lp-pressing");
-    timer=setTimeout(()=>{timer=null;el.classList.remove("lp-pressing");lpSuppressClick=true;setTimeout(()=>{lpSuppressClick=false;},700);try{navigator.vibrate?.(12);}catch(_){};handler(e);},480);
-  });
-  el.addEventListener("pointermove",e=>{if(timer && Math.hypot(e.clientX-x,e.clientY-y)>10) cancel();});
-  ["pointerup","pointercancel","pointerleave"].forEach(ev=>el.addEventListener(ev,cancel));
-  el.addEventListener("contextmenu",e=>e.preventDefault());
-}
-function setupLongPressTargets(){
-  const byId=id=>document.getElementById(id);
-  // Home — ultimi 5 movimenti
-  bindLongPress(byId("netAmount"),()=>showLongPressPopup(byId("netAmount"),"Ultimi 5 movimenti",lpLastMovements(),{emptyText:"Nessun movimento registrato."}));
-  bindLongPress(document.querySelector("#view-home .hero-split-item.income"),e=>showLongPressPopup(e.currentTarget||document.querySelector("#view-home .hero-split-item.income"),"Ultime 5 entrate",lpLastMovements(t=>t.type==="income"),{emptyText:"Nessuna entrata registrata."}));
-  bindLongPress(document.querySelector("#view-home .hero-split-item.expense"),()=>showLongPressPopup(document.querySelector("#view-home .hero-split-item.expense"),"Ultime 5 uscite",lpLastMovements(t=>t.type==="expense"),{emptyText:"Nessuna uscita registrata."}));
-  bindLongPress(byId("homeMainAccountCard"),()=>{
-    const acc=state.accounts.find(a=>a.id===state.mainAccountId);
-    showLongPressPopup(byId("homeMainAccountCard"),acc?`Ultimi 5 · ${acc.name}`:"Ultimi 5 movimenti",lpLastMovements(acc?(t=>t.accountId===acc.id||t.toAccountId===acc.id):null));
-  });
-  bindLongPress(document.querySelector("#view-home .hero-liquidity-item.all"),()=>showLongPressPopup(document.querySelector("#view-home .hero-liquidity-item.all"),"Ultimi 5 movimenti",lpLastMovements()));
-  const fc=document.querySelectorAll("#view-home .forecast-card");
-  if(fc[0]) bindLongPress(fc[0],()=>showLongPressPopup(fc[0],"Ultimi 5 movimenti",lpLastMovements()));
-  if(fc[1]) bindLongPress(fc[1],()=>showLongPressPopup(fc[1],"Prossimi 5 in arrivo",lpNextScheduled(),{future:true,emptyText:"Nessuna voce in arrivo."}));
-  if(fc[2]) bindLongPress(fc[2],()=>showLongPressPopup(fc[2],"Prossimi 5 in arrivo",lpNextScheduled(),{future:true,emptyText:"Nessuna voce in arrivo."}));
-  // R&P — prossimi 5 (mix, solo ricorrenti, solo pianificate)
-  const rp=[["recurringEstimateCard","Prossimi 5 ricorrenti",t=>!!t.recurringId],["plannedEstimateCard","Prossime 5 pianificate",t=>!!t.plannedId],["rpCombinedEstimateCard","Prossimi 5 · ricorrenti e pianificate",null]];
-  rp.forEach(([id,title,f])=>{
-    const card=byId(id); if(!card) return;
-    bindLongPress(card,e=>{
-      const chip=e.target.closest?.(".rp-estimate-breakdown span, .rp-combined-breakdown span");
-      let filter=f, t=title;
-      if(chip){
-        const income=/Entrate/.test(chip.textContent);
-        filter=x=>(!f||f(x)) && x.type===(income?"income":"expense");
-        t=title+(income?" · entrate":" · uscite");
-      }
-      showLongPressPopup(chip||card,t,lpNextScheduled(filter),{future:true,emptyText:"Nessuna voce in arrivo."});
-    });
-  });
-}
-setupLongPressTargets();
 
-/* v1.6.1 — Il pulsante "nascondi importi" di R&P sta accanto al periodo (mese/giorno). */
-(function moveRPEye(){
-  // v1.6.2: l'occhio di R&P sta a destra della riga Totali / Ricorrenti / Pianificate.
-  const eye=document.getElementById("toggleRPBalance"), toggle=document.getElementById("rpModeToggle");
-  if(!eye || !toggle) return;
-  const row=document.createElement("div"); row.className="rp-mode-row";
-  toggle.parentNode.insertBefore(row,toggle); row.appendChild(toggle); row.appendChild(eye);
-})();
 
-/* v1.7.0 — Campo di ricerca in R&P (vale per Totali, Ricorrenti e Pianificate). */
-(function setupRPSearch(){
-  return; // v1.8.0: la ricerca è nel pannello "Vedi tutti" di R&P.
-  const row=document.querySelector("#view-recurring .rp-mode-row")||document.getElementById("rpModeToggle");
-  if(!row || document.getElementById("rpSearchInput")) return;
-  const wrap=document.createElement("div");wrap.className="rp-search";
-  wrap.innerHTML='<input id="rpSearchInput" class="text-input" type="search" placeholder="Cerca nome, categoria o conto" autocomplete="off">';
-  row.after(wrap);
-  let t=null;
-  wrap.querySelector("input").addEventListener("input",e=>{clearTimeout(t);const v=e.target.value;t=setTimeout(()=>{rpSearchQuery=v;renderAll();},180);});
-})();
 
-/* =========================================================
-   v1.8.0 — Pannello "Vedi tutti" di R&P (come "Vedi tutti" della Home):
-   scelta Totali / Ricorrenti / Pianificate, ricerca con evidenziazione, pulsante periodo.
-   ========================================================= */
-function rpAllMatches(name,categoryId,accountId){
-  const q=rpAllQuery.trim().toLocaleLowerCase("it"); if(!q) return true;
-  const cats=categoriesById(), accs=accountsById();
-  return [name,cats[categoryId]?.name,accs[accountId]?.name].filter(Boolean).join(" ").toLocaleLowerCase("it").includes(q);
-}
-function renderRPAllView(){
-  const up=document.getElementById("rpAllUpcoming"); if(!up) return;
-  document.querySelectorAll("[data-rpall-kind]").forEach(b=>b.classList.toggle("active",b.dataset.rpallKind===rpAllKind));
-  const pbtn=document.getElementById("rpAllPeriodBtn");
-  if(pbtn) pbtn.innerHTML=`<svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="2.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M4 10h16M9 3v4M15 3v4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><span>${periodLabel("rpall")}</span>`;
-  const wantRec=rpAllKind!=="planned", wantPl=rpAllKind!=="recurring";
-  const months=monthsInPeriod("rpall");
-  const recRows=wantRec?state.recurring.map(r=>({r,dates:months.flatMap(([y,m])=>recurringOccurrencesInMonth(r,y,m)).filter(iso=>inPeriod("rpall",iso))}))
-    .filter(x=>x.dates.length && rpAllMatches(x.r.name,x.r.categoryId,x.r.accountId)):[];
-  const plRows=wantPl?state.planned.filter(p=>p.date && inPeriod("rpall",p.date) && rpAllMatches(p.name,p.categoryId,p.accountId)):[];
-  up.innerHTML="";
-  const rows=withHighlight(rpAllQuery,()=>[...recRows.map(({r,dates})=>recurringRowElement(r,{dates})),...plRows.map(p=>plannedRowElement(p))])
-    .sort((a,b)=>(a.dataset.sortDate||"").localeCompare(b.dataset.sortDate||""));
-  rows.forEach(r=>up.appendChild(r));
-  document.getElementById("rpAllUpcomingCount").textContent=rows.length||"";
-  document.getElementById("rpAllUpcomingEmpty").hidden=rows.length>0;
-  const paid=state.transactions.filter(t=>((wantRec&&t.recurringId)||(wantPl&&t.plannedId)) && inPeriod("rpall",t.date) && rpAllMatches(t.name,t.categoryId,t.accountId))
-    .sort((a,b)=>b.date.localeCompare(a.date)||String(b.id).localeCompare(String(a.id)));
-  const paidEl=document.getElementById("rpAllPaid");
-  withHighlight(rpAllQuery,()=>renderTxRows(paidEl,paid,{paidLabel:true}));
-  document.getElementById("rpAllPaidCount").textContent=paid.length||"";
-  document.getElementById("rpAllPaidEmpty").hidden=paid.length>0;
-}
-document.querySelectorAll("[data-rpall-kind]").forEach(b=>b.addEventListener("click",()=>{rpAllKind=b.dataset.rpallKind;renderRPAllView();}));
-document.getElementById("rpAllPeriodBtn")?.addEventListener("click",()=>openPeriodPicker("rpall"));
-(function(){let t=null;document.getElementById("rpAllSearchInput")?.addEventListener("input",e=>{clearTimeout(t);const v=e.target.value;t=setTimeout(()=>{rpAllQuery=v;renderRPAllView();},180);});})();
 
 // v1.9.2 — La copertura della barra di stato appare solo quando si scorre.
 (function(){

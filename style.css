@@ -209,12 +209,8 @@ button:active {
   letter-spacing: -0.3px;
 }
 /* Ricorrenti e Pianificate: più respiro tra titolo e resto della pagina */
-#view-planned {
-  padding-top: 18px;
-}
-#view-planned .view-title {
-  margin-bottom: 24px;
-}
+
+
 /* ---------- Hero ---------- */
 .hero {
   border: 2px solid var(--emerald);
@@ -751,31 +747,10 @@ button:active {
   font-size: 19px;
 }
 /* alias retro-compatibile */
-.evo-stats-row {
-  display: flex;
-  gap: 10px;
-  margin-top: 10px;
-}
-.evo-stat-card {
-  flex: 1;
-  background: var(--card);
-  border: 1px solid var(--line);
-  border-radius: var(--radius-card);
-  padding: 14px 10px;
-  text-align: center;
-}
-.evo-stat-label {
-  font-size: 11.5px;
-  color: var(--ink-soft);
-  margin: 0 0 6px;
-}
-.evo-stat-value {
-  font-family: var(--font-display);
-  font-weight: 700;
-  font-size: 22px;
-  margin: 0;
-  font-variant-numeric: tabular-nums;
-}
+
+
+
+
 /* ---------- Calendario spese ---------- */
 .calendar-nav {
   display: flex;
@@ -1393,12 +1368,10 @@ b {
   outline: 2px solid var(--emerald-soft);
   outline-offset: 2px;
 }
-.stat-cards-row,
-.evo-stats-row {
+.stat-cards-row{
   flex-wrap: wrap;
 }
-.stat-card,
-.evo-stat-card {
+.stat-card{
   min-width: 0;
   overflow-wrap: anywhere;
 }
@@ -1537,23 +1510,20 @@ textarea,
 .tx-amount.expense,
 .tx-row.planned .tx-amount.expense,
 .amt.expense,
-#expenseAmount,
-.evo-stat-value.neg {
+#expenseAmount{
   color: var(--rust);
 }
 .tx-amount.income,
 .tx-row.planned .tx-amount.income,
 .amt.income,
-#incomeAmount,
-.evo-stat-value.pos {
+#incomeAmount{
   color: var(--emerald);
 }
 .hero {
   --emerald: #63d4aa;
   --rust: #ff8d85;
 }
-.stat-card-value.zero,
-.evo-stat-value.zero {
+.stat-card-value.zero{
   color: #fff;
 }
 /* Gli importi restano puliti: nessun riquadro nero per lo zero. */
@@ -1601,9 +1571,7 @@ textarea,
 .hero-split-item.expense .direction-arrow {
   color: var(--rust);
 }
-.rp-estimate {
-  font-family: var(--font-display);
-}
+
 input[type="date"] {
   min-width: 0;
   max-width: 100%;
@@ -1748,9 +1716,7 @@ input[type="date"] {
   width: 100%;
 }
 /* L'area sicura evita che il titolo Pianificate finisca sotto la Dynamic Island. */
-#view-planned {
-  padding-top: calc(34px + env(safe-area-inset-top));
-}
+
 /* Nei pannelli iPhone, data e nota non si sovrappongono. */
 .sheet .form-inline {
   grid-template-columns: minmax(108px, 0.72fr) minmax(0, 1.28fr);
@@ -1891,8 +1857,7 @@ input[type="date"] {
   padding: 5px 8px;
   font-size: 12px;
 }
-.tx-type-toggle,
-.rp-mode-toggle {
+.tx-type-toggle{
   margin: 7px 0 10px;
 }
 .sheet-head-date {
@@ -2125,19 +2090,16 @@ input[type="date"] {
 }
 /* Nessun vuoto artificiale tra categoria e conto quando si sceglie Entrata. */
 #sheetAddTx .chip-groups,
-#sheetRecurringForm .chip-groups,
-#sheetPlannedForm .chip-groups {
+#sheetRecurringForm .chip-groups{
   min-height: 72px !important;
 }
 /* Categoria e macrocategoria: conferma accanto al titolo, sempre visibile. */
-#sheetCategoryForm .primary-btn,
-#sheetMacroForm .primary-btn {
+#sheetCategoryForm .primary-btn{
   top: 18px;
   right: 14px;
   bottom: auto;
 }
-#sheetCategoryForm .sheet-head,
-#sheetMacroForm .sheet-head {
+#sheetCategoryForm .sheet-head{
   min-height: 42px;
 }
 /* Budget: macro e categorie hanno esattamente la stessa gerarchia visiva. */
@@ -2214,11 +2176,7 @@ input[type="date"] {
   gap: 5px;
   padding: 5px;
 }
-#rpModeToggle {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  gap: 5px;
-}
+
 #statsGroupToggle .type-opt {
   width: 100%;
   min-width: 0;
@@ -2228,13 +2186,7 @@ input[type="date"] {
   font-size: 13px !important;
   white-space: nowrap;
 }
-#rpModeToggle .type-opt {
-  width: 100%;
-  min-width: 0;
-  padding: 5px 4px;
-  font-size: 13px !important;
-  white-space: nowrap;
-}
+
 /* Splash iniziale: icona denaro e caricamento leggero. */
 .loader-content {
   display: flex;
@@ -2314,20 +2266,9 @@ input[type="date"] {
   color: #fff !important;
 }
 /* Riepilogo Home per natura e periodo. */
-.budget-kind {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin-bottom: 18px;
-}
-.budget-kind h3 {
-  margin: 0 2px 2px;
-  font-size: 14px;
-  color: var(--ink-soft);
-}
-.budget-kind.income h3 {
-  color: var(--emerald);
-}
+
+
+
 .budget-earned {
   color: var(--emerald);
   font-weight: 800;
@@ -2426,8 +2367,7 @@ textarea,
 }
 /* Conferma dei pannelli: oro Bet Tracker. Nei form con data resta accanto alla data;
    nel ricorrente la conferma va in alto a destra senza occupare la colonna centrale. */
-#sheetAddTx .sheet-head,
-#sheetPlannedForm .sheet-head {
+#sheetAddTx .sheet-head{
   grid-template-columns: minmax(0, 1fr) 126px 42px;
   gap: 9px;
   padding-right: 0 !important;
@@ -2440,8 +2380,7 @@ textarea,
   padding-right: 0 !important;
 }
 #sheetAccountForm .sheet-head,
-#sheetCategoryForm .sheet-head,
-#sheetMacroForm .sheet-head {
+#sheetCategoryForm .sheet-head{
   display: flex !important;
   align-items: center;
   gap: 10px;
@@ -2449,15 +2388,12 @@ textarea,
 }
 #sheetAddTx .sheet-head h3,
 #sheetRecurringForm .sheet-head h3,
-#sheetPlannedForm .sheet-head h3,
 #sheetAccountForm .sheet-head h3,
-#sheetCategoryForm .sheet-head h3,
-#sheetMacroForm .sheet-head h3 {
+#sheetCategoryForm .sheet-head h3{
   min-width: 0;
   margin: 0;
 }
-#sheetAddTx .sheet-head-date,
-#sheetPlannedForm .sheet-head-date {
+#sheetAddTx .sheet-head-date{
   width: 126px !important;
   margin: 0 !important;
   justify-self: end;
@@ -2468,10 +2404,8 @@ textarea,
 }
 #sheetAddTx .primary-btn,
 #sheetRecurringForm .primary-btn,
-#sheetPlannedForm .primary-btn,
 #sheetAccountForm .primary-btn,
-#sheetCategoryForm .primary-btn,
-#sheetMacroForm .primary-btn {
+#sheetCategoryForm .primary-btn{
   position: static !important;
   display: grid !important;
   place-items: center;
@@ -2490,10 +2424,8 @@ textarea,
 }
 #sheetAddTx .primary-btn::after,
 #sheetRecurringForm .primary-btn::after,
-#sheetPlannedForm .primary-btn::after,
 #sheetAccountForm .primary-btn::after,
-#sheetCategoryForm .primary-btn::after,
-#sheetMacroForm .primary-btn::after {
+#sheetCategoryForm .primary-btn::after{
   content: "✓";
   color: #241800;
   font-size: 23px;
@@ -2501,10 +2433,8 @@ textarea,
 }
 #sheetAddTx .primary-btn:active,
 #sheetRecurringForm .primary-btn:active,
-#sheetPlannedForm .primary-btn:active,
 #sheetAccountForm .primary-btn:active,
-#sheetCategoryForm .primary-btn:active,
-#sheetMacroForm .primary-btn:active {
+#sheetCategoryForm .primary-btn:active{
   background: #f1b54f !important;
 }
 /* Scelta tema e relativi filtri: palette Bet Tracker, senza il verde precedente. */
@@ -2517,39 +2447,11 @@ textarea,
   border-color: #e8a33d !important;
 }
 /* R&P: selettore centrato e riepilogo leggibile, indipendente dalla larghezza schermo. */
-#view-recurring {
-  max-width: 520px;
-  margin-inline: auto;
-}
-#view-recurring .view-title {
-  margin-bottom: 16px;
-}
-#rpModeToggle {
-  width: min(100%, 400px) !important;
-  margin: 0 auto 14px !important;
-  padding: 4px !important;
-  border: 1px solid #2b3640 !important;
-  border-radius: 14px !important;
-}
-#rpModeToggle .type-opt {
-  height: 34px !important;
-  min-height: 34px !important;
-  border-radius: 10px !important;
-}
-.rp-estimate {
-  width: min(100%, 400px);
-  min-height: 52px;
-  margin: 0 auto 18px !important;
-  padding: 14px 16px !important;
-  border: 1px solid #2b3640;
-  border-radius: 14px;
-  background: linear-gradient(135deg, #1b2c3b, #1b232c);
-  color: #f1f5f4 !important;
-  text-align: center;
-  font-size: 15px !important;
-  font-weight: 800 !important;
-  box-shadow: 0 5px 16px #0002;
-}
+
+
+
+
+
 /* Azione principale: pulsante geometrico, allineato alla tab bar su ogni schermo. */
 .fab {
   position: fixed !important;
@@ -2871,28 +2773,14 @@ textarea,
   border-radius: 50% !important;
   cursor: pointer;
 }
-.rp-combined-estimate {
-  margin: -8px 0 16px;
-  padding: 12px 14px;
-  text-align: center;
-  border: 1px solid var(--line);
-  border-radius: 13px;
-  background: var(--card);
-  color: #e8a33d;
-  font-family: var(--font-display);
-  font-size: 17px;
-  font-weight: 800;
-}
+
 /* Allineamento schede e azione Duplica */
 #view-home,
-#view-recurring,
 #view-stats,
-#view-accounts,
 #view-more {
   padding-top: 4px;
 }
-#view-home .view-title,
-#view-recurring .view-title {
+#view-home .view-title{
   min-height: 34px;
   margin: 14px 0 20px;
   padding: 10px 18px 0;
@@ -2903,8 +2791,7 @@ textarea,
   letter-spacing: -0.3px;
   text-align: center;
 }
-#view-stats .view-title,
-#view-accounts .view-title {
+#view-stats .view-title{
   min-height: 34px;
   font-family: var(--font-display);
   font-weight: 800;
@@ -2924,7 +2811,6 @@ textarea,
 }
 #view-home .hero,
 #view-stats .stats-period-filter,
-#view-accounts .total-balance-card,
 #view-more > .section-block:first-of-type {
   margin-top: 0 !important;
 }
@@ -2945,12 +2831,10 @@ textarea,
   -webkit-user-select: none;
 }
 /* Home: movimenti e prossime scadenze come piccole card R&P. */
-#recentTx,
-#upcomingHomeList {
+#recentTx{
   gap: 7px;
 }
-#recentTx .tx-row,
-#upcomingHomeList .tx-row {
+#recentTx .tx-row{
   min-height: 52px;
   padding: 7px 9px;
   gap: 8px;
@@ -2959,38 +2843,31 @@ textarea,
   background: var(--card);
   box-shadow: inset 0 1px 0 #ffffff07;
 }
-#recentTx .tx-icon,
-#upcomingHomeList .tx-icon {
+#recentTx .tx-icon{
   width: 30px;
   height: 30px;
   border-radius: 8px;
   font-size: 14px;
 }
-#recentTx .tx-cat,
-#upcomingHomeList .tx-cat {
+#recentTx .tx-cat{
   font-size: 13px;
   line-height: 1.2;
 }
-#recentTx .tx-sub,
-#upcomingHomeList .tx-sub {
+#recentTx .tx-sub{
   font-size: 10px;
   line-height: 1.2;
   margin-top: 2px;
   gap: 4px;
 }
 #recentTx .tx-meta,
-#upcomingHomeList .tx-meta,
-#recentTx .tx-meta .destination-card,
-#upcomingHomeList .tx-meta .destination-card {
+#recentTx .tx-meta .destination-card{
   font-size: 9.8px;
 }
-#recentTx .tx-amount,
-#upcomingHomeList .tx-amount {
+#recentTx .tx-amount{
   font-size: 13px;
   font-weight: 700;
 }
-#recentTx .status-badge,
-#upcomingHomeList .status-badge {
+#recentTx .status-badge{
   font-size: 8.8px;
   padding: 1px 5px;
   margin-left: 4px;
@@ -3070,59 +2947,16 @@ textarea,
   width: 100%;
 }
 /* Stime R&P a colpo d'occhio e action sheet ridisegnato. */
-#view-recurring .rp-estimates-grid {
-  width: min(100%, 400px);
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-}
-#view-recurring .rp-estimate-card {
-  border: 1px solid #2b3640;
-  flex-direction: column;
-}
-#view-recurring .rp-estimate-card.recurring {
-  background: linear-gradient(145deg, #232c35, #1b232c);
-}
-#view-recurring .rp-estimate-card.planned {
-  background: linear-gradient(145deg, #2a292f, #1b232c);
-}
-.rp-estimate-label {
-  font-size: 12px;
-  font-weight: 800;
-  letter-spacing: 0.01em;
-}
-.rp-estimate-value {
-  font-family: var(--font-display);
-  font-size: 24px;
-  line-height: 1;
-  letter-spacing: -0.02em;
-}
-.rp-estimate-caption {
-  font-size: 10px;
-  font-weight: 700;
-}
-#view-recurring .rp-combined-estimate {
-  width: min(100%, 400px);
-  min-height: 44px;
-  margin: 0 auto 14px;
-  padding: 10px 13px;
-  border: 1px solid #2b3640;
-  border-radius: 13px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  font-family: inherit;
-  font-size: 11px;
-  font-weight: 800;
-}
-#view-recurring .rp-combined-estimate strong {
-  font-family: var(--font-display);
-  font-size: 17px;
-  color: #e8a33d;
-  white-space: nowrap;
-}
-#view-recurring .rp-estimate {
-  display: none !important;
-}
+
+
+
+
+
+
+
+
+
+
 /* Action sheet più leggero e simile a un menu nativo mobile. */
 .movement-action-overlay {
   padding: 18px 12px calc(18px + env(safe-area-inset-bottom));
@@ -3222,49 +3056,20 @@ textarea,
   background: #25313b;
 }
 @media (max-width: 360px) {
-  #view-recurring .rp-estimate-card {
-    min-height: 102px;
-    padding: 12px 10px 10px;
-  }
-  .rp-estimate-value {
-    font-size: 21px;
-  }
+  
+  
   .movement-action-btn {
     min-height: 72px;
   }
 }
 /* R&P: Totali + KPI contestuali */
-#view-recurring .rp-estimates-grid.single {
-  grid-template-columns: minmax(0, 195px);
-  justify-content: center;
-}
-#view-recurring #rpTotalList .template-manage-row {
-  padding: 9px 10px;
-  gap: 8px;
-  min-height: 58px;
-}
-#view-recurring #rpTotalList .template-manage-row .ic {
-  width: 30px;
-  height: 30px;
-  border-radius: 8px;
-  font-size: 14px;
-}
-#view-recurring #rpTotalList .template-manage-row .nm {
-  font-size: 13.5px;
-  line-height: 1.2;
-}
-#view-recurring #rpTotalList .template-manage-row .sub {
-  font-size: 10.5px;
-  line-height: 1.2;
-}
-#view-recurring #rpTotalList .template-manage-row .amt {
-  font-size: 11.5px;
-}
-#view-recurring #rpTotalList .template-manage-row .destination-card {
-  margin-top: 3px;
-  font-size: 9.8px;
-  padding: 1px 5px;
-}
+
+
+
+
+
+
+
 /* Riconciliazione saldo */
 .field-hint {
   display: block;
@@ -3284,23 +3089,8 @@ textarea,
   margin-top: 10px;
 }
 /* R&P tabs allineati e storico rettifiche separato */
-#view-recurring #rpModeToggle {
-  display: grid !important;
-  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
-  gap: 4px !important;
-  padding: 4px !important;
-  width: 100%;
-}
-#view-recurring #rpModeToggle .type-opt {
-  width: 100% !important;
-  min-width: 0 !important;
-  height: 32px !important;
-  min-height: 32px !important;
-  padding: 4px 2px !important;
-  font-size: 11px !important;
-  line-height: 1 !important;
-  white-space: nowrap !important;
-}
+
+
 .balance-adjustment-history {
   margin-top: 20px;
   padding-top: 16px;
@@ -3367,12 +3157,7 @@ textarea,
 .balance-adjustment-amount.expense {
   color: #f08b86;
 }
-@media (max-width: 360px) {
-  #view-recurring #rpModeToggle .type-opt {
-    font-size: 10px !important;
-    padding-inline: 1px !important;
-  }
-}
+
 /* Ricorrenze a numero di rate */
 .recurring-duration-select {
   margin-top: 5px;
@@ -3417,17 +3202,8 @@ textarea,
   color: var(--ink) !important;
   box-shadow: 0 4px 14px var(--shadow-soft) !important;
 }
-#view-recurring .rp-estimate-card {
-  background: var(--card) !important;
-  border-color: var(--line) !important;
-  color: var(--ink) !important;
-}
-#view-recurring .rp-combined-estimate {
-  background: var(--card) !important;
-  border-color: var(--line) !important;
-  color: var(--ink) !important;
-  box-shadow: 0 4px 14px var(--shadow-soft) !important;
-}
+
+
 .chart-wrap {
   color: var(--ink) !important;
   box-shadow: 0 4px 14px var(--shadow-soft) !important;
@@ -3453,8 +3229,6 @@ textarea,
 .hero .hero-label,
 .total-balance-card .hero-label,
 .forecast-card span,
-.rp-estimate-label,
-.rp-estimate-caption,
 .backup-status,
 .stats-top-list,
 .chart-sheet-help,
@@ -3464,7 +3238,6 @@ textarea,
   color: var(--ink-soft) !important;
 }
 .forecast-card strong,
-.rp-estimate-value,
 .pie-legend-item .val,
 .balance-adjustment-history-head h4,
 .balance-adjustment-info strong,
@@ -3494,10 +3267,7 @@ textarea,
   border-color: var(--action) !important;
   color: var(--action) !important;
 }
-#rpModeToggle {
-  background: var(--card) !important;
-  border-color: var(--line) !important;
-}
+
 #typeToggle .type-opt[data-type="transfer"].active {
   background: var(--surface-strong) !important;
   border-color: var(--action) !important;
@@ -3667,10 +3437,8 @@ textarea,
 .category-row,
 .template-manage-row,
 #recentTx .tx-row,
-#upcomingHomeList .tx-row,
 #recurringList .template-manage-row,
-#plannedListRP .template-manage-row,
-#rpTotalList .template-manage-row {
+#plannedListRP .template-manage-row{
   border-color: var(--line) !important;
 }
 .tx-custom-range label,
@@ -3758,81 +3526,17 @@ textarea,
   }
 }
 /* v1.3.3 — R&P: elementi pagati nel mese + data di partenza esplicita */
-.rp-paid-section {
-  margin-top: 18px;
-  padding-top: 14px;
-  border-top: 1px solid var(--line);
-}
-.rp-paid-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  margin: 0 2px 9px;
-  color: var(--ink-soft);
-  font-size: 11px;
-  font-weight: 800;
-  letter-spacing: 0.03em;
-  text-transform: uppercase;
-}
-.rp-paid-head span:last-child {
-  min-width: 24px;
-  padding: 2px 7px;
-  border: 1px solid var(--line);
-  border-radius: 999px;
-  background: var(--surface-strong);
-  color: var(--ink);
-  text-align: center;
-}
-.rp-all-paid-notice {
-  margin: 0 0 11px;
-  padding: 10px 12px;
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  background: var(--surface-strong);
-  color: var(--ink);
-  font-size: 12px;
-  font-weight: 750;
-  line-height: 1.4;
-}
-.rp-paid-list {
-  display: flex;
-  flex-direction: column;
-  gap: 7px;
-}
-.rp-paid-list .tx-row {
-  min-height: 54px;
-  padding: 8px 10px;
-  gap: 8px;
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  background: var(--card);
-}
-.rp-paid-list .tx-icon {
-  width: 30px;
-  height: 30px;
-  border-radius: 8px;
-  font-size: 14px;
-}
-.rp-paid-list .tx-cat {
-  font-size: 13px;
-  line-height: 1.2;
-}
-.rp-paid-list .tx-sub {
-  font-size: 10px;
-  line-height: 1.2;
-  margin-top: 2px;
-  gap: 4px;
-}
-.rp-paid-list .tx-amount {
-  font-size: 13px;
-  font-weight: 750;
-}
-.rp-paid-list .status-badge {
-  font-size: 8.5px;
-  padding: 1px 5px;
-  margin-left: 4px;
-}
+
+
+
+
+
+
+
+
+
+
+
 .status-badge.paid {
   color: var(--emerald);
   background: var(--surface-strong);
@@ -3925,8 +3629,7 @@ textarea,
   }
 }
 /* v1.3.5 — riepilogo R&P, conto principale e titoli sezione */
-#view-stats .view-title,
-#view-accounts .view-title {
+#view-stats .view-title{
   display: block !important;
   visibility: visible !important;
   opacity: 1 !important;
@@ -3938,61 +3641,14 @@ textarea,
   position: relative;
   z-index: 1;
 }
-.rp-estimate-breakdown {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 6px;
-  margin-top: 10px;
-  width: 100%;
-}
-.rp-estimate-breakdown span {
-  min-width: 0;
-  padding: 7px 6px;
-  border: 1px solid var(--line);
-  border-radius: 9px;
-  background: color-mix(in srgb, var(--card) 86%, transparent);
-  font-size: 10px;
-  font-weight: 700;
-  color: var(--muted);
-}
-.rp-estimate-breakdown b {
-  display: block;
-  margin-top: 3px;
-  font-size: 12px;
-  color: var(--ink);
-  font-variant-numeric: tabular-nums;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.rp-combined-estimate {
-  display: block !important;
-}
-.rp-combined-estimate > div:first-child {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
-.rp-combined-breakdown {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
-  margin-top: 10px;
-  padding-top: 9px;
-  border-top: 1px solid var(--line);
-}
-.rp-combined-breakdown span {
-  font-size: 11px;
-  color: var(--muted);
-  font-weight: 700;
-}
-.rp-combined-breakdown b {
-  float: right;
-  color: var(--ink);
-  font-size: 12px;
-  font-variant-numeric: tabular-nums;
-}
+
+
+
+
+
+
+
+
 .hero-liquidity {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -4034,84 +3690,20 @@ button.hero-liquidity-item {
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.main-account-notice {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  margin: -8px 0 18px;
-  padding: 12px;
-  border: 1px solid var(--accent);
-  border-radius: 14px;
-  background: var(--card);
-}
-.main-account-notice[hidden] {
-  display: none !important;
-}
-.main-account-notice div {
-  min-width: 0;
-  display: grid;
-  gap: 2px;
-}
-.main-account-notice strong {
-  font-size: 13px;
-  color: var(--ink);
-}
-.main-account-notice span {
-  font-size: 11px;
-  line-height: 1.35;
-  color: var(--muted);
-}
-.main-account-notice .pill-btn {
-  flex: 0 0 auto;
-  white-space: nowrap;
-}
-.main-account-setting {
-  margin: 0 0 14px;
-  padding: 13px;
-  border: 1px solid var(--line);
-  border-radius: 14px;
-  background: var(--card);
-}
-.main-account-setting label {
-  display: block;
-  margin-bottom: 7px;
-  color: var(--ink);
-  font-size: 13px;
-  font-weight: 800;
-}
-.main-account-setting select {
-  width: 100%;
-  min-width: 0;
-  margin: 0;
-}
-.main-account-setting small {
-  display: block;
-  margin-top: 7px;
-  color: var(--muted);
-  font-size: 10px;
-  line-height: 1.35;
-}
-.main-account-badge {
-  display: inline-flex;
-  align-items: center;
-  margin-left: 5px;
-  padding: 2px 6px;
-  border: 1px solid var(--accent);
-  border-radius: 999px;
-  color: var(--accent);
-  font-size: 9px;
-  font-weight: 800;
-  vertical-align: middle;
-}
+
+
+
+
+
+
+
+
+
+
+
 @media (max-width: 390px) {
-  .rp-estimate-breakdown {
-    grid-template-columns: 1fr;
-    gap: 4px;
-  }
-  .rp-estimate-breakdown span {
-    padding: 5px 6px;
-  }
+  
+  
   .hero-liquidity {
     gap: 6px;
   }
@@ -4121,36 +3713,22 @@ button.hero-liquidity-item {
   .hero-liquidity-item strong {
     font-size: 14px;
   }
-  .main-account-notice {
-    align-items: flex-start;
-    flex-direction: column;
-  }
-  .main-account-notice .pill-btn {
-    width: 100%;
-  }
+  
+  
 }
-#view-recurring .rp-estimate-value {
-  margin-top: 7px;
-}
-@media (max-width: 390px) {
-  #view-recurring .rp-estimate-card {
-    min-height: 154px !important;
-  }
-}
+
+
 /* v1.3.7 — iPhone/PWA safe-area: titoli di Statistiche, Conti e Altro sotto Dynamic Island */
 #view-stats,
-#view-accounts,
 #view-more {
   padding-top: calc(18px + env(safe-area-inset-top)) !important;
 }
 #view-stats .view-title,
-#view-accounts .view-title,
 #view-more .view-title {
   margin-top: 0 !important;
 }
 @supports (padding-top: constant(safe-area-inset-top)) {
   #view-stats,
-  #view-accounts,
   #view-more {
     padding-top: calc(18px + constant(safe-area-inset-top)) !important;
   }
@@ -4245,144 +3823,33 @@ button.hero-liquidity-item {
   }
 }
 /* v1.3.9 — R&P: privacy toggle, account/card breakdown and correct total visibility */
-#view-recurring .rp-title-row {
-  justify-content: space-between;
-  gap: 12px;
-}
-#view-recurring .rp-title-row .view-title {
-  margin-bottom: 0;
-}
-#view-recurring .rp-balance-hide {
-  color: var(--ink) !important;
-  background: var(--card) !important;
-  border: 1px solid var(--line) !important;
-  box-shadow: none !important;
-  flex: 0 0 44px;
-}
-#view-recurring .rp-combined-estimate[hidden] {
-  display: none !important;
-}
-#view-recurring .rp-account-breakdown {
-  margin-top: 10px;
-  padding-top: 9px;
-  border-top: 1px solid var(--line);
-  display: grid;
-  gap: 6px;
-  text-align: left;
-}
-#view-recurring .rp-account-title {
-  font-size: 11px;
-  font-weight: 800;
-  letter-spacing: 0.02em;
-  text-transform: uppercase;
-  color: var(--ink-soft);
-}
-#view-recurring .rp-account-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  min-width: 0;
-  font-size: 12px;
-  color: var(--ink-soft);
-}
-#view-recurring .rp-account-row span {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  min-width: 0;
-}
-#view-recurring .rp-account-row b {
-  white-space: nowrap;
-  color: var(--ink);
-  font-weight: 800;
-}
-#view-recurring .rp-account-row b.pos {
-  color: var(--green);
-}
-#view-recurring .rp-account-row b.neg {
-  color: var(--red);
-}
-#view-recurring .rp-account-empty {
-  font-size: 11px;
-  color: var(--ink-soft);
-}
-#view-recurring .rp-combined-estimate .rp-account-breakdown {
-  margin-top: 10px;
-}
+
+
+
+
+
+
+
+
+
+
+
+
+
 /* v1.3.10 — R&P layout, feedback UI e iPhone polish */
-#view-recurring .rp-title-row {
-  position: relative;
-  min-height: 68px;
-  display: grid !important;
-  grid-template-columns: 44px 1fr 44px;
-  align-items: center;
-  margin: 0 0 18px !important;
-  padding: 0 !important;
-}
-#view-recurring .rp-title-row::before {
-  content: "";
-  width: 44px;
-  height: 44px;
-}
-#view-recurring .rp-title-row .view-title {
-  grid-column: 2;
-  margin: 14px 0 0 !important;
-  padding: 10px 0 0 !important;
-  min-height: 44px;
-  text-align: center !important;
-  align-self: center;
-}
-#view-recurring .rp-balance-hide {
-  grid-column: 3;
-  justify-self: end;
-  margin-top: 14px;
-}
-#view-recurring .rp-mode-toggle {
-  margin-top: 0 !important;
-  margin-bottom: 16px !important;
-}
+
+
+
+
+
 /* Card R&P: gerarchia centrata e tinte distinguibili, valide in chiaro e scuro. */
-#view-recurring .rp-estimate-card {
-  border-color: color-mix(in srgb, var(--line) 72%, transparent) !important;
-  box-shadow: 0 5px 18px var(--shadow-soft) !important;
-}
-#view-recurring .rp-estimate-card.recurring {
-  background: linear-gradient(
-    145deg,
-    color-mix(in srgb, var(--emerald) 15%, var(--card)),
-    color-mix(in srgb, var(--emerald-soft) 5%, var(--card))
-  ) !important;
-}
-#view-recurring .rp-estimate-card.planned {
-  background: linear-gradient(
-    145deg,
-    color-mix(in srgb, var(--amber) 16%, var(--card)),
-    color-mix(in srgb, var(--amber-soft) 5%, var(--card))
-  ) !important;
-}
-#view-recurring .rp-estimate-label,
-#view-recurring .rp-estimate-value {
-  color: var(--ink) !important;
-}
-#view-recurring .rp-account-breakdown {
-  width: 100%;
-}
-#view-recurring .rp-account-title {
-  text-align: center;
-}
-#view-recurring .rp-combined-estimate {
-  background: linear-gradient(
-    135deg,
-    color-mix(in srgb, var(--tab-recurring) 10%, var(--card)),
-    var(--card)
-  ) !important;
-  border-color: color-mix(
-    in srgb,
-    var(--tab-recurring) 28%,
-    var(--line)
-  ) !important;
-}
+
+
+
+
+
+
+
 /* Prompt update: superficie quasi opaca e nettamente leggibile. */
 .app-update-prompt {
   background: color-mix(
@@ -4407,481 +3874,61 @@ button.hero-liquidity-item {
   color: #17493c !important;
 }
 /* v1.3.11 — R&P: card riepilogo orizzontali, compatte e full-width su iPhone */
-#view-recurring .rp-estimates-grid,
-#view-recurring .rp-estimates-grid.single {
-  width: 100% !important;
-  max-width: none !important;
-  margin: 0 0 12px !important;
-  display: grid !important;
-  grid-template-columns: 1fr !important;
-  gap: 10px !important;
-}
-#view-recurring .rp-estimate-card {
-  width: 100% !important;
-  min-height: 0 !important;
-  height: auto !important;
-  aspect-ratio: auto !important;
-  padding: 11px 12px !important;
-  display: grid !important;
-  grid-template-columns: minmax(92px, 0.8fr) minmax(128px, 1fr) minmax(
-      0,
-      1.25fr
-    ) !important;
-  grid-template-rows: auto auto !important;
-  column-gap: 12px !important;
-  row-gap: 4px !important;
-  align-items: center !important;
-  text-align: left !important;
-  justify-content: stretch !important;
-  border-radius: 16px !important;
-}
-#view-recurring .rp-estimate-label {
-  grid-column: 1 !important;
-  grid-row: 1 !important;
-  width: auto !important;
-  margin: 0 !important;
-  text-align: left !important;
-  font-size: 11px !important;
-  line-height: 1.15 !important;
-}
-#view-recurring .rp-estimate-value {
-  grid-column: 1 !important;
-  grid-row: 2 !important;
-  width: auto !important;
-  margin: 0 !important;
-  text-align: left !important;
-  font-size: 22px !important;
-  line-height: 1.05 !important;
-}
-#view-recurring .rp-estimate-breakdown {
-  grid-column: 2 !important;
-  grid-row: 1 / span 2 !important;
-  width: 100% !important;
-  margin: 0 !important;
-  display: grid !important;
-  grid-template-columns: 1fr !important;
-  gap: 5px !important;
-}
-#view-recurring .rp-estimate-breakdown span {
-  min-width: 0 !important;
-  padding: 6px 8px !important;
-  border-radius: 9px !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: space-between !important;
-  gap: 6px !important;
-  text-align: left !important;
-  font-size: 10px !important;
-}
-#view-recurring .rp-estimate-breakdown b {
-  display: inline !important;
-  margin: 0 !important;
-  font-size: 11px !important;
-  overflow: visible !important;
-  text-overflow: clip !important;
-}
-#view-recurring .rp-estimate-card > .rp-account-breakdown {
-  grid-column: 3 !important;
-  grid-row: 1 / span 2 !important;
-  width: 100% !important;
-  min-width: 0 !important;
-  margin: 0 !important;
-  padding: 0 0 0 10px !important;
-  border-top: 0 !important;
-  border-left: 1px solid var(--line) !important;
-  display: flex !important;
-  align-items: center !important;
-  gap: 6px !important;
-  overflow-x: auto !important;
-  overflow-y: hidden !important;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: none;
-}
-#view-recurring .rp-estimate-card > .rp-account-breakdown::-webkit-scrollbar {
-  display: none;
-}
-#view-recurring .rp-estimate-card .rp-account-title {
-  flex: 0 0 auto !important;
-  text-align: left !important;
-  white-space: nowrap !important;
-  font-size: 9px !important;
-  writing-mode: horizontal-tb !important;
-}
-#view-recurring .rp-estimate-card .rp-account-row {
-  flex: 0 0 auto !important;
-  min-width: 92px !important;
-  max-width: 130px !important;
-  padding: 6px 8px !important;
-  border: 1px solid color-mix(in srgb, var(--line) 82%, transparent) !important;
-  border-radius: 9px !important;
-  background: color-mix(in srgb, var(--card) 82%, transparent) !important;
-  display: grid !important;
-  gap: 2px !important;
-  align-items: start !important;
-  font-size: 10px !important;
-}
-#view-recurring .rp-estimate-card .rp-account-row span {
-  display: block !important;
-  max-width: 100% !important;
-  font-size: 9px !important;
-}
-#view-recurring .rp-estimate-card .rp-account-row b {
-  display: block !important;
-  font-size: 11px !important;
-}
-#view-recurring .rp-estimate-card .rp-account-empty {
-  flex: 0 0 auto !important;
-  font-size: 10px !important;
-  white-space: nowrap !important;
-}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 /* iPhone stretti: netto + entrate/uscite sopra, conti su seconda riga orizzontale. */
-@media (max-width: 430px) {
-  #view-recurring .rp-estimate-card {
-    grid-template-columns: minmax(98px, 0.85fr) minmax(0, 1.15fr) !important;
-    grid-template-rows: auto auto auto !important;
-    column-gap: 10px !important;
-    padding: 10px 11px !important;
-  }
-  #view-recurring .rp-estimate-label {
-    grid-column: 1 !important;
-    grid-row: 1 !important;
-  }
-  #view-recurring .rp-estimate-value {
-    grid-column: 1 !important;
-    grid-row: 2 !important;
-    font-size: 21px !important;
-  }
-  #view-recurring .rp-estimate-breakdown {
-    grid-column: 2 !important;
-    grid-row: 1 / span 2 !important;
-    gap: 4px !important;
-  }
-  #view-recurring .rp-estimate-card > .rp-account-breakdown {
-    grid-column: 1 / -1 !important;
-    grid-row: 3 !important;
-    margin-top: 5px !important;
-    padding: 7px 0 0 !important;
-    border-left: 0 !important;
-    border-top: 1px solid var(--line) !important;
-  }
-  #view-recurring .rp-estimate-card .rp-account-title {
-    font-size: 9px !important;
-  }
-}
+
 /* v1.3.12 — R&P: Totali mantiene il layout classico; layout orizzontale solo nelle tab singole. */
-#view-recurring.rp-mode-total .rp-estimates-grid {
-  width: min(100%, 400px) !important;
-  margin: 0 auto 10px !important;
-  display: grid !important;
-  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-  gap: 10px !important;
-}
-#view-recurring.rp-mode-total .rp-estimate-card {
-  width: auto !important;
-  min-height: 112px !important;
-  height: auto !important;
-  aspect-ratio: 1.18/1 !important;
-  padding: 14px 12px 12px !important;
-  display: flex !important;
-  flex-direction: column !important;
-  align-items: center !important;
-  justify-content: space-between !important;
-  text-align: center !important;
-  border-radius: 17px !important;
-}
-#view-recurring.rp-mode-total .rp-estimate-label,
-#view-recurring.rp-mode-total .rp-estimate-value {
-  width: 100% !important;
-  margin: 0 !important;
-  text-align: center !important;
-}
-#view-recurring.rp-mode-total .rp-estimate-value {
-  font-size: 24px !important;
-}
-#view-recurring.rp-mode-total .rp-estimate-breakdown {
-  width: 100% !important;
-  margin: 0 !important;
-  display: grid !important;
-  grid-template-columns: 1fr !important;
-  gap: 5px !important;
-}
-#view-recurring.rp-mode-total .rp-estimate-breakdown span {
-  padding: 0 !important;
-  display: block !important;
-  text-align: center !important;
-  font-size: 10px !important;
-  background: transparent !important;
-}
-#view-recurring.rp-mode-total .rp-estimate-breakdown b {
-  display: block !important;
-  margin-top: 2px !important;
-  font-size: 11px !important;
-}
-#view-recurring.rp-mode-total .rp-estimate-card > .rp-account-breakdown {
-  width: 100% !important;
-  min-width: 0 !important;
-  margin: 8px 0 0 !important;
-  padding: 8px 0 0 !important;
-  border-left: 0 !important;
-  border-top: 1px solid var(--line) !important;
-  display: grid !important;
-  gap: 5px !important;
-  overflow: visible !important;
-}
-#view-recurring.rp-mode-total .rp-estimate-card .rp-account-row {
-  border: 0 !important;
-  background: transparent !important;
-  align-items: center !important;
-  justify-content: space-between !important;
-  font-size: 10px !important;
-}
+
+
+
+
+
+
+
+
+
 /* Nelle tab singole si vede e si sviluppa in orizzontale solo la card del tipo selezionato. */
-#view-recurring.rp-mode-recurring #plannedEstimateCard,
-#view-recurring.rp-mode-planned #recurringEstimateCard {
-  display: none !important;
-}
-#view-recurring.rp-mode-recurring #recurringEstimateCard,
-#view-recurring.rp-mode-planned #plannedEstimateCard {
-  display: grid !important;
-}
-#view-recurring.rp-mode-recurring .rp-estimates-grid,
-#view-recurring.rp-mode-planned .rp-estimates-grid {
-  grid-template-columns: 1fr !important;
-  width: 100% !important;
-  max-width: none !important;
-  margin: 0 0 12px !important;
-}
+
+
+
 /* v1.3.13 — Totali R&P: layout dedicato e stabile, separato dalle tab singole. */
-#view-recurring.rp-mode-total #rpEstimatesGrid {
-  width: 100% !important;
-  max-width: none !important;
-  margin: 0 0 12px !important;
-  display: grid !important;
-  grid-template-columns: 1fr !important;
-  gap: 10px !important;
-}
-#view-recurring.rp-mode-total #recurringEstimateCard,
-#view-recurring.rp-mode-total #plannedEstimateCard {
-  width: 100% !important;
-  min-height: 0 !important;
-  height: auto !important;
-  aspect-ratio: auto !important;
-  padding: 13px 14px !important;
-  display: grid !important;
-  grid-template-columns: minmax(105px, 0.9fr) minmax(0, 1.1fr) !important;
-  grid-template-rows: auto auto auto !important;
-  column-gap: 14px !important;
-  row-gap: 6px !important;
-  align-items: center !important;
-  text-align: left !important;
-  border-radius: 16px !important;
-}
-#view-recurring.rp-mode-total #recurringEstimateCard .rp-estimate-label,
-#view-recurring.rp-mode-total #plannedEstimateCard .rp-estimate-label {
-  grid-column: 1 !important;
-  grid-row: 1 !important;
-  width: auto !important;
-  text-align: left !important;
-  font-size: 11px !important;
-}
-#view-recurring.rp-mode-total #recurringEstimateCard .rp-estimate-value,
-#view-recurring.rp-mode-total #plannedEstimateCard .rp-estimate-value {
-  grid-column: 1 !important;
-  grid-row: 2 !important;
-  width: auto !important;
-  text-align: left !important;
-  font-size: 24px !important;
-  line-height: 1.05 !important;
-}
-#view-recurring.rp-mode-total #recurringEstimateCard .rp-estimate-breakdown,
-#view-recurring.rp-mode-total #plannedEstimateCard .rp-estimate-breakdown {
-  grid-column: 2 !important;
-  grid-row: 1 / span 2 !important;
-  display: grid !important;
-  grid-template-columns: 1fr 1fr !important;
-  gap: 7px !important;
-  width: 100% !important;
-  margin: 0 !important;
-}
-#view-recurring.rp-mode-total
-  #recurringEstimateCard
-  .rp-estimate-breakdown
-  span,
-#view-recurring.rp-mode-total #plannedEstimateCard .rp-estimate-breakdown span {
-  display: block !important;
-  padding: 7px 8px !important;
-  border-radius: 10px !important;
-  text-align: center !important;
-  background: color-mix(in srgb, var(--card) 72%, transparent) !important;
-  font-size: 9.5px !important;
-}
-#view-recurring.rp-mode-total #recurringEstimateCard .rp-estimate-breakdown b,
-#view-recurring.rp-mode-total #plannedEstimateCard .rp-estimate-breakdown b {
-  display: block !important;
-  margin-top: 2px !important;
-  font-size: 11px !important;
-}
-#view-recurring.rp-mode-total #recurringEstimateCard > .rp-account-breakdown,
-#view-recurring.rp-mode-total #plannedEstimateCard > .rp-account-breakdown {
-  grid-column: 1 / -1 !important;
-  grid-row: 3 !important;
-  width: 100% !important;
-  margin: 3px 0 0 !important;
-  padding: 8px 0 0 !important;
-  border-left: 0 !important;
-  border-top: 1px solid color-mix(in srgb, var(--line) 80%, transparent) !important;
-  display: flex !important;
-  align-items: center !important;
-  gap: 7px !important;
-  overflow-x: auto !important;
-  overflow-y: hidden !important;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: none;
-}
-#view-recurring.rp-mode-total
-  #recurringEstimateCard
-  > .rp-account-breakdown::-webkit-scrollbar,
-#view-recurring.rp-mode-total
-  #plannedEstimateCard
-  > .rp-account-breakdown::-webkit-scrollbar {
-  display: none;
-}
-#view-recurring.rp-mode-total .rp-estimate-card .rp-account-title {
-  flex: 0 0 auto !important;
-  white-space: nowrap !important;
-  text-align: left !important;
-  font-size: 9px !important;
-}
-#view-recurring.rp-mode-total .rp-estimate-card .rp-account-row {
-  flex: 0 0 auto !important;
-  min-width: 96px !important;
-  max-width: 135px !important;
-  padding: 5px 7px !important;
-  border: 1px solid color-mix(in srgb, var(--line) 80%, transparent) !important;
-  border-radius: 9px !important;
-  background: color-mix(in srgb, var(--card) 78%, transparent) !important;
-  display: grid !important;
-  gap: 1px !important;
-}
-#view-recurring.rp-mode-total .rp-estimate-card .rp-account-row span,
-#view-recurring.rp-mode-total .rp-estimate-card .rp-account-row b {
-  display: block !important;
-  font-size: 9.5px !important;
-}
-#view-recurring.rp-mode-total #rpCombinedEstimateCard {
-  width: 100% !important;
-  min-height: 0 !important;
-  margin: 0 0 12px !important;
-  padding: 13px 14px !important;
-  border: 1px solid #5b5038 !important;
-  border-radius: 16px !important;
-  background: linear-gradient(145deg, #2a2c2f, #1b232c) !important;
-  display: grid !important;
-  grid-template-columns: minmax(105px, 0.9fr) minmax(0, 1.1fr) !important;
-  grid-template-rows: auto auto auto !important;
-  column-gap: 14px !important;
-  row-gap: 6px !important;
-  align-items: center !important;
-  justify-content: stretch !important;
-  text-align: left !important;
-}
-#view-recurring.rp-mode-total #rpCombinedEstimateCard > div:first-child {
-  display: contents !important;
-}
-#view-recurring.rp-mode-total #rpCombinedEstimateCard > div:first-child span {
-  grid-column: 1 !important;
-  grid-row: 1 !important;
-  width: auto !important;
-  text-align: left !important;
-  font-size: 11px !important;
-  color: #c6d0d5 !important;
-  font-weight: 800 !important;
-}
-#view-recurring.rp-mode-total #rpCombinedEstimateCard > div:first-child strong {
-  grid-column: 1 !important;
-  grid-row: 2 !important;
-  width: auto !important;
-  text-align: left !important;
-  font-family: var(--font-display) !important;
-  font-size: 22px !important;
-  line-height: 1.05 !important;
-  color: #e8a33d !important;
-}
-#view-recurring.rp-mode-total #rpCombinedEstimateCard .rp-combined-breakdown {
-  grid-column: 2 !important;
-  grid-row: 1 / span 2 !important;
-  display: grid !important;
-  grid-template-columns: 1fr 1fr !important;
-  gap: 7px !important;
-  width: 100% !important;
-  margin: 0 !important;
-  padding-top: 0 !important;
-  border-top: 0 !important;
-}
-#view-recurring.rp-mode-total
-  #rpCombinedEstimateCard
-  .rp-combined-breakdown
-  span {
-  display: block !important;
-  padding: 7px 8px !important;
-  border-radius: 10px !important;
-  text-align: center !important;
-  background: color-mix(in srgb, var(--card) 72%, transparent) !important;
-  font-size: 9.5px !important;
-  color: #c6d0d5 !important;
-}
-#view-recurring.rp-mode-total #rpCombinedEstimateCard .rp-combined-breakdown b {
-  display: block !important;
-  float: none !important;
-  width: 100% !important;
-  margin-top: 2px !important;
-  text-align: center !important;
-  font-size: 11px !important;
-  color: #f1f5f4 !important;
-}
-#view-recurring.rp-mode-total #rpCombinedEstimateCard .rp-account-breakdown {
-  grid-column: 1 / -1 !important;
-  grid-row: 3 !important;
-  width: 100% !important;
-  margin: 3px 0 0 !important;
-  padding: 8px 0 0 !important;
-  border-top: 1px solid color-mix(in srgb, var(--line) 80%, transparent) !important;
-  border-left: 0 !important;
-  display: flex !important;
-  align-items: center !important;
-  gap: 7px !important;
-  overflow-x: auto !important;
-  overflow-y: hidden !important;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: none;
-}
-#view-recurring.rp-mode-total
-  #rpCombinedEstimateCard
-  .rp-account-breakdown::-webkit-scrollbar {
-  display: none;
-}
-#view-recurring.rp-mode-total #rpCombinedEstimateCard .rp-account-title {
-  flex: 0 0 auto !important;
-  white-space: nowrap !important;
-  text-align: left !important;
-  font-size: 9px !important;
-}
-#view-recurring.rp-mode-total #rpCombinedEstimateCard .rp-account-row {
-  flex: 0 0 auto !important;
-  min-width: 96px !important;
-  max-width: 135px !important;
-  padding: 5px 7px !important;
-  border: 1px solid color-mix(in srgb, var(--line) 80%, transparent) !important;
-  border-radius: 9px !important;
-  background: color-mix(in srgb, var(--card) 78%, transparent) !important;
-  display: grid !important;
-  gap: 1px !important;
-}
-#view-recurring.rp-mode-total #rpCombinedEstimateCard .rp-account-row span,
-#view-recurring.rp-mode-total #rpCombinedEstimateCard .rp-account-row b {
-  display: block !important;
-  font-size: 9.5px !important;
-}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 /* Statistiche: Top 5 categorie come grafico a barre orizzontali. */
 .top-categories-card {
   padding-bottom: 14px !important;
@@ -4942,11 +3989,7 @@ button.hero-liquidity-item {
   font-size: 11px;
   text-align: center;
 }
-@media (min-width: 620px) {
-  #view-recurring.rp-mode-total #rpEstimatesGrid {
-    grid-template-columns: 1fr 1fr !important;
-  }
-}
+
 /* v1.3.15 — Dettagli più leggibili su movimenti correnti e futuri:
    separatori su ogni riga e niente grassetto. */
 .tx-detail-body,
@@ -4992,16 +4035,8 @@ button.hero-liquidity-item {
   line-height: 44px !important;
   text-align: center !important;
 }
-#sheetPlannedForm #plannedDateInput {
-  height: 42px !important;
-  min-height: 42px !important;
-  padding-top: 0 !important;
-  padding-bottom: 0 !important;
-  line-height: 42px !important;
-  text-align: center !important;
-}
-#sheetRecurringForm #recurringDateInput::-webkit-date-and-time-value,
-#sheetPlannedForm #plannedDateInput::-webkit-date-and-time-value {
+
+#sheetRecurringForm #recurringDateInput::-webkit-date-and-time-value{
   text-align: center !important;
   line-height: normal !important;
   min-height: 100% !important;
@@ -5009,8 +4044,7 @@ button.hero-liquidity-item {
   align-items: center !important;
   justify-content: center !important;
 }
-#sheetRecurringForm #recurringDateInput::-webkit-datetime-edit,
-#sheetPlannedForm #plannedDateInput::-webkit-datetime-edit {
+#sheetRecurringForm #recurringDateInput::-webkit-datetime-edit{
   padding: 0 !important;
   line-height: normal !important;
 }
@@ -5095,13 +4129,7 @@ button.hero-liquidity-item {
   height: 24px;
   display: block;
 }
-.rp-balance-hide {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0 !important;
-  color: var(--ink-soft) !important;
-}
+
 .hero-split {
   justify-content: center !important;
 }
@@ -5361,11 +4389,8 @@ button.hero-liquidity-item {
 /* Pulsante "Salva" testuale nei pannelli (al posto del solo ✓). */
 #sheetAddTx .sheet-head .primary-btn,
 #sheetRecurringForm .sheet-head .primary-btn,
-#sheetPlannedForm .sheet-head .primary-btn,
 #sheetAccountForm .sheet-head .primary-btn,
 #sheetCategoryForm .sheet-head .primary-btn,
-#sheetMacroForm .sheet-head .primary-btn,
-#sheetBalanceReconcile .sheet-head .primary-btn,
 .sheet .sheet-head .primary-btn {
   width: auto !important;
   min-width: 76px !important;
@@ -5379,11 +4404,8 @@ button.hero-liquidity-item {
 }
 #sheetAddTx .sheet-head .primary-btn::after,
 #sheetRecurringForm .sheet-head .primary-btn::after,
-#sheetPlannedForm .sheet-head .primary-btn::after,
 #sheetAccountForm .sheet-head .primary-btn::after,
 #sheetCategoryForm .sheet-head .primary-btn::after,
-#sheetMacroForm .sheet-head .primary-btn::after,
-#sheetBalanceReconcile .sheet-head .primary-btn::after,
 .sheet .sheet-head .primary-btn::after {
   content: none !important;
   display: none !important;
@@ -5410,29 +4432,25 @@ button.hero-liquidity-item {
   background: var(--surface-strong);
 }
 /* Intestazione pannelli con data: titolo + Salva sulla prima riga, data sotto. */
-#sheetAddTx .sheet-head,
-#sheetPlannedForm .sheet-head {
+#sheetAddTx .sheet-head{
   display: grid !important;
   grid-template-columns: minmax(0, 1fr) auto !important;
   align-items: center !important;
   row-gap: 8px !important;
   column-gap: 12px !important;
 }
-#sheetAddTx .sheet-head h3,
-#sheetPlannedForm .sheet-head h3 {
+#sheetAddTx .sheet-head h3{
   grid-column: 1;
   grid-row: 1;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
-#sheetAddTx .sheet-head .primary-btn,
-#sheetPlannedForm .sheet-head .primary-btn {
+#sheetAddTx .sheet-head .primary-btn{
   grid-column: 2;
   grid-row: 1;
 }
-#sheetAddTx .sheet-head .sheet-head-date,
-#sheetPlannedForm .sheet-head .sheet-head-date {
+#sheetAddTx .sheet-head .sheet-head-date{
   grid-column: 1 / -1;
   grid-row: 2;
   justify-self: start;
@@ -5475,10 +4493,10 @@ button.hero-liquidity-item {
 /* v1.6.0 — testi dei grafici SVG con lo stesso font dell'app */
 svg text{font-family:var(--font-display);}
 /* R&P: totale del mese sotto l'etichetta del contatore */
-.rp-month-total{display:block;margin-top:3px;font-size:11px;font-weight:600;color:var(--ink-soft);letter-spacing:0;text-transform:none;white-space:normal;line-height:1.25;}
-#view-recurring.rp-mode-total .rp-month-total{font-size:10px;}
+
+
 /* v1.6.0 — App installata su iPhone: titolo e barra del mese non finiscono sotto la barra di stato. */
-#view-home,#view-recurring,#view-transactions,#view-planned{padding-top:calc(4px + env(safe-area-inset-top))!important;}
+#view-home,#view-transactions{padding-top:calc(4px + env(safe-area-inset-top))!important;}
 .view > .topbar{top:env(safe-area-inset-top)!important;}
 #view-transactions .sticky-head{top:env(safe-area-inset-top)!important;}
 #app::before{content:"";position:fixed;top:0;left:0;right:0;height:env(safe-area-inset-top);background:var(--paper);z-index:60;pointer-events:none;}
@@ -5486,8 +4504,8 @@ svg text{font-family:var(--font-display);}
 /* v1.6.0 — Mini popup "tieni premuto" */
 .lp-target{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none;}
 .lp-pressing{opacity:.75;transition:opacity .2s ease;}
-.lp-popup{position:fixed;z-index:400;background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:16px;box-shadow:0 16px 40px rgba(0,0,0,.38);padding:10px 12px 8px;opacity:0;transform:translateY(-4px) scale(.98);transition:opacity .14s ease,transform .14s ease;}
-.lp-popup.show{opacity:1;transform:none;}
+
+
 .lp-head{font-size:12px;font-weight:800;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.4px;margin:2px 2px 6px;}
 .lp-row{display:flex;align-items:center;gap:10px;padding:7px 2px;border-top:1px solid var(--line);}
 .lp-row:first-of-type{border-top:0;}
@@ -5500,14 +4518,14 @@ svg text{font-family:var(--font-display);}
 .lp-empty{margin:6px 2px 8px;font-size:13px;color:var(--ink-soft);}
 
 /* v1.6.1 — Niente titolo di sezione in alto: il contenuto parte subito sotto la barra di stato. */
-.view-title,#view-recurring .rp-title-row{display:none!important;}
-#view-home,#view-recurring,#view-transactions,#view-planned,#view-stats,#view-accounts,#view-more{padding-top:calc(10px + env(safe-area-inset-top))!important;}
+.view-title{display:none!important;}
+#view-home,#view-transactions,#view-stats,#view-more{padding-top:calc(10px + env(safe-area-inset-top))!important;}
 .view > .topbar{margin-top:0!important;}
 /* Occhio di R&P accanto al periodo; visibile solo in R&P. */
 .topbar .period-picker #toggleRPBalance{grid-column:auto!important;margin:0!important;width:40px!important;height:40px!important;min-width:40px!important;flex:0 0 40px!important;border-radius:12px!important;padding:0!important;}
 #view-home .topbar #toggleRPBalance{display:none!important;}
 .topbar .period-picker #toggleRPBalance svg{width:22px;height:22px;}
-#views .view .view-title,#views #view-recurring .rp-title-row{display:none!important;}
+#views .view .view-title{display:none!important;}
 
 /* v1.6.2 — Riquadro data a destra, prima dell'importo */
 .date-box{flex:0 0 auto;display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:46px;padding:5px 6px;margin-left:8px;border-radius:11px;border:1px solid var(--line);background:var(--paper);line-height:1.05;text-align:center;}
@@ -5517,20 +4535,20 @@ svg text{font-family:var(--font-display);}
 .date-box.is-today{border-color:var(--action);}
 .date-box.is-today em,.date-box.is-future em{color:#8A5A00;}
 :root[data-theme="dark"] .date-box.is-today em,:root[data-theme="dark"] .date-box.is-future em{color:var(--action);}
-.tx-row .tx-amount,.template-manage-row .rp-amt{flex:0 0 auto;margin-left:10px;text-align:right;min-width:64px;}
+.tx-row .tx-amount{flex:0 0 auto;margin-left:10px;text-align:right;min-width:64px;}
 .template-manage-row{align-items:center!important;}
 .template-manage-row .info{flex:1 1 auto;min-width:0;}
-.template-manage-row .rp-amt{font-weight:800;font-size:15px;font-variant-numeric:tabular-nums;white-space:nowrap;}
-.template-manage-row .rp-amt.income{color:var(--emerald);} .template-manage-row .rp-amt.expense{color:var(--rust);}
+
+ 
 
 /* v1.6.2 — Popup "tieni premuto": niente grassetto sulle righe */
 .lp-main b{font-weight:500!important;}
 .lp-amt{font-weight:500!important;}
 
 /* v1.6.2 — Occhio di R&P accanto alla freccia "mese successivo": il periodo resta centrato */
-.rp-mode-row{display:flex;align-items:center;gap:8px;margin-bottom:16px;}
-.rp-mode-row #rpModeToggle{flex:1 1 auto;min-width:0;margin:0!important;}
-.rp-mode-row #toggleRPBalance{flex:0 0 46px!important;width:46px!important;height:46px!important;min-width:46px!important;margin:0!important;border-radius:14px!important;position:static!important;transform:none!important;}
+
+
+
 .template-manage-row{flex-wrap:nowrap!important;}
 
 /* v1.6.3 — Riga movimento unica (Home, Movimenti, R&P) */
@@ -5655,8 +4673,8 @@ svg text{font-family:var(--font-display);}
 #view-home .forecast-card strong,#view-home .forecast-card.wide strong{margin-top:3px!important;font-size:14px!important;}
 #view-home .forecast-grid{margin:8px 0 16px!important;gap:6px!important;}
 /* R&P: titoli dei riquadri su una riga */
-#view-recurring .rp-estimate-label,#view-recurring #rpCombinedEstimateCard > div:first-child > span{font-size:10px!important;white-space:nowrap!important;overflow:hidden;text-overflow:ellipsis;max-width:100%;}
-#views #view-recurring #recurringEstimateCard .rp-estimate-label,#views #view-recurring #plannedEstimateCard .rp-estimate-label,#views #view-recurring #rpCombinedEstimateCard > div:first-child > span{font-size:10px!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;}
+
+
 #views #view-home .forecast-card span{font-size:9.5px!important;letter-spacing:-.15px!important;}
 /* v1.6.9 — spazio di respiro tra testo e importo/data quando nome o categoria+banca sono lunghi */
 .tx-row.mv-row,.template-manage-row.mv-row{column-gap:10px!important;}
@@ -5678,7 +4696,7 @@ svg text{font-family:var(--font-display);}
 .topbar #prevMonth,.topbar #nextMonth{display:none!important;}
 .view > .topbar{justify-content:center!important;min-height:52px;}
 .topbar .topbar-cal-btn{position:absolute!important;right:12px;top:50%;transform:translateY(-50%);width:40px!important;height:40px!important;min-width:40px!important;padding:0!important;border-radius:12px!important;display:inline-flex!important;align-items:center;justify-content:center;border:1px solid var(--line)!important;background:var(--card)!important;color:var(--ink)!important;}
-#view-recurring .topbar .topbar-cal-btn{display:none!important;}
+
 /* Selettore periodo */
 .pp-title{border:0;background:transparent;color:var(--ink);font:inherit;font-size:17px;font-weight:800;padding:6px 10px;border-radius:10px;}
 .pp-title:active{background:var(--surface-strong);}
@@ -5704,20 +4722,20 @@ svg text{font-family:var(--font-display);}
 /* Evidenziazione della ricerca */
 mark.hl{background:color-mix(in srgb,var(--action) 45%,transparent);color:inherit;border-radius:3px;padding:0 1px;}
 /* R&P: ricerca e "Mostra tutti" */
-.rp-search{margin:0 0 14px;}
-.rp-search input{width:100%;}
-.rp-more-btn{display:block;width:100%;min-height:40px;margin-top:2px;border-radius:12px;border:1px dashed var(--line);background:transparent;color:var(--ink-soft);font:inherit;font-size:13px;font-weight:700;}
+
+
+
 
 /* v1.7.1 — Calendari: niente frecce, si naviga toccando il titolo (giorni → mesi → anni); altezza sempre uguale */
 #ppPrev,#ppNext,#calPrevMonth,#calNextMonth{display:none!important;}
 .pp-nav,#sheetCalendar .calendar-nav{justify-content:center!important;}
 .pp-months{height:var(--pp-h,auto);grid-auto-rows:1fr;align-content:stretch;}
 .pp-months.is-years{grid-auto-rows:52px;align-content:start;overflow-y:auto;}
-.rp-list-head{display:flex;align-items:center;justify-content:space-between;margin:4px 0 8px!important;}
-.rp-list-head h2{font-size:15px!important;margin:0!important;}
-.rp-paid-head{display:flex;align-items:center;gap:8px;}
-.rp-paid-head .rp-see-all{margin-left:auto;}
-.rp-see-all{min-height:30px!important;padding:4px 10px!important;font-size:12px!important;}
+
+
+
+
+
 
 /* =========================================================
    v1.8.0 — Estetica più moderna
@@ -5725,24 +4743,24 @@ mark.hl{background:color-mix(in srgb,var(--action) 45%,transparent);color:inheri
    barra di navigazione fluttuante "a vetro", badge numerici.
    ========================================================= */
 :root{--radius-xl:18px;--radius-lg:14px;--hairline:color-mix(in srgb,var(--line) 70%,transparent);--glass:color-mix(in srgb,var(--card) 78%,transparent);}
-#view-rpall{padding-top:calc(10px + env(safe-area-inset-top))!important;}
+
 
 /* Tipografia */
 #views .section-head h2{font-size:17px!important;font-weight:700!important;letter-spacing:-.2px;}
-.rp-list-head h2{font-size:15px!important;}
+
 #views{letter-spacing:-.05px;}
 
 /* Superfici: raggi ampi, bordo sottile, ombra leggera */
 #views .hero,#views .total-balance-card{border-radius:22px!important;border-width:1px!important;border-color:var(--hairline)!important;}
-#views .forecast-card,#views .rp-estimate-card,#views .rp-combined-estimate,#views .account-card,#views .stat-card,#views .chart-wrap,#views .budget-item,#views .settings-rows,#views .main-account-setting,#views .stats-period-filter{border-radius:var(--radius-xl)!important;border-color:var(--hairline)!important;}
+#views .forecast-card,#views .account-card,#views .stat-card,#views .chart-wrap,#views .budget-item,#views .settings-rows,#views .stats-period-filter{border-radius:var(--radius-xl)!important;border-color:var(--hairline)!important;}
 :root:not([data-theme="dark"]) #views .forecast-card,:root:not([data-theme="dark"]) #views .mv-row,:root:not([data-theme="dark"]) #views .account-card{box-shadow:0 1px 2px rgba(20,24,26,.05),0 6px 18px rgba(20,24,26,.05)!important;}
 #views .mv-row,#overlayRoot .mv-row{border-radius:var(--radius-lg)!important;border-top-color:var(--hairline)!important;border-right-color:var(--hairline)!important;border-bottom-color:var(--hairline)!important;}
 
 /* Pulsanti secondari "fantasma" e badge numerici */
-#views .section-head .pill-btn,.rp-see-all{border:0!important;background:color-mix(in srgb,var(--ink) 7%,transparent)!important;color:var(--ink)!important;border-radius:999px!important;font-weight:700!important;display:inline-flex!important;align-items:center;gap:5px;}
+#views .section-head .pill-btn{border:0!important;background:color-mix(in srgb,var(--ink) 7%,transparent)!important;color:var(--ink)!important;border-radius:999px!important;font-weight:700!important;display:inline-flex!important;align-items:center;gap:5px;}
 .count-badge{display:inline-flex;align-items:center;justify-content:center;min-width:20px;height:18px;padding:0 6px;border-radius:999px;background:var(--action);color:var(--action-ink);font-size:11px;font-weight:800;line-height:1;font-variant-numeric:tabular-nums;}
 .count-badge:empty{display:none;}
-.rp-list-head .count-badge{margin-left:8px;margin-right:auto;}
+
 
 /* Controlli segmentati in stile iOS */
 #views .type-toggle{border:0!important;background:color-mix(in srgb,var(--ink) 7%,transparent)!important;border-radius:14px!important;padding:3px!important;}
@@ -5763,25 +4781,25 @@ mark.hl{background:color-mix(in srgb,var(--action) 45%,transparent);color:inheri
 /* Pannelli (sheet) più morbidi */
 .sheet{border-radius:26px 26px 0 0!important;}
 /* v1.8.0 — rifiniture */
-#rpTotalPaidCount,#recurringPaidCount,#plannedPaidCount{display:none!important;}
-#views .rp-paid-head{margin:18px 0 8px!important;}
-#views .rp-paid-head > span:first-child{font-size:15px!important;font-weight:700!important;text-transform:none!important;letter-spacing:-.2px!important;color:var(--ink)!important;}
-.rp-see-all .chev,#views .section-head .pill-btn .chev{background:none!important;border:0!important;width:auto!important;height:auto!important;margin:0!important;padding:0!important;color:var(--ink-soft)!important;}
-#view-rpall .type-toggle .type-opt{font-size:13px!important;padding:9px 6px!important;}
-#view-rpall .type-toggle{margin-bottom:12px!important;}
-#view-rpall .rp-list-head{margin:16px 0 8px!important;}
-#view-rpall .rp-list-head:first-of-type{margin-top:4px!important;}
-#view-rpall .template-manage-list,#view-rpall .tx-list{display:flex;flex-direction:column;gap:7px;}
+#recurringPaidCount,#plannedPaidCount{display:none!important;}
+
+
+#views .section-head .pill-btn .chev{background:none!important;border:0!important;width:auto!important;height:auto!important;margin:0!important;padding:0!important;color:var(--ink-soft)!important;}
+
+
+
+
+
 
 /* =========================================================
    v1.9.0 — Navigazione indietro, badge compatti, colori e trasparenze
    ========================================================= */
 
 /* "Vedi tutti" + badge: spaziatura fissa e indipendente dalle cifre */
-#views .section-head .pill-btn,.rp-see-all{gap:6px!important;padding:4px 9px 4px 12px!important;white-space:nowrap;}
+#views .section-head .pill-btn{gap:6px!important;padding:4px 9px 4px 12px!important;white-space:nowrap;}
 .pill-btn .sa-label{line-height:1;}
-.pill-btn .count-badge,.rp-list-head .pill-btn .count-badge,.rp-paid-head .pill-btn .count-badge{margin:0!important;min-width:18px;height:18px;padding:0 5px;}
-.rp-list-head > .count-badge{margin-left:8px;margin-right:auto;}
+.pill-btn .count-badge{margin:0!important;min-width:18px;height:18px;padding:0 5px;}
+
 .pill-btn .chev{margin-left:-1px!important;}
 
 /* Pulsante indietro nelle sotto-pagine */
@@ -5800,7 +4818,7 @@ mark.hl{background:color-mix(in srgb,var(--action) 45%,transparent);color:inheri
 .view.view-dragging{transition:none!important;will-change:transform,opacity;box-shadow:-18px 0 40px rgba(0,0,0,.22);}
 #views{overflow-x:clip;}
 html.back-swiping,html.back-swiping body{overflow-x:hidden;}
-#view-transactions,#view-rpall{touch-action:pan-y;}
+#view-transactions{touch-action:pan-y;}
 .movement-action-menu{touch-action:none;}
 @media (prefers-reduced-motion:reduce){.view.view-push,.view.view-pop{animation:none;}}
 
@@ -5831,7 +4849,7 @@ body::before{content:"";position:fixed;inset:-10vh -10vw;z-index:-1;pointer-even
 #app::before{background:color-mix(in srgb,var(--paper) 72%,transparent)!important;-webkit-backdrop-filter:blur(16px) saturate(1.6);backdrop-filter:blur(16px) saturate(1.6);}
 
 /* ---------- Superfici in vetro ---------- */
-#views .forecast-card,#views .rp-estimate-card,#views .account-card,#views .stat-card,#views .chart-wrap,#views .budget-item,#views .settings-rows,#views .main-account-setting,#views .stats-period-filter,#views .total-balance-card{
+#views .forecast-card,#views .account-card,#views .stat-card,#views .chart-wrap,#views .budget-item,#views .settings-rows,#views .stats-period-filter,#views .total-balance-card{
   background:var(--glass-card)!important;border:1px solid var(--glass-edge)!important;box-shadow:var(--glass-shadow)!important;
   -webkit-backdrop-filter:blur(14px) saturate(1.5);backdrop-filter:blur(14px) saturate(1.5);}
 #views .mv-row,#overlayRoot .mv-row{background-color:var(--glass-row)!important;border-top-color:var(--glass-edge)!important;border-right-color:var(--glass-edge)!important;border-bottom-color:var(--glass-edge)!important;box-shadow:var(--glass-shadow)!important;transition:transform .15s ease;}
@@ -5856,11 +4874,7 @@ body::before{content:"";position:fixed;inset:-10vh -10vw;z-index:-1;pointer-even
     radial-gradient(90% 80% at 100% 100%,rgba(138,107,214,.26),transparent 62%),
     var(--glass-card)!important;}
 /* Card totale R&P: tinta ambra */
-#views .rp-combined-estimate{
-  background:radial-gradient(120% 100% at 0% 0%,rgba(232,163,61,.24),transparent 62%),var(--glass-card)!important;
-  border:1px solid color-mix(in srgb,var(--action) 35%,transparent)!important;
-  box-shadow:0 16px 36px -20px rgba(232,163,61,.55),var(--glass-shadow)!important;
-  -webkit-backdrop-filter:blur(14px) saturate(1.5);backdrop-filter:blur(14px) saturate(1.5);}
+
 
 /* ---------- Accenti colorati ---------- */
 .count-badge{background:linear-gradient(135deg,#f6c46a,#e8932c)!important;color:#2a1a00!important;box-shadow:0 2px 8px -2px rgba(232,147,44,.65);}
@@ -5885,10 +4899,10 @@ body::before{content:"";position:fixed;inset:-10vh -10vw;z-index:-1;pointer-even
 .sheet{background:color-mix(in srgb,var(--paper) 86%,transparent)!important;-webkit-backdrop-filter:blur(26px) saturate(1.6);backdrop-filter:blur(26px) saturate(1.6);border-top:1px solid var(--glass-edge);box-shadow:0 -16px 40px -12px rgba(0,0,0,.35);}
 .overlay-backdrop{-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);}
 .sheet-handle{background:color-mix(in srgb,var(--ink) 25%,transparent)!important;}
-.lp-popup,.movement-action-menu{-webkit-backdrop-filter:blur(22px) saturate(1.6);backdrop-filter:blur(22px) saturate(1.6);}
-.lp-popup{background:color-mix(in srgb,var(--card) 82%,transparent)!important;border-color:var(--glass-edge)!important;}
-.rp-paid-head .rp-see-all .chev,.rp-see-all .chev{min-width:0!important;}
-.rp-paid-head .rp-see-all{text-transform:none!important;letter-spacing:0!important;font-size:12px!important;}
+.movement-action-menu{-webkit-backdrop-filter:blur(22px) saturate(1.6);backdrop-filter:blur(22px) saturate(1.6);}
+
+
+
 
 /* v1.9.1 — Calendari: grassetto solo su titolo, mese/anno; spazi ridotti */
 #overlayRoot :is(#sheetPeriodPicker,#sheetCalendar) :is(.calendar-weekdays span,.calendar-cell,.cal-day-num,.pp-months button,.pp-months button *,.pp-hint,.calendar-legend,.cal-leg-item){font-weight:400!important;}
@@ -5906,7 +4920,7 @@ body::before{content:"";position:fixed;inset:-10vh -10vw;z-index:-1;pointer-even
 /* v1.9.2 — Barra del periodo senza stacco dalla barra di stato dell'iPhone:
    la barra del periodo è trasparente (stesso sfondo della pagina) e la copertura
    della barra di stato sfuma verso il basso invece di avere un bordo netto. */
-#view-home,#view-recurring{padding-top:0!important;}
+#view-home{padding-top:0!important;}
 #views .view > .topbar{top:0!important;margin-top:0!important;padding-top:calc(6px + env(safe-area-inset-top))!important;background:transparent!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important;border:0!important;box-shadow:none!important;}
 #app::before{height:calc(env(safe-area-inset-top) + 14px)!important;background:color-mix(in srgb,var(--paper) 88%,transparent)!important;
   -webkit-mask-image:linear-gradient(to bottom,#000 calc(100% - 14px),transparent);mask-image:linear-gradient(to bottom,#000 calc(100% - 14px),transparent);}
@@ -5950,39 +4964,39 @@ html:not(.is-scrolled) #app::before{opacity:0;}
 #overlayRoot .sheet h3{letter-spacing:-.3px;}
 
 /* Evoluzione del conto */
-#sheetAccountEvolution .evo-summary{margin:2px 0 14px;}
-.evo-kicker{margin:0;font-size:13px;font-weight:600;color:var(--ink-soft);}
-.evo-hero{margin:2px 0 6px;font-size:34px;font-weight:800;letter-spacing:-1px;color:var(--ink);font-variant-numeric:tabular-nums;line-height:1.1;}
-.evo-delta{margin:0;font-size:13px;color:var(--ink-soft);display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
-.evo-delta-pill{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:999px;font-weight:700;color:var(--ink);font-variant-numeric:tabular-nums;background:color-mix(in srgb,var(--ink) 8%,transparent);}
-.evo-delta.up .evo-delta-pill{background:color-mix(in srgb,#2fb36a 20%,transparent);}
-.evo-delta.down .evo-delta-pill{background:color-mix(in srgb,#e2554e 20%,transparent);}
-#sheetAccountEvolution .evo-range{margin:0 0 12px!important;display:grid!important;grid-template-columns:repeat(4,1fr);}
-#sheetAccountEvolution .evo-range .type-opt{font-size:13px!important;padding:8px 4px!important;}
-.evo-chart{position:relative;margin:0 -4px;padding:10px 4px 4px;border-radius:20px;background:color-mix(in srgb,var(--ink) 4%,transparent);border:1px solid var(--glass-edge);touch-action:pan-y;}
-.evo-svg{display:block;width:100%;height:auto;overflow:visible;}
-.evo-grid{stroke:color-mix(in srgb,var(--ink) 10%,transparent);stroke-width:1;}
-.evo-zero{stroke:color-mix(in srgb,var(--ink) 35%,transparent);stroke-width:1;stroke-dasharray:3 4;}
-.evo-ylab{font-size:10px;fill:var(--ink-soft);font-family:inherit;font-variant-numeric:tabular-nums;}
-.evo-xlab{font-size:10.5px;fill:var(--ink-soft);font-family:inherit;}
-.evo-line{fill:none;stroke:var(--evo-line);stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round;}
-.evo-stop-a{stop-color:var(--evo-line);stop-opacity:.32;}
-.evo-stop-b{stop-color:var(--evo-line);stop-opacity:0;}
-.evo-last,.evo-hover{fill:var(--evo-line);stroke:var(--paper);stroke-width:2.5;}
-.evo-cross{stroke:color-mix(in srgb,var(--ink) 35%,transparent);stroke-width:1;stroke-dasharray:2 3;transition:opacity .15s ease;}
-.evo-hit{cursor:crosshair;}
-.evo-tip{position:absolute;top:-6px;display:grid;gap:1px;padding:7px 10px;border-radius:12px;background:color-mix(in srgb,var(--card) 92%,transparent);border:1px solid var(--glass-edge);box-shadow:0 10px 24px -8px rgba(0,0,0,.45);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);pointer-events:none;white-space:nowrap;font-size:12px;color:var(--ink-soft);z-index:2;}
-.evo-tip b{color:var(--ink);font-size:12px;}
-.evo-tip-val{color:var(--ink);font-size:15px;font-weight:800;font-variant-numeric:tabular-nums;}
-.evo-tip-delta{font-weight:700;color:var(--ink-soft);}
-.evo-tip-delta.up::first-letter{color:#2fb36a;}
-.evo-tip-delta.down::first-letter{color:#e2554e;}
-#sheetAccountEvolution #editAccountFromEvolutionBtn{margin-top:14px!important;}
-.evo-anchor{stroke:var(--action);stroke-width:1.5;stroke-dasharray:3 3;opacity:.85;}
-.evo-anchor-lab{font-size:10.5px;font-weight:700;fill:var(--ink-soft);font-family:inherit;}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 /* v1.10.2 — più orizzonti temporali + periodo dal calendario */
-#sheetAccountEvolution .evo-range{grid-template-columns:repeat(4,1fr)!important;row-gap:3px;}
-#sheetAccountEvolution .evo-range .evo-custom{grid-column:span 2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+
+
 /* v1.10.3 — card dei conti più compatte; periodo del grafico scelto solo dal calendario */
 #accountsList{gap:7px!important;}
 #views #accountsList .account-card{padding:9px 10px 9px 14px!important;min-height:0!important;gap:8px;margin:0 0 7px!important;}
@@ -5990,13 +5004,13 @@ html:not(.is-scrolled) #app::before{opacity:0;}
 #views #accountsList .account-type{font-size:11px!important;margin-top:1px!important;}
 #views #accountsList .account-balance{font-size:15px!important;font-weight:750!important;}
 #views #accountsList .account-edit{width:32px!important;height:32px!important;font-size:14px!important;border-radius:10px!important;border:0!important;background:color-mix(in srgb,var(--ink) 7%,transparent)!important;margin-left:4px!important;}
-#views #accountsList .main-account-badge{font-size:10px!important;padding:1px 6px!important;}
-#sheetAccountEvolution .evo-period{display:inline-flex!important;align-items:center;gap:7px;min-height:38px!important;max-width:100%!important;margin:0 0 12px;padding:0 14px!important;font-size:13.5px!important;}
-#sheetAccountEvolution .evo-period svg{flex:0 0 auto;opacity:.8;}
-#sheetAccountEvolution .evo-period span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+
+
+
+
 /* v1.10.4 — Saldo nascosto = tutti gli importi nascosti (Home, R&P, Movimenti, Statistiche) */
-html.amounts-hidden :is(.mv-amt,.budget-spent,.budget-limit,.budget-earned,.stat-card-value,.top-category-meta strong,.pie-legend-item .val,.tx-amount,.rp-amt){font-size:0!important;letter-spacing:0!important;}
-html.amounts-hidden :is(.mv-amt,.stat-card-value,.tx-amount,.rp-amt)::after{content:"••••";font-size:15px;letter-spacing:1px;color:var(--ink);}
+
+
 html.amounts-hidden :is(.budget-spent,.budget-limit,.budget-earned,.top-category-meta strong,.pie-legend-item .val)::after{content:"••••";font-size:13px;letter-spacing:1px;color:var(--ink);}
 html.amounts-hidden .stat-card-value::after{font-size:20px;}
 /* Le etichette dei grafici restano visibili; le cifre sono sostituite da pallini nel codice. */
@@ -6021,7 +5035,7 @@ html.amounts-hidden .stat-card-value::after{font-size:20px;}
 .movement-action-btn.planned .movement-action-icon,.movement-action-btn.duplicate[data-add-kind="planned"] .movement-action-icon{background:#f0dca6!important;color:#5c4510!important;}
 .movement-action-btn.add-recent .movement-action-icon{background:linear-gradient(145deg,#f7c463,#e48d24)!important;color:#241800!important;font-size:20px;font-weight:800;}
 .movement-action-btn.add-atm .movement-action-icon{background:#b9d3f2!important;color:#1f3a5c!important;font-size:18px;}
-#sheetAtm .atm-total{margin:-4px 2px 10px;font-weight:650;color:var(--ink);}
+
 .fab.is-hidden{display:none!important;}
 
 /* =========================================================

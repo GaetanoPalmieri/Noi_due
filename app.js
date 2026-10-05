@@ -356,7 +356,7 @@ function sanitizeCouple(data){
     items:(Array.isArray(l.items)?l.items:[]).filter(i=>i&&i.id).map(i=>({id:String(i.id).slice(0,120),text:String(i.text||"").slice(0,120),price:Number.isFinite(Number(i.price))&&Number(i.price)>0?Math.round(Number(i.price)*100)/100:null,done:!!i.done,
       code:String(i.code||"").replace(/[^0-9A-Za-z-]/g,"").slice(0,32),image:/^https:\/\//.test(String(i.image||""))?String(i.image).slice(0,500):"",url:/^https:\/\//.test(String(i.url||""))?String(i.url).slice(0,500):"",
       photo:/^data:image\/(jpeg|png|webp);base64,/.test(String(i.photo||""))&&String(i.photo).length<300000?String(i.photo):/^idb:[\w-]{1,120}$/.test(String(i.photo||""))?String(i.photo):"",
-      qty:Math.min(99,Math.max(1,Math.round(Number(i.qty)||1))),aisle:typeof i.aisle==="string"?i.aisle.slice(0,20):"",forWhom:["a","b"].includes(i.forWhom)?i.forWhom:"both"})),
+      qty:Math.min(99,Math.max(1,Math.round(Number(i.qty)||1))),aisle:typeof i.aisle==="string"?i.aisle.slice(0,20):"",forWhom:["a","b"].includes(i.forWhom)?i.forWhom:"both",addedBy:["a","b"].includes(i.addedBy)?i.addedBy:"",via:typeof i.via==="string"?i.via.slice(0,20):""})),
     sortMode:l.sortMode==="manual"?"manual":"aisle",
     restockOnExit:typeof l.restockOnExit==="boolean"?l.restockOnExit:/spesa|supermercat/i.test(String(l.name||"")),
     template:(Array.isArray(l.template)?l.template:[]).map(t=>String(t||"").slice(0,120)).filter(Boolean).slice(0,200),
@@ -394,6 +394,15 @@ function defaultGroupId(){
 }
 function groupOf(t){ return state.groups.some(g=>g.id===t.groupId) ? t.groupId : (state.groups.find(g=>/coppia/i.test(g.name))||state.groups[0])?.id; }
 function groupLabel(gid){ const g=groupsById()[gid]; return g?`${g.emoji} ${g.name}`:"Gruppo"; }
+/* v1.12.0 — Chi usa questo telefono (non viene sincronizzato): serve per "da Giulia" nelle liste e per gli avvisi. */
+function myPerson(){ const v=localStorage.getItem("noidue_me"); return v==="a"||v==="b"?v:""; }
+function askWhoAmI(){
+  if(!window.SuiteSync||document.querySelector(".noidue-me-modal")) return;
+  SuiteSync.modal(`<h3>Chi usa questo telefono?</h3><p class="suite-modal-text">Così nelle liste vedi cosa ha aggiunto l'altra persona e ricevi un avviso quando aggiunge qualcosa.</p><div class="app-update-actions"><button type="button" class="noidue-me-btn" data-me="a" style="border-color:${safeColor(personColor("a"))}">${escapeHtml(personName("a"))}</button><button type="button" class="noidue-me-btn" data-me="b" style="border-color:${safeColor(personColor("b"))}">${escapeHtml(personName("b"))}</button></div>`,(wrap,close)=>{
+    wrap.classList.add("noidue-me-modal");
+    wrap.querySelectorAll("[data-me]").forEach(b=>b.addEventListener("click",()=>{ safeSetLocalStorage("noidue_me",b.dataset.me,{notify:false}); close(); renderAll(); if(typeof listDetailRefresh==="function") listDetailRefresh(); showToast(`Ok: su questo telefono sei ${personName(b.dataset.me)}`); }));
+  });
+}
 function personName(k){ return k==="a"||k==="b" ? state.couple[k].name : "Cassa comune"; }
 function personColor(k){ return k==="a"||k==="b" ? state.couple[k].color : "#D4A83A"; }
 function personInitial(k){ return (personName(k).trim()[0]||(k==="a"?"1":"2")).toUpperCase(); }
@@ -2171,7 +2180,7 @@ function parseQty(text){
 }
 function newListItem(rawText,extra={}){
   const {text,qty}=parseQty(rawText);
-  return {id:uid(),text:text.slice(0,120),qty,price:null,done:false,code:"",image:"",url:"",photo:"",aisle:guessAisle(text),forWhom:"both",...extra};
+  return {id:uid(),text:text.slice(0,120),qty,price:null,done:false,code:"",image:"",url:"",photo:"",aisle:guessAisle(text),forWhom:"both",addedBy:myPerson(),...extra};
 }
 /* Ricorda le cose comprate (per i suggerimenti "Comprati spesso"). */
 function recordPurchased(list,items){
@@ -2251,7 +2260,8 @@ function openListDetail(listId){
       row.className="list-item"+(it.done?" done":"");
       row.setAttribute("role","button"); row.tabIndex=0;
       const pic=photoSrc(it.photo)||it.image;
-      const who=it.forWhom==="a"||it.forWhom==="b"?`<small class="list-for" style="color:${safeColor(personColor(it.forWhom))}">solo ${escapeHtml(personName(it.forWhom))}</small>`:"";
+      const who=(it.forWhom==="a"||it.forWhom==="b"?`<small class="list-for" style="color:${safeColor(personColor(it.forWhom))}">solo ${escapeHtml(personName(it.forWhom))}</small>`:"")
+        +(it.addedBy&&it.addedBy!==myPerson()?`<small class="list-by" style="color:${safeColor(personColor(it.addedBy))}">da ${escapeHtml(personName(it.addedBy))}</small>`:it.via?`<small class="list-by">da ${escapeHtml(it.via)}</small>`:"");
       row.innerHTML=`<span class="list-swipe-bg" aria-hidden="true"><span>${it.done?"↩︎ Da comprare":"✓ Nel carrello"}</span><span></span></span>
         <span class="list-check" aria-hidden="true">${it.done?"✓":""}</span>
         <span class="list-thumb">${pic?`<img src="${escapeHtml(pic)}" alt="" loading="lazy" referrerpolicy="no-referrer">`:""}</span>
@@ -3819,6 +3829,7 @@ function alignBackup(local,inc){
   if(la&&lb&&la!==lb&&ia===lb&&ib===la){
     inc.couple={...inc.couple,a:inc.couple.b,b:inc.couple.a};
     inc.accounts.forEach(a=>{ if(a.owner==="a") a.owner="b"; else if(a.owner==="b") a.owner="a"; });
+    (inc.lists||[]).forEach(l=>(l.items||[]).forEach(i=>{ if(i.addedBy==="a") i.addedBy="b"; else if(i.addedBy==="b") i.addedBy="a"; if(i.forWhom==="a") i.forWhom="b"; else if(i.forWhom==="b") i.forWhom="a"; }));
     [...inc.transactions,...inc.recurring,...inc.planned].forEach(t=>{ if(t.split&&Number.isFinite(Number(t.split.pctA))) t.split.pctA=100-Number(t.split.pctA); if(t.settleAlloc) Object.keys(t.settleAlloc).forEach(k=>{ t.settleAlloc[k]=-t.settleAlloc[k]; }); });
   }
   const map={};
@@ -4118,9 +4129,13 @@ var syncNoiDue = window.SuiteSync ? SuiteSync.register({
     const inc=alignBackup(JSON.parse(JSON.stringify(local)),migrate(JSON.parse(JSON.stringify(remote))));
     return mergeStates(JSON.parse(JSON.stringify(local)),inc,remoteNewer?"backup":"local");
   },
+  toast:(m)=>showToast(m),
+  noPrune:true,
   setLocal:(data,info)=>{
     const inc=info&&info.merged?data:alignBackup(JSON.parse(JSON.stringify(state)),migrate(JSON.parse(JSON.stringify(data))));
+    const beforeItems=new Set(allListItems(state).map(i=>i.id)), beforeTx=new Set(state.transactions.map(t=>t.id));
     state=migrate(inc); balanceCache.clear(); offloadPhotos();
+    if(!(info&&info.restored)) notifyPartnerChanges(beforeItems,beforeTx);
     safeSetLocalStorage(STORAGE_KEY, JSON.stringify(state));
     renderAll(); if(typeof listDetailRefresh==="function") listDetailRefresh();
   },
@@ -4136,3 +4151,24 @@ var syncNoiDue = window.SuiteSync ? SuiteSync.register({
   },
 }) : null;
 (function(){ const slot=document.getElementById("suiteSyncSlot"); if(slot&&window.SuiteSync) slot.innerHTML=SuiteSync.cardHtml("noidue",{cls:"section-block suite-sync-block",h:"h2"}); })();
+
+/* v1.12.0 — Avviso quando l'altra persona aggiunge qualcosa (dopo la sincronizzazione). */
+function notifyPartnerChanges(beforeItems,beforeTx){
+  const me=myPerson(); if(!me) return;
+  const other=me==="a"?"b":"a", parts=[];
+  const via=[];
+  state.lists.forEach(l=>{
+    const fresh=(l.items||[]).filter(i=>!beforeItems.has(i.id));
+    const n=fresh.filter(i=>i.addedBy===other).length, v=fresh.filter(i=>i.via).length;
+    if(n) parts.push(`${n} ${n===1?"cosa":"cose"} a ${l.name}`);
+    if(v) via.push(`${v} ${v===1?"prodotto":"prodotti"} a ${l.name}`);
+  });
+  const tx=state.transactions.filter(t=>!beforeTx.has(t.id)).length;
+  if(tx) parts.push(`${tx} ${tx===1?"movimento":"movimenti"}`);
+  if(!parts.length&&!via.length) return;
+  showToast(parts.length?`${personName(other)} ha aggiunto ${parts.join(" e ")}`:`Da RecompApp: ${via.join(", ")}`);
+  if(navigator.vibrate) navigator.vibrate(20);
+}
+setTimeout(()=>{ if(window.SuiteSync&&SuiteSync.signedIn&&!myPerson()&&state.couple.onboarded) askWhoAmI(); },3500);
+document.addEventListener("submit",e=>{ if(e.target.closest&&e.target.closest("[data-suite-sync-login]")) setTimeout(()=>{ if(SuiteSync.signedIn&&!myPerson()) askWhoAmI(); },2500); });
+document.getElementById("noidueMeBtn")?.addEventListener("click",askWhoAmI);

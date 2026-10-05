@@ -1,0 +1,10 @@
+Noi Due 1.12.0
+- Sincronizzazione più sicura:
+  · "Versioni precedenti" (Altro › Sincronizzazione): il database tiene una copia all'ora dei dati, fino a 60,
+    e puoi tornare a una di queste (i dati attuali vengono prima salvati come nuova versione);
+  · un elemento cancellato su un dispositivo non ricompare più unendo i dati con un altro;
+  · "Password dimenticata?" nella schermata di accesso e "Cambia password" quando sei collegato.
+- Tempo reale: quello che aggiunge l'altra persona arriva subito (serve il passo 10 della guida Supabase).
+- "Chi usa questo telefono" (Altro): nelle liste compare "da Giulia" sulle cose aggiunte dall'altra persona
+  e arriva un avviso tipo "Giulia ha aggiunto 3 cose a Spesa".
+- Pulizia dello stile: tolte 227 regole non usate e 157 impostazioni sovrascritte; schermate identiche.

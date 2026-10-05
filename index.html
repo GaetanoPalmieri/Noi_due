@@ -4,11 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
 <title>Noi Due — Spese di coppia</title>
-<meta name="app-version" content="1.8.1">
+<meta name="app-version" content="1.11.0">
 <meta name="description" content="Spese di coppia: chi ha pagato, chi deve a chi, budget e statistiche.">
 
 <!-- PWA / iOS home screen -->
-<link rel="manifest" href="manifest.json?v=1.8.1">
+<link rel="manifest" href="manifest.json?v=1.11.0">
 <meta name="theme-color" content="#12181F">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -16,9 +16,9 @@
 <!-- iPhone: icona nella cartella principale, senza ?v=, con la dimensione dichiarata (la legge anche Safari più vecchio). -->
 <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
 <link rel="apple-touch-icon-precomposed" sizes="180x180" href="apple-touch-icon-precomposed.png">
-<link rel="icon" href="icons/icon-192.png?v=1.8.1">
+<link rel="icon" href="icons/icon-192.png?v=1.11.0">
 
-<link rel="stylesheet" href="style.css?v=1.8.1">
+<link rel="stylesheet" href="style.css?v=1.11.0">
 </head>
 <body>
 
@@ -96,7 +96,7 @@
         <p class="empty-hint" id="budgetEmptyHint" hidden>Nessuna categoria di spesa.</p>
       </div>
 
-      <p class="app-version">Versione 1.8.1</p>
+      <p class="app-version">Versione 1.11.0</p>
     </section>
 
     <!-- ===== COPPIA ===== -->
@@ -257,6 +257,8 @@
         </div>
       </div>
 
+      <div id="suiteSyncSlot"></div>
+
       <div class="section-block">
         <div class="section-head"><h2>Dati</h2></div>
         <p class="backup-status" id="backupStatus">Nessun backup esportato su questo dispositivo.</p>
@@ -280,7 +282,7 @@
         </div>
       </div>
 
-      <p class="app-version">Noi Due v1.8.1 · dati salvati solo su questo dispositivo</p>
+      <p class="app-version">Noi Due v1.11.0 · dati sul telefono e, se colleghi la sincronizzazione, anche online</p>
     </section>
 
   </main>
@@ -444,6 +446,7 @@
     </div>
     <div class="list-suggest" id="listSuggest" hidden></div>
     <div id="listTodo" class="list-items"></div>
+    <p class="field-hint list-gesture-hint" id="listGestureHint">Scorri a destra: nel carrello · a sinistra: ☆ preferito o elimina · tieni premuto: dettagli</p>
     <p class="empty-hint" id="listEmpty" hidden>La lista è vuota. Scrivi qui sopra cosa comprare.</p>
     <div id="listDoneWrap" hidden>
       <div class="list-done-head"><h4 class="gd-sub" id="listDoneTitle">Nel carrello</h4><button type="button" class="pill-btn mini-btn" id="listClearDone">Togli</button></div>
@@ -862,6 +865,7 @@
   </div>
 </template>
 
-<script src="app.js?v=1.8.1"></script>
+<script src="suite.js?v=1.11.0"></script>
+<script src="app.js?v=1.11.0"></script>
 </body>
 </html>

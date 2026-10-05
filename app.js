@@ -166,11 +166,67 @@ function safeSetLocalStorage(key,value,{notify=true}={}){
     return false;
   }
 }
+/* v1.10.0 — Foto dei prodotti in IndexedDB.
+   Prima erano dentro i dati (localStorage, ~5 MB in tutto): con molte foto lo spazio finiva e l'app
+   non salvava più. Ora nei dati resta solo un riferimento "idb:<id>"; le foto stanno in IndexedDB.
+   Il backup continua a contenere le foto (vengono reinserite all'esportazione). */
+const PhotoStore=(()=>{
+  const cache=new Map(); let dbp=null, ok=!!window.indexedDB;
+  function db(){
+    if(!ok) return Promise.reject(new Error("no idb"));
+    if(!dbp) dbp=new Promise((res,rej)=>{ const r=indexedDB.open("noidue_photos",1); r.onupgradeneeded=()=>r.result.createObjectStore("photos"); r.onsuccess=()=>res(r.result); r.onerror=()=>{ ok=false; rej(r.error); }; });
+    return dbp;
+  }
+  function tx(mode,fn){ return db().then(d=>new Promise((res,rej)=>{ const t=d.transaction("photos",mode), st=t.objectStore("photos"); const out=fn(st); t.oncomplete=()=>res(out&&out.result); t.onerror=()=>rej(t.error); t.onabort=()=>rej(t.error); })); }
+  // v1.11.0: foto aggiunte dall'altro telefono: si scaricano dal database online la prima volta che servono.
+  const pending=new Set(), failed=new Set();
+  function fetchRemote(key){
+    const S=window.syncNoiDue;
+    if(!S||!S.coupleId||!window.SuiteSync?.signedIn||pending.has(key)||failed.has(key)) return;
+    pending.add(key);
+    S.downloadPhoto(`coppia/${S.coupleId}/${key}.jpg`).then(blob=>new Promise((res,rej)=>{ const r=new FileReader(); r.onload=()=>res(r.result); r.onerror=rej; r.readAsDataURL(blob); }))
+      .then(data=>{ cache.set(key,data); return tx("readwrite",st=>st.put(data,key)).catch(()=>{}); })
+      .then(()=>{ markUploaded(key); if(typeof listDetailRefresh==="function") listDetailRefresh(); })
+      .catch(()=>failed.add(key)).finally(()=>pending.delete(key));
+  }
+  return {
+    get available(){ return ok; },
+    has(key){ return cache.has(key); },
+    src(ref){ if(!ref) return ""; if(String(ref).startsWith("idb:")){ const k=ref.slice(4); if(!cache.has(k)) fetchRemote(k); return cache.get(k)||""; } return ref; },
+    data(ref){ return this.src(ref); },
+    put(key,dataUrl){ cache.set(key,dataUrl); return tx("readwrite",st=>st.put(dataUrl,key)); },
+    async loadAll(){ const keys=await tx("readonly",st=>st.getAllKeys()); const vals=await tx("readonly",st=>st.getAll()); (keys||[]).forEach((k,i)=>cache.set(k,vals[i])); return cache.size; },
+    async prune(used){ const keys=await tx("readonly",st=>st.getAllKeys()); const dead=(keys||[]).filter(k=>!used.has(k)); if(dead.length) await tx("readwrite",st=>{ dead.forEach(k=>{ st.delete(k); cache.delete(k); }); }); return dead.length; }
+  };
+})();
+function photoSrc(ref){ return PhotoStore.src(ref); }
+function allListItems(s){ return (s?.lists||[]).flatMap(l=>l.items||[]); }
+/* Sposta in IndexedDB le foto ancora salvate dentro i dati (nuove, importate o di versioni precedenti). */
+function offloadPhotos(){
+  if(!PhotoStore.available) return;
+  allListItems(state).forEach(it=>{
+    if(!/^data:image\//.test(String(it.photo||""))) return;
+    const key=uid(), data=it.photo;
+    it.photo="idb:"+key;
+    PhotoStore.put(key,data).catch(()=>{ // IndexedDB non disponibile: la foto torna nei dati
+      allListItems(state).forEach(x=>{ if(x.photo==="idb:"+key) x.photo=data; }); safeSetLocalStorage(STORAGE_KEY, JSON.stringify(state));
+    });
+  });
+}
+/* Copia dei dati con le foto dentro (per backup e confronti). */
+function stateWithPhotos(s){
+  const c=JSON.parse(JSON.stringify(s));
+  allListItems(c).forEach(it=>{ if(String(it.photo||"").startsWith("idb:")) it.photo=PhotoStore.data(it.photo)||""; });
+  return c;
+}
 function persist(){
   balanceCache.clear();
+  offloadPhotos();
   state.updatedAt=new Date().toISOString();
   state.trash = pruneTrashArray(state.trash);
-  return safeSetLocalStorage(STORAGE_KEY, JSON.stringify(state));
+  const ok=safeSetLocalStorage(STORAGE_KEY, JSON.stringify(state));
+  if(ok && window.syncNoiDue) syncNoiDue.changed();
+  return ok;
 }
 function toggleBalances(){balancesHidden=!balancesHidden;safeSetLocalStorage("noidue_hide_balances",balancesHidden?"1":"0",{notify:false});renderAll();}
 function moveToTrash(kind, item){
@@ -299,7 +355,7 @@ function sanitizeCouple(data){
   data.lists=data.lists.filter(l=>l&&l.id).map(l=>({id:String(l.id).slice(0,120),name:String(l.name||"Lista").slice(0,40),emoji:cleanEmoji(String(l.emoji||"🛒"))||"🛒",groupId:ids.has(l.groupId)?l.groupId:fallback,
     items:(Array.isArray(l.items)?l.items:[]).filter(i=>i&&i.id).map(i=>({id:String(i.id).slice(0,120),text:String(i.text||"").slice(0,120),price:Number.isFinite(Number(i.price))&&Number(i.price)>0?Math.round(Number(i.price)*100)/100:null,done:!!i.done,
       code:String(i.code||"").replace(/[^0-9A-Za-z-]/g,"").slice(0,32),image:/^https:\/\//.test(String(i.image||""))?String(i.image).slice(0,500):"",url:/^https:\/\//.test(String(i.url||""))?String(i.url).slice(0,500):"",
-      photo:/^data:image\/(jpeg|png|webp);base64,/.test(String(i.photo||""))&&String(i.photo).length<300000?String(i.photo):"",
+      photo:/^data:image\/(jpeg|png|webp);base64,/.test(String(i.photo||""))&&String(i.photo).length<300000?String(i.photo):/^idb:[\w-]{1,120}$/.test(String(i.photo||""))?String(i.photo):"",
       qty:Math.min(99,Math.max(1,Math.round(Number(i.qty)||1))),aisle:typeof i.aisle==="string"?i.aisle.slice(0,20):"",forWhom:["a","b"].includes(i.forWhom)?i.forWhom:"both"})),
     sortMode:l.sortMode==="manual"?"manual":"aisle",
     restockOnExit:typeof l.restockOnExit==="boolean"?l.restockOnExit:/spesa|supermercat/i.test(String(l.name||"")),
@@ -2174,6 +2230,7 @@ function openFavorites(listId,onAdded){
     paint();
   });
 }
+let openSwipeRow=null;
 function openListDetail(listId){
   openSheet("tpl-list-detail",(node,close)=>{
     const input=node.querySelector("#listItemInput"), priceInput=node.querySelector("#listPriceInput");
@@ -2185,37 +2242,56 @@ function openListDetail(listId){
       showActionToast(`“${it.text}” eliminato`,"Annulla",()=>{ const cur=list(); if(!cur) return; if(state.deleted) delete state.deleted[it.id]; cur.items.splice(Math.min(idx,cur.items.length),0,it); save(); });
     }
     function itemRow(it){
+      const wrap=document.createElement("div");
+      wrap.className="list-swipe-wrap";
+      const fav=isFavorite(it.text);
+      wrap.innerHTML=`<span class="list-actions" aria-hidden="true"><button type="button" class="list-act-fav${fav?" on":""}" tabindex="-1" aria-label="${fav?"Togli dai preferiti":"Aggiungi ai preferiti"}"><span class="la-ico">${fav?"★":"☆"}</span><small>${fav?"Togli":"Preferito"}</small></button><button type="button" class="list-act-del" tabindex="-1" aria-label="Elimina"><span class="la-ico">🗑️</span><small>Elimina</small></button></span>`;
       const row=document.createElement("div");
+      wrap.appendChild(row);
       row.className="list-item"+(it.done?" done":"");
       row.setAttribute("role","button"); row.tabIndex=0;
-      const pic=it.photo||it.image;
+      const pic=photoSrc(it.photo)||it.image;
       const who=it.forWhom==="a"||it.forWhom==="b"?`<small class="list-for" style="color:${safeColor(personColor(it.forWhom))}">solo ${escapeHtml(personName(it.forWhom))}</small>`:"";
-      row.innerHTML=`<span class="list-swipe-bg" aria-hidden="true"><span>${it.done?"↩︎ Da comprare":"✓ Nel carrello"}</span><span>🗑️ Elimina</span></span>
+      row.innerHTML=`<span class="list-swipe-bg" aria-hidden="true"><span>${it.done?"↩︎ Da comprare":"✓ Nel carrello"}</span><span></span></span>
         <span class="list-check" aria-hidden="true">${it.done?"✓":""}</span>
         <span class="list-thumb">${pic?`<img src="${escapeHtml(pic)}" alt="" loading="lazy" referrerpolicy="no-referrer">`:""}</span>
-        <span class="list-text">${it.qty>1?`<b class="list-qty">${it.qty}×</b> `:""}${escapeHtml(it.text)}${isFavorite(it.text)?` <span class="list-fav" aria-label="preferito">★</span>`:""}${who}</span>
+        <span class="list-text">${it.qty>1?`<b class="list-qty">${it.qty}×</b> `:""}${escapeHtml(it.text)}${fav?` <span class="list-fav" aria-label="preferito">★</span>`:""}${who}</span>
         <span class="list-price">${it.price?(balancesHidden?"••••":fmt(it.price*(it.qty||1))):""}</span>
         <button type="button" class="list-del" aria-label="Dettagli di ${escapeHtml(it.text)}">›</button>`;
       row.querySelector("img")?.addEventListener("error",e=>{ e.target.remove(); });
       row.setAttribute("aria-pressed",String(it.done));
       const toggle=()=>{ it.done=!it.done; save(); };
-      // Gesti: scorri a destra = carrello, a sinistra = elimina, tieni premuto = dettagli.
-      let sx=0,sy=0,dx=0,moved=false,swiping=false,suppress=false,pressTimer=null;
-      row.addEventListener("touchstart",e=>{ e.stopPropagation(); const t=e.touches[0]; sx=t.clientX; sy=t.clientY; dx=0; moved=false; swiping=false;
-        pressTimer=setTimeout(()=>{ if(!moved){ suppress=true; if(navigator.vibrate) navigator.vibrate(15); openListItem(listId,it.id); } },550); },{passive:true});
+      // v1.9.0 — Gesti: scorri a destra = carrello; scorri a sinistra = compaiono ★ Preferito e Elimina
+      // (uno swipe lungo elimina subito); tieni premuto = dettagli.
+      const OPEN=-136;
+      const setOpen=on=>{ wrap.classList.toggle("open",on); if(!on) wrap.classList.remove("swipe-left","swipe-far"); wrap.style.setProperty("--dx",on?`${OPEN}px`:"0px"); if(on){ if(openSwipeRow&&openSwipeRow!==wrap) openSwipeRow._close(); openSwipeRow=wrap; } else if(openSwipeRow===wrap) openSwipeRow=null; };
+      wrap._close=()=>setOpen(false);
+      let sx=0,sy=0,dx=0,base=0,moved=false,swiping=false,suppress=false,pressTimer=null;
+      row.addEventListener("touchstart",e=>{ e.stopPropagation(); if(openSwipeRow&&openSwipeRow!==wrap) openSwipeRow._close();
+        const t=e.touches[0]; sx=t.clientX; sy=t.clientY; dx=0; moved=false; swiping=false; base=wrap.classList.contains("open")?OPEN:0;
+        pressTimer=setTimeout(()=>{ if(!moved&&!base){ suppress=true; if(navigator.vibrate) navigator.vibrate(15); openListItem(listId,it.id); } },550); },{passive:true});
       row.addEventListener("touchmove",e=>{ const t=e.touches[0]; dx=t.clientX-sx; if(swiping||Math.abs(dx)>14) e.stopPropagation(); const dy=t.clientY-sy;
         if(Math.abs(dx)>8||Math.abs(dy)>8){ moved=true; clearTimeout(pressTimer); }
         if(!swiping && Math.abs(dx)>14 && Math.abs(dx)>Math.abs(dy)*1.3) swiping=true;
-        if(swiping){ row.classList.add("swiping"); row.classList.toggle("swipe-right",dx>0); row.classList.toggle("swipe-left",dx<0); row.style.setProperty("--dx",`${Math.max(-140,Math.min(140,dx))}px`); } },{passive:true});
+        if(swiping){ const x=Math.max(-260,Math.min(base?0:140,base+dx));
+          row.classList.add("swiping"); wrap.classList.toggle("swipe-right",x>0); wrap.classList.toggle("swipe-left",x<0); wrap.classList.toggle("swipe-far",x<-210);
+          wrap.style.setProperty("--dx",`${x}px`); } },{passive:true});
       row.addEventListener("touchend",e=>{ clearTimeout(pressTimer);
-        if(swiping){ e.stopPropagation(); suppress=true; row.classList.remove("swiping"); row.style.removeProperty("--dx");
-          if(dx>80) toggle(); else if(dx<-80) removeItem(it,{purchased:it.done}); }
+        if(swiping){ e.stopPropagation(); suppress=true; row.classList.remove("swiping"); wrap.classList.remove("swipe-right","swipe-far");
+          const x=base+dx;
+          if(x>80&&!base){ setOpen(false); toggle(); }
+          else if(x<-210){ setOpen(false); removeItem(it,{purchased:it.done}); }
+          else if(x<-50) setOpen(true);
+          else { setOpen(false); wrap.classList.remove("swipe-left"); } }
+        else if(base&&!moved){ suppress=true; setOpen(false); }
         setTimeout(()=>{ suppress=false; },350); });
-      row.addEventListener("touchcancel",()=>{ clearTimeout(pressTimer); row.classList.remove("swiping"); row.style.removeProperty("--dx"); });
-      row.addEventListener("click",e=>{ if(suppress||e.target.closest(".list-del")) return; toggle(); });
+      row.addEventListener("touchcancel",()=>{ clearTimeout(pressTimer); row.classList.remove("swiping"); setOpen(wrap.classList.contains("open")); });
+      row.addEventListener("click",e=>{ if(suppress||e.target.closest(".list-del")) return; if(wrap.classList.contains("open")){ setOpen(false); return; } toggle(); });
       activateRowFromKeyboard(row,toggle);
       row.querySelector(".list-del").addEventListener("click",e=>{ e.stopPropagation(); openListItem(listId,it.id); });
-      return row;
+      wrap.querySelector(".list-act-fav").addEventListener("click",e=>{ e.stopPropagation(); const on=!isFavorite(it.text); setFavorite(it.text,on,it.aisle||""); setOpen(false); save(); showToast(on?`★ “${it.text}” nei preferiti`:`“${it.text}” tolto dai preferiti`); });
+      wrap.querySelector(".list-act-del").addEventListener("click",e=>{ e.stopPropagation(); setOpen(false); removeItem(it,{purchased:it.done}); });
+      return wrap;
     }
     function paint(){
       if(!node.isConnected){ listDetailRefresh=null; return; }
@@ -2236,6 +2312,7 @@ function openListDetail(listId){
       } else todo.forEach(it=>todoBox.appendChild(itemRow(it)));
       doneBox.innerHTML=""; done.forEach(it=>doneBox.appendChild(itemRow(it)));
       node.querySelector("#listEmpty").hidden=l.items.length>0;
+      node.querySelector("#listGestureHint").hidden=!l.items.length;
       node.querySelector("#listDoneWrap").hidden=!done.length;
       const sum=arr=>arr.reduce((s,i)=>s+(i.price||0)*(i.qty||1),0);
       const est=sum(todo), cart=sum(done);
@@ -2253,8 +2330,10 @@ function openListDetail(listId){
       // Comprati spesso
       const sug=listSuggestions(l), sbox=node.querySelector("#listSuggest");
       sbox.hidden=!sug.length;
-      sbox.innerHTML=sug.length?`<p class="list-suggest-title">Comprati spesso</p><div class="list-suggest-chips">${sug.map((s,i)=>`<button type="button" class="chip" data-sug="${i}">＋ ${escapeHtml(s.text)}</button>`).join("")}</div>`:"";
+      // v1.10.0: ogni suggerimento ha la sua stellina per i preferiti (la riga scorre in orizzontale, quindi niente swipe).
+      sbox.innerHTML=sug.length?`<p class="list-suggest-title">Comprati spesso</p><div class="list-suggest-chips">${sug.map((s,i)=>{ const f=isFavorite(s.text); return `<span class="sug-chip"><button type="button" class="chip" data-sug="${i}">＋ ${escapeHtml(s.text)}</button><button type="button" class="sug-fav${f?" on":""}" data-sug-fav="${i}" aria-label="${f?"Togli":"Aggiungi"} ${escapeHtml(s.text)} ${f?"dai":"ai"} preferiti">${f?"★":"☆"}</button></span>`; }).join("")}</div>`:"";
       sbox.querySelectorAll("[data-sug]").forEach(b=>b.addEventListener("click",()=>{ const s=sug[Number(b.dataset.sug)]; list().items.push(newListItem(s.text,{aisle:s.aisle||guessAisle(s.text)})); save(); }));
+      sbox.querySelectorAll("[data-sug-fav]").forEach(b=>b.addEventListener("click",()=>{ const s=sug[Number(b.dataset.sugFav)]; const on=!isFavorite(s.text); setFavorite(s.text,on,s.aisle||""); save(); showToast(on?`★ “${s.text}” nei preferiti`:`“${s.text}” tolto dai preferiti`); }));
     }
     function add(){
       const text=input.value.trim();
@@ -2964,7 +3043,7 @@ function openListItem(listId,itemId){
     urlInput.addEventListener("change",()=>{ draft.url=extractUrl(urlInput.value)||""; paint(); });
     const photoBox=node.querySelector("#itemPhoto"), links=node.querySelector("#itemLinks"), removeBtn=node.querySelector("#itemPhotoRemove");
     function paint(){
-      const pic=draft.photo||draft.image;
+      const pic=photoSrc(draft.photo)||draft.image;
       photoBox.innerHTML=pic?`<img src="${escapeHtml(pic)}" alt="" referrerpolicy="no-referrer">`:"";
       photoBox.hidden=!pic;
       photoBox.querySelector("img")?.addEventListener("error",()=>{ photoBox.hidden=true; });
@@ -3713,7 +3792,7 @@ document.getElementById("exportCsvBtn")?.addEventListener("click",exportTransact
 const PRE_IMPORT_KEY="noidue_pre_import";
 function backupFileName(){ const d=new Date(); return `noidue-backup-${d.getFullYear()}${pad2(d.getMonth()+1)}${pad2(d.getDate())}-${pad2(d.getHours())}${pad2(d.getMinutes())}.json`; }
 async function exportBackup(){
-  const json=JSON.stringify({...state,exportedAt:new Date().toISOString()},null,2);
+  const json=JSON.stringify({...stateWithPhotos(state),exportedAt:new Date().toISOString()},null,2);
   const name=backupFileName();
   const done=()=>{ safeSetLocalStorage("noidue_last_backup",new Date().toISOString(),{notify:false}); renderAll(); };
   try{
@@ -3825,7 +3904,7 @@ document.getElementById("undoImportBtn")?.addEventListener("click",async()=>{
   catch(e){ showToast("Copia non leggibile"); }
 });
 function openImportChoice(parsed,fileName){
-  const local=JSON.parse(JSON.stringify(state));
+  const local=stateWithPhotos(state);
   const inc=alignBackup(local,migrate(JSON.parse(JSON.stringify(parsed))));
   openSheet("tpl-import-choice",(node,close)=>{
     const L=stateSummary(local), B=stateSummary(inc);
@@ -3985,6 +4064,19 @@ function ensureInitialHome(){
   renderHeader();
   renderHome();
 }
+// Foto: carica quelle in IndexedDB, sposta lì quelle ancora nei dati, elimina quelle non più usate.
+PhotoStore.loadAll().then(()=>{
+  const before=JSON.stringify(state).length;
+  offloadPhotos();
+  if(JSON.stringify(state).length!==before) safeSetLocalStorage(STORAGE_KEY, JSON.stringify(state));
+  const used=new Set();
+  const collect=s=>allListItems(s).forEach(it=>{ const p=String(it.photo||""); if(p.startsWith("idb:")) used.add(p.slice(4)); });
+  collect(state);
+  try{ const pre=localStorage.getItem(PRE_IMPORT_KEY); if(pre) collect(JSON.parse(pre)); }catch(e){}
+  PhotoStore.prune(used).catch(()=>{});
+  if(typeof listDetailRefresh==="function") listDetailRefresh();
+  renderAll();
+}).catch(()=>{});
 ensureInitialHome();
 requestAnimationFrame(()=>{
   ensureInitialHome();
@@ -4008,3 +4100,39 @@ setTimeout(()=>{
 
 // Primo avvio: chiede i nomi della coppia una volta sola.
 setTimeout(()=>{ if(!state.couple.onboarded && /^Persona 1$/.test(state.couple.a.name) && /^Persona 2$/.test(state.couple.b.name) && !state.transactions.length){ state.couple.onboarded=true; persist(); openCoupleForm(true); } },900);
+
+/* Promemoria backup comune alle 4 app (30 giorni, al massimo una volta a settimana). */
+setTimeout(()=>{ if(window.SuiteBackup) SuiteBackup.maybe({app:"Noi Due",key:"noidue",last:localStorage.getItem("noidue_last_backup"),hasData:state.transactions.length>0||allListItems(state).length>0,onExport:exportBackup}); },3000);
+
+/* v1.11.0 — Sincronizzazione online (Supabase): una sola copia per la coppia, tabella noidue_data.
+   Le modifiche dei due telefoni vengono unite con la stessa logica dell'importazione con unione. */
+const UPLOADED_KEY="noidue_uploaded_photos";
+function uploadedSet(){ try{ return new Set(JSON.parse(localStorage.getItem(UPLOADED_KEY)||"[]")); }catch(e){ return new Set(); } }
+function markUploaded(key){ const s=uploadedSet(); s.add(key); safeSetLocalStorage(UPLOADED_KEY,JSON.stringify([...s].slice(-2000)),{notify:false}); }
+var syncNoiDue = window.SuiteSync ? SuiteSync.register({
+  app:"noidue", name:"Noi Due", scope:"couple",
+  getLocal:()=>state,
+  hasLocalData:()=>state.transactions.length>0||allListItems(state).length>0,
+  localUpdatedAt:()=>state.updatedAt||null,
+  merge:(local,remote,remoteNewer)=>{
+    const inc=alignBackup(JSON.parse(JSON.stringify(local)),migrate(JSON.parse(JSON.stringify(remote))));
+    return mergeStates(JSON.parse(JSON.stringify(local)),inc,remoteNewer?"backup":"local");
+  },
+  setLocal:(data,info)=>{
+    const inc=info&&info.merged?data:alignBackup(JSON.parse(JSON.stringify(state)),migrate(JSON.parse(JSON.stringify(data))));
+    state=migrate(inc); balanceCache.clear(); offloadPhotos();
+    safeSetLocalStorage(STORAGE_KEY, JSON.stringify(state));
+    renderAll(); if(typeof listDetailRefresh==="function") listDetailRefresh();
+  },
+  afterPush:async(S)=>{
+    const done=uploadedSet();
+    for(const it of allListItems(state)){
+      const p=String(it.photo||""); if(!p.startsWith("idb:")) continue;
+      const key=p.slice(4); if(done.has(key)||!PhotoStore.has(key)) continue;
+      const blob=await (await fetch(PhotoStore.data(p))).blob();
+      await S.uploadPhoto(`coppia/${S.coupleId}/${key}.jpg`,blob);
+      markUploaded(key);
+    }
+  },
+}) : null;
+(function(){ const slot=document.getElementById("suiteSyncSlot"); if(slot&&window.SuiteSync) slot.innerHTML=SuiteSync.cardHtml("noidue",{cls:"section-block suite-sync-block",h:"h2"}); })();

@@ -1,0 +1,9 @@
+Noi Due 1.10.0 — foto al sicuro, preferiti dai suggerimenti
+
+- Foto dei prodotti salvate in IndexedDB invece che dentro i dati: prima, con molte foto, lo spazio
+  (circa 5 MB) poteva finire e l'app smetteva di salvare. Le foto già presenti vengono spostate da sole
+  al primo avvio. Il backup continua a contenere le foto.
+- "Comprati spesso": ogni suggerimento ha la sua stellina ☆ per aggiungerlo o toglierlo dai preferiti.
+- Promemoria backup comune alle 4 app (dopo 30 giorni, al massimo una volta a settimana).
+- Da RecompApp: "Manda alla lista di Noi Due" copia la spesa della settimana; qui basta lista Spesa › 📋 Incolla.
+- Nuovo file: suite.js (parti comuni alle 4 app).

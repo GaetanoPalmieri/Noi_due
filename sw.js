@@ -3,21 +3,21 @@
    - Pagina: rete con timeout di 3 secondi, poi la copia salvata (veloce anche con segnale scarso).
    - File con ?v= e icone: prima la cache; un nuovo rilascio cambia ?v= e quindi l'indirizzo.
    - Il nuovo worker resta in attesa finché l'app non chiede di attivarlo (avviso "Aggiorna"). */
-const VERSION = '1.12.1';
+const VERSION = '1.12.2';
 const PREFIX = 'noidue-cache-';
 const CACHE = PREFIX + VERSION;
 const SHELL = [
   './',
   './index.html',
-  './suite.js?v=1.12.1',
-  './style.css?v=1.12.1',
-  './app.js?v=1.12.1',
-  './manifest.json?v=1.12.1',
-  './icons/icon-192.png?v=1.12.1',
-  './icons/icon-512.png?v=1.12.1',
-  './icons/icon-maskable-192.png?v=1.12.1',
-  './icons/icon-maskable-512.png?v=1.12.1',
-  './icons/apple-touch-icon.png?v=1.12.1',
+  './suite.js?v=1.12.2',
+  './style.css?v=1.12.2',
+  './app.js?v=1.12.2',
+  './manifest.json?v=1.12.2',
+  './icons/icon-192.png?v=1.12.2',
+  './icons/icon-512.png?v=1.12.2',
+  './icons/icon-maskable-192.png?v=1.12.2',
+  './icons/icon-maskable-512.png?v=1.12.2',
+  './icons/apple-touch-icon.png?v=1.12.2',
   './apple-touch-icon.png',
   './apple-touch-icon-precomposed.png'
 ];

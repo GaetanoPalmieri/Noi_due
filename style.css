@@ -452,20 +452,33 @@ button:active {
 }
 .category-row .ic {
   width: 30px;
-  height: 30px;
+  min-height: 30px;
+  height: auto;
   border-radius: 8px;
+  background: none!important;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  font-size: 15px;
+  gap: 1px;
+  overflow: visible;
+  font-size: 17px;
   flex-shrink: 0;
 }
 .template-manage-row .ic {
   border-radius: 8px;
+  background: none!important;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
+  gap: 1px;
+  overflow: visible;
   flex-shrink: 0;
+}
+.mv-ic-item {
+  display: block;
+  line-height: 1;
 }
 .category-row .info, .template-manage-row .info {
   flex: 1;
@@ -3325,8 +3338,12 @@ svg text {
 .mv-row .mv-ic {
   grid-area: ic;
   align-self: center;
-  display: grid;
-  place-items: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  overflow: visible;
 }
 .mv-row .mv-title {
   grid-area: title;
@@ -3574,6 +3591,7 @@ svg text {
 }
 .mv-row .mv-ic {
   border-radius: 8px!important;
+  background: none!important;
 }
 .mv-row .mv-acc {
   padding: 0 6px!important;
@@ -3616,9 +3634,10 @@ svg text {
   height: 10px;
 }
 .mv-row .mv-ic {
-  width: 26px!important;
-  height: 26px!important;
-  font-size: 13px!important;
+  width: 28px!important;
+  min-height: 26px;
+  height: auto!important;
+  font-size: 16px!important;
 }
 .tx-row.mv-row,.template-manage-row.mv-row {
   row-gap: 3px!important;
@@ -3664,7 +3683,7 @@ svg text {
 /* Card movimento: colonna destra di larghezza fissa; data a tutta larghezza della colonna, importo centrato sopra.
    Così importo e data sono allineati in tutte le liste (Home, Tutti i movimenti, R&P). */
 .tx-row.mv-row,.template-manage-row.mv-row {
-  grid-template-columns: 26px minmax(0,1fr) minmax(66px,auto)!important;
+  grid-template-columns: 28px minmax(0,1fr) minmax(66px,auto)!important;
 }
 .mv-row .mv-date {
   justify-self: stretch!important;
@@ -4811,11 +4830,18 @@ html.amounts-hidden .stat-card-value::after {
 }
 .group-card .mv-ic {
   width: 42px;
-  height: 42px;
+  min-height: 42px;
+  height: auto;
   border-radius: 14px;
-  display: grid;
-  place-items: center;
-  font-size: 21px;
+  background: none!important;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  overflow: visible;
+  font-size: 24px;
+  flex-shrink: 0;
 }
 .group-card-text {
   min-width: 0;

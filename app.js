@@ -964,9 +964,13 @@ function buildEmojiField(row, initial, onChange){
   row.append(wrap,hint);
   commit();
 }
+function emojiIconHtml(emoji){
+  const grs=emojiGraphemes(emoji).slice(0,4);
+  return (grs.length?grs:[emoji]).map(g=>`<span class="mv-ic-item">${escapeHtml(g)}</span>`).join("");
+}
 function movementRowHtml({emoji,color,title,badges="",meta="",amountHtml,type,date,relative=true,kind=null,paid=false}){
-  const nEm=Math.min(4,emojiGraphemes(emoji).length||1);
-  return `<span class="mv-ic${nEm>1?` mv-ic-n${nEm}`:""}" style="background:${safeColor(color,"#999999")}22;">${escapeHtml(emoji)}</span>
+  const nEm=Math.max(1,Math.min(4,emojiGraphemes(emoji).length||1));
+  return `<span class="mv-ic${nEm>1?` mv-ic-n${nEm}`:""}">${emojiIconHtml(emoji)}</span>
     <span class="mv-title"><span class="mv-name">${hlText(title)}</span></span>
     <span class="mv-amt ${type}">${amountHtml}</span>
     <span class="mv-meta"><span class="mv-meta-text">${meta}</span></span>
@@ -1347,7 +1351,7 @@ function renderCategories(){
     const row = document.createElement("button");
     row.className = "category-row";
     row.innerHTML = `
-      <span class="ic" style="background:${safeColor(c.color)}22;">${escapeHtml(c.emoji)}</span>
+      <span class="ic">${emojiIconHtml(c.emoji)}</span>
       <span class="info">
         <p class="nm">${escapeHtml(c.name)}</p>
         <p class="sub">${(n=>`${n} ${n===1?"movimento":"movimenti"}`)(state.transactions.filter(t=>t.categoryId===c.id).length)}</p>
@@ -2140,7 +2144,7 @@ function renderCoupleLists(){
     const g=groupsById()[l.groupId];
     const card=document.createElement("button");
     card.type="button"; card.className="group-card list-card";
-    card.innerHTML=`<span class="mv-ic" style="background:${safeColor(g?.color||"#D4A83A")}22">${escapeHtml(l.emoji)}</span>
+    card.innerHTML=`<span class="mv-ic">${emojiIconHtml(l.emoji)}</span>
       <span class="group-card-text"><strong>${escapeHtml(l.name)}</strong><span>${todo?`${todo} da comprare`:"Niente da comprare"}${done?` · ${done} nel carrello`:""}</span><span>${g?escapeHtml(g.emoji+" "+g.name):""}</span></span>
       <span class="list-count${todo?"":" zero"}">${todo}</span>
       <span class="chev" aria-hidden="true">›</span>`;
@@ -2560,7 +2564,7 @@ function renderCoupleGroups(){
     card.type="button"; card.className="group-card";
     const debtor=bal>0?"b":"a";
     const who=Math.abs(bal)<0.005?"In pari":`${personName(debtor)} deve a ${personName(otherPerson(debtor))}`;
-    card.innerHTML=`<span class="mv-ic" style="background:${safeColor(g.color)}22">${escapeHtml(g.emoji)}</span>
+    card.innerHTML=`<span class="mv-ic">${emojiIconHtml(g.emoji)}</span>
       <span class="group-card-text"><strong>${escapeHtml(g.name)}</strong><span>${escapeHtml(who)}</span><span>${balancesHidden?"••••":fmt(spent.paid.a+spent.paid.b+spent.paid.joint)} spesi in tutto</span></span>
       <span class="group-card-amt" style="color:${Math.abs(bal)<0.005?"var(--ink-soft)":personColor(otherPerson(debtor))}">${Math.abs(bal)<0.005?"€0":(balancesHidden?"••••":fmt(Math.abs(bal)))}</span>
       <span class="chev" aria-hidden="true">›</span>`;
@@ -2594,7 +2598,7 @@ function renderFixedExpenses(){
     const split=splitLabel({...r,type:"expense"});
     const card=document.createElement("button");
     card.type="button"; card.className="group-card fixed-card"+(r.active===false?" paused":"");
-    card.innerHTML=`<span class="mv-ic">${escapeHtml(c.emoji||"🔁")}</span>
+    card.innerHTML=`<span class="mv-ic">${emojiIconHtml(c.emoji||"🔁")}</span>
       <span class="group-card-text"><strong>${escapeHtml(r.name||c.name||"Spesa fissa")}</strong>
         <span>${r.active===false?"In pausa":`${FREQ_LABEL[r.freq]||"Ogni mese"} · prossima ${d} ${mesiBrevi[m-1]}`}</span>
         <span>Paga ${escapeHtml(owner==="joint"?"la cassa comune":personName(owner))}${g?` · ${escapeHtml(g.emoji)} ${escapeHtml(split)}`:""}</span></span>

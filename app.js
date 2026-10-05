@@ -94,7 +94,7 @@ const TRASH_RETENTION_DAYS = 90;
 const BACKUP_WARNING_DAYS = 30;
 let balanceCache = new Map();
 let state = load();
-let balancesHidden = localStorage.getItem("noidue_hide_balances") !== "0";
+let balancesHidden = true; // sempre nascosto all'apertura dell'app
 function load(){
   try{
     const raw = localStorage.getItem(STORAGE_KEY);

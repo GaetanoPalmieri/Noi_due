@@ -8,7 +8,9 @@ alter table public.push_subscriptions add column if not exists couple_id uuid;
 alter table public.push_subscriptions add column if not exists person text check (person in ('a','b') or person is null);
 
 -- 2) Chi ha salvato per ultimo i dati della coppia (serve per non avvisare chi ha appena scritto)
-alter table public.noidue_data add column if not exists updated_by text check (updated_by in ('a','b') or updated_by is null);
+--    NB: la tabella aveva già una colonna "updated_by" di tipo uuid usata per altro: qui ne usiamo
+--    una con nome diverso per non toccarla.
+alter table public.noidue_data add column if not exists updated_by_person text check (updated_by_person in ('a','b') or updated_by_person is null);
 
 -- 3) Estensioni necessarie (se non già presenti da Bilancio)
 create extension if not exists pg_net with schema extensions;
@@ -22,7 +24,7 @@ begin
     perform net.http_post(
       url     := 'https://thdlzqhqdktbkpnplxdm.supabase.co/functions/v1/notify-noidue',
       headers := '{"Content-Type":"application/json","x-noidue-secret":"INCOLLA_QUI_NOIDUE_TRIGGER_SECRET"}'::jsonb,
-      body    := jsonb_build_object('couple_id', new.couple_id, 'editor', new.updated_by, 'old', old.data, 'new', new.data)
+      body    := jsonb_build_object('couple_id', new.couple_id, 'editor', new.updated_by_person, 'old', old.data, 'new', new.data)
     );
   end if;
   return new;

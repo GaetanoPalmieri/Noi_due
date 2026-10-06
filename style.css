@@ -434,8 +434,10 @@ button:active {
   display: flex;
   align-items: center;
   gap: 10px;
-  background: var(--card);
-  border: 1px solid var(--line);
+  background: var(--glass-row,var(--card));
+  border: 1px solid var(--glass-edge,var(--line));
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
   border-radius: 12px;
   padding: 10px 12px;
   width: 100%;
@@ -443,8 +445,10 @@ button:active {
   color: var(--ink);
 }
 .template-manage-row {
-  background: var(--card);
-  border: 1px solid var(--line);
+  background: var(--glass-row,var(--card));
+  border: 1px solid var(--glass-edge,var(--line));
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
   border-radius: 12px;
   width: 100%;
   text-align: left;
@@ -576,8 +580,10 @@ button:active {
 }
 .month-nav {
   border-radius: 50%;
-  border: 1px solid var(--line);
-  background: var(--card);
+  border: 1px solid var(--glass-edge,var(--line));
+  background: var(--glass-row,var(--card));
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
   color: var(--ink);
   display: flex;
   align-items: center;
@@ -608,8 +614,10 @@ button:active {
 }
 .calendar-cell {
   aspect-ratio: 1;
-  border: 1px solid var(--line);
-  background: var(--card);
+  border: 1px solid var(--glass-edge,var(--line));
+  background: var(--glass-row,var(--card));
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
   border-radius: 10px;
   display: flex;
   flex-direction: column;
@@ -1098,8 +1106,10 @@ input, select, textarea, .text-input {
   transform: translateX(-50%);
   width: min(280px, calc(100vw - 24px));
   padding: 10px;
-  background: var(--card);
-  border: 1px solid var(--line);
+  background: var(--glass-card,var(--card));
+  border: 1px solid var(--glass-edge,var(--line));
+  -webkit-backdrop-filter: blur(16px) saturate(1.5);
+  backdrop-filter: blur(16px) saturate(1.5);
   border-radius: 16px;
   box-shadow: 0 8px 28px #0003;
   z-index: 40;
@@ -2511,9 +2521,9 @@ html, body, button, input, select, textarea, .sheet, .view, .tab, .chip, .pill-b
 .reorder-btn {
   width: 30px;
   height: 28px;
-  border: 1px solid var(--line);
+  border: 1px solid var(--glass-edge,var(--line));
   border-radius: 8px;
-  background: var(--card);
+  background: var(--glass-row,var(--card));
   color: var(--ink);
   font-weight: 900;
   line-height: 1;
@@ -3083,9 +3093,11 @@ button.hero-liquidity-item {
 }
 /* v1.4.0 — Dialogo di conferma in-app */
 .ask-dialog {
-  border: 1px solid var(--line);
+  border: 1px solid var(--glass-edge,var(--line));
   border-radius: 20px;
-  background: var(--card);
+  background: var(--glass-card,var(--card));
+  -webkit-backdrop-filter: blur(20px) saturate(1.5);
+  backdrop-filter: blur(20px) saturate(1.5);
   color: var(--ink);
   padding: 22px 20px 16px;
   width: min(340px, calc(100vw - 40px));
@@ -3214,8 +3226,8 @@ button.hero-liquidity-item {
   min-height: 28px;
   padding: 0;
   border-radius: 50%;
-  border: 1px solid var(--line);
-  background: var(--card);
+  border: 1px solid var(--glass-edge,var(--line));
+  background: var(--glass-row,var(--card));
   color: var(--ink-soft);
   font-size: 17px;
   line-height: 1;
@@ -3764,8 +3776,10 @@ svg text {
 .pp-month {
   min-height: 48px;
   border-radius: 12px;
-  border: 1px solid var(--line);
-  background: var(--card);
+  border: 1px solid var(--glass-edge,var(--line));
+  background: var(--glass-row,var(--card));
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
   color: var(--ink);
   font: inherit;
   font-size: 14px;
@@ -3803,8 +3817,10 @@ svg text {
 .pp-btn {
   min-height: 46px;
   border-radius: 13px;
-  border: 1.5px solid var(--line);
-  background: var(--card);
+  border: 1.5px solid var(--glass-edge,var(--line));
+  background: var(--glass-row,var(--card));
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
   color: var(--ink);
   font: inherit;
   font-size: 15px;
@@ -5017,6 +5033,8 @@ html.amounts-hidden .stat-card-value::after {
   border-radius: 14px;
   border: 1px solid var(--glass-edge,var(--line));
   background: var(--glass-row,var(--card));
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
   user-select: none;

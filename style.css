@@ -6183,6 +6183,37 @@ html.amounts-hidden .stat-card-value::after {
 .suite-sync-card button:disabled {
   opacity: .6;
 }
+/* Allineamento stile pulsanti notifiche/sync a RecompApp (gym_tracker) */
+.suite-sync-card p.suite-sync-status {
+  font-size: 13px!important;
+  line-height: 1.45!important;
+  margin: 6px 0 10px!important;
+}
+.suite-sync-card button.suite-sync-primary {
+  background: linear-gradient(145deg,#f7c463,#e48d24)!important;
+  color: #241800!important;
+  border: 0!important;
+  box-shadow: 0 8px 20px -8px rgba(232,147,44,.6)!important;
+}
+.suite-sync-card .suite-sync-actions {
+  display: grid!important;
+  grid-template-columns: 1fr auto!important;
+  gap: 8px!important;
+}
+.suite-sync-card .suite-sync-actions button {
+  width: 100%;
+  margin: 0!important;
+}
+.suite-sync-form input {
+  background: rgba(127,140,150,.1)!important;
+  border: 1px solid rgba(127,140,150,.28)!important;
+  border-radius: 12px!important;
+}
+.suite-sync-more button {
+  font-size: 13px!important;
+  font-weight: 600!important;
+  padding: 8px 6px!important;
+}
 .suite-sync-link {
   justify-self: center;
   min-height: 36px!important;

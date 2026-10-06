@@ -59,17 +59,18 @@ function buildMessage(oldData: any, newData: any) {
   const oldLists = byId(oldData?.lists), newLists = byId(newData?.lists);
   let itemsAdded = 0, itemsRemoved = 0;
   const addedByList: string[] = [], removedByList: string[] = [];
+  const lines: string[] = [];
   newLists.forEach((l, id) => {
     const old = oldLists.get(id);
     const d = diffIds(old?.items, l.items);
-    if (d.added.length) { itemsAdded += d.added.length; addedByList.push(`${d.added.length} a ${l.name || "una lista"}`); }
-    if (d.removed.length) { itemsRemoved += d.removed.length; removedByList.push(`${d.removed.length} da ${l.name || "una lista"}`); }
+    if (d.added.length) { itemsAdded += d.added.length; addedByList.push(`${d.added.length} a ${l.name || "una lista"}`); lines.push(`➕ ${d.added.length} · 📝 ${l.name || "Lista"}`); }
+    if (d.removed.length) { itemsRemoved += d.removed.length; removedByList.push(`${d.removed.length} da ${l.name || "una lista"}`); lines.push(`➖ ${d.removed.length} · 📝 ${l.name || "Lista"}`); }
   });
   // liste cancellate del tutto: i loro articoli contano come rimossi
   oldLists.forEach((l, id) => {
     if (newLists.has(id)) return;
     const n = (l.items || []).length;
-    if (n) { itemsRemoved += n; removedByList.push(`${n} da ${l.name || "una lista"}`); }
+    if (n) { itemsRemoved += n; removedByList.push(`${n} da ${l.name || "una lista"}`); lines.push(`➖ ${n} · 📝 ${l.name || "Lista"} (eliminata)`); }
   });
 
   const addedParts: string[] = [];
@@ -83,7 +84,10 @@ function buildMessage(oldData: any, newData: any) {
   const bits: string[] = [];
   if (addedParts.length) bits.push(`ha aggiunto ${addedParts.join(" e ")}`);
   if (removedParts.length) bits.push(`ha rimosso ${removedParts.join(" e ")}`);
-  return { addedCount: txDiff.added.length + itemsAdded, removedCount: txDiff.removed.length + itemsRemoved, text: bits.join(" · ") };
+  const mov = (n: number) => `${n} ${n === 1 ? "movimento" : "movimenti"}`;
+  if (txDiff.removed.length) lines.unshift(`➖ ${mov(txDiff.removed.length)}`);
+  if (txDiff.added.length) lines.unshift(`➕ ${mov(txDiff.added.length)}`);
+  return { addedCount: txDiff.added.length + itemsAdded, removedCount: txDiff.removed.length + itemsRemoved, text: bits.join(" · "), lines };
 }
 
 /* ---------- Riepilogo mensile (stessa logica dell'app: coupleMonthStats e coupleBalance) ---------- */
@@ -164,31 +168,35 @@ function monthlyMessage(data: any, key: string, today: string, showAmounts: bool
   const cats = new Map((data?.categories || []).map((c: any) => [String(c.id), c]));
   const top = [...byCat.entries()].sort((a, b) => b[1] - a[1]).slice(0, 3).map(([id, v]) => {
     const c: any = cats.get(id) || {};
-    return { label: `${c.emoji ? c.emoji + " " : ""}${c.name || "Altro"}`, amount: v };
+    return { emoji: c.emoji || "", name: c.name || "Altro", amount: v };
   });
   // Saldo di coppia come nell'app (movimenti fino a oggi)
   const bal = Math.round(all.filter((t: any) => t && typeof t.date === "string" && t.date <= today).reduce((s: number, t: any) => s + C.txDebt(t), 0) * 100) / 100;
-  let balance = "Siete in pari";
+  let balance = "⚖️ In pari";
   if (Math.abs(bal) >= 0.005) {
     const debtor = bal > 0 ? "b" : "a", creditor = debtor === "a" ? "b" : "a";
-    balance = showAmounts ? `${C.name(debtor)} deve ${fmt(Math.abs(bal))} a ${C.name(creditor)}` : `${C.name(debtor)} deve qualcosa a ${C.name(creditor)}`;
+    balance = `⚖️ ${C.name(debtor)} → ${C.name(creditor)}${showAmounts ? " " + fmt(Math.abs(bal)) : ""}`;
   }
+  const euro0 = (n: number) => "€" + Math.round(n).toLocaleString("it-IT");
   const lines: string[] = [];
   if (showAmounts) {
-    const who = (["a", "b", "joint"] as const).filter((k) => paid[k] > 0).map((k) => `${k === "joint" ? "comune" : C.name(k)} ${fmt(paid[k])}`);
-    lines.push(`Spese ${fmt(total)}${who.length > 1 ? " (" + who.join(" · ") + ")" : ""}`);
-    if (top.length) lines.push("Top: " + top.map((t) => `${t.label} ${fmt(t.amount)}`).join(", "));
+    lines.push(`💶 Spese ${fmt(total)}`);
+    const who = (["a", "b", "joint"] as const).filter((k) => paid[k] > 0).map((k) => `${k === "joint" ? "Comune" : C.name(k)} ${euro0(paid[k])}`);
+    if (who.length > 1) lines.push("💳 " + who.join(" · "));
+    if (top.length) lines.push(top.map((t) => `${t.emoji || "•"} ${euro0(t.amount)}`).join(" · "));
   } else {
-    lines.push(`${tx.length} ${tx.length === 1 ? "spesa" : "spese"} registrate`);
-    if (top.length) lines.push("Spese principali: " + top.map((t) => t.label).join(", "));
+    lines.push(`🧾 ${tx.length} ${tx.length === 1 ? "spesa" : "spese"}`);
+    if (top.length) lines.push(top.map((t) => `${t.emoji || "•"} ${t.name}`).join(" · "));
   }
-  const prevTotal = exp(monthBefore(key)).reduce((s: number, t: any) => s + (Number(t.amount) || 0), 0);
+  const prevKey = monthBefore(key);
+  const prevTotal = exp(prevKey).reduce((s: number, t: any) => s + (Number(t.amount) || 0), 0);
   if (prevTotal > 0 && total > 0) {
     const pct = Math.round(((total - prevTotal) / prevTotal) * 100);
-    lines.push(pct === 0 ? `Spese uguali ${aMese(monthBefore(key))}` : `Spese ${pct > 0 ? "+" : "−"}${Math.abs(pct)}% rispetto ${aMese(monthBefore(key))}`);
+    lines.push(pct === 0 ? `➖ Spese stabili vs ${monthName(prevKey)}` : `${pct > 0 ? "📈 +" : "📉 −"}${Math.abs(pct)}% spese vs ${monthName(prevKey)}`);
   }
   lines.push(balance);
-  return { title: `Noi Due · riepilogo di ${monthName(key)}`, body: lines.join("\n"), tag: `noidue-riepilogo-${key}`, url: "./" };
+  const m = monthName(key);
+  return { title: `📊 ${m.charAt(0).toUpperCase() + m.slice(1)}`, body: lines.join("\n"), tag: `noidue-riepilogo-${key}`, url: "./" };
 }
 
 async function loadCouple(coupleId: string) {
@@ -252,7 +260,8 @@ Deno.serve(async (req) => {
     const msg = buildMessage(old, fresh);
     if (!msg) return json({ sent: 0, reason: "nessuna aggiunta/rimozione" });
     const who = editor === "a" || editor === "b" ? (fresh?.couple?.[editor]?.name || "Il tuo partner") : "Il tuo partner";
-    const payload = { title: "Noi Due", body: `${who} ${msg.text}`, tag: "noidue-sync", url: "./" };
+    const tot = msg.addedCount + msg.removedCount;
+    const payload = { title: `👤 ${who} · ${tot} ${tot === 1 ? "modifica" : "modifiche"}`, body: msg.lines.slice(0, 5).join("\n"), tag: "noidue-sync", url: "./" };
     let q = admin.from("push_subscriptions").select("*").eq("app", APP).eq("couple_id", couple_id).eq("enabled", true);
     const { data: subs } = await q;
     const targets = (subs || []).filter((s: any) => !editor || !s.person || s.person !== editor);
@@ -278,12 +287,12 @@ Deno.serve(async (req) => {
       const { today } = localNow(s.tz);
       const key = monthBefore(today.slice(0, 7));
       const msg = monthlyMessage(coupleData, key, today, s.show_amounts)
-        || { title: `Noi Due · riepilogo di ${monthName(key)}`, body: `Nessuna spesa ${aMese(key)}: il giorno 1 di ogni mese riceverai qui il riepilogo.`, tag: "noidue-riepilogo-prova", url: "./" };
+        || { title: `📊 ${monthName(key).charAt(0).toUpperCase() + monthName(key).slice(1)}`, body: "🧾 Nessuna spesa\n📅 Il riepilogo arriva il giorno 1 di ogni mese", tag: "noidue-riepilogo-prova", url: "./" };
       results.push(await send(s, msg));
     }
     return json({ sent: results.filter((r) => r === "ok").length, results });
   }
-  const payload = { title: "Noi Due", body: "Notifiche attive: ti avviso quando viene aggiunto o rimosso qualcosa.", tag: "noidue-prova", url: "./" };
+  const payload = { title: "✅ Notifiche attive", body: "➕ Aggiunte del partner\n➖ Rimozioni del partner\n📊 Riepilogo il giorno 1", tag: "noidue-prova", url: "./" };
   const results: string[] = [];
   for (const s of subs) results.push(await send(s, payload));
   return json({ sent: results.filter((r) => r === "ok").length, results });

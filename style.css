@@ -6406,3 +6406,27 @@ html.amounts-hidden .stat-card-value::after {
 #pushCard .push-settings { display: grid; gap: 8px; margin: 0 0 10px; }
 #pushCard .toggle-line.push-line { display: flex; align-items: center; justify-content: flex-start; gap: 12px; font-size: 14px; }
 #pushCard .push-settings .push-msg { margin: 0; }
+
+/* =====================================================================
+   Altro: Sincronizzazione e Notifiche allineate alle altre sezioni
+   (stesso rientro delle righe di Gestione/Dati, titolo come "Aspetto").
+   Blocco identico in Bilancio e Noi Due.
+   ===================================================================== */
+#views .section-block.suite-sync-card {
+  padding: 14px 14px 15px !important;
+}
+#views .section-block.suite-sync-card > h2 {
+  font-size: 17px !important;
+  font-weight: 700 !important;
+  letter-spacing: -0.2px !important;
+  line-height: 1.25 !important;
+  margin: 0 0 6px !important;
+}
+#views .section-block.suite-sync-card .suite-sync-status {
+  margin: 0 0 12px !important;
+}
+#views .section-block.suite-sync-card input,
+#views .section-block.suite-sync-card select:not(#pushHourSelect) {
+  width: 100%;
+  box-sizing: border-box;
+}

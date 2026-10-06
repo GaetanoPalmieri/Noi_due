@@ -77,9 +77,8 @@ Supabase › Edge Functions › notify-noidue › Code: sostituisci TUTTO il con
 supabase/functions/notify-noidue/index.ts e premi Deploy. La verifica JWT resta disattivata.
 
 PASSO C — Giro orario (nuovo)
-SQL Editor › New query. Incolla supabase/cron_riepilogo.sql, sostituisci
-INCOLLA_QUI_NOIDUE_TRIGGER_SECRET con la stessa password di NOIDUE_TRIGGER_SECRET
-(quella che avevi inventato al passo 2) e premi Run. Nessun segreto nuovo da creare.
+SQL Editor › New query. Incolla supabase/cron_riepilogo.sql e premi Run.
+Non serve incollare nessuna password: la prende da sola dal trigger già installato.
 
 PASSO D — Sul telefono (su entrambi)
 Carica la nuova versione, apri Noi Due › Altro › Notifiche. Compaiono gli interruttori
@@ -94,3 +93,12 @@ Come funziona
   perché la notifica si vede anche a telefono bloccato: in quel caso dice "X deve qualcosa a Y").
 - Se in quel mese non c'è nessuna spesa, non arriva nulla.
 - Per controllare il giro: select * from cron.job_run_details order by start_time desc limit 5;
+
+
+=====================================================================
+NOTIFICHE SCHEMATICHE (6 ottobre 2026)
+=====================================================================
+Il testo delle notifiche ora è uno schema: un dato per riga con un'icona davanti.
+Cambia solo la funzione su Supabase, non l'app: per averle basta
+Supabase › Edge Functions › notify-noidue › Code › incolla il nuovo
+supabase/functions/notify-noidue/index.ts › Deploy.

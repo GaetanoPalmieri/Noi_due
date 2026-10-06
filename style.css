@@ -6401,3 +6401,8 @@ html.amounts-hidden .stat-card-value::after {
   line-height: 1.4;
   color: var(--ink-soft);
 }
+
+/* v1.15.0 — Notifiche: interruttori del riepilogo mensile (come in Bilancio) */
+#pushCard .push-settings { display: grid; gap: 8px; margin: 0 0 10px; }
+#pushCard .toggle-line.push-line { display: flex; align-items: center; justify-content: flex-start; gap: 12px; font-size: 14px; }
+#pushCard .push-settings .push-msg { margin: 0; }

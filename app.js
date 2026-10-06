@@ -4175,6 +4175,7 @@ function b64uToUint8(str){
 }
 function pushErrText(e){
   const t=String(e&&e.message||e||"");
+  if(/monthly_summary|last_monthly_sent/.test(t)) return "Su Supabase manca il riepilogo mensile: esegui supabase/riepilogo_mensile.sql (vedi GUIDA_NOTIFICHE).";
   if(/push_subscriptions/.test(t) && /(does not exist|42P01|PGRST205|schema cache)/.test(t)) return "Su Supabase manca la colonna/tabella delle notifiche: esegui il passo 2 della guida.";
   if(/notify-noidue|404/.test(t) && /function|not found|NOT_FOUND/i.test(t)) return "Su Supabase manca la funzione notify-noidue: esegui il passo 4 della guida.";
   if(e&&e.auth) return "Rifai l'accesso alla sincronizzazione qui sopra.";
@@ -4191,7 +4192,8 @@ async function refreshPushState(){
     pushState.sub=reg?await reg.pushManager.getSubscription():null;
     pushState.row=null;
     if(pushState.sub && window.SuiteSync && SuiteSync.signedIn){
-      const rows=await SuiteSync.api(`/rest/v1/push_subscriptions?select=enabled&app=eq.noidue&endpoint=eq.${encodeURIComponent(pushState.sub.endpoint)}`);
+      // select=* : se le colonne del riepilogo mensile non esistono ancora, semplicemente non arrivano
+      const rows=await SuiteSync.api(`/rest/v1/push_subscriptions?select=*&app=eq.noidue&endpoint=eq.${encodeURIComponent(pushState.sub.endpoint)}`);
       pushState.row=rows[0]||null;
     }
   }catch(e){ pushState.msg=pushErrText(e); pushState.err=true; }
@@ -4215,7 +4217,12 @@ function renderPushCard(){
   } else if(on){
     dot="on";
     status="Attive su questo telefono: ti avviso quando il tuo partner aggiunge o rimuove un movimento o un articolo da una lista.";
-    inner=`<div class="suite-sync-actions"><button type="button" class="suite-sync-primary primary" id="pushTestBtn"${pushState.busy?" disabled":""}>Invia una prova</button><button type="button" id="pushOffBtn"${pushState.busy?" disabled":""}>Disattiva</button></div>`;
+    const hasMonthly="monthly_summary" in pushState.row;
+    inner=`<div class="push-settings">${hasMonthly
+        ? `<label class="toggle-line push-line"><input type="checkbox" id="pushMonthlyInput"${pushState.row.monthly_summary!==false?" checked":""}> Riepilogo mensile (il giorno 1 alle 9:00)</label>
+           <label class="toggle-line push-line"><input type="checkbox" id="pushAmountsInput"${pushState.row.show_amounts?" checked":""}> Mostra gli importi nel riepilogo</label>`
+        : `<p class="push-msg">Riepilogo mensile: per attivarlo esegui su Supabase i file supabase/riepilogo_mensile.sql e cron_riepilogo.sql (vedi GUIDA_NOTIFICHE).</p>`}</div>
+      <div class="suite-sync-actions"><button type="button" class="suite-sync-primary primary" id="pushTestBtn"${pushState.busy?" disabled":""}>Invia una prova</button>${hasMonthly?`<button type="button" id="pushTestMonthlyBtn"${pushState.busy?" disabled":""}>Prova riepilogo</button>`:""}<button type="button" id="pushOffBtn"${pushState.busy?" disabled":""}>Disattiva</button></div>`;
   } else {
     status=Notification.permission==="denied"
       ? "Notifiche bloccate per Noi Due: riattivale in Impostazioni › Notifiche › Noi Due, poi torna qui."
@@ -4253,6 +4260,7 @@ async function pushEnable(){
     pushState.sub=(await reg.pushManager.getSubscription()) || (await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:b64uToUint8(PUSH_VAPID_PUBLIC)}));
     await pushSaveRow();
     pushState.row={enabled:true};
+    setTimeout(refreshPushState,300);
     pushState.busy=false; pushSay("Fatto. Tocca \"Invia una prova\" per controllare che arrivino.");
   }catch(e){ pushState.busy=false; pushSay(pushErrText(e),true); }
 }
@@ -4265,20 +4273,36 @@ async function pushDisable(){
   pushState.sub=null; pushState.row=null; pushState.busy=false;
   pushSay("Notifiche disattivate su questo telefono.");
 }
-async function pushTest(){
+async function pushTest(kind){
   if(pushState.busy) return;
-  pushState.busy=true; pushSay("Invio la prova…");
+  const monthly=kind==="monthly";
+  pushState.busy=true; pushSay(monthly?"Invio il riepilogo del mese scorso…":"Invio la prova…");
   try{
-    const r=await SuiteSync.api(PUSH_FN,{method:"POST",json:{test:true}});
+    if(monthly && syncNoiDue && syncNoiDue.sync) { try{ await syncNoiDue.sync("push-test"); }catch(e){} } // la funzione legge i dati online
+    const r=await SuiteSync.api(PUSH_FN,{method:"POST",json:monthly?{test:"monthly",endpoint:pushState.sub.endpoint}:{test:true}});
     pushState.busy=false;
-    pushSay(r&&r.sent?"Prova inviata: dovrebbe arrivare tra pochi secondi su tutti i telefoni della coppia.":"La prova non è partita: disattiva e riattiva le notifiche.",!(r&&r.sent));
+    pushSay(r&&r.sent?(monthly?"Riepilogo inviato a questo telefono: dovrebbe arrivare tra pochi secondi.":"Prova inviata: dovrebbe arrivare tra pochi secondi su tutti i telefoni della coppia."):"La prova non è partita: disattiva e riattiva le notifiche.",!(r&&r.sent));
   }catch(e){ pushState.busy=false; pushSay(pushErrText(e),true); }
+}
+async function pushUpdate(patch){
+  if(!pushState.sub||!pushState.row) return;
+  const prev=Object.assign({},pushState.row);
+  Object.assign(pushState.row,patch); pushState.msg=""; renderPushCard();
+  try{
+    await SuiteSync.api(`/rest/v1/push_subscriptions?endpoint=eq.${encodeURIComponent(pushState.sub.endpoint)}`,{method:"PATCH",
+      headers:{Prefer:"return=minimal"},json:Object.assign({updated_at:new Date().toISOString()},patch)});
+  }catch(e){ pushState.row=prev; pushSay(pushErrText(e),true); }
 }
 document.getElementById("pushCard")?.addEventListener("click",e=>{
   const id=e.target.closest("button")?.id;
   if(id==="pushOnBtn") pushEnable();
   else if(id==="pushOffBtn") pushDisable();
   else if(id==="pushTestBtn") pushTest();
+  else if(id==="pushTestMonthlyBtn") pushTest("monthly");
+});
+document.getElementById("pushCard")?.addEventListener("change",e=>{
+  if(e.target.id==="pushMonthlyInput") pushUpdate({monthly_summary:e.target.checked});
+  else if(e.target.id==="pushAmountsInput") pushUpdate({show_amounts:e.target.checked});
 });
 setTimeout(refreshPushState,1500);
 

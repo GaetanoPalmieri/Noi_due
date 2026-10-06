@@ -4139,9 +4139,20 @@ body::before {
   backdrop-filter: blur(16px) saturate(1.6);
 }
 /* ---------- Superfici in vetro ---------- */
-#views .forecast-card,#views .stat-card,#views .chart-wrap,#views .settings-rows,#views .stats-period-filter {
+#views .forecast-card,#views .stat-card,#views .chart-wrap,#views .settings-rows,#views .stats-period-filter,#views .suite-sync-card {
   background: var(--glass-card)!important;
   border: 1px solid var(--glass-edge)!important;
+  box-shadow: var(--glass-shadow)!important;
+  -webkit-backdrop-filter: blur(14px) saturate(1.5);
+  backdrop-filter: blur(14px) saturate(1.5);
+}
+#views .suite-sync-card {
+  border-radius: var(--radius-xl)!important;
+}
+/* Grafici: legenda, stesso vetro delle altre card */
+#views .pie-legend-item {
+  background: var(--glass-row)!important;
+  border-color: var(--glass-edge)!important;
   box-shadow: var(--glass-shadow)!important;
   -webkit-backdrop-filter: blur(14px) saturate(1.5);
   backdrop-filter: blur(14px) saturate(1.5);

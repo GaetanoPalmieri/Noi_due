@@ -6301,3 +6301,103 @@ html.amounts-hidden .stat-card-value::after {
   display: flex;
   justify-content: center;
 }
+
+/* =====================================================================
+   v1.13.6 — Passaggio finale di trasparenza (portato da Bilancio).
+   Pannelli, popup e riquadri secondari: più trasparenti, con sfocatura
+   per restare leggibili. Va in fondo al file per vincere sulle regole
+   precedenti che impostavano uno sfondo pieno.
+   ===================================================================== */
+.sheet {
+  background: color-mix(in srgb, var(--paper) 56%, transparent) !important;
+  -webkit-backdrop-filter: blur(18px) saturate(1.8);
+  backdrop-filter: blur(18px) saturate(1.8);
+}
+.overlay-backdrop {
+  background: rgba(20, 24, 26, .26) !important;
+}
+:root[data-theme="dark"] .overlay-backdrop {
+  background: rgba(8, 11, 13, .38) !important;
+}
+.movement-action-overlay.show {
+  background: rgba(20, 24, 26, .22) !important;
+}
+:root[data-theme="dark"] .movement-action-overlay.show {
+  background: rgba(8, 11, 13, .42) !important;
+}
+.movement-action-menu {
+  background: color-mix(in srgb, var(--overlay-surface) 50%, transparent) !important;
+  border-color: var(--glass-edge, var(--line)) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(1.8);
+  backdrop-filter: blur(20px) saturate(1.8);
+}
+.ask-dialog,.app-update-card {
+  background: color-mix(in srgb, var(--card) 56%, transparent) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(1.8);
+  backdrop-filter: blur(20px) saturate(1.8);
+}
+.period-menu {
+  background: color-mix(in srgb, var(--card) 52%, transparent) !important;
+  -webkit-backdrop-filter: blur(16px) saturate(1.7);
+  backdrop-filter: blur(16px) saturate(1.7);
+}
+/* Riquadri dentro pannelli e popup: calendario, liste, categorie, aggiunta spesa */
+:is(.movement-action-menu, .sheet, .ask-dialog, .app-update-card) :is(.movement-action-btn, .movement-action-cancel, .calendar-cell, .pp-btn:not(.primary), .pp-month:not(.selected), .month-nav, .ask-cancel, .pill-btn, .settings-rows, .list-item, .category-row, .template-manage-row, .suite-history-row:not(.confirm)) {
+  background: color-mix(in srgb, var(--surface-strong, var(--card)) 48%, transparent) !important;
+  border-color: var(--glass-edge, var(--line)) !important;
+}
+/* Liste della spesa e righe categoria anche fuori dai pannelli */
+#views :is(.list-item, .category-row, .template-manage-row) {
+  background: color-mix(in srgb, var(--surface-strong, var(--card)) 48%, transparent) !important;
+  border-color: var(--glass-edge, var(--line)) !important;
+  -webkit-backdrop-filter: blur(14px) saturate(1.6);
+  backdrop-filter: blur(14px) saturate(1.6);
+}
+/* Scheda Notifiche: stesso vetro e stessi pulsanti gialli della Sincronizzazione */
+#pushCard:empty {
+  display: none !important;
+}
+#views #pushCard {
+  background: var(--glass-card) !important;
+  border: 1px solid var(--glass-edge) !important;
+  border-radius: var(--radius-xl) !important;
+  box-shadow: var(--glass-shadow) !important;
+  -webkit-backdrop-filter: blur(14px) saturate(1.5);
+  backdrop-filter: blur(14px) saturate(1.5);
+  padding: 14px 15px 15px;
+}
+#pushCard button.suite-sync-primary {
+  background: linear-gradient(145deg, #f7c463, #e48d24) !important;
+  color: #241800 !important;
+  border: 0 !important;
+  box-shadow: 0 8px 20px -8px rgba(232, 147, 44, .6) !important;
+}
+#pushCard button {
+  min-height: 44px;
+  padding: 8px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(127, 140, 150, .3);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-weight: 700;
+  font-size: 15px;
+}
+#pushCard .suite-sync-actions {
+  display: grid !important;
+  grid-template-columns: 1fr auto !important;
+  gap: 8px !important;
+}
+#pushCard .suite-sync-actions button {
+  width: 100%;
+  margin: 0 !important;
+}
+#pushCard .push-on-btn {
+  width: 100%;
+}
+#pushCard .push-msg {
+  margin: 10px 0 0;
+  font-size: 12.5px;
+  line-height: 1.4;
+  color: var(--ink-soft);
+}

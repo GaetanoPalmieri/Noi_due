@@ -4,11 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
 <title>Noi Due — Spese di coppia</title>
-<meta name="app-version" content="1.15.1">
+<meta name="app-version" content="1.15.2">
 <meta name="description" content="Spese di coppia: chi ha pagato, chi deve a chi, budget e statistiche.">
 
 <!-- PWA / iOS home screen -->
-<link rel="manifest" href="manifest.json?v=1.15.1">
+<link rel="manifest" href="manifest.json?v=1.15.2">
 <meta name="theme-color" content="#12181F">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -16,11 +16,11 @@
 <!-- iPhone: icona nella cartella principale, senza ?v=, con la dimensione dichiarata (la legge anche Safari più vecchio). -->
 <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
 <link rel="apple-touch-icon-precomposed" sizes="180x180" href="apple-touch-icon-precomposed.png">
-<link rel="icon" href="icons/icon-192.png?v=1.15.1">
+<link rel="icon" href="icons/icon-192.png?v=1.15.2">
 
-<link rel="stylesheet" href="style.css?v=1.15.1">
+<link rel="stylesheet" href="style.css?v=1.15.2">
 <!-- Token grafici condivisi dalle 4 app: va caricato per ultimo. -->
-<link rel="stylesheet" href="suite-tokens.css?v=1.15.1">
+<link rel="stylesheet" href="suite-tokens.css?v=1.15.2">
 </head>
 <body>
 
@@ -52,19 +52,19 @@
       <h1 class="view-title">Home</h1>
       <div class="hero nd-home-hero">
         <p class="hero-label">Spese del mese</p>
-        <div class="balance-line"><p class="hero-amount" id="ndMonthSpent">€0</p><button class="balance-hide" id="toggleHomeBalance" type="button" aria-label="Nascondi importi"></button></div>
+        <div class="balance-line"><p class="hero-amount" id="ndMonthSpent">0,00 €</p><button class="balance-hide" id="toggleHomeBalance" type="button" aria-label="Nascondi importi"></button></div>
         <div class="hero-split nd-paid-split">
-          <div class="hero-split-item"><span class="nd-dot" id="ndDotA"></span><span class="hero-split-label" id="ndPaidALabel">Persona 1</span><span class="hero-split-value" id="ndPaidA">€0</span></div>
-          <div class="hero-split-item"><span class="nd-dot" id="ndDotB"></span><span class="hero-split-label" id="ndPaidBLabel">Persona 2</span><span class="hero-split-value" id="ndPaidB">€0</span></div>
+          <div class="hero-split-item"><span class="nd-dot" id="ndDotA"></span><span class="hero-split-label" id="ndPaidALabel">Persona 1</span><span class="hero-split-value" id="ndPaidA">0,00 €</span></div>
+          <div class="hero-split-item"><span class="nd-dot" id="ndDotB"></span><span class="hero-split-label" id="ndPaidBLabel">Persona 2</span><span class="hero-split-value" id="ndPaidB">0,00 €</span></div>
         </div>
         <div class="hero-liquidity">
-          <div class="hero-liquidity-item"><span>Cassa comune</span><strong id="ndPaidJoint">€0</strong></div>
-          <div class="hero-liquidity-item"><span>Rimborsi tra voi</span><strong id="ndBudgetLeft">€0</strong></div>
+          <div class="hero-liquidity-item"><span>Cassa comune</span><strong id="ndPaidJoint">0,00 €</strong></div>
+          <div class="hero-liquidity-item"><span>Rimborsi tra voi</span><strong id="ndBudgetLeft">0,00 €</strong></div>
         </div>
       </div>
       <button type="button" class="couple-strip" id="homeCoupleStrip" aria-label="Apri Saldi">
         <span class="couple-avs"><span class="couple-av sm" id="stripAvA">1</span><span class="couple-av sm b" id="stripAvB">2</span></span>
-        <span class="couple-strip-text"><span id="stripWho">Siete in pari</span><strong id="stripAmount">€0</strong></span>
+        <span class="couple-strip-text"><span id="stripWho">Siete in pari</span><strong id="stripAmount">0,00 €</strong></span>
         <span class="chev" aria-hidden="true">›</span>
       </button>
       <div class="home-lists" id="homeLists" aria-label="Liste"></div>
@@ -110,7 +110,7 @@
           <button type="button" class="pill-btn mini-btn" id="editCoupleBtn">Modifica</button>
         </div>
         <p class="hero-label" id="coupleWho">Siete in pari</p>
-        <div class="balance-line"><p class="hero-amount" id="coupleAmount">€0</p><button class="balance-hide" id="toggleCoupleBalance" type="button" aria-label="Nascondi importi"></button></div>
+        <div class="balance-line"><p class="hero-amount" id="coupleAmount">0,00 €</p><button class="balance-hide" id="toggleCoupleBalance" type="button" aria-label="Nascondi importi"></button></div>
         <div class="couple-tug" id="coupleTug" aria-hidden="true"><span class="couple-knot" id="coupleKnot"></span></div>
         <div class="couple-tug-names"><span id="coupleNameA"></span><span id="coupleNameB"></span></div>
         <p class="couple-total-note">Totale di tutti i gruppi</p>
@@ -130,9 +130,9 @@
       </div>
 
       <div class="forecast-grid" aria-label="Chi ha pagato in tutto">
-        <div class="forecast-card"><span id="couplePaidALabel">Ha pagato</span><strong id="couplePaidA">€0</strong></div>
-        <div class="forecast-card"><span id="couplePaidBLabel">Ha pagato</span><strong id="couplePaidB">€0</strong></div>
-        <div class="forecast-card wide"><span>Cassa comune</span><strong id="couplePaidJoint">€0</strong></div>
+        <div class="forecast-card"><span id="couplePaidALabel">Ha pagato</span><strong id="couplePaidA">0,00 €</strong></div>
+        <div class="forecast-card"><span id="couplePaidBLabel">Ha pagato</span><strong id="couplePaidB">0,00 €</strong></div>
+        <div class="forecast-card wide"><span>Cassa comune</span><strong id="couplePaidJoint">0,00 €</strong></div>
       </div>
 
       <div class="section-block">
@@ -413,15 +413,15 @@
     </div>
     <div class="group-detail-hero" id="groupDetailHero">
       <p class="hero-label" id="groupDetailWho">Siete in pari</p>
-      <p class="hero-amount" id="groupDetailAmount">€0</p>
+      <p class="hero-amount" id="groupDetailAmount">0,00 €</p>
       <div class="couple-tug" aria-hidden="true"><span class="couple-knot" id="groupDetailKnot"></span></div>
       <div class="couple-tug-names"><span id="groupDetailNameA"></span><span id="groupDetailNameB"></span></div>
       <button type="button" class="gd-settle" id="groupSettleBtn">🤝 Rimborso in questo gruppo</button>
     </div>
     <div class="forecast-grid group-detail-grid">
-      <div class="forecast-card"><span id="gdPaidALabel">Ha pagato</span><strong id="gdPaidA">€0</strong></div>
-      <div class="forecast-card"><span id="gdPaidBLabel">Ha pagato</span><strong id="gdPaidB">€0</strong></div>
-      <div class="forecast-card"><span>Cassa comune</span><strong id="gdPaidJoint">€0</strong></div>
+      <div class="forecast-card"><span id="gdPaidALabel">Ha pagato</span><strong id="gdPaidA">0,00 €</strong></div>
+      <div class="forecast-card"><span id="gdPaidBLabel">Ha pagato</span><strong id="gdPaidB">0,00 €</strong></div>
+      <div class="forecast-card"><span>Cassa comune</span><strong id="gdPaidJoint">0,00 €</strong></div>
     </div>
     <p class="field-hint gd-month" id="gdMonth"></p>
     <h4 class="gd-sub">Movimenti del gruppo</h4>
@@ -859,7 +859,7 @@
   </div>
 </template>
 
-<script src="suite.js?v=1.15.1"></script>
-<script src="app.js?v=1.15.1"></script>
+<script src="suite.js?v=1.15.2"></script>
+<script src="app.js?v=1.15.2"></script>
 </body>
 </html>

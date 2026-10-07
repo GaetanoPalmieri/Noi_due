@@ -1,0 +1,11 @@
+Versione 1.11.0 — sincronizzazione online (Supabase)
+
+- Nuova scheda "Sincronizzazione" in Altro: accedi con email e password (una volta per app).
+- I dati restano sul telefono (l'app funziona anche offline) e in più c'è una copia online:
+  si sincronizza all'apertura, quando torni nell'app, quando torna la rete e pochi secondi dopo ogni modifica.
+- Se nel frattempo un altro dispositivo ha cambiato qualcosa, i dati vengono uniti invece di essere sovrascritti.
+- Pallino verde = collegato; arancione = sincronizzo; rosso = errore (il messaggio spiega cosa non va).
+- "Esci" scollega solo questo telefono: i dati restano sia qui sia online.
+- Noi Due: una sola copia condivisa dalla coppia. Le modifiche dei due telefoni (spese, liste, preferiti)
+  si uniscono come nell'importazione con unione; anche se sui due telefoni le persone sono invertite.
+  Le foto dei prodotti vengono caricate online e compaiono anche sull'altro telefono.

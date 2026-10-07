@@ -6430,3 +6430,10 @@ html.amounts-hidden .stat-card-value::after {
   width: 100%;
   box-sizing: border-box;
 }
+
+/* 1.15.2 — Spese totali: importi per persona leggibili in entrambi i temi (prima erano bianchi,
+   invisibili in chiaro) e le due persone sulla stessa riga anche con il nuovo formato 1.234,56 € */
+#view-home .nd-paid-split { flex-wrap: nowrap !important; gap: 6px 14px !important; justify-content: center !important; }
+#view-home .nd-paid-split .hero-split-item { min-width: 0; gap: 5px; }
+#view-home .nd-paid-split .hero-split-label { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#view-home .nd-paid-split .hero-split-value { color: var(--ink) !important; font-size: 14.5px !important; white-space: nowrap; }

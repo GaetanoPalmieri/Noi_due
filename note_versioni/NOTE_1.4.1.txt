@@ -1,0 +1,94 @@
+Noi Due 1.4.1
+- Icona su iPhone: apple-touch-icon.png (e apple-touch-icon-precomposed.png) ora sono anche nella cartella
+  principale dell'app, senza ?v= e con sizes="180x180". IMPORTANTE: carica sul sito anche la cartella icons/
+  e i due file .png della cartella principale, poi elimina l'icona dalla Home e aggiungila di nuovo.
+
+Noi Due 1.4.0 — solo le sezioni che servono a una coppia
+- Barra in basso: Home · Saldi · Liste · Grafici · Altro. Tolte le schede R&P e Conti ereditate da Bilancio.
+- Niente più conti: chi paga è Persona 1, Persona 2 o la Cassa comune. Nel modulo il campo si chiama "Pagato da"
+  e propone l'ultimo usato. I conti della 1.3.0 vengono uniti per persona (es. "Carta Marco" e "Contanti Marco"
+  diventano "Marco"); i giroconti tra conti della stessa persona spariscono perché non servono più.
+- Home: "Spese del mese" con quanto ha pagato ciascuno, la cassa comune e il budget rimasto; sotto il saldo tra
+  voi, le liste e i movimenti recenti. Tolte "Saldo attuale / previsto / Pagamenti in arrivo" e "Prossime scadenze".
+- "+": Spesa, Rimborso, Da comprare (tolti Ricorrente, Pianificato, Trasferimento e Prelievo ATM).
+- Nuova scheda Liste (prima era dentro Coppia). La scheda Coppia ora si chiama Saldi.
+- Nuova spesa: solo uscite (le vecchie entrate restano modificabili). Rimborso: niente scelta del conto, basta
+  scegliere cosa saldare e l'importo.
+- Grafici: "Spese del periodo" al posto di "Saldo periodo", grafico Spese, sezione "Chi ha pagato" al posto
+  di "Ripartizione per conto"; tolti Entrate e Saldo cumulato.
+- Altro: "La coppia: nomi e colori", Categorie e budget, Cestino, Aspetto, Dati.
+
+Noi Due 1.3.0
+- Liste: nuovo pulsante 📷 accanto a "+". Apre "Cerca prodotto":
+  · "Inquadra il codice": legge il codice a barre dal vivo con la fotocamera;
+  · "Scatta una foto": se nella foto c'è un codice a barre lo legge, altrimenti tiene la foto del prodotto;
+  · oppure scrivi il codice a mano.
+  Il codice viene cercato nei database aperti Open Food Facts, Open Beauty Facts, Open Products Facts e
+  Open Pet Food Facts: nome, marca, formato e foto si compilano da soli. Se non c'è, scrivi il nome tu.
+  Link pronti: Scheda prodotto, Cerca su Google, Confronta prezzi, Amazon.
+- Ogni articolo ha "›" per i dettagli: foto, nome, prezzo, codice (con 🔎 per cercarlo), link ed eliminazione.
+  Tocca l'articolo per spuntarlo come prima.
+- Servono internet e il permesso alla fotocamera. Le foto sono ridotte (circa 30-60 KB) per non riempire la memoria.
+- Backup: "Esporta / condividi backup" apre la condivisione dell'iPhone (AirDrop, WhatsApp, File…).
+- Importa backup: si apre una scelta con il confronto tra questo telefono e il backup
+  (movimenti, gruppi, liste, ultimo movimento, data di modifica):
+  · Unisci i due (consigliato): tiene i dati di entrambi; per un elemento modificato su tutti e due scegli
+    quale versione tenere (propone quella modificata più di recente). Ciò che è stato eliminato su uno dei
+    due telefoni resta eliminato. Conti, categorie, gruppi e liste con lo stesso nome diventano uno solo;
+    se nel backup le due persone sono in ordine inverso vengono scambiate. La stessa cosa da comprare
+    aggiunta da tutti e due resta una volta sola.
+  · Usa solo il backup: sostituisce tutto.
+  · Tieni solo questo telefono: non importa niente.
+  Prima di unire o sostituire viene salvata una copia: Altro › "Annulla ultima importazione".
+
+Noi Due 1.2.0
+- Liste della spesa e delle cose da comprare. Di serie: 🛒 Spesa (gruppo Spese di coppia) e 🏠 Per la casa (gruppo Casa).
+  "+ Nuova" in Coppia › Liste crea altre liste con nome, icona e gruppo.
+- Home: sotto il saldo tra voi, una pillola per ogni lista con il numero di cose da comprare; tocca per aprirla.
+- Nella lista: scrivi e premi Invio (prezzo stimato facoltativo), tocca un articolo per spuntarlo: passa in
+  "Nel carrello". ✕ elimina un articolo, "Togli" svuota il carrello. In fondo la stima di spesa.
+- "Registra come spesa": apre il nuovo movimento già compilato (nome della lista, totale dei prezzi, categoria
+  simile al nome, gruppo della lista, articoli nella nota). Scegli chi ha pagato e come dividere; al salvataggio
+  gli articoli nel carrello escono dalla lista.
+- Schermata di avvio e avviso di aggiornamento con il nome Noi Due (prima comparivano "Money Tracker" e €).
+
+Noi Due 1.1.1
+- Saldo nascosto: nei grafici le cifre diventano pallini •••• invece di sparire (come Bilancio 1.10.9).
+
+Noi Due 1.1.0
+- Gruppi separati, ognuno con il proprio saldo: di serie Casa 🏠, Spese di coppia 💑 e Viaggi ✈️.
+  In Coppia, la card grande mostra il totale di tutti i gruppi; sotto, la sezione "Gruppi" ha il saldo
+  di ciascuno e quanto avete speso nel mese. "+ Nuovo" crea un gruppo.
+- Tocca un gruppo: saldo con la fune, "Rimborso in questo gruppo", chi ha pagato nel mese e tutti i suoi
+  movimenti. "Modifica": nome, icona (tastiera emoji come nelle categorie), colore, divisione predefinita
+  del gruppo ed eliminazione (i movimenti passano a un altro gruppo).
+- Movimento, Ricorrente e Pianificato: campo "Gruppo" sopra "Come dividere". Propone l'ultimo usato.
+  Nelle righe dei movimenti compare l'icona del gruppo accanto alla divisione.
+- Rimborso: "Cosa saldare" con Tutti i gruppi o un gruppo solo (con il saldo accanto).
+  Il rimborso del totale si ripartisce tra i gruppi: se salda tutto, ogni gruppo torna in pari;
+  se è parziale, ogni gruppo scende nella stessa proporzione.
+- Trasferimento come scelta separata nel "+" (come in Bilancio 1.10.8); un trasferimento tra i conti
+  delle due persone chiede il gruppo e conta come rimborso. Prelievo ATM modificabile.
+- Correzione importante: in 1.0.0, riaprendo l'app i dati salvati potevano non essere caricati
+  (l'app ripartiva vuota). Ora vengono letti correttamente.
+- I dati della 1.0.0 vengono assegnati al gruppo "Spese di coppia".
+
+Noi Due 1.0.0 — spese di coppia (derivata da Bilancio 1.10.7)
+Installazione: mettere la cartella noi_due accanto a money_tracker (indirizzo diverso) e aggiungerla
+alla schermata Home. Dati, tema e cache sono separati da Bilancio: le due app non si toccano.
+
+- Stessa grafica, pannelli, gesti, calendario, R&P, budget, statistiche, cestino e backup di Bilancio.
+- Nuova scheda "Coppia": quanto deve uno all'altro, barra a "tiro alla fune", chi ha pagato nel mese,
+  quote di ciascuno, spese divise del mese e storico dei rimborsi. "Modifica" imposta nomi, colori
+  e divisione predefinita (a metà o personale). I conti "Carta Persona 1/2" prendono il nuovo nome.
+- Home: riquadro con il saldo tra voi due, tocca per aprire Coppia.
+- Conti: campo "Di chi è" (persona 1, persona 2, comune). Le spese dal conto comune non creano debiti.
+- Movimento, Ricorrente e Pianificato: campo "Come dividere" per i conti personali —
+  A metà, Percentuale (cursore), Tutto all'altro, Solo chi paga — con l'anteprima di chi dovrà quanto.
+  Le entrate sono personali, salvo scelta diversa.
+- Rimborso tra voi: dal "+" o da Coppia, propone l'importo che azzera il saldo. È un trasferimento
+  tra i conti delle due persone, quindi aggiorna anche i saldi dei conti. Ogni trasferimento tra
+  conti di persone diverse conta come rimborso.
+- Scheda Statistiche rinominata "Grafici" per far stare sei schede nella barra.
+- Limite: i dati restano sul telefono. Per usarla in due serve un solo telefono condiviso
+  oppure, in futuro, una sincronizzazione.

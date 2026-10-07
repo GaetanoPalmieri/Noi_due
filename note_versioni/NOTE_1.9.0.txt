@@ -1,0 +1,14 @@
+Noi Due 1.9.0 — preferiti con uno swipe
+
+Liste della spesa
+- Scorri un prodotto verso sinistra: compaiono ☆ Preferito ed Elimina. Tocca la stellina e il prodotto va
+  nei preferiti (se lo era già, la stessa stellina lo toglie). Uno swipe lungo elimina subito, come prima.
+- Scorri a destra: nel carrello (come prima). Tieni premuto: dettagli.
+- Tocca la riga o un'altra riga per richiudere i pulsanti. Sotto la lista c'è un promemoria dei gesti.
+
+Correzioni
+- Icone: la cartella icons/ era vuota, quindi il service worker non riusciva a salvare l'app per l'uso
+  offline (e il popup di aggiornamento poteva non comparire). Ora le icone ci sono.
+
+Stile comune alle 4 app
+- Scheda attiva della barra in basso verde, come in Bilancio, RecompApp e Style.

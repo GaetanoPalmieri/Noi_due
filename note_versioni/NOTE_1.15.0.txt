@@ -1,0 +1,7 @@
+VERSIONE 1.15.0 — Riepilogo mensile di coppia
+
+- Il giorno 1 di ogni mese dalle 9:00 arriva il riepilogo del mese appena chiuso: spese di coppia,
+  chi ha pagato quanto, 3 categorie principali, confronto col mese prima e chi deve quanto a chi.
+- Altro › Notifiche: interruttori "Riepilogo mensile" e "Mostra gli importi nel riepilogo",
+  pulsante "Prova riepilogo" (arriva solo sul telefono da cui lo tocchi).
+- Da installare su Supabase: vedi GUIDA_NOTIFICHE.txt, sezione "NOVITÀ 1.15.0".

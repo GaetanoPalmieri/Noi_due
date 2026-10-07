@@ -16,17 +16,19 @@ const EMOJIS = ["🛒","🚗","💡","🏠","💊","🎬","👕","✈️","📚"
 function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,8); }
 function pad2(n){ return String(n).padStart(2,"0"); }
 function todayISO(){ const d=new Date(); return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`; }
+/* Formato importi unico della suite (suite.js): 1.234,56 € */
 function fmt(n){
+  if(window.SuiteFmt) return SuiteFmt.money(n);
   const v = Math.round((n||0)*100)/100;
-  return "€" + v.toLocaleString("it-IT", { minimumFractionDigits: v % 1 === 0 ? 0 : 2, maximumFractionDigits: 2 });
+  return v.toLocaleString("it-IT", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + "\u00a0€";
 }
 function fmtSigned(n){ return (n>=0?"+":"−") + fmt(Math.abs(n)); }
 /* Con il saldo nascosto le cifre dei grafici diventano pallini (non spariscono). */
 function maskAmt(text,dots="••••"){ return balancesHidden ? dots : text; }
 function parseAmount(str){
   if(!str) return 0;
-  const cleaned = String(str).replace(/[€\s]/g,"").replace(",",".");
-  const v = parseFloat(cleaned);
+  // legge anche "1.234,56" (punto delle migliaia) senza scambiarlo per 1,234
+  const v = window.SuiteFmt ? SuiteFmt.parse(str) : parseFloat(String(str).replace(/[€\s]/g,"").replace(",","."));
   return isNaN(v) ? 0 : Math.abs(v);
 }
 function autoGrowAmountInput(el){
@@ -2566,7 +2568,7 @@ function renderCoupleGroups(){
     const who=Math.abs(bal)<0.005?"In pari":`${personName(debtor)} deve a ${personName(otherPerson(debtor))}`;
     card.innerHTML=`<span class="mv-ic">${emojiIconHtml(g.emoji)}</span>
       <span class="group-card-text"><strong>${escapeHtml(g.name)}</strong><span>${escapeHtml(who)}</span><span>${balancesHidden?"••••":fmt(spent.paid.a+spent.paid.b+spent.paid.joint)} spesi in tutto</span></span>
-      <span class="group-card-amt" style="color:${Math.abs(bal)<0.005?"var(--ink-soft)":personColor(otherPerson(debtor))}">${Math.abs(bal)<0.005?"€0":(balancesHidden?"••••":fmt(Math.abs(bal)))}</span>
+      <span class="group-card-amt" style="color:${Math.abs(bal)<0.005?"var(--ink-soft)":personColor(otherPerson(debtor))}">${Math.abs(bal)<0.005?fmt(0):(balancesHidden?"••••":fmt(Math.abs(bal)))}</span>
       <span class="chev" aria-hidden="true">›</span>`;
     card.addEventListener("click",()=>openGroupDetail(g.id));
     box.appendChild(card);

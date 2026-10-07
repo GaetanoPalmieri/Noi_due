@@ -1,0 +1,10 @@
+VERSIONE 1.15.2 — Formato importi unico della suite
+
+- Importi scritti come in tutte le app: 1.234,56 € (simbolo dopo, punto delle migliaia,
+  sempre due decimali). Prima: €1.234,56 e €10 senza decimali.
+- Correzione: un importo scritto a mano con il punto delle migliaia ("1.234,56") ora viene
+  letto come 1234,56 e non più come 1,234.
+- Notifiche nello stesso formato: aggiorna la funzione notify-noidue su Supabase con il nuovo
+  supabase/functions/notify-noidue/index.ts (facoltativo).
+- Spese totali: gli importi per persona erano bianchi e invisibili in tema chiaro (difetto già
+  presente prima): ora usano il colore del testo e restano sulla stessa riga.

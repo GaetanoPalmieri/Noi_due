@@ -1,0 +1,5 @@
+VERSIONE 1.15.1 — Altro: riquadri allineati
+
+- Sincronizzazione e Notifiche: stesso rientro delle altre sezioni (testo, campi e pulsanti
+  non toccano più il bordo) e titolo della stessa misura di "Aspetto", "Gestione", "Dati".
+- Identico in Bilancio e Noi Due.

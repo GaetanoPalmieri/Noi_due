@@ -6437,3 +6437,345 @@ html.amounts-hidden .stat-card-value::after {
 #view-home .nd-paid-split .hero-split-item { min-width: 0; gap: 5px; }
 #view-home .nd-paid-split .hero-split-label { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 #view-home .nd-paid-split .hero-split-value { color: var(--ink) !important; font-size: 14.5px !important; white-space: nowrap; }
+
+/* =====================================================================
+   Noi Due 1.16.0 — Pannello "Aggiungi un prodotto" alla lista (rifatto)
+   Scheda in vetro come il resto della suite: campo grande in evidenza,
+   dettagli (quantità, prezzo, reparto, per chi) che si aprono mentre scrivi,
+   pulsante ambra a tutta larghezza, strumenti rapidi sotto.
+   ===================================================================== */
+#overlayRoot #sheetListDetail .lc {
+  margin: 4px 0 10px;
+  padding: 6px;
+  border-radius: 20px;
+  background: var(--glass-card, var(--card));
+  border: 1px solid var(--glass-edge, var(--line));
+  box-shadow: var(--glass-shadow, none);
+  -webkit-backdrop-filter: blur(18px) saturate(1.4);
+  backdrop-filter: blur(18px) saturate(1.4);
+  transition: box-shadow .2s ease, border-color .2s ease;
+}
+#overlayRoot #sheetListDetail .lc.open,
+#overlayRoot #sheetListDetail .lc:focus-within {
+  border-color: rgba(228, 141, 36, .55);
+  box-shadow: 0 0 0 3px rgba(228, 141, 36, .14), var(--glass-shadow, none);
+}
+#overlayRoot #sheetListDetail .lc-main {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 50px;
+  padding: 0 4px 0 12px;
+}
+#overlayRoot #sheetListDetail .lc-plus {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 9px;
+  background: var(--amber-grad, linear-gradient(145deg, #f7c463, #e48d24));
+  color: var(--suite-on-amber, #241800);
+  font-size: 17px;
+  font-weight: 800;
+  line-height: 1;
+}
+#overlayRoot #sheetListDetail .lc .lc-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 46px;
+  padding: 0 4px !important;
+  margin: 0 !important;
+  border: 0 !important;
+  outline: none !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  color: var(--ink) !important;
+  font-size: 17px !important;
+  font-weight: 600;
+}
+#overlayRoot #sheetListDetail .lc .lc-input::placeholder {
+  color: var(--ink-soft);
+  font-weight: 500;
+  opacity: .85;
+}
+#overlayRoot #sheetListDetail .lc-icon {
+  flex: none;
+  width: 42px;
+  height: 42px;
+  border-radius: 13px;
+  border: 1px solid var(--glass-edge, var(--line));
+  background: var(--glass-row, var(--card));
+  font-size: 19px;
+  line-height: 1;
+  padding: 0;
+}
+#overlayRoot #sheetListDetail .lc-more {
+  display: grid;
+  gap: 12px;
+  padding: 10px 8px 6px;
+  margin-top: 4px;
+  border-top: 1px solid var(--glass-edge, var(--line));
+  animation: lc-in .18s ease-out;
+}
+#overlayRoot #sheetListDetail .lc-more[hidden] {
+  display: none;
+}
+@keyframes lc-in {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: none; }
+}
+#overlayRoot #sheetListDetail .lc-grid {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 10px;
+  align-items: end;
+}
+#overlayRoot #sheetListDetail .lc-field {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+  margin: 0;
+}
+#overlayRoot #sheetListDetail .lc-label {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+#overlayRoot #sheetListDetail .lc-label small {
+  text-transform: none;
+  letter-spacing: 0;
+  font-weight: 600;
+  color: #c27a1c;
+}
+#overlayRoot #sheetListDetail .lc-label small[hidden] {
+  display: none;
+}
+#overlayRoot #sheetListDetail .lc-stepper {
+  display: inline-flex;
+  align-items: center;
+  height: 44px;
+  padding: 3px;
+  border-radius: 14px;
+  border: 1px solid var(--glass-edge, var(--line));
+  background: var(--glass-row, var(--card));
+}
+#overlayRoot #sheetListDetail .lc-stepper button {
+  width: 38px;
+  height: 36px;
+  border: 0;
+  border-radius: 11px;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-size: 21px;
+  font-weight: 700;
+  padding: 0;
+}
+#overlayRoot #sheetListDetail .lc-stepper button:active {
+  background: var(--glass-strong, var(--card2));
+}
+#overlayRoot #sheetListDetail .lc-stepper output {
+  min-width: 30px;
+  text-align: center;
+  font-weight: 800;
+  font-size: 17px;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+}
+#overlayRoot #sheetListDetail .lc-money {
+  display: flex;
+  align-items: center;
+  height: 44px;
+  padding: 0 12px;
+  border-radius: 14px;
+  border: 1px solid var(--glass-edge, var(--line));
+  background: var(--glass-row, var(--card));
+}
+#overlayRoot #sheetListDetail .lc-money:focus-within {
+  border-color: rgba(228, 141, 36, .6);
+}
+#overlayRoot #sheetListDetail .lc-money input {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 40px;
+  padding: 0 !important;
+  margin: 0 !important;
+  border: 0 !important;
+  outline: none !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  color: var(--ink) !important;
+  font-size: 16px !important;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+#overlayRoot #sheetListDetail .lc-money input::placeholder {
+  color: var(--ink-soft);
+  font-weight: 500;
+}
+#overlayRoot #sheetListDetail .lc-money i {
+  font-style: normal;
+  font-weight: 700;
+  color: var(--ink-soft);
+}
+#overlayRoot #sheetListDetail .lc-chips {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  scroll-behavior: smooth;
+  margin: 0 -8px;
+  padding: 0 8px 2px;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+#overlayRoot #sheetListDetail .lc-chips::-webkit-scrollbar {
+  display: none;
+}
+#overlayRoot #sheetListDetail .lc-chip,
+#overlayRoot #sheetListDetail .lc-seg-btn {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 36px;
+  padding: 0 12px;
+  border-radius: 999px;
+  border: 1px solid var(--glass-edge, var(--line));
+  background: var(--glass-row, var(--card));
+  color: var(--ink);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+#overlayRoot #sheetListDetail .lc-chip.on,
+#overlayRoot #sheetListDetail .lc-seg-btn.on {
+  background: var(--teal-grad, linear-gradient(135deg, #3fb38e, #1f7a62));
+  border-color: transparent;
+  color: #fff;
+  box-shadow: 0 6px 16px -8px rgba(58, 166, 132, .9);
+}
+#overlayRoot #sheetListDetail .lc-seg {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 4px;
+  padding: 3px;
+  border-radius: 14px;
+  border: 1px solid var(--glass-edge, var(--line));
+  background: var(--glass-row, var(--card));
+}
+#overlayRoot #sheetListDetail .lc-seg-btn {
+  min-width: 0;
+  border: 0;
+  border-radius: 11px;
+  background: transparent;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding: 0 8px;
+}
+#overlayRoot #sheetListDetail .lc-seg-btn i {
+  flex: none;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, .5);
+}
+#overlayRoot #sheetListDetail .lc-add {
+  height: 50px;
+  border: 0;
+  border-radius: 15px;
+  background: var(--amber-grad, linear-gradient(145deg, #f7c463, #e48d24));
+  color: var(--suite-on-amber, #241800);
+  font: inherit;
+  font-size: 16.5px;
+  font-weight: 800;
+  box-shadow: 0 10px 22px -12px rgba(228, 141, 36, .9), inset 0 1px 0 rgba(255, 255, 255, .35);
+}
+#overlayRoot #sheetListDetail .lc-add:disabled {
+  opacity: .5;
+  box-shadow: none;
+}
+#overlayRoot #sheetListDetail .lc-add:active:not(:disabled) {
+  transform: scale(.985);
+}
+/* Strumenti rapidi sotto il pannello */
+#overlayRoot #sheetListDetail .lc-tools {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  margin: 0 -2px 12px;
+  padding: 0 2px;
+  scrollbar-width: none;
+}
+#overlayRoot #sheetListDetail .lc-tools::-webkit-scrollbar {
+  display: none;
+}
+#overlayRoot #sheetListDetail .lc-tool {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 34px;
+  padding: 0 12px;
+  border-radius: 999px;
+  border: 1px solid var(--glass-edge, var(--line));
+  background: var(--glass-card, var(--card));
+  color: var(--ink);
+  font: inherit;
+  font-size: 13.5px;
+  font-weight: 650;
+  white-space: nowrap;
+}
+#overlayRoot #sheetListDetail .lc-tool[hidden] {
+  display: none;
+}
+#overlayRoot #sheetListDetail .lc-tool span {
+  font-size: 13px;
+}
+/* "Comprati spesso": pillole uniche con la stellina dentro (niente più blocchetto bianco in chiaro) */
+#overlayRoot #sheetListDetail .sug-chip {
+  border-radius: 999px;
+  border: 1px solid var(--glass-edge, var(--line));
+  background: var(--glass-card, var(--card));
+}
+#overlayRoot #sheetListDetail .sug-chip .chip {
+  background: transparent !important;
+  padding: 7px 4px 7px 12px !important;
+  font-size: 14px !important;
+  font-weight: 650 !important;
+  color: var(--ink) !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+#overlayRoot #sheetListDetail .sug-fav {
+  border: 0;
+  background: transparent;
+  padding: 0 11px 0 6px;
+  min-width: 0;
+}
+:root[data-theme="light"] #overlayRoot #sheetListDetail .lc-label small {
+  color: #a8650f;
+}
+:root[data-theme="dark"] #overlayRoot #sheetListDetail .lc-label small {
+  color: #f0b45a;
+}
+#overlayRoot #sheetListDetail .lc-grid {
+  grid-template-columns: auto minmax(0, 1fr);
+}
+#overlayRoot #sheetListDetail .lc-money {
+  min-width: 0;
+  width: auto;
+  box-sizing: border-box;
+}
+#overlayRoot #sheetListDetail .lc-money input {
+  width: 100% !important;
+  max-width: none !important;
+  box-sizing: border-box;
+}

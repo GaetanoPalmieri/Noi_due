@@ -2351,18 +2351,54 @@ function openListDetail(listId){
       sbox.querySelectorAll("[data-sug]").forEach(b=>b.addEventListener("click",()=>{ const s=sug[Number(b.dataset.sug)]; list().items.push(newListItem(s.text,{aisle:s.aisle||guessAisle(s.text)})); save(); }));
       sbox.querySelectorAll("[data-sug-fav]").forEach(b=>b.addEventListener("click",()=>{ const s=sug[Number(b.dataset.sugFav)]; const on=!isFavorite(s.text); setFavorite(s.text,on,s.aisle||""); save(); showToast(on?`★ “${s.text}” nei preferiti`:`“${s.text}” tolto dai preferiti`); }));
     }
+    /* Noi Due 1.16.0 — Pannello di aggiunta: bozza con quantità, prezzo, reparto e per chi.
+       Il reparto segue quello che scrivi finché non ne scegli uno tu. */
+    const lc={qty:1,aisle:"",aisleManual:false,forWhom:"both"};
+    const more=node.querySelector("#lcMore"), qtyOut=node.querySelector("#lcQty");
+    const aisleBox=node.querySelector("#lcAisle"), forBox=node.querySelector("#lcFor"), aisleAuto=node.querySelector("#lcAisleAuto");
+    function lcText(){ const t=input.value.trim(), url=extractUrl(t); return url?t.replace(url,"").trim():t; }
+    function lcPaint(){
+      const typed=input.value.trim();
+      const dirty=!!typed||lc.qty>1||!!priceInput.value.trim()||lc.aisleManual||lc.forWhom!=="both";
+      more.hidden=!dirty;
+      node.querySelector("#listComposer").classList.toggle("open",dirty);
+      if(!dirty) return;
+      const parsed=parseQty(lcText());
+      if(!lc.aisleManual) lc.aisle=parsed.text?guessAisle(parsed.text):"altro";
+      qtyOut.textContent=String(lc.qty>1?lc.qty:parsed.qty);
+      aisleAuto.hidden=lc.aisleManual||!parsed.text;
+      const keys=[...AISLES.map(a=>a[0]),"altro"];
+      aisleBox.innerHTML=keys.map(k=>{ const a=aisleInfo(k); return `<button type="button" class="lc-chip${lc.aisle===k?" on":""}" data-lc-aisle="${k}" aria-pressed="${lc.aisle===k}"><span aria-hidden="true">${a.emoji}</span>${escapeHtml(a.name)}</button>`; }).join("");
+      aisleBox.querySelectorAll("[data-lc-aisle]").forEach(b=>b.addEventListener("click",()=>{ lc.aisle=b.dataset.lcAisle; lc.aisleManual=true; lcPaint(); }));
+      const on=aisleBox.querySelector(".on"); if(on&&!lc.aisleManual) aisleBox.scrollLeft=Math.max(0,on.offsetLeft-aisleBox.clientWidth/2+on.offsetWidth/2);
+      forBox.innerHTML=[["both","Tutti e due",""],["a",personName("a"),personColor("a")],["b",personName("b"),personColor("b")]].map(([k,label,c])=>`<button type="button" class="lc-seg-btn${lc.forWhom===k?" on":""}" data-lc-for="${k}" aria-pressed="${lc.forWhom===k}">${c?`<i style="background:${safeColor(c)}" aria-hidden="true"></i>${k===lc.forWhom?"Solo ":""}`:""}${escapeHtml(label)}</button>`).join("");
+      forBox.querySelectorAll("[data-lc-for]").forEach(b=>b.addEventListener("click",()=>{ lc.forWhom=b.dataset.lcFor; lcPaint(); }));
+      const n=Number(qtyOut.textContent)||1;
+      node.querySelector("#listAddBtn").textContent=typed?`＋ Aggiungi${n>1?` ${n}×`:""} alla lista`:"Scrivi cosa aggiungere";
+      node.querySelector("#listAddBtn").disabled=!typed;
+    }
+    function lcStep(d){ const base=lc.qty>1?lc.qty:parseQty(lcText()).qty; lc.qty=Math.min(99,Math.max(1,base+d)); lcPaint(); }
+    node.querySelector("#lcQtyMinus").addEventListener("click",()=>lcStep(-1));
+    node.querySelector("#lcQtyPlus").addEventListener("click",()=>lcStep(1));
+    input.addEventListener("input",lcPaint); priceInput.addEventListener("input",lcPaint);
     function add(){
       const text=input.value.trim();
       if(!text){ input.focus(); return; }
       const price=parseAmount(priceInput.value);
       const url=extractUrl(text);
       const label=url?(text.replace(url,"").trim()||"Carico il prodotto dal link…"):text;
-      const it=newListItem(label,{price:price>0?Math.round(price*100)/100:null,url:url||""});
+      const extra={price:price>0?Math.round(price*100)/100:null,url:url||"",forWhom:lc.forWhom};
+      if(lc.aisleManual||(!url&&lc.aisle)) extra.aisle=lc.aisleManual?lc.aisle:guessAisle(parseQty(label).text);
+      const it=newListItem(label,extra);
+      if(lc.qty>1) it.qty=lc.qty;
       list().items.push(it);
       input.value=""; priceInput.value="";
-      save(); input.focus();
+      Object.assign(lc,{qty:1,aisle:"",aisleManual:false,forWhom:"both"});
+      save(); lcPaint(); input.focus();
+      showToast(`Aggiunto: ${it.qty>1?it.qty+"× ":""}${it.text}`);
       if(url) enrichListItem(listId,it.id,url);
     }
+    lcPaint();
     node.querySelector("#listAddBtn").addEventListener("click",add);
     function addMany(lines){
       const l=list(); if(!l||!lines.length) return 0;

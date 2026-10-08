@@ -358,10 +358,13 @@ function sanitizeCouple(data){
     items:(Array.isArray(l.items)?l.items:[]).filter(i=>i&&i.id).map(i=>({id:String(i.id).slice(0,120),text:String(i.text||"").slice(0,120),price:Number.isFinite(Number(i.price))&&Number(i.price)>0?Math.round(Number(i.price)*100)/100:null,done:!!i.done,
       code:String(i.code||"").replace(/[^0-9A-Za-z-]/g,"").slice(0,32),image:/^https:\/\//.test(String(i.image||""))?String(i.image).slice(0,500):"",url:/^https:\/\//.test(String(i.url||""))?String(i.url).slice(0,500):"",
       photo:/^data:image\/(jpeg|png|webp);base64,/.test(String(i.photo||""))&&String(i.photo).length<300000?String(i.photo):/^idb:[\w-]{1,120}$/.test(String(i.photo||""))?String(i.photo):"",
-      qty:Math.min(99,Math.max(1,Math.round(Number(i.qty)||1))),aisle:typeof i.aisle==="string"?i.aisle.slice(0,20):"",forWhom:["a","b"].includes(i.forWhom)?i.forWhom:"both",addedBy:["a","b"].includes(i.addedBy)?i.addedBy:"",via:typeof i.via==="string"?i.via.slice(0,20):"",counted:/^\d{4}-\d{2}-\d{2}$/.test(String(i.counted||""))?String(i.counted):""})),
+      qty:Math.min(99,Math.max(1,Math.round(Number(i.qty)||1))),aisle:typeof i.aisle==="string"?i.aisle.slice(0,20):"",forWhom:["a","b"].includes(i.forWhom)?i.forWhom:"both",addedBy:["a","b"].includes(i.addedBy)?i.addedBy:"",via:typeof i.via==="string"?i.via.slice(0,20):"",counted:/^\d{4}-\d{2}-\d{2}$/.test(String(i.counted||""))?String(i.counted):"",boughtAt:/^\d{4}-\d{2}-\d{2}T[\d:.]+Z?$/.test(String(i.boughtAt||""))?String(i.boughtAt):""})),
     sortMode:l.sortMode==="manual"?"manual":"aisle",
     restockOnExit:typeof l.restockOnExit==="boolean"?l.restockOnExit:/spesa|supermercat/i.test(String(l.name||"")),
     template:(Array.isArray(l.template)?l.template:[]).map(t=>String(t||"").slice(0,120)).filter(Boolean).slice(0,200),
+    // v1.19.0 — Acquisti nel tempo (con data e ora automatiche) e cestino della lista.
+    purchases:(Array.isArray(l.purchases)?l.purchases:[]).filter(x=>x&&x.id&&x.text&&/^\d{4}-\d{2}-\d{2}T/.test(String(x.at||""))).map(x=>({id:String(x.id).slice(0,120),itemId:String(x.itemId||"").slice(0,120),text:String(x.text).slice(0,120),qty:Math.min(99,Math.max(1,Math.round(Number(x.qty)||1))),aisle:typeof x.aisle==="string"?x.aisle.slice(0,20):"",at:String(x.at).slice(0,30),by:["a","b"].includes(x.by)?x.by:""})).sort((a,b)=>a.at.localeCompare(b.at)).slice(-400),
+    trash:(Array.isArray(l.trash)?l.trash:[]).filter(x=>x&&x.id&&x.text&&/^\d{4}-\d{2}-\d{2}T/.test(String(x.deletedAt||""))).map(x=>({id:String(x.id).slice(0,120),text:String(x.text).slice(0,120),qty:Math.min(99,Math.max(1,Math.round(Number(x.qty)||1))),price:Number(x.price)>0?Math.round(Number(x.price)*100)/100:null,aisle:typeof x.aisle==="string"?x.aisle.slice(0,20):"",forWhom:["a","b"].includes(x.forWhom)?x.forWhom:"both",url:/^https:\/\//.test(String(x.url||""))?String(x.url).slice(0,500):"",image:/^https:\/\//.test(String(x.image||""))?String(x.image).slice(0,500):"",deletedAt:String(x.deletedAt).slice(0,30),by:["a","b"].includes(x.by)?x.by:""})).sort((a,b)=>b.deletedAt.localeCompare(a.deletedAt)).slice(0,200),
     history:Object.fromEntries(Object.entries(l.history&&typeof l.history==="object"?l.history:{}).filter(([k,v])=>k&&v&&v.text).slice(-300).map(([k,v])=>[k.slice(0,120),{text:String(v.text).slice(0,120),count:Math.max(1,Number(v.count)||1),last:String(v.last||"").slice(0,10),aisle:typeof v.aisle==="string"?v.aisle.slice(0,20):"",dates:(Array.isArray(v.dates)?v.dates:[]).map(d=>String(d||"").slice(0,10)).filter(d=>/^\d{4}-\d{2}-\d{2}$/.test(d)).slice(-12),qty:Math.min(99,Math.max(1,Math.round(Number(v.qty)||1)))}]))}));
   // Preferiti: prodotti da rimettere in lista con un tocco (comuni a tutte le liste).
   data.favorites=(Array.isArray(data.favorites)?data.favorites:[]).filter(f=>f&&f.text).map(f=>({id:String(f.id||uid()).slice(0,120),text:String(f.text).slice(0,120),aisle:typeof f.aisle==="string"?f.aisle.slice(0,20):""})).slice(0,300);
@@ -1818,7 +1821,8 @@ function openPeriodPicker(view=activeView,opts=null){
           // v1.17.0 — come in Bilancio: un pallino sotto il giorno, qui con il colore di chi ha pagato.
           const di=info[iso];
           const dots=di?["a","b","joint"].filter(k=>di[k]).map(k=>`<span class="cal-dot" style="background:${safeColor(personColor(k))}"></span>`).join("")+(di.settle?'<span class="cal-dot settle"></span>':""):"";
-          cell.innerHTML=`<span class="cal-day-num">${d}</span><span class="cal-dots">${dots}</span>`;
+          const amt=di&&di.total>0?`<span class="cal-amt">${balancesHidden?"••":Math.round(di.total)}</span>`:"";
+          cell.innerHTML=`<span class="cal-day-num">${d}</span>${amt}<span class="cal-dots">${dots}</span>`;
           if(di&&di.total>0) cell.classList.add("has-real");
           cell.setAttribute("aria-label",`${d} ${MESI[pMonth]} ${pYear}`);
           cell.addEventListener("click",()=>{
@@ -1831,6 +1835,12 @@ function openPeriodPicker(view=activeView,opts=null){
           grid.appendChild(cell);
         }
         padCalendarGrid(grid,lead,n);
+        // Legenda e totale del mese, come nel calendario spese.
+        let lg=days.querySelector(".pp-legend"); if(!lg){ lg=document.createElement("div"); lg.className="calendar-legend pp-legend"; days.appendChild(lg); }
+        lg.innerHTML=["a","b","joint"].map(k=>`<span class="cal-leg-item"><span class="dot" style="background:${safeColor(personColor(k))}"></span>${escapeHtml(personName(k))}</span>`).join("")+`<span class="cal-leg-item"><span class="dot" style="background:#e8a33d"></span>Rimborso</span>`;
+        const monthTot=Object.values(info).reduce((t,x)=>t+(x.total||0),0);
+        let mt=days.querySelector(".pp-month-total"); if(!mt){ mt=document.createElement("p"); mt.className="pp-month-total"; days.appendChild(mt); }
+        mt.textContent=monthTot>0?`Spese di ${MESI[pMonth].toLowerCase()}: ${balancesHidden?"••••":fmt(monthTot)}`:`Nessuna spesa a ${MESI[pMonth].toLowerCase()}`;
         node.style.setProperty("--pp-h",days.offsetHeight+"px");
       }
       if(!selStart){hint.textContent="Tocca un giorno, oppure due giorni per un periodo.";apply.disabled=true;apply.textContent="Mostra";}
@@ -2201,7 +2211,7 @@ function renderHomeLists(){
   state.lists.forEach(l=>{
     const todo=l.items.filter(i=>!i.done).length, done=l.items.length-todo, due=smartSuggestions(l).filter(x=>x.isDue).length;
     const pct=l.items.length?Math.round(done/l.items.length*100):0;
-    const b=document.createElement("button"); b.type="button"; b.className="hl-item"+(todo?"":" empty");
+    const b=document.createElement("div"); b.setAttribute("role","button"); b.tabIndex=0; b.className="hl-item"+(todo?"":" empty");
     b.innerHTML=`<span class="hl-em" aria-hidden="true">${escapeHtml(l.emoji)}</span><span class="hl-txt"><b>${escapeHtml(l.name)}</b><small>${todo?`${todo} da comprare`:"Niente da comprare"}${due?` · ⏰ ${due}`:""}</small></span><span class="hl-bar" aria-hidden="true"><i style="width:${pct}%"></i></span>`;
     b.setAttribute("aria-label",`Lista ${l.name}: ${todo} da comprare${due?`, ${due} da ricomprare`:""}`);
     b.addEventListener("click",()=>openListDetail(l.id));
@@ -2215,19 +2225,17 @@ function renderCoupleLists(){
   if(!box) return;
   box.innerHTML="";
   if(!state.lists.length){ box.innerHTML=`<p class="empty-hint">Nessuna lista. Tocca "+ Nuova" per crearne una.</p>`; return; }
-  // v1.17.0 — Schede delle liste rifatte: anteprima dei prodotti, avanzamento e "da ricomprare".
+  // v1.19.0 — Schede compatte (una riga): emoji, nome, cosa resta, barra di avanzamento, numero.
   state.lists.forEach(l=>{
-    const todoItems=l.items.filter(i=>!i.done), todo=todoItems.length, done=l.items.length-todo;
+    const todo=l.items.filter(i=>!i.done).length, done=l.items.length-todo;
     const g=groupsById()[l.groupId], due=smartSuggestions(l).filter(x=>x.isDue).length;
     const pct=l.items.length?Math.round(done/l.items.length*100):0;
-    const prev=todoItems.slice(0,4).map(i=>`${i.qty>1?i.qty+"× ":""}${i.text}`), more=todo-prev.length;
-    const card=document.createElement("button");
-    card.type="button"; card.className="lv-card"+(todo?"":" empty");
-    card.innerHTML=`<span class="lv-top"><span class="lv-em" aria-hidden="true">${escapeHtml(l.emoji)}</span><span class="lv-head"><b>${escapeHtml(l.name)}</b><small>${todo?`${todo} da comprare`:"Niente da comprare"}${done?` · ${done} nel carrello`:""}${g?` · ${escapeHtml(g.emoji+" "+g.name)}`:""}</small></span><span class="lv-count${todo?"":" zero"}">${todo}</span></span>
-      ${prev.length?`<span class="lv-preview">${prev.map(t=>`<span>${escapeHtml(t)}</span>`).join("")}${more>0?`<span class="lv-more">+${more}</span>`:""}</span>`:""}
-      <span class="lv-foot"><span class="lv-bar" aria-hidden="true"><i style="width:${pct}%"></i></span>${due?`<span class="lv-due">⏰ ${due} da ricomprare</span>`:l.items.length?`<span class="lv-pct">${pct}% preso</span>`:`<span class="lv-pct">Tocca per aggiungere</span>`}</span>`;
+    const card=document.createElement("div");
+    card.className="lv-card"+(todo?"":" empty"); card.setAttribute("role","button"); card.tabIndex=0;
+    card.innerHTML=`<span class="lv-em" aria-hidden="true">${escapeHtml(l.emoji)}</span><span class="lv-head"><b>${escapeHtml(l.name)}</b><small>${todo?`${todo} da comprare`:"Niente da comprare"}${done?` · ${done} acquistati`:""}${due?` · ⏰ ${due}`:""}${g?` · ${escapeHtml(g.emoji+" "+g.name)}`:""}</small><span class="lv-bar" aria-hidden="true"><i style="width:${pct}%"></i></span></span><span class="lv-count${todo?"":" zero"}">${todo}</span><span class="lv-chev" aria-hidden="true">›</span>`;
     card.setAttribute("aria-label",`${l.name}: ${todo} da comprare`);
     card.addEventListener("click",()=>openListDetail(l.id));
+    card.addEventListener("keydown",e=>{ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); openListDetail(l.id); } });
     box.appendChild(card);
   });
 }
@@ -2239,6 +2247,11 @@ function listCategoryFor(l){
 }
 /* ---------------- Noi Due 1.7.0 — Liste: quantità, reparti, comprati spesso, gesti, per chi, lista base ---------------- */
 const AISLES=[
+  // v1.19.0 — reparti in più per le cose "non da supermercato" (prima finivano in Altro o nel reparto sbagliato).
+  ["elettro","🔌","Elettrodomestici ed elettronica",/\b(aspirapolvere|scopa elettrica|robot (aspira|da cucina|lavapavimenti)|macchin(a|etta) (da|del|per) (caff|pane|cucire)|macchina caff|frullator|mixer|tostapane|tostiera|bollitore|microonde|friggitrice|forno elettrico|piastra|ferro da stiro|asse da stiro|phon|fon\b|asciugacapelli|piastra per capelli|rasoio elettrico|spazzolino elettrico|ventilatore|stufa|condizionatore|deumidificatore|umidificatore|purificatore|lavatrice nuova|frigorifero|congelatore|televisore|\btv\b|monitor|computer|portatile|notebook|tablet|ipad|iphone|smartphone|telefono|cellulare|caricatore|caricabatterie|power ?bank|cavo|cavetto|adattatore|presa multipla|ciabatta elettrica|prolunga|cuffie|auricolari|airpods|cassa bluetooth|altoparlante|stampante|cartuccia|toner|mouse|tastiera|hard disk|chiavetta usb|router|telecomando|lampada|faretto|smart ?watch|bilancia pesapersone|sveglia)/i],
+  ["abbigliamento","👕","Abbigliamento e scarpe",/\b(maglia|maglion|maglietta|t-?shirt|camicia|felpa|pantalon|jeans|gonna|vestito|giacca|giubbotto|cappotto|piumino|calz[ei]|calzini|collant|mutand|slip|reggiseno|pigiama|accappatoio|costume|scarpe|scarpa|sneaker|stivali|ciabatte|infradito|sandali|cintura|cappello|sciarpa|guanti|ombrello|borsa|zaino)/i],
+  ["fai-da-te","🔧","Fai da te e giardino",/\b(vit[ei]\b|tasselli|chiodi|trapano|cacciavite|martello|pinza|chiave inglese|nastro (adesivo|isolante|biadesivo)|colla|silicone|vernice|pennello|rullo|carta vetrata|metro|livella|seghetto|attrezzi|lucchetto|serratura|terriccio|concime|vaso|piant[ae]|semi\b|innaffiatoio|tubo (da|per) giardino|pesticid)/i],
+  ["cartoleria","✏️","Cartoleria e ufficio",/\b(quadern|block ?notes|agenda|penna\b|penne (a sfera|bic|gel)|matit|gomma da cancellare|evidenziator|pennarell|colori a|astuccio|righello|forbici|graffett|spillatrice|puntine|post-?it|carta (a4|da stampa|regalo)|buste (da lettera|imbottite)|francobolli|cartellina|raccoglitore|scotch)/i],
   ["frutta","🥦","Frutta e verdura",/\b(mel[ae]|banan|aranc|limon|per[ae]\b|frutta|kiwi|uva\b|fragol|insalat|lattug|pomodor|zucchin|carot|patat[ae]\b|cipoll|aglio|peperon|melanzan|verdur|spinac|broccol|cavol|fungh|basilic|prezzemol|avocado|finocch|sedano|rucola|ananas|pesche|albicocc|cocomer|melone|mirtill|lampon)/i],
   ["pane","🥖","Pane e forno",/\b(pane|panin|focacc|grissin|piadin|cornett|brioche|fette biscottate|tramezzin|pizza bianca)/i],
   ["latte","🧀","Latticini e uova",/\b(latte|yogurt|burro|formagg|mozzarell|parmigian|grana|ricott|uov[ao]|panna|stracchin|scamorz|mascarpon|gorgonzol|pecorin|kefir|skyr)/i],
@@ -2250,6 +2263,8 @@ const AISLES=[
   ["igiene","🧴","Igiene e cura",/\b(shampoo|balsamo|bagnoschiuma|sapone|dentifric|spazzolin|deodorant|rasoi|schiuma da barba|assorbent|cotton|crema|struccant|salviett|fazzolett|cerott|collutorio|lamette|profumo|filo interdentale|tampon)/i],
   ["animali","🐾","Animali",/\b(crocchett|lettiera|cane|gatto|scatolett|cibo per)/i],
 ];
+// Ordine di visualizzazione: prima i reparti del supermercato, poi casa/elettronica/abbigliamento ecc.
+function aisleKeys(){ const late=["elettro","abbigliamento","fai-da-te","cartoleria"]; return [...AISLES.map(a=>a[0]).filter(k=>!late.includes(k)),...late,"altro"]; }
 const AISLE_OTHER=["altro","🛍️","Altro"];
 function aisleInfo(key){ const a=AISLES.find(x=>x[0]===key); return a?{key:a[0],emoji:a[1],name:a[2]}:{key:"altro",emoji:AISLE_OTHER[1],name:AISLE_OTHER[2]}; }
 function guessAisle(text){ const t=String(text||""); const a=AISLES.find(x=>x[3].test(t)); return a?a[0]:"altro"; }
@@ -2280,6 +2295,12 @@ function markBought(list,it){
   h.count+=1; h.text=parseQty(it.text).text; h.aisle=it.aisle||h.aisle||guessAisle(it.text); h.qty=it.qty||1;
   h.dates=[...(Array.isArray(h.dates)?h.dates:[]).filter(d=>d!==today),today].slice(-12);
   h.last=today; list.history[k]=h; it.counted=today;
+  // Acquisti nel tempo: data e ora automatiche, chi l'ha preso.
+  const at=new Date().toISOString();
+  if(!Array.isArray(list.purchases)) list.purchases=[];
+  list.purchases.push({id:uid(),itemId:it.id,text:parseQty(it.text).text,qty:it.qty||1,aisle:it.aisle||guessAisle(it.text),at,by:myPerson()||""});
+  if(list.purchases.length>400) list.purchases.splice(0,list.purchases.length-400);
+  it.boughtAt=at;
 }
 function unmarkBought(list,it){
   if(!list||!it||!it.counted) return;
@@ -2289,7 +2310,37 @@ function unmarkBought(list,it){
     if(Array.isArray(h.dates)&&h.dates[h.dates.length-1]===it.counted&&it.counted===todayISO()) h.dates.pop();
     if(h.count<=0) delete list.history[k]; else h.last=(h.dates&&h.dates[h.dates.length-1])||h.last;
   }
-  it.counted="";
+  // Tolto dal carrello per errore: non era un acquisto, sparisce anche dalla cronologia.
+  if(Array.isArray(list.purchases)){ const drop=list.purchases.filter(p=>p.itemId===it.id&&(!it.boughtAt||p.at===it.boughtAt)); if(drop.length){ markDeleted(drop.map(p=>p.id)); list.purchases=list.purchases.filter(p=>!drop.includes(p)); } }
+  it.counted=""; it.boughtAt="";
+}
+/* Data e ora leggibili: "oggi 14:32", "ieri 09:10", "3 ott 18:20". */
+function whenLabel(iso){
+  const d=new Date(iso); if(!Number.isFinite(d.getTime())) return "";
+  const hm=`${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
+  const day=`${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`, diff=daysBetweenISO(day,todayISO());
+  if(diff===0) return `oggi ${hm}`;
+  if(diff===1) return `ieri ${hm}`;
+  return `${d.getDate()} ${MESI_BREVI[d.getMonth()].toLowerCase()}${d.getFullYear()!==new Date().getFullYear()?" "+d.getFullYear():""} ${hm}`;
+}
+function dayHeading(iso){
+  const d=new Date(iso), day=`${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`, diff=daysBetweenISO(day,todayISO());
+  if(diff===0) return "Oggi"; if(diff===1) return "Ieri";
+  return `${["Domenica","Lunedì","Martedì","Mercoledì","Giovedì","Venerdì","Sabato"][d.getDay()]} ${d.getDate()} ${MESI[d.getMonth()].toLowerCase()}${d.getFullYear()!==new Date().getFullYear()?" "+d.getFullYear():""}`;
+}
+/* Cestino delle liste: ogni prodotto eliminato con data e ora. */
+function trashListItem(list,it){
+  if(!Array.isArray(list.trash)) list.trash=[];
+  list.trash.unshift({id:uid(),text:it.text,qty:it.qty||1,price:it.price||null,aisle:it.aisle||"",forWhom:it.forWhom||"both",url:it.url||"",image:it.image||"",deletedAt:new Date().toISOString(),by:myPerson()||""});
+  if(list.trash.length>200) list.trash.length=200;
+  return list.trash[0];
+}
+function restoreTrashEntry(list,entryId){
+  const i=(list.trash||[]).findIndex(x=>x.id===entryId); if(i<0) return null;
+  const e=list.trash.splice(i,1)[0];
+  markDeleted(e.id); // la voce del cestino non torna con la sincronizzazione
+  const it=newListItem(e.text,{aisle:e.aisle,price:e.price,forWhom:e.forWhom,url:e.url,image:e.image}); it.qty=e.qty||1;
+  list.items.push(it); return it;
 }
 // Compatibilità con i punti che "chiudono" la spesa: conta solo ciò che non è già stato contato.
 function recordPurchased(list,items){ items.forEach(i=>markBought(list,i)); }
@@ -2376,6 +2427,8 @@ function openFavorites(listId,onAdded){
 }
 let openSwipeRow=null;
 function openListDetail(listId){
+  // v1.19.0 — riclassifica i prodotti finiti in "Altro" con i reparti nuovi (es. aspirapolvere).
+  { const l0=state.lists.find(l=>l.id===listId); let ch=false; (l0?.items||[]).forEach(i=>{ if(!i.aisle||i.aisle==="altro"){ const g=guessAisle(i.text); if(g!=="altro"&&g!==i.aisle){ i.aisle=g; ch=true; } } }); if(ch) persist(); }
   openSheet("tpl-list-detail",(node,close)=>{
     const input=node.querySelector("#listItemInput"), priceInput=node.querySelector("#listPriceInput");
     const list=()=>state.lists.find(l=>l.id===listId);
@@ -2383,8 +2436,9 @@ function openListDetail(listId){
     function save(){ persist(); renderCoupleLists(); paint(); }
     function removeItem(it,{purchased=false}={}){
       const l=list(), idx=l.items.findIndex(x=>x.id===it.id); if(idx<0) return;
-      l.items.splice(idx,1); if(purchased) recordPurchased(l,[it]); markDeleted(it.id); save();
-      showActionToast(`“${it.text}” eliminato`,"Annulla",()=>{ const cur=list(); if(!cur) return; if(state.deleted) delete state.deleted[it.id]; cur.items.splice(Math.min(idx,cur.items.length),0,it); save(); });
+      l.items.splice(idx,1); if(purchased) recordPurchased(l,[it]); markDeleted(it.id);
+      const entry=trashListItem(l,it); save();
+      showActionToast(`🗑 “${it.text}” nel cestino`,"Annulla",()=>{ const cur=list(); if(!cur) return; if(entry){ restoreTrashEntry(cur,entry.id); } else { const back=newListItem(it.text,{aisle:it.aisle,price:it.price,forWhom:it.forWhom}); back.qty=it.qty||1; cur.items.push(back); } save(); });
     }
     function itemRow(it){
       const wrap=document.createElement("div");
@@ -2399,10 +2453,10 @@ function openListDetail(listId){
       const pic=photoSrc(it.photo)||it.image;
       const who=(it.forWhom==="a"||it.forWhom==="b"?`<small class="list-for" style="color:${safeColor(personColor(it.forWhom))}">solo ${escapeHtml(personName(it.forWhom))}</small>`:"")
         +(it.addedBy&&it.addedBy!==myPerson()?`<small class="list-by" style="color:${safeColor(personColor(it.addedBy))}">da ${escapeHtml(personName(it.addedBy))}</small>`:it.via?`<small class="list-by">da ${escapeHtml(it.via)}</small>`:"");
-      row.innerHTML=`<span class="list-swipe-bg" aria-hidden="true"><span>${it.done?"↩︎ Da comprare":"✓ Nel carrello"}</span><span></span></span>
+      row.innerHTML=`<span class="list-swipe-bg" aria-hidden="true"><span>${it.done?"↩︎ Da comprare":"✓ Acquistato"}</span><span></span></span>
         <span class="list-check" aria-hidden="true">${it.done?"✓":""}</span>
         <span class="list-thumb">${pic?`<img src="${escapeHtml(pic)}" alt="" loading="lazy" referrerpolicy="no-referrer">`:""}</span>
-        <span class="list-text">${it.qty>1?`<b class="list-qty">${it.qty}×</b> `:""}${escapeHtml(it.text)}${fav?` <span class="list-fav" aria-label="preferito">★</span>`:""}${who}</span>
+        <span class="list-text">${it.qty>1?`<b class="list-qty">${it.qty}×</b> `:""}${escapeHtml(it.text)}${fav?` <span class="list-fav" aria-label="preferito">★</span>`:""}${who}${it.done&&it.boughtAt?`<small class="list-when">✓ ${escapeHtml(whenLabel(it.boughtAt))}</small>`:""}</span>
         <span class="list-price">${it.price?(balancesHidden?"••••":fmt(it.price*(it.qty||1))):""}</span>
         <button type="button" class="list-del" aria-label="Dettagli di ${escapeHtml(it.text)}">›</button>`;
       row.querySelector("img")?.addEventListener("error",e=>{ e.target.remove(); });
@@ -2449,7 +2503,7 @@ function openListDetail(listId){
       const todoBox=node.querySelector("#listTodo"), doneBox=node.querySelector("#listDone");
       todoBox.innerHTML="";
       if(l.sortMode!=="manual"){
-        const order=[...AISLES.map(a=>a[0]),"altro"];
+        const order=aisleKeys();
         order.forEach(key=>{
           const its=todo.filter(i=>(i.aisle||guessAisle(i.text))===key);
           if(!its.length) return;
@@ -2463,24 +2517,20 @@ function openListDetail(listId){
       node.querySelector("#listDoneWrap").hidden=!done.length;
       const sum=arr=>arr.reduce((s,i)=>s+(i.price||0)*(i.qty||1),0);
       const est=sum(todo), cart=sum(done);
-      const parts=[]; if(est>0) parts.push(`Stima da comprare ${balancesHidden?"••••":fmt(est)}`); if(cart>0) parts.push(`nel carrello ${balancesHidden?"••••":fmt(cart)}`);
+      const parts=[]; if(est>0) parts.push(`Stima da comprare ${balancesHidden?"••••":fmt(est)}`); if(cart>0) parts.push(`acquistato ${balancesHidden?"••••":fmt(cart)}`);
       node.querySelector("#listTotal").textContent=parts.join(" · ");
       const reg=node.querySelector("#listRegisterBtn");
       reg.hidden=!done.length;
       reg.textContent=`🧾 Registra come spesa (${done.length})`;
       const fixed=!!l.restockOnExit;
-      node.querySelector("#listDoneTitle").textContent=fixed?"Presi":"Nel carrello";
+      node.querySelector("#listDoneTitle").textContent=`✓ Acquistato · ${done.length}`;
       node.querySelector("#listDoneHint").hidden=!fixed;
       node.querySelector("#listClearDone").textContent=fixed?"↩︎ Rimetti":"Togli";
       node.querySelector("#listSortBtn").textContent=l.sortMode==="manual"?"🗂️ Per reparto":"↕︎ In ordine";
       const baseBtn=node.querySelector("#listBaseBtn"); baseBtn.hidden=!(l.template&&l.template.length);
-      // v1.17.0 — Striscia rapida: prima i "da ricomprare", altrimenti i più comprati. Tutto il resto è nel cassetto laterale.
-      const all=smartSuggestions(l), due=all.filter(x=>x.isDue), sug=(due.length?due:all).slice(0,8), sbox=node.querySelector("#listSuggest");
-      sbox.hidden=!sug.length;
-      sbox.innerHTML=sug.length?`<p class="list-suggest-title">${due.length?`⏰ Da ricomprare · ${due.length}`:"Comprati spesso"}<button type="button" class="ls-more" data-open-drawer="smart">Tutti ›</button></p><div class="list-suggest-chips">${sug.map((x,i)=>{ const f=isFavorite(x.text); return `<span class="sug-chip${x.isDue?" due":""}"><button type="button" class="chip" data-sug="${i}" title="${escapeHtml(suggestionMeta(x))}">＋ ${escapeHtml(x.text)}</button><button type="button" class="sug-fav${f?" on":""}" data-sug-fav="${i}" aria-label="${f?"Togli":"Aggiungi"} ${escapeHtml(x.text)} ${f?"dai":"ai"} preferiti">${f?"★":"☆"}</button></span>`; }).join("")}</div>`:"";
-      sbox.querySelectorAll("[data-sug]").forEach(b=>b.addEventListener("click",()=>{ const x=sug[Number(b.dataset.sug)]; quickAdd(x.text,{aisle:x.aisle,qty:x.qty}); }));
-      sbox.querySelectorAll("[data-sug-fav]").forEach(b=>b.addEventListener("click",()=>{ const x=sug[Number(b.dataset.sugFav)]; const on=!isFavorite(x.text); setFavorite(x.text,on,x.aisle||""); save(); showToast(on?`★ “${x.text}” nei preferiti`:`“${x.text}” tolto dai preferiti`); }));
-      sbox.querySelector("[data-open-drawer]")?.addEventListener("click",()=>openDrawer("smart"));
+      // v1.19.0 — niente più striscia "Comprati spesso": gli acquisti stanno nella linguetta 🕘 a destra.
+      const sbox=node.querySelector("#listSuggest"); sbox.hidden=true; sbox.innerHTML="";
+      const tb=node.querySelector("#listTrashBtn"), tn=(l.trash||[]).length; tb.hidden=!tn; tb.textContent=`🗑 Cestino della lista · ${tn}`;
       paintSide();
     }
     /* Noi Due 1.16.0 — Pannello di aggiunta: bozza con quantità, prezzo, reparto e per chi.
@@ -2499,7 +2549,7 @@ function openListDetail(listId){
       if(!lc.aisleManual) lc.aisle=parsed.text?guessAisle(parsed.text):"altro";
       qtyOut.textContent=String(lc.qty>1?lc.qty:parsed.qty);
       aisleAuto.hidden=lc.aisleManual||!parsed.text;
-      const keys=[...AISLES.map(a=>a[0]),"altro"];
+      const keys=aisleKeys();
       aisleBox.innerHTML=keys.map(k=>{ const a=aisleInfo(k); return `<button type="button" class="lc-chip${lc.aisle===k?" on":""}" data-lc-aisle="${k}" aria-pressed="${lc.aisle===k}"><span aria-hidden="true">${a.emoji}</span>${escapeHtml(a.name)}</button>`; }).join("");
       aisleBox.querySelectorAll("[data-lc-aisle]").forEach(b=>b.addEventListener("click",()=>{ lc.aisle=b.dataset.lcAisle; lc.aisleManual=true; lcPaint(); }));
       const on=aisleBox.querySelector(".on"); if(on&&!lc.aisleManual) aisleBox.scrollLeft=Math.max(0,on.offsetLeft-aisleBox.clientWidth/2+on.offsetWidth/2);
@@ -2545,12 +2595,12 @@ function openListDetail(listId){
       return true;
     }
     const side=document.createElement("div"); side.className="ls-tabs"; side.setAttribute("aria-label","Aggiunta rapida");
-    side.innerHTML=`<button type="button" class="ls-tab" data-ls-tab="smart" aria-label="Comprati spesso"><span class="ls-ic" aria-hidden="true">↻</span><span class="ls-lb">Spesso</span><i class="ls-badge" hidden></i></button><button type="button" class="ls-tab fav" data-ls-tab="fav" aria-label="Preferiti"><span class="ls-ic" aria-hidden="true">★</span><span class="ls-lb">Preferiti</span></button>`;
+    side.innerHTML=`<button type="button" class="ls-tab acq" data-ls-tab="acq" aria-label="Acquisti nel tempo"><span class="ls-ic" aria-hidden="true">🕘</span><i class="ls-badge" hidden></i></button><button type="button" class="ls-tab fav" data-ls-tab="fav" aria-label="Preferiti"><span class="ls-ic" aria-hidden="true">★</span></button>`;
     const scrim=document.createElement("div"); scrim.className="ls-scrim"; scrim.hidden=true;
     const drawer=document.createElement("aside"); drawer.className="ls-drawer"; drawer.setAttribute("aria-label","Aggiunta rapida"); drawer.hidden=true;
-    drawer.innerHTML=`<div class="ls-dr-head"><div class="ls-seg" role="tablist"><button type="button" data-dr-tab="smart">↻ Spesso</button><button type="button" data-dr-tab="fav">★ Preferiti</button></div><button type="button" class="ls-dr-close" aria-label="Chiudi">✕</button></div><p class="ls-dr-hint">Tocca per aggiungere, oppure trascinalo ← sulla lista</p><div class="ls-dr-list"></div><div class="ls-dr-foot"></div>`;
+    drawer.innerHTML=`<div class="ls-dr-head"><div class="ls-seg" role="tablist"><button type="button" data-dr-tab="acq">🕘 Acquisti</button><button type="button" data-dr-tab="fav">★ Preferiti</button></div><button type="button" class="ls-dr-close" aria-label="Chiudi">✕</button></div><p class="ls-dr-hint">Tocca per rimetterlo in lista, oppure trascinalo ← sulla lista</p><div class="ls-dr-list"></div><div class="ls-dr-foot"></div>`;
     document.body.append(scrim,drawer,side);
-    let drTab="smart";
+    let drTab="acq";
     function paintSide(){
       const l=list(); if(!l) return;
       const due=smartSuggestions(l).filter(x=>x.isDue).length, b=side.querySelector(".ls-badge");
@@ -2562,14 +2612,24 @@ function openListDetail(listId){
       const inList=new Set(l.items.filter(i=>!i.done).map(i=>historyKey(i.text)));
       if(drTab==="fav") return (state.favorites||[]).slice().sort((a,b)=>a.text.localeCompare(b.text,"it")).map(f=>{ const h=l.history&&l.history[historyKey(f.text)]; const st=h?purchaseStats(h):null;
         return {text:f.text,aisle:f.aisle||guessAisle(f.text),qty:h?.qty||1,meta:h?suggestionMeta({...h,...st,isDue:st.ratio!=null&&st.ratio>=0.85&&st.since>0}):"Preferito",inList:inList.has(historyKey(f.text)),fav:true}; });
-      return smartSuggestions(l).map(x=>({text:x.text,aisle:x.aisle||guessAisle(x.text),qty:x.qty||1,meta:suggestionMeta(x),due:x.isDue,inList:false,fav:isFavorite(x.text)}));
+      // Acquisti nel tempo: solo ciò che avete davvero preso (tolto dal carrello = non conta), dal più recente.
+      const out=[];
+      const due=smartSuggestions(l).filter(x=>x.isDue);
+      if(due.length){ out.push({head:`⏰ Da ricomprare · ${due.length}`}); due.forEach(x=>out.push({text:x.text,aisle:x.aisle||guessAisle(x.text),qty:x.qty||1,meta:suggestionMeta(x),due:true,inList:inList.has(historyKey(x.text))})); }
+      let last="";
+      (l.purchases||[]).slice().reverse().forEach(pu=>{
+        const h=dayHeading(pu.at); if(h!==last){ out.push({head:h}); last=h; }
+        const d=new Date(pu.at);
+        out.push({text:pu.text,aisle:pu.aisle||guessAisle(pu.text),qty:pu.qty||1,label:`${pu.qty>1?pu.qty+"× ":""}${pu.text}`,meta:`${pad2(d.getHours())}:${pad2(d.getMinutes())}${pu.by?` · ${personName(pu.by)}`:""}`,inList:inList.has(historyKey(pu.text))});
+      });
+      return out;
     }
     function paintDrawer(){
       drawer.querySelectorAll("[data-dr-tab]").forEach(b=>{ const on=b.dataset.drTab===drTab; b.classList.toggle("on",on); b.setAttribute("aria-selected",String(on)); });
       const items=drawerItems(), box=drawer.querySelector(".ls-dr-list"), foot=drawer.querySelector(".ls-dr-foot");
-      box.innerHTML=items.length?items.map((x,i)=>`<div class="ls-card${x.due?" due":""}${x.inList?" in":""}" data-i="${i}" role="button" tabindex="0" aria-label="${x.inList?"Già in lista":"Aggiungi"} ${escapeHtml(x.text)}"><span class="ls-em" aria-hidden="true">${escapeHtml(aisleInfo(x.aisle).emoji)}</span><span class="ls-tx"><b>${escapeHtml(x.text)}</b><small>${escapeHtml(x.meta)}</small></span><span class="ls-add" aria-hidden="true">${x.inList?"✓":"＋"}</span></div>`).join("")
-        :`<p class="ls-empty">${drTab==="fav"?"Nessun preferito. Scorri a sinistra su un prodotto della lista e tocca ☆, oppure aggiungili qui sotto.":"Ancora niente: quando segnate i prodotti nel carrello l'app impara cosa comprate e ogni quanto."}</p>`;
-      const due=items.filter(x=>x.due&&!x.inList);
+      box.innerHTML=items.length?items.map((x,i)=>x.head?`<p class="ls-day">${escapeHtml(x.head)}</p>`:`<div class="ls-card${x.due?" due":""}${x.inList?" in":""}" data-i="${i}" role="button" tabindex="0" aria-label="${x.inList?"Già in lista":"Aggiungi"} ${escapeHtml(x.text)}"><span class="ls-em" aria-hidden="true">${escapeHtml(aisleInfo(x.aisle).emoji)}</span><span class="ls-tx"><b>${escapeHtml(x.label||x.text)}</b><small>${escapeHtml(x.meta)}</small></span><span class="ls-add" aria-hidden="true">${x.inList?"✓":"＋"}</span></div>`).join("")
+        :`<p class="ls-empty">${drTab==="fav"?"Nessun preferito. Scorri su un prodotto della lista e tocca ☆, oppure aggiungili da “Gestisci preferiti”.":"Ancora nessun acquisto. Tocca un prodotto della lista quando lo prendete: finisce in “Acquistato” e qui, con data e ora."}</p>`;
+      const due=items.filter(x=>!x.head&&x.due&&!x.inList);
       foot.innerHTML=drTab==="fav"?`<button type="button" class="ls-foot-btn" data-manage>★ Gestisci preferiti</button>`:due.length>1?`<button type="button" class="ls-foot-btn primary" data-add-due>＋ Aggiungi i ${due.length} da ricomprare</button>`:"";
       foot.querySelector("[data-manage]")?.addEventListener("click",()=>{ closeDrawer(); openFavorites(listId,n=>{ save(); if(n) showToast(`${n} ${n===1?"preferito aggiunto":"preferiti aggiunti"}`); }); });
       foot.querySelector("[data-add-due]")?.addEventListener("click",()=>{ let n=0; due.forEach(x=>{ if(quickAdd(x.text,{aisle:x.aisle,qty:x.qty})) n++; }); if(n) showToast(`${n} prodotti da ricomprare aggiunti`); });
@@ -2650,8 +2710,9 @@ function openListDetail(listId){
     [input,priceInput].forEach(el=>el.addEventListener("keydown",e=>{ if(e.key==="Enter"){ e.preventDefault(); add(); } }));
     node.querySelector("#listClearDone").addEventListener("click",()=>{ const l=list(), done=l.items.filter(i=>i.done);
       if(l.restockOnExit){ recordPurchased(l,done); done.forEach(i=>{ i.done=false; i.counted=""; }); save(); showToast("Rimessi tutti da comprare"); return; }
-      recordPurchased(l,done); markDeleted(done.map(i=>i.id)); l.items=l.items.filter(i=>!i.done); save(); showToast("Tolti gli articoli nel carrello"); });
+      recordPurchased(l,done); markDeleted(done.map(i=>i.id)); l.items=l.items.filter(i=>!i.done); save(); showToast("Tolti gli acquistati dalla lista (restano in 🕘 Acquisti)"); });
     node.querySelector("#listFavBtn").addEventListener("click",()=>openDrawer("fav"));
+    node.querySelector("#listTrashBtn").addEventListener("click",()=>openListTrash(listId,()=>{ if(node.isConnected) paint(); }));
     // Lista della spesa fissa: uscendo dalla lista i prodotti presi tornano "da comprare".
     const restockWatch=setInterval(()=>{
       if(node.isConnected) return;
@@ -3074,6 +3135,39 @@ document.getElementById("homeCoupleStrip")?.addEventListener("click",()=>switchV
 document.getElementById("settleBtn")?.addEventListener("click",()=>openSettleForm("all"));
 document.getElementById("addGroupBtn")?.addEventListener("click",()=>openGroupForm());
 document.getElementById("addListBtn")?.addEventListener("click",()=>openListForm());
+document.getElementById("listsTrashBtn")?.addEventListener("click",()=>openListTrash(null));
+/* v1.19.0 — Cestino: di una lista (dal dettaglio) o comune a tutte (dalla pagina Liste). Ogni voce ha data e
+   ora di eliminazione; ↩︎ la rimette nella sua lista. */
+function openListTrash(listId,onChange){
+  openSheet("tpl-list-trash",(node,close)=>{
+    const box=node.querySelector("#listTrashBox"), emptyBtn=node.querySelector("#listTrashEmpty");
+    function entries(){
+      const ls=listId?state.lists.filter(l=>l.id===listId):state.lists;
+      return ls.flatMap(l=>(l.trash||[]).map(e=>({e,l}))).sort((a,b)=>b.e.deletedAt.localeCompare(a.e.deletedAt));
+    }
+    function paint(){
+      const l=listId&&state.lists.find(x=>x.id===listId);
+      node.querySelector("#listTrashTitle").textContent=l?`🗑 Cestino · ${l.emoji} ${l.name}`:"🗑 Cestino delle liste";
+      const all=entries();
+      emptyBtn.hidden=!all.length;
+      if(!all.length){ box.innerHTML=`<p class="empty-hint">Il cestino è vuoto.</p>`; return; }
+      let last="", html="";
+      all.forEach(({e,l},i)=>{
+        const h=dayHeading(e.deletedAt); if(h!==last){ html+=`<p class="lt-day">${escapeHtml(h)}</p>`; last=h; }
+        html+=`<div class="lt-row"><span class="lt-em" aria-hidden="true">${escapeHtml(aisleInfo(e.aisle||guessAisle(e.text)).emoji)}</span><span class="lt-tx"><b>${e.qty>1?e.qty+"× ":""}${escapeHtml(e.text)}</b><small>🗑 ${escapeHtml(whenLabel(e.deletedAt))}${listId?"":` · ${escapeHtml(l.emoji+" "+l.name)}`}${e.by?` · ${escapeHtml(personName(e.by))}`:""}</small></span><button type="button" class="lt-restore" data-i="${i}" aria-label="Rimetti ${escapeHtml(e.text)} nella lista">↩︎</button></div>`;
+      });
+      box.innerHTML=html;
+      box.querySelectorAll("[data-i]").forEach(b=>b.addEventListener("click",()=>{ const {e,l}=all[Number(b.dataset.i)]; restoreTrashEntry(l,e.id); persist(); renderAll(); paint(); onChange&&onChange(); showToast(`↩︎ “${e.text}” di nuovo in ${l.name}`); }));
+    }
+    emptyBtn.addEventListener("click",()=>{
+      const n=entries().length; if(!n) return;
+      if(!confirm(`Eliminare definitivamente ${n} ${n===1?"prodotto":"prodotti"} dal cestino?`)) return;
+      (listId?state.lists.filter(l=>l.id===listId):state.lists).forEach(l=>{ markDeleted((l.trash||[]).map(e=>e.id)); l.trash=[]; });
+      persist(); renderAll(); paint(); onChange&&onChange();
+    });
+    paint();
+  });
+}
 document.getElementById("openCoupleSettingsBtn")?.addEventListener("click",()=>openCoupleForm());
 // Pulsanti "i": spiegazioni a richiesta invece di testi sempre visibili.
 document.addEventListener("click",e=>{ const b=e.target.closest("[data-nd-info]"); if(!b) return; e.preventDefault(); e.stopPropagation(); openChartInfo(b.dataset.ndInfo); },true);
@@ -3289,7 +3383,7 @@ function openListItem(listId,itemId){
     const forBox=node.querySelector("#itemForChips"), aisleBox=node.querySelector("#itemAisleChips");
     const paintFor=()=>{ forBox.innerHTML=[["both","Tutti e due"],["a",`Solo ${personName("a")}`],["b",`Solo ${personName("b")}`]].map(([k,l])=>`<button type="button" class="chip${draft.forWhom===k?" active":""}" data-for="${k}">${escapeHtml(l)}</button>`).join("");
       forBox.querySelectorAll("[data-for]").forEach(b=>b.addEventListener("click",()=>{ draft.forWhom=b.dataset.for; paintFor(); })); };
-    const paintAisle=()=>{ aisleBox.innerHTML=[...AISLES.map(a=>a[0]),"altro"].map(k=>{ const a=aisleInfo(k); return `<button type="button" class="chip${draft.aisle===k?" active":""}" data-aisle="${k}"><span class="em">${a.emoji}</span>${escapeHtml(a.name)}</button>`; }).join("");
+    const paintAisle=()=>{ aisleBox.innerHTML=aisleKeys().map(k=>{ const a=aisleInfo(k); return `<button type="button" class="chip${draft.aisle===k?" active":""}" data-aisle="${k}"><span class="em">${a.emoji}</span>${escapeHtml(a.name)}</button>`; }).join("");
       aisleBox.querySelectorAll("[data-aisle]").forEach(b=>b.addEventListener("click",()=>{ draft.aisle=b.dataset.aisle; paintAisle(); })); };
     paintFor(); paintAisle();
     draft.fav=isFavorite(it.text);
@@ -3709,7 +3803,7 @@ function openChartInfo(kind){
     dividi:"Quanto della spesa spetta a ciascuno. A metà, con una percentuale, tutta all'altra persona oppure solo a chi ha pagato (spesa personale). Dalla cassa comune non si crea nessun debito.",
     fisse:"Spese che si ripetono, come affitto, bollette o abbonamenti. Scegli quanto, ogni quanto, chi paga, il gruppo e come dividere: alla data giusta la spesa viene registrata da sola nei movimenti e aggiorna il saldo tra voi. Tocca una spesa fissa per modificarla, metterla in pausa o eliminarla.",
     gruppi:"Ogni gruppo è un conto separato tra voi, con il suo saldo (es. Casa, Viaggio a Lisbona). Il numero grande in alto è la somma di tutti i gruppi. Tocca un gruppo per vederne i movimenti o saldarlo.",
-    liste:"Tocca una lista per aggiungere articoli: scrivendoli, incollando una lista (ogni riga diventa un articolo) o con una foto. Spunta quello che metti nel carrello e registralo come spesa.",
+    liste:"Tocca una lista per aggiungere articoli: scrivendoli, incollando una lista (ogni riga diventa un articolo) o con una foto. Tocca un prodotto quando lo prendi: finisce in “Acquistato” con data e ora e nella cronologia 🕘 (linguetta a destra). Scorrendo puoi metterlo nei ★ preferiti o eliminarlo: va nel cestino della lista (🗑 in fondo); dalla pagina Liste trovi il cestino di tutte le liste. Gli acquistati si possono registrare come spesa.",
     ripartizione:"Mostra come entrate o uscite del periodo selezionato sono distribuite fra categorie o macrocategorie. Non considera i trasferimenti fra conti.",
     andamento:"Entrate/Uscite mostra i flussi del periodo. Saldo cumulato mostra il saldo reale, partendo dal saldo presente prima dell’inizio del periodo. Tieni premuto un punto per leggere il giorno.",
     conti:"Mostra la variazione netta di ciascun conto nel periodo scelto. I trasferimenti compaiono come uscita nel conto di origine e entrata in quello di destinazione."
@@ -4016,7 +4110,11 @@ function openCalendar(){
   });
 }
 /* v1.7.0 — Il pulsante calendario sta nella barra del periodo della Home (vista generale di tutti i movimenti). */
+/* v1.19.0 — Un solo calendario: quello che si apre toccando il titolo (colori per persona, cassa comune,
+   rimborsi e spesa del giorno). Il pulsante 📅 in alto a destra non c'è più. */
+(function hideCalendarBtn(){ const b=document.getElementById("openCalendarBtn"); if(b){ b.hidden=true; b.style.setProperty("display","none","important"); } })();
 (function moveCalendarBtn(){
+  return;
   const btn=document.getElementById("openCalendarBtn"), bar=document.querySelector(".topbar");
   if(btn && bar){ bar.appendChild(btn); btn.classList.add("topbar-cal-btn"); btn.setAttribute("aria-label","Calendario dei movimenti"); btn.innerHTML='<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.9"/><path d="M4 10h16M9 3v4M15 3v4" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/><circle cx="9" cy="14.5" r="1.2" fill="currentColor"/><circle cx="15" cy="14.5" r="1.2" fill="currentColor"/></svg>'; }
 })();
@@ -4138,7 +4236,10 @@ function mergeStates(local,inc,prefer){
   out.trash=mergeArr(first.trash,second.trash,{keepGone:true}).sort((x,y)=>String(y.deletedAt).localeCompare(String(x.deletedAt)));
   const lists=new Map();
   (first.lists||[]).forEach(l=>lists.set(l.id,{...l,items:[...(l.items||[])]}));
-  (second.lists||[]).forEach(l=>{ const prev=lists.get(l.id); lists.set(l.id,{...(prev||{}),...l,items:mergeArr(prev?.items||[],l.items||[])}); });
+  (second.lists||[]).forEach(l=>{ const prev=lists.get(l.id); lists.set(l.id,{...(prev||{}),...l,items:mergeArr(prev?.items||[],l.items||[]),
+    // v1.19.0 — acquisti e cestino delle liste: si sommano quelli dei due telefoni.
+    purchases:mergeArr(prev?.purchases||[],l.purchases||[]).sort((a,b)=>String(a.at).localeCompare(String(b.at))).slice(-400),
+    trash:mergeArr(prev?.trash||[],l.trash||[]).sort((a,b)=>String(b.deletedAt).localeCompare(String(a.deletedAt))).slice(0,200)}); });
   // Stessa cosa aggiunta da tutti e due (es. "Latte" ancora da comprare): resta una volta sola.
   out.lists=[...lists.values()].filter(l=>!gone(l.id)).map(l=>{ const seenText=new Set(); return {...l,items:l.items.filter(i=>!gone(i.id)).filter(i=>{ if(i.done) return true; const k=normName(i.text); if(seenText.has(k)) return false; seenText.add(k); return true; })}; });
   // Ricorrenti e pianificate generate su entrambi i telefoni: una sola per data.

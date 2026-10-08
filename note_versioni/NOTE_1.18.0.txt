@@ -1,0 +1,31 @@
+VERSIONE 1.18.0 — Liste più smart, Home e calendario come in Bilancio
+
+Home
+- Le scorciatoie delle liste ora sono in una scheda "🛒 Liste della spesa" con il totale da
+  comprare e "Tutte ›". Ogni lista mostra quanto resta da comprare, una barra di avanzamento
+  e quanti prodotti sono "⏰ da ricomprare".
+- Tieni premuto sul titolo in alto (Tutti i movimenti / mese): menu veloce con
+  "Tutti i movimenti" e i mesi vicini, come in Bilancio.
+- Tocca il titolo: il calendario ha lo stesso layout di Bilancio (in basso "Tutto <mese>" e
+  "Mostra", "Tutti i movimenti" in alto) e sotto ogni giorno compare un pallino del colore di chi
+  ha pagato.
+- Pulsante "Oggi" in alto a sinistra quando stai guardando un altro mese: torna al mese corrente.
+
+Liste
+- Gli acquisti ora vengono contati quando segnate un prodotto nel carrello (spunta o scorri a
+  destra), una sola volta; se lo togliete dal carrello per errore il conteggio torna indietro.
+  Per ogni prodotto l'app ricorda le ultime date di acquisto e capisce ogni quanto lo comprate.
+- "Comprati spesso" diventa smart: conta quante volte, ogni quanti giorni e da quanto non lo
+  comprate. Quando è ora di ricomprarlo compare "⏰ Da ricomprare" (in cima alla lista e nel
+  numero sulla linguetta).
+- Linguette sul bordo destro (come in RecompApp): "↻ Spesso" e "★ Preferiti". Si apre un
+  cassetto laterale: tocca un prodotto per aggiungerlo oppure trascinalo verso sinistra e
+  lascialo sulla lista. "＋ Aggiungi i N da ricomprare" li mette tutti in lista in un colpo.
+  Il pulsante "★ Preferiti" sotto il campo apre lo stesso cassetto.
+- La pagina Liste è stata rifatta: schede in vetro con anteprima dei prodotti, avanzamento,
+  "⏰ da ricomprare" e conteggio.
+
+Statistiche
+- "Grafici" si chiama ora "Statistiche" (titolo e barra in basso).
+- Spese per categoria: testo più piccolo; con gli importi nascosti si vedono solo i puntini
+  e la percentuale (prima comparivano sia l'importo sia i puntini).

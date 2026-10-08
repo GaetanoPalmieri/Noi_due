@@ -4,11 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
 <title>Noi Due — Spese di coppia</title>
-<meta name="app-version" content="1.18.0">
+<meta name="app-version" content="1.19.0">
 <meta name="description" content="Spese di coppia: chi ha pagato, chi deve a chi, budget e statistiche.">
 
 <!-- PWA / iOS home screen -->
-<link rel="manifest" href="manifest.json?v=1.18.0">
+<link rel="manifest" href="manifest.json?v=1.19.0">
 <meta name="theme-color" content="#12181F">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -16,11 +16,11 @@
 <!-- iPhone: icona nella cartella principale, senza ?v=, con la dimensione dichiarata (la legge anche Safari più vecchio). -->
 <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
 <link rel="apple-touch-icon-precomposed" sizes="180x180" href="apple-touch-icon-precomposed.png">
-<link rel="icon" href="icons/icon-192.png?v=1.18.0">
+<link rel="icon" href="icons/icon-192.png?v=1.19.0">
 
-<link rel="stylesheet" href="style.css?v=1.18.0">
+<link rel="stylesheet" href="style.css?v=1.19.0">
 <!-- Token grafici condivisi dalle 4 app: va caricato per ultimo. -->
-<link rel="stylesheet" href="suite-tokens.css?v=1.18.0">
+<link rel="stylesheet" href="suite-tokens.css?v=1.19.0">
 </head>
 <body>
 
@@ -158,7 +158,7 @@
     <section class="view" id="view-liste" data-view="liste">
       <h1 class="view-title">Liste</h1>
       <div class="section-block">
-        <div class="section-head"><h2>Cosa comprare <button type="button" class="nd-info" data-nd-info="liste" aria-label="Come funzionano le liste">i</button></h2><button type="button" class="pill-btn mini-btn" id="addListBtn">＋ Nuova lista</button></div>
+        <div class="section-head"><h2>Cosa comprare <button type="button" class="nd-info" data-nd-info="liste" aria-label="Come funzionano le liste">i</button></h2><span class="lv-actions"><button type="button" class="pill-btn mini-btn" id="listsTrashBtn" aria-label="Cestino di tutte le liste">🗑</button><button type="button" class="pill-btn mini-btn" id="addListBtn">＋ Nuova lista</button></span></div>
         <div id="coupleLists" class="lv-grid"></div>
       </div>
     </section>
@@ -437,7 +437,7 @@
     <div class="sheet-head">
       <h3 id="listDetailTitle">Lista</h3><button type="button" class="pill-btn mini-btn" id="listEditBtn">Modifica</button>
     </div>
-    <!-- Noi Due 1.18.0 — Pannello "Aggiungi un prodotto" rifatto: nome (o link) in evidenza, poi
+    <!-- Noi Due 1.19.0 — Pannello "Aggiungi un prodotto" rifatto: nome (o link) in evidenza, poi
          quantità, prezzo, reparto riconosciuto da solo e per chi. I dettagli compaiono mentre scrivi. -->
     <section class="lc" id="listComposer" aria-label="Aggiungi un prodotto">
       <div class="lc-main">
@@ -467,15 +467,16 @@
     </div>
     <div class="list-suggest" id="listSuggest" hidden></div>
     <div id="listTodo" class="list-items"></div>
-    <p class="field-hint list-gesture-hint" id="listGestureHint">Scorri a destra: nel carrello · a sinistra: ☆ preferito o elimina · tieni premuto: dettagli</p>
+    <p class="field-hint list-gesture-hint" id="listGestureHint">Tocca: acquistato · scorri a sinistra: ☆ preferito o 🗑 elimina · tieni premuto: dettagli</p>
     <p class="empty-hint" id="listEmpty" hidden>La lista è vuota. Scrivi qui sopra cosa comprare.</p>
     <div id="listDoneWrap" hidden>
-      <div class="list-done-head"><h4 class="gd-sub" id="listDoneTitle">Nel carrello</h4><button type="button" class="pill-btn mini-btn" id="listClearDone">Togli</button></div>
+      <div class="list-done-head"><h4 class="gd-sub" id="listDoneTitle">✓ Acquistato</h4><button type="button" class="pill-btn mini-btn" id="listClearDone">Togli</button></div>
       <p class="field-hint list-done-hint" id="listDoneHint" hidden>Quando esci dalla lista tornano da comprare.</p>
       <div id="listDone" class="list-items"></div>
     </div>
     <p class="field-hint list-total" id="listTotal"></p>
     <button type="button" class="gd-settle" id="listRegisterBtn" hidden>🧾 Registra come spesa</button>
+    <button type="button" class="lt-open" id="listTrashBtn" hidden>🗑 Cestino della lista</button>
   </div>
 </template>
 
@@ -496,6 +497,16 @@
       <div class="scan-code-row"><input type="text" id="scanCodeInput" class="text-input" inputmode="numeric" placeholder="es. 8076809513753" autocomplete="off" enterkeyhint="search"><button type="button" class="list-add-btn" id="scanCodeBtn" aria-label="Cerca il codice">🔎</button></div>
     </div>
     <div id="scanResult"></div>
+  </div>
+</template>
+
+<template id="tpl-list-trash">
+  <div class="sheet" id="sheetListTrash">
+    <div class="sheet-handle"></div>
+    <div class="sheet-head"><h3 id="listTrashTitle">Cestino</h3><button class="sheet-close" data-close aria-label="Chiudi pannello">✕</button></div>
+    <p class="field-hint" id="listTrashHint">I prodotti eliminati restano qui con data e ora. Tocca ↩︎ per rimetterli nella lista.</p>
+    <div id="listTrashBox" class="lt-list"></div>
+    <button type="button" class="text-danger-btn" id="listTrashEmpty" hidden>Svuota il cestino</button>
   </div>
 </template>
 
@@ -876,7 +887,7 @@
   </div>
 </template>
 
-<script src="suite.js?v=1.18.0"></script>
-<script src="app.js?v=1.18.0"></script>
+<script src="suite.js?v=1.19.0"></script>
+<script src="app.js?v=1.19.0"></script>
 </body>
 </html>

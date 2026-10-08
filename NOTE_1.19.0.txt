@@ -1,0 +1,23 @@
+VERSIONE 1.19.0 — Liste: acquistato, cestino e acquisti nel tempo
+
+Home
+- Un solo calendario: quello che si apre toccando il titolo in alto ("Tutti i movimenti" / mese).
+  Il pulsante 📅 in alto a destra non c'è più. Il calendario ha i pallini del colore di chi ha
+  pagato, la cassa comune e i rimborsi, con la legenda, la spesa di ogni giorno e il totale del mese.
+
+Liste
+- Tocca il pallino o il nome di un prodotto = acquistato: resta barrato e scende nella sezione
+  "✓ Acquistato" con data e ora automatiche. Se lo ritocchi (errore) torna da comprare e non
+  conta come acquisto.
+- Scorri sul prodotto e tocca "Elimina": finisce nel cestino della lista, con data e ora di
+  eliminazione (pulsante "🗑 Cestino della lista" in fondo). Da lì ↩︎ lo rimette in lista.
+- Pagina Liste: pulsante 🗑 in alto con il cestino comune di tutte le liste (con il nome della lista).
+- Linguette a destra solo con l'icona e colorate: 🕘 Acquisti nel tempo (verde) e ★ Preferiti
+  (ambra). "Acquisti nel tempo" è la cronologia per giorno di ciò che avete davvero preso, con
+  ora e chi l'ha preso; in cima i prodotti "⏰ da ricomprare". Tocca o trascina per rimetterli in lista.
+- Tolta la sezione "Comprati spesso" dentro la lista.
+- Pagina Liste: schede compatte su una riga (prima erano troppo grandi).
+- Scorrendo su un prodotto la riga non si restringe più: testo e pulsanti restano della stessa misura.
+- Reparti nuovi: Elettrodomestici ed elettronica (aspirapolvere, macchina da caffè, frullatore…),
+  Abbigliamento e scarpe, Fai da te e giardino, Cartoleria e ufficio. I prodotti già in "Altro"
+  vengono riclassificati da soli aprendo la lista.

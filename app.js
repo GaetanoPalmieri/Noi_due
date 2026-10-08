@@ -2198,6 +2198,11 @@ function renderCouple(){
   if(listDetailRefresh) listDetailRefresh();
 }
 /* ---------------- Liste della spesa / cose da comprare ---------------- */
+/* v1.20.0 — Anello di avanzamento con il numero di cose da comprare (al posto del riquadro giallo). */
+function listRingHtml(todo,total){
+  const pct=total?Math.round((total-todo)/total*100):0, r=15, c=2*Math.PI*r, off=c*(1-pct/100);
+  return `<span class="lr-ring${todo?"":" zero"}" aria-hidden="true"><svg viewBox="0 0 36 36"><circle class="lr-bg" cx="18" cy="18" r="${r}"/><circle class="lr-fg" cx="18" cy="18" r="${r}" stroke-dasharray="${c.toFixed(1)}" stroke-dashoffset="${off.toFixed(1)}"/></svg><b>${todo?todo:"✓"}</b></span>`;
+}
 /* v1.17.0 — Home: le liste in una scheda con titolo, così si capisce cosa sono. Ogni lista mostra quanto
    resta da comprare, una barra di avanzamento e i prodotti "da ricomprare". */
 function renderHomeLists(){
@@ -2212,7 +2217,7 @@ function renderHomeLists(){
     const todo=l.items.filter(i=>!i.done).length, done=l.items.length-todo, due=smartSuggestions(l).filter(x=>x.isDue).length;
     const pct=l.items.length?Math.round(done/l.items.length*100):0;
     const b=document.createElement("div"); b.setAttribute("role","button"); b.tabIndex=0; b.className="hl-item"+(todo?"":" empty");
-    b.innerHTML=`<span class="hl-em" aria-hidden="true">${escapeHtml(l.emoji)}</span><span class="hl-txt"><b>${escapeHtml(l.name)}</b><small>${todo?`${todo} da comprare`:"Niente da comprare"}${due?` · ⏰ ${due}`:""}</small></span><span class="hl-bar" aria-hidden="true"><i style="width:${pct}%"></i></span>`;
+    b.innerHTML=`<span class="hl-em" aria-hidden="true">${escapeHtml(l.emoji)}</span><span class="hl-txt"><b>${escapeHtml(l.name)}</b><small>${todo?`${todo} da comprare`:"Tutto preso"}${due?` · ⏰ ${due}`:""}</small></span>${listRingHtml(todo,l.items.length)}`;
     b.setAttribute("aria-label",`Lista ${l.name}: ${todo} da comprare${due?`, ${due} da ricomprare`:""}`);
     b.addEventListener("click",()=>openListDetail(l.id));
     row.appendChild(b);
@@ -2232,7 +2237,7 @@ function renderCoupleLists(){
     const pct=l.items.length?Math.round(done/l.items.length*100):0;
     const card=document.createElement("div");
     card.className="lv-card"+(todo?"":" empty"); card.setAttribute("role","button"); card.tabIndex=0;
-    card.innerHTML=`<span class="lv-em" aria-hidden="true">${escapeHtml(l.emoji)}</span><span class="lv-head"><b>${escapeHtml(l.name)}</b><small>${todo?`${todo} da comprare`:"Niente da comprare"}${done?` · ${done} acquistati`:""}${due?` · ⏰ ${due}`:""}${g?` · ${escapeHtml(g.emoji+" "+g.name)}`:""}</small><span class="lv-bar" aria-hidden="true"><i style="width:${pct}%"></i></span></span><span class="lv-count${todo?"":" zero"}">${todo}</span><span class="lv-chev" aria-hidden="true">›</span>`;
+    card.innerHTML=`<span class="lv-em" aria-hidden="true">${escapeHtml(l.emoji)}</span><span class="lv-head"><b>${escapeHtml(l.name)}</b><small>${todo?`${todo} da comprare`:"Niente da comprare"}${done?` · ${done} acquistati`:""}${due?` · ⏰ ${due}`:""}${g?` · ${escapeHtml(g.emoji+" "+g.name)}`:""}</small></span>${listRingHtml(todo,l.items.length)}<span class="lv-chev" aria-hidden="true">›</span>`;
     card.setAttribute("aria-label",`${l.name}: ${todo} da comprare`);
     card.addEventListener("click",()=>openListDetail(l.id));
     card.addEventListener("keydown",e=>{ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); openListDetail(l.id); } });

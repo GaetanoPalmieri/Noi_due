@@ -7869,3 +7869,88 @@ html.amounts-hidden #views #view-stats .pie-legend-item .val::after {
   background: var(--card) !important;
   background-image: none !important;
 }
+
+/* =====================================================================
+   Noi Due 1.20.0 — Liste in Home e pagina Liste: schede piene (niente
+   vetro trasparente) e anello di avanzamento al posto del riquadro giallo.
+   ===================================================================== */
+#view-home .hl-card,
+#view-liste .lv-card {
+  background: var(--card) !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+  border: 1px solid color-mix(in srgb, var(--ink) 8%, transparent) !important;
+  box-shadow: 0 1px 2px rgba(0,0,0,.06), 0 8px 22px -14px rgba(0,0,0,.35) !important;
+}
+#view-home .hl-item {
+  display: flex !important;
+  align-items: center;
+  gap: 10px !important;
+  min-width: 168px;
+  padding: 10px 10px 10px 10px !important;
+  background: color-mix(in srgb, var(--ink) 4%, var(--card)) !important;
+  border: 1px solid color-mix(in srgb, var(--ink) 7%, transparent) !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+#view-home .hl-em,
+#view-liste .lv-em {
+  background: color-mix(in srgb, var(--ink) 6%, transparent) !important;
+  border: 0 !important;
+}
+#view-home .hl-txt {
+  flex: 1 1 auto;
+}
+#view-home .hl-txt small {
+  color: var(--ink-soft) !important;
+  font-weight: 600;
+}
+#view-home .hl-title-ic {
+  background: color-mix(in srgb, #3fb38e 18%, transparent) !important;
+}
+#view-home .hl-all {
+  color: #3fb38e !important;
+}
+/* Anello: verde = quanto è già stato preso, numero = quanto resta */
+.lr-ring {
+  position: relative;
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+}
+.lr-ring svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+.lr-ring circle {
+  fill: none;
+  stroke-width: 3.2;
+}
+.lr-ring .lr-bg {
+  stroke: color-mix(in srgb, var(--ink) 12%, transparent);
+}
+.lr-ring .lr-fg {
+  stroke: #3fb38e;
+  stroke-linecap: round;
+  transition: stroke-dashoffset .3s ease;
+}
+.lr-ring b {
+  position: relative;
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+.lr-ring.zero b {
+  color: #3fb38e;
+  font-size: 15px;
+}
+#view-liste .lv-card .lr-ring {
+  width: 38px;
+  height: 38px;
+}

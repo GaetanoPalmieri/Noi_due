@@ -2773,32 +2773,10 @@ function openListDetail(listId){
    Il browser non può leggere direttamente le pagine di altri siti, quindi passa da Microlink (gratuito, senza chiave). */
 const URL_RE=/https?:\/\/[^\s<>"]+/i;
 function extractUrl(text){ const m=String(text||"").match(URL_RE); return m?m[0].replace(/[),.;!?]+$/,""):""; }
-function cleanProductTitle(title,publisher){
-  let t=String(title||"").replace(/\s+/g," ").trim();
-  const parts=t.split(/\s+[|·•–—-]\s+/);
-  if(parts.length>1 && parts[0].length>=4){
-    const last=parts[parts.length-1].toLowerCase();
-    if(!publisher || last.includes(String(publisher).toLowerCase().slice(0,5)) || /amazon|ikea|zalando|shop|store|online|\.it|\.com/.test(last)) t=parts.slice(0,-1).join(" - ");
-  }
-  return t.replace(/^(Amazon\.it\s*:\s*)/i,"").slice(0,120);
-}
-async function fetchLinkPreview(url){
-  const base=`https://api.microlink.io/?url=${encodeURIComponent(url)}`;
-  const priceRules="&data.price.selector="+encodeURIComponent('meta[property="product:price:amount"],meta[property="og:price:amount"],meta[itemprop="price"],[itemprop="price"][content]')+"&data.price.attr=content";
-  for(const q of [base+priceRules, base]){
-    try{
-      const r=await fetch(q);
-      const j=await r.json();
-      if(j && j.status==="success" && j.data){
-        const d=j.data;
-        const price=parseFloat(String(d.price??"").replace(",","."));
-        return {title:cleanProductTitle(d.title,d.publisher),image:/^https:\/\//.test(d.image?.url||"")?d.image.url:(/^https:\/\//.test(d.logo?.url||"")?d.logo.url:""),
-          url:/^https?:\/\//.test(d.url||"")?d.url:url,price:Number.isFinite(price)&&price>0&&price<100000?Math.round(price*100)/100:null,publisher:String(d.publisher||"").slice(0,40)};
-      }
-    }catch(e){ /* rete assente o limite gratuito raggiunto: riprova senza regole o rinuncia */ }
-  }
-  return null;
-}
+/* La lettura vera e propria del link sta in suite.js (SuiteLink), condivisa con Style Wishlist:
+   una sola copia da correggere se un giorno cambia il servizio. */
+function cleanProductTitle(title,publisher){ return window.SuiteLink ? SuiteLink.cleanTitle(title,publisher) : String(title||"").slice(0,120); }
+async function fetchLinkPreview(url){ return window.SuiteLink ? SuiteLink.preview(url) : null; }
 /* Arricchisce un articolo già in lista con i dati presi dal link. */
 async function enrichListItem(listId,itemId,url){
   const p=await fetchLinkPreview(url);

@@ -140,7 +140,6 @@ button:active {
   display: flex;
   align-items: center;
   justify-content: center;
-  position: relative;
   padding: calc(14px + env(safe-area-inset-top)) 16px 10px;
   position: sticky;
   top: 0;
@@ -173,7 +172,7 @@ button:active {
 /* ---------- Titolo di sezione (nome della vista, es. Home, Ricorrenti) ---------- */
 .view-title {
   font-family: var(--font-display);
-  font-size: 28px;
+  font-size: 34px;
   font-weight: 800;
   text-align: center;
   color: var(--ink);
@@ -211,7 +210,7 @@ button:active {
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 14px;
+  font-size: 15px;
 }
 .hero-split-item .dot {
   width: 8px;
@@ -262,7 +261,7 @@ button:active {
   padding: 6px 12px;
   border-radius: 20px;
   border: 1px solid var(--line);
-  font-size: 14.5px;
+  font-size: 15px;
   font-weight: 600;
 }
 .pill-btn .chev {
@@ -322,7 +321,7 @@ button:active {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 13.5px;
+  font-size: 13px;
 }
 .pie-legend-item .sw {
   width: 10px;
@@ -357,7 +356,7 @@ button:active {
   display: flex;
   align-items: center;
   gap: 7px;
-  font-size: 14.5px;
+  font-size: 15px;
   font-weight: 600;
   color: var(--ink-soft);
   margin: 0 0 2px 2px;
@@ -387,7 +386,7 @@ button:active {
   border: 1.5px solid var(--line);
   border-radius: 10px;
   padding: 8px 13px;
-  font-size: 15.5px;
+  font-size: 15px;
   font-weight: 600;
 }
 .graph-macro-node .em {
@@ -421,7 +420,7 @@ button:active {
   background: var(--line);
 }
 .graph-cat-node .em {
-  font-size: 14px;
+  font-size: 15px;
 }
 /* ---------- Accounts ---------- */
 /* ---------- Categories/templates manage ---------- */
@@ -490,7 +489,7 @@ button:active {
 }
 .category-row .nm {
   font-weight: 600;
-  font-size: 16px;
+  font-size: 17px;
   margin: 0;
 }
 .template-manage-row .nm {
@@ -498,7 +497,7 @@ button:active {
   margin: 0;
 }
 .category-row .sub {
-  font-size: 12px;
+  font-size: 13px;
   color: var(--ink-soft);
   margin: 1px 0 0;
 }
@@ -509,7 +508,7 @@ button:active {
 /* Ricorrenti/Pianificate: righe con testo più grande e più leggibile */
 .chev {
   color: var(--ink-soft);
-  font-size: 16px;
+  font-size: 17px;
 }
 .amt {
   font-weight: 700;
@@ -530,7 +529,7 @@ button:active {
   text-align: center;
 }
 .stat-card-label {
-  font-size: 11.5px;
+  font-size: 11px;
   margin: 0 0 6px;
   display: flex;
   align-items: center;
@@ -547,7 +546,7 @@ button:active {
 .stat-card-value {
   font-family: var(--font-display);
   font-weight: 700;
-  font-size: 21px;
+  font-size: 22px;
   margin: 0;
   font-variant-numeric: tabular-nums;
 }
@@ -566,7 +565,7 @@ button:active {
   justify-content: flex-start;
 }
 .stat-card-grid .stat-card-value {
-  font-size: 19px;
+  font-size: 17px;
 }
 /* alias retro-compatibile */
 /* ---------- Calendario spese ---------- */
@@ -623,7 +622,7 @@ button:active {
   align-items: center;
   justify-content: center;
   gap: 3px;
-  font-size: 12.5px;
+  font-size: 13px;
   color: var(--ink);
   padding: 2px;
 }
@@ -657,9 +656,7 @@ button:active {
 .cal-dot.planned {
   background: var(--ink-soft);
 }
-.cal-dot.real {
-  background: var(--navy);
-}
+
 .cal-dot.recurring {
   background: #7b55b7;
 }
@@ -672,7 +669,7 @@ button:active {
   gap: 16px;
   justify-content: center;
   margin-top: 16px;
-  font-size: 12px;
+  font-size: 13px;
   color: var(--ink-soft);
   flex-wrap: wrap;
 }
@@ -696,9 +693,7 @@ button:active {
 .cal-leg-item .dot.planned {
   background: var(--ink-soft);
 }
-.cal-leg-item .dot.real {
-  background: var(--navy);
-}
+
 .cal-leg-item .dot.recurring {
   background: #7b55b7;
 }
@@ -717,7 +712,7 @@ button:active {
   padding: 13px 14px;
   background: none;
   border: none;
-  font-size: 14px;
+  font-size: 15px;
   color: var(--ink);
   border-bottom: 1px solid var(--line);
 }
@@ -729,7 +724,7 @@ button:active {
 }
 .app-version {
   text-align: center;
-  font-size: 11.5px;
+  font-size: 11px;
   color: var(--ink-soft);
   margin-top: 22px;
 }
@@ -825,13 +820,13 @@ button:active {
 }
 .sheet-head h3 {
   font-family: var(--font-display);
-  font-size: 20px;
+  font-size: 22px;
   margin: 0;
 }
 .sheet-close {
   background: none;
   border: none;
-  font-size: 16px;
+  font-size: 17px;
   color: var(--ink-soft);
   padding: 6px;
 }
@@ -846,7 +841,7 @@ button:active {
 }
 .field-row label {
   display: block;
-  font-size: 14.5px;
+  font-size: 15px;
   color: var(--ink-soft);
   margin-bottom: 7px;
   font-weight: 600;
@@ -877,7 +872,7 @@ button:active {
   border: none;
   background: none;
   border-radius: 10px;
-  font-size: 17.5px;
+  font-size: 17px;
   font-weight: 700;
   color: var(--ink-soft);
   display: flex;
@@ -890,7 +885,7 @@ button:active {
   box-shadow: 0 2px 7px rgba(0, 0, 0, 0.16);
 }
 .type-toggle.three .type-opt {
-  font-size: 15.5px;
+  font-size: 15px;
   padding: 12px 4px;
 }
 .amount-field {
@@ -933,7 +928,7 @@ button:active {
   border-radius: 13px;
   border: 1.5px solid var(--line);
   background: var(--card);
-  font-size: 16.5px;
+  font-size: 17px;
   font-weight: 700;
   color: var(--ink);
   display: flex;
@@ -941,7 +936,7 @@ button:active {
   gap: 6px;
 }
 .chip .em {
-  font-size: 14px;
+  font-size: 15px;
 }
 /* Selettori "grandi" tipo pulsante (Statistiche, Ricorrenti, evoluzione conto) */
 .chip-groups {
@@ -979,7 +974,7 @@ button:active {
   padding: 15px;
   border-radius: 13px;
   border: none;
-  font-size: 17.5px;
+  font-size: 17px;
   font-weight: 600;
 }
 .primary-btn:active {
@@ -991,7 +986,7 @@ button:active {
   border: none;
   background: none;
   color: var(--rust);
-  font-size: 16px;
+  font-size: 17px;
   font-weight: 600;
   margin-top: 10px;
 }
@@ -1003,7 +998,7 @@ button:active {
 .tx-detail-row {
   display: flex;
   justify-content: space-between;
-  font-size: 14px;
+  font-size: 15px;
 }
 .tx-detail-row .k {
   color: var(--ink-soft);
@@ -1028,16 +1023,16 @@ button:focus-visible, input:focus-visible {
   display: none !important;
 }
 .hero-split-value {
-  font-size: 16px;
+  font-size: 17px;
 }
 .pie-legend-item .val {
-  font-size: 15.5px;
+  font-size: 15px;
 }
 .amt, .tx-detail-row .v {
-  font-size: 16px;
+  font-size: 17px;
 }
 .calendar-cell.today {
-  font-size: 14.5px;
+  font-size: 15px;
 }
 strong, b {
   font-size: 1.12em;
@@ -1071,7 +1066,7 @@ html, body {
   max-width: 100%;
 }
 input, select, textarea, .text-input {
-  font-size: 16px;
+  font-size: 17px;
 }
 .topbar {
   gap: 6px;
@@ -1119,13 +1114,13 @@ input, select, textarea, .text-input {
   border-radius: 10px;
   color: var(--ink);
   background: transparent;
-  font-size: 16px;
+  font-size: 17px;
 }
 .period-menu label {
   display: block;
   color: var(--ink-soft);
   margin: 12px 4px 6px;
-  font-size: 14px;
+  font-size: 15px;
 }
 .period-menu input {
   display: block;
@@ -1224,7 +1219,7 @@ input[type="date"] {
   display: block;
   margin-bottom: 8px;
   color: var(--ink-soft);
-  font-size: 14px;
+  font-size: 15px;
 }
 .period-return {
   max-width: 520px;
@@ -1261,7 +1256,7 @@ input[type="date"] {
   margin-bottom: 12px;
 }
 .sheet .type-opt {
-  font-size: 14.5px;
+  font-size: 15px;
   padding: 10px 7px;
 }
 .sheet .chip {
@@ -1271,7 +1266,7 @@ input[type="date"] {
   margin-bottom: 13px;
 }
 .sheet .field-row label {
-  font-size: 13.5px;
+  font-size: 13px;
   margin-bottom: 5px;
 }
 .sheet .text-input {
@@ -1285,7 +1280,7 @@ input[type="date"] {
 }
 .sheet .text-danger-btn {
   padding: 11px;
-  font-size: 14.5px;
+  font-size: 15px;
 }
 .sheet-handle, .sheet-head {
   touch-action: none;
@@ -1350,20 +1345,20 @@ input[type="date"] {
 }
 .sheet .primary-btn::after {
   content: "✓";
-  font-size: 25px;
+  font-size: 22px;
   font-weight: 800;
 }
 /* Comandi e contorni verde-grigio chiaro. */
 .mini-btn {
   min-height: 30px !important;
   padding: 5px 8px !important;
-  font-size: 12px;
+  font-size: 13px;
 }
 .section-head-actions {
   margin-left: auto;
 }
 .chip-group-title {
-  font-size: 12.5px;
+  font-size: 13px;
 }
 .sheet .note-field {
   width: 100%;
@@ -1381,7 +1376,7 @@ input[type="date"] {
   opacity: 0;
   pointer-events: none;
   z-index: 200;
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 700;
   transition: 0.18s;
 }
@@ -1393,7 +1388,7 @@ input[type="date"] {
 .type-toggle .type-opt {
   min-height: 31px;
   padding: 5px 8px;
-  font-size: 12px;
+  font-size: 13px;
 }
 .tx-type-toggle {
   margin: 7px 0 10px;
@@ -1403,7 +1398,7 @@ input[type="date"] {
   width: 126px;
   min-height: 31px;
   padding: 4px 6px;
-  font-size: 11.5px;
+  font-size: 11px;
   font-weight: 800;
   border-color: var(--line);
 }
@@ -1456,7 +1451,7 @@ input[type="date"] {
   border-color: #b8c1bc !important;
 }
 .sheet .chip, .sheet .chip-group-title {
-  font-size: 11.5px;
+  font-size: 11px;
 }
 .sheet .chip {
   padding: 6px 8px;
@@ -1478,7 +1473,7 @@ input[type="date"] {
   margin-left: 5px;
   padding: 2px 7px;
   border-radius: 999px;
-  font-size: 10.5px;
+  font-size: 11px;
   font-weight: 800;
   line-height: 1.3;
   white-space: nowrap;
@@ -1506,14 +1501,14 @@ input[type="date"] {
   width: auto;
   min-width: 32px;
   height: 32px;
-  font-size: 16px;
+  font-size: 17px;
 }
 .template-manage-row .nm {
   font-size: 15px;
   line-height: 1.25;
 }
 .template-manage-row .sub {
-  font-size: 11.5px;
+  font-size: 11px;
   line-height: 1.3;
 }
 .template-manage-row .amt {
@@ -1537,7 +1532,7 @@ input[type="date"] {
   min-height: 34px !important;
   height: 34px !important;
   padding: 4px 9px !important;
-  font-size: 12px !important;
+  font-size: 13px !important;
   line-height: 1.1;
 }
 #sheetRecurringForm #recurringFreqSelect {
@@ -1606,7 +1601,7 @@ input[type="date"] {
   margin: 0;
   color: var(--ink);
   font-family: var(--font-display);
-  font-size: 16px;
+  font-size: 17px;
   font-weight: 700;
   letter-spacing: 0.1px;
 }
@@ -1665,7 +1660,7 @@ input[type="date"] {
   border-radius: 12px;
 }
 .stats-period-filter label {
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 700;
   color: var(--ink-soft);
 }
@@ -1677,7 +1672,7 @@ input[type="date"] {
   border-radius: 9px;
   background: var(--paper);
   color: var(--ink);
-  font: 700 12px var(--font-body);
+  font: 700 13px var(--font-body);
 }
 /* Coerenza completa con il font e i comandi del Bet Tracker. */
 html, body, button, input, select, textarea, .sheet, .view, .tab, .chip, .pill-btn, .primary-btn, .text-danger-btn {
@@ -1713,7 +1708,7 @@ html, body, button, input, select, textarea, .sheet, .view, .tab, .chip, .pill-b
   width: 32px !important;
   height: 32px !important;
   min-width: 32px !important;
-  font-size: 21px !important;
+  font-size: 22px !important;
   box-shadow: none !important;
 }
 .add-btn:active {
@@ -1779,7 +1774,7 @@ html, body, button, input, select, textarea, .sheet, .view, .tab, .chip, .pill-b
 #sheetAddTx .primary-btn::after, #sheetRecurringForm .primary-btn::after, #sheetCategoryForm .primary-btn::after {
   content: "✓";
   color: #241800;
-  font-size: 23px;
+  font-size: 22px;
   font-weight: 900;
 }
 #sheetAddTx .primary-btn:active, #sheetRecurringForm .primary-btn:active, #sheetCategoryForm .primary-btn:active {
@@ -1856,7 +1851,7 @@ html, body, button, input, select, textarea, .sheet, .view, .tab, .chip, .pill-b
 .tx-custom-range .text-input {
   height: 35px;
   padding: 5px;
-  font-size: 12px;
+  font-size: 13px;
 }
 .recurring-options {
   display: grid;
@@ -1865,14 +1860,14 @@ html, body, button, input, select, textarea, .sheet, .view, .tab, .chip, .pill-b
   margin: -2px 0 14px;
 }
 .recurring-options label {
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 700;
 }
 .recurring-options input[type="date"] {
   margin-top: 5px;
   height: 35px;
   padding: 5px;
-  font-size: 12px;
+  font-size: 13px;
 }
 .toggle-line {
   display: flex;
@@ -1884,7 +1879,7 @@ html, body, button, input, select, textarea, .sheet, .view, .tab, .chip, .pill-b
 }
 .backup-status {
   margin: 0 0 9px;
-  font-size: 12px;
+  font-size: 13px;
 }
 #appToast {
   display: flex;
@@ -1895,7 +1890,7 @@ html, body, button, input, select, textarea, .sheet, .view, .tab, .chip, .pill-b
   border: 0;
   border-radius: 8px;
   padding: 5px 8px;
-  font: 800 12px system-ui;
+  font: 800 13px system-ui;
 }
 .wide-stat {
   grid-column: 1/-1;
@@ -1914,11 +1909,11 @@ html, body, button, input, select, textarea, .sheet, .view, .tab, .chip, .pill-b
 .stats-nature-toggle .type-opt {
   min-height: 32px !important;
   padding: 5px !important;
-  font-size: 12px !important;
+  font-size: 13px !important;
 }
 #typeToggle .type-opt {
   min-width: 0;
-  font-size: 10.5px !important;
+  font-size: 11px !important;
   padding: 7px 3px !important;
   white-space: nowrap;
 }
@@ -2010,7 +2005,7 @@ html, body, button, input, select, textarea, .sheet, .view, .tab, .chip, .pill-b
 }
 .chart-sheet-help {
   margin: 0 0 12px;
-  font-size: 12px;
+  font-size: 13px;
 }
 .chart-fullscreen-body {
   min-height: 260px;
@@ -2032,7 +2027,7 @@ html, body, button, input, select, textarea, .sheet, .view, .tab, .chip, .pill-b
 .chart-info-card {
   padding: 8px;
   line-height: 1.6;
-  font-size: 14px;
+  font-size: 15px;
 }
 @media (max-width: 380px) {
   .tx-custom-range {
@@ -2084,7 +2079,7 @@ html, body, button, input, select, textarea, .sheet, .view, .tab, .chip, .pill-b
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
-  font-size: 26px !important;
+  font-size: 22px !important;
   line-height: 1 !important;
   padding: 0 !important;
   border-radius: 50% !important;
@@ -2099,7 +2094,7 @@ html, body, button, input, select, textarea, .sheet, .view, .tab, .chip, .pill-b
   margin: 14px 0 20px;
   padding: 10px 18px 0;
   font-family: var(--font-display);
-  font-size: 28px;
+  font-size: 34px;
   font-weight: 800;
   line-height: 1.2;
   letter-spacing: -0.3px;
@@ -2117,7 +2112,7 @@ html, body, button, input, select, textarea, .sheet, .view, .tab, .chip, .pill-b
   margin: 14px 0 20px;
   padding: 10px 18px 0;
   font-family: var(--font-display);
-  font-size: 28px;
+  font-size: 34px;
   font-weight: 800;
   line-height: 1.2;
   letter-spacing: -0.3px;
@@ -2155,7 +2150,7 @@ html, body, button, input, select, textarea, .sheet, .view, .tab, .chip, .pill-b
   box-shadow: inset 0 1px 0 #ffffff07;
 }
 #recentTx .status-badge {
-  font-size: 8.8px;
+  font-size: 11px;
   padding: 1px 5px;
   margin-left: 4px;
 }
@@ -2310,7 +2305,7 @@ html, body, button, input, select, textarea, .sheet, .view, .tab, .chip, .pill-b
   min-width: 0;
 }
 .recurring-installments-input span {
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 800;
   color: var(--muted, #9fb0ab);
   white-space: nowrap;
@@ -2588,7 +2583,7 @@ html, body, button, input, select, textarea, .sheet, .view, .tab, .chip, .pill-b
   #view-transactions #clearCustomRange {
     padding-left: 6px;
     padding-right: 6px;
-    font-size: 12px;
+    font-size: 13px;
   }
 }
 /* v1.3.3 — R&P: elementi pagati nel mese + data di partenza esplicita */
@@ -2672,7 +2667,7 @@ html, body, button, input, select, textarea, .sheet, .view, .tab, .chip, .pill-b
     overflow: hidden;
     padding-left: 4px;
     padding-right: 4px;
-    font-size: 10.5px;
+    font-size: 11px;
   }
   #view-transactions #clearCustomRange {
     grid-column: auto !important;
@@ -2690,7 +2685,7 @@ html, body, button, input, select, textarea, .sheet, .view, .tab, .chip, .pill-b
   color: var(--ink) !important;
   margin: 16px 0 22px !important;
   padding: 10px 12px 0 !important;
-  font-size: 28px !important;
+  font-size: 34px !important;
   line-height: 1.2 !important;
   position: relative;
   z-index: 1;
@@ -2719,7 +2714,7 @@ button.hero-liquidity-item {
   width: 100%;
 }
 .hero-liquidity-item span {
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 700;
   color: rgba(255, 255, 255, 0.68);
   overflow: hidden;
@@ -2743,7 +2738,7 @@ button.hero-liquidity-item {
     padding: 8px;
   }
   .hero-liquidity-item strong {
-    font-size: 14px;
+    font-size: 15px;
   }
 }
 /* v1.3.7 — iPhone/PWA safe-area: titoli di Statistiche, Conti e Altro sotto Dynamic Island */
@@ -2944,7 +2939,7 @@ button.hero-liquidity-item {
   font-weight: 700 !important;
 }
 #view-home .forecast-card:not(.wide) strong {
-  font-size: 14px !important;
+  font-size: 15px !important;
 }
 /* =========================================================
    v1.3.21 — Fix review grafica
@@ -3016,17 +3011,12 @@ button.hero-liquidity-item {
   grid-column: auto !important;
   display: flex !important;
   flex-direction: column !important;
-  justify-content: space-between !important;
   align-items: flex-start !important;
-  min-height: 64px;
-  padding: 9px 10px !important;
 }
 #view-home .forecast-card span {
   line-height: 1.2;
 }
 #view-home .forecast-card strong, #view-home .forecast-card.wide strong {
-  margin-top: 6px !important;
-  font-size: 15px !important;
   line-height: 1.1 !important;
   transform: none !important;
   align-self: flex-start !important;
@@ -3055,7 +3045,7 @@ button.hero-liquidity-item {
 }
 /* 8) Messaggi "vuoto" più discreti. */
 .empty-hint {
-  font-size: 14px !important;
+  font-size: 15px !important;
 }
 /* v1.4.0 — Sezione Categorie unificata */
 #catHubToggle {
@@ -3100,7 +3090,7 @@ button.hero-liquidity-item {
 }
 .ask-dialog .ask-msg {
   margin: 0 0 18px;
-  font-size: 16px;
+  font-size: 17px;
   line-height: 1.45;
 }
 .ask-dialog .ask-actions {
@@ -3256,7 +3246,7 @@ button.hero-liquidity-item {
   white-space: nowrap;
 }
 .topbar .month-label .pl-sub {
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 700;
   color: var(--ink-soft);
 }
@@ -3393,7 +3383,7 @@ svg text {
 .mv-row .mv-meta .status-badge {
   flex: 0 0 auto;
   margin: 0!important;
-  font-size: 10.5px!important;
+  font-size: 11px!important;
   padding: 2px 7px!important;
 }
 .mv-row .mv-meta .status-badge + span::before {
@@ -3406,7 +3396,6 @@ svg text {
 }
 .mv-row .mv-date.is-today,.mv-row .mv-date.is-future {
   border-color: #C98A1E;
-  color: #8A5A00;
   background: #FBEFD9;
 }
 :root[data-theme="dark"] .mv-row .mv-date.is-today,:root[data-theme="dark"] .mv-row .mv-date.is-future {
@@ -3433,7 +3422,7 @@ svg text {
 .mv-row .mv-title .status-badge {
   flex: 0 0 auto;
   margin: 0!important;
-  font-size: 10.5px!important;
+  font-size: 11px!important;
   padding: 2px 7px!important;
   line-height: 1.3;
 }
@@ -3497,29 +3486,11 @@ svg text {
 .mv-row .mv-date.is-today {
   font-weight: 800;
 }
-.mv-row .mv-date.kind-recurring svg {
-  color: #8A6BD6;
-}
-.mv-row .mv-date.kind-planned svg {
-  color: #D49A2A;
-}
-.mv-row .mv-date.kind-recurring.is-future,.mv-row .mv-date.kind-recurring.is-today {
-  border-color: color-mix(in srgb,#8A6BD6 55%,transparent)!important;
-  background: color-mix(in srgb,#8A6BD6 12%,transparent)!important;
-}
-.mv-row .mv-date.kind-planned.is-future,.mv-row .mv-date.kind-planned.is-today {
-  border-color: color-mix(in srgb,#D49A2A 60%,transparent)!important;
-  background: color-mix(in srgb,#D49A2A 14%,transparent)!important;
-}
+
 .mv-row .mv-date.is-paid svg {
   color: var(--emerald);
 }
-:root:not([data-theme="dark"]) .mv-row .mv-date.kind-recurring svg {
-  color: #6B4FA0;
-}
-:root:not([data-theme="dark"]) .mv-row .mv-date.kind-planned svg {
-  color: #A8700F;
-}
+
 .tx-list,.template-manage-list {
   gap: 7px!important;
 }
@@ -3564,22 +3535,12 @@ svg text {
 .mv-row.mv-kind-past {
   border: 1.5px solid color-mix(in srgb,#3AA684 60%,transparent)!important;
 }
-.mv-row.mv-kind-recurring {
-  border: 1.5px solid color-mix(in srgb,#8A6BD6 70%,transparent)!important;
-}
-.mv-row.mv-kind-planned {
-  border: 1.5px solid color-mix(in srgb,#D4A83A 75%,transparent)!important;
-}
+
 /* Stessi colori nel popup "tieni premuto" */
 #views .mv-row.mv-kind-past,#overlayRoot .mv-row.mv-kind-past {
   border: 1.5px solid color-mix(in srgb,#3AA684 60%,transparent)!important;
 }
-#views .mv-row.mv-kind-recurring,#overlayRoot .mv-row.mv-kind-recurring {
-  border: 1.5px solid color-mix(in srgb,#8A6BD6 70%,transparent)!important;
-}
-#views .mv-row.mv-kind-planned,#overlayRoot .mv-row.mv-kind-planned {
-  border: 1.5px solid color-mix(in srgb,#D4A83A 75%,transparent)!important;
-}
+
 /* v1.6.7 — Bordo grigio con solo il lato sinistro colorato; testi più piccoli; card più basse */
 #views .mv-row.mv-kind-past,#overlayRoot .mv-row.mv-kind-past, #views .mv-row.mv-kind-recurring,#overlayRoot .mv-row.mv-kind-recurring, #views .mv-row.mv-kind-planned,#overlayRoot .mv-row.mv-kind-planned {
   border: 1px solid var(--line)!important;
@@ -3588,12 +3549,7 @@ svg text {
 #views .mv-row.mv-kind-past,#overlayRoot .mv-row.mv-kind-past {
   border-left-color: #3AA684!important;
 }
-#views .mv-row.mv-kind-recurring,#overlayRoot .mv-row.mv-kind-recurring {
-  border-left-color: #8A6BD6!important;
-}
-#views .mv-row.mv-kind-planned,#overlayRoot .mv-row.mv-kind-planned {
-  border-left-color: #D4A83A!important;
-}
+
 .mv-row .mv-ic {
   border-radius: 8px!important;
   background: none!important;
@@ -3619,19 +3575,19 @@ svg text {
    ========================================================= */
 /* Card movimenti: testi ancora un'unità più piccoli */
 .mv-row .mv-title {
-  font-size: 12px!important;
+  font-size: 13px!important;
 }
 .mv-row .mv-amt {
   font-size: 11px!important;
 }
 .mv-row .mv-meta {
-  font-size: 9.5px!important;
+  font-size: 11px!important;
 }
 .mv-row .mv-acc {
-  font-size: 9px!important;
+  font-size: 11px!important;
 }
 .mv-row .mv-date {
-  font-size: 9px!important;
+  font-size: 11px!important;
   padding: 1px 6px!important;
 }
 .mv-row .mv-date svg {
@@ -3643,7 +3599,7 @@ svg text {
   min-width: 28px;
   min-height: 26px;
   height: auto!important;
-  font-size: 16px!important;
+  font-size: 17px!important;
 }
 .tx-row.mv-row,.template-manage-row.mv-row {
   row-gap: 3px!important;
@@ -3656,7 +3612,7 @@ svg text {
   justify-content: flex-start!important;
 }
 #view-home .forecast-card span {
-  font-size: 10px!important;
+  font-size: 11px!important;
   white-space: nowrap!important;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -3665,7 +3621,7 @@ svg text {
 }
 #view-home .forecast-card strong,#view-home .forecast-card.wide strong {
   margin-top: 3px!important;
-  font-size: 14px!important;
+  font-size: 15px!important;
 }
 #view-home .forecast-grid {
   margin: 8px 0 16px!important;
@@ -3673,7 +3629,7 @@ svg text {
 }
 /* R&P: titoli dei riquadri su una riga */
 #views #view-home .forecast-card span {
-  font-size: 9.5px!important;
+  font-size: 11px!important;
   letter-spacing: -.15px!important;
 }
 /* v1.6.9 — spazio di respiro tra testo e importo/data quando nome o categoria+banca sono lunghi */
@@ -3711,7 +3667,7 @@ svg text {
 #view-home .section-head .pill-btn {
   min-height: 30px!important;
   padding: 4px 10px!important;
-  font-size: 12px!important;
+  font-size: 13px!important;
 }
 /* Barra del periodo: niente frecce, si sceglie dal calendario; in Home c'è il pulsante calendario a destra */
 .topbar #prevMonth,.topbar #nextMonth {
@@ -3753,7 +3709,7 @@ svg text {
   background: var(--surface-strong);
 }
 .pp-caret {
-  font-size: 12px;
+  font-size: 13px;
   color: var(--ink-soft);
 }
 .pp-months {
@@ -3771,7 +3727,7 @@ svg text {
   backdrop-filter: blur(12px);
   color: var(--ink);
   font: inherit;
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 700;
 }
 .pp-month.today {
@@ -4177,12 +4133,7 @@ body::before {
 #views .mv-row.mv-kind-past,#overlayRoot .mv-row.mv-kind-past {
   background-image: linear-gradient(90deg,color-mix(in srgb,var(--kind-past) 13%,transparent),transparent 38%)!important;
 }
-#views .mv-row.mv-kind-recurring,#overlayRoot .mv-row.mv-kind-recurring {
-  background-image: linear-gradient(90deg,color-mix(in srgb,var(--kind-recurring) 15%,transparent),transparent 38%)!important;
-}
-#views .mv-row.mv-kind-planned,#overlayRoot .mv-row.mv-kind-planned {
-  background-image: linear-gradient(90deg,color-mix(in srgb,var(--kind-planned) 15%,transparent),transparent 38%)!important;
-}
+
 /* Card principale: gradiente con bagliore */
 #views .hero {
   background: radial-gradient(120% 90% at 0% 0%,rgba(58,166,132,.22),transparent 60%),
@@ -4366,7 +4317,7 @@ html:not(.is-scrolled) #app::before {
   border: 0!important;
 }
 #overlayRoot .sheet .field-row > label,#overlayRoot .sheet .chip-group-title,#overlayRoot .sheet .chip-groups > p {
-  font-size: 12px!important;
+  font-size: 13px!important;
   font-weight: 600!important;
   letter-spacing: .02em;
   color: var(--ink-soft)!important;
@@ -4462,7 +4413,7 @@ html.amounts-hidden :is(.budget-spent,.budget-limit,.budget-earned,.top-category
   align-items: center;
 }
 #overlayRoot .sheet .emoji-input {
-  font-size: 26px!important;
+  font-size: 22px!important;
   letter-spacing: 2px;
   min-height: 54px;
   padding: 8px 44px 8px 14px!important;
@@ -4485,13 +4436,13 @@ html.amounts-hidden :is(.budget-spent,.budget-limit,.budget-earned,.top-category
 }
 .emoji-hint {
   margin: 0;
-  font-size: 12px;
+  font-size: 13px;
   color: var(--ink-soft);
 }
 /* v1.10.7 — scelta del "+" (movimento, ricorrente, pianificato, prelievo ATM) e azioni "rendi ricorrente/pianifica" */
 .add-choice-grid .movement-action-btn {
   min-height: 84px;
-  font-size: 12.5px;
+  font-size: 13px;
 }
 .movement-action-btn.recurring .movement-action-icon,.movement-action-btn.edit[data-add-kind="recurring"] .movement-action-icon {
   background: #cbbcf0!important;
@@ -4504,7 +4455,7 @@ html.amounts-hidden :is(.budget-spent,.budget-limit,.budget-earned,.top-category
 .movement-action-btn.add-recent .movement-action-icon {
   background: linear-gradient(145deg,#f7c463,#e48d24)!important;
   color: #241800!important;
-  font-size: 20px;
+  font-size: 22px;
   font-weight: 800;
 }
 .fab.is-hidden {
@@ -4591,7 +4542,7 @@ html.amounts-hidden :is(.budget-spent,.budget-limit,.budget-earned,.top-category
   display: inline-grid;
   place-items: center;
   font-weight: 700;
-  font-size: 16px;
+  font-size: 17px;
   color: #fff;
   border: 2.5px solid var(--card);
   box-shadow: 0 4px 12px -4px var(--shadow-soft);
@@ -4661,7 +4612,7 @@ html.amounts-hidden :is(.budget-spent,.budget-limit,.budget-earned,.top-category
   padding: 7px 9px!important;
 }
 #view-coppia .forecast-card span {
-  font-size: 10px!important;
+  font-size: 11px!important;
   white-space: nowrap!important;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -4669,7 +4620,7 @@ html.amounts-hidden :is(.budget-spent,.budget-limit,.budget-earned,.top-category
 }
 #view-coppia .forecast-card strong {
   margin-top: 3px!important;
-  font-size: 14px!important;
+  font-size: 15px!important;
   line-height: 1.1!important;
 }
 .couple-shares {
@@ -4690,7 +4641,7 @@ html.amounts-hidden :is(.budget-spent,.budget-limit,.budget-earned,.top-category
 }
 .cs-lbl strong {
   font-variant-numeric: tabular-nums;
-  font-size: 14px;
+  font-size: 15px;
 }
 .cs-bar {
   height: 8px;
@@ -4735,14 +4686,14 @@ html.amounts-hidden :is(.budget-spent,.budget-limit,.budget-earned,.top-category
   gap: 1px;
 }
 .couple-strip-text span {
-  font-size: 12.5px;
+  font-size: 13px;
   color: var(--ink-soft);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 .couple-strip-text strong {
-  font-size: 18px;
+  font-size: 17px;
   font-variant-numeric: tabular-nums;
 }
 .couple-strip .chev {
@@ -4809,7 +4760,7 @@ html.amounts-hidden :is(.budget-spent,.budget-limit,.budget-earned,.top-category
 /* Noi Due 1.1.0 — Gruppi con saldo proprio */
 .couple-total-note {
   margin: 6px 0 0;
-  font-size: 12px;
+  font-size: 13px;
   color: var(--ink-soft);
 }
 .couple-groups-block {
@@ -4849,7 +4800,7 @@ html.amounts-hidden :is(.budget-spent,.budget-limit,.budget-earned,.top-category
   justify-content: center;
   gap: 1px;
   overflow: visible;
-  font-size: 24px;
+  font-size: 22px;
   flex-shrink: 0;
 }
 .group-card-text {
@@ -4862,7 +4813,7 @@ html.amounts-hidden :is(.budget-spent,.budget-limit,.budget-earned,.top-category
   font-size: 15px;
 }
 .group-card-text span {
-  font-size: 12px;
+  font-size: 13px;
   color: var(--ink-soft);
   white-space: nowrap;
   overflow: hidden;
@@ -4870,11 +4821,11 @@ html.amounts-hidden :is(.budget-spent,.budget-limit,.budget-earned,.top-category
 }
 .group-card-amt {
   font-weight: 800;
-  font-size: 16px;
+  font-size: 17px;
   font-variant-numeric: tabular-nums;
 }
 .group-card .chev {
-  font-size: 20px;
+  font-size: 22px;
   color: var(--ink-soft);
 }
 .group-detail-hero {
@@ -4907,13 +4858,13 @@ html.amounts-hidden :is(.budget-spent,.budget-limit,.budget-earned,.top-category
   padding: 7px 9px!important;
 }
 .group-detail-grid .forecast-card span {
-  font-size: 10px!important;
+  font-size: 11px!important;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 .group-detail-grid .forecast-card strong {
-  font-size: 14px!important;
+  font-size: 15px!important;
   margin-top: 3px!important;
 }
 .gd-month {
@@ -4956,44 +4907,13 @@ html.amounts-hidden :is(.budget-spent,.budget-limit,.budget-earned,.top-category
   box-shadow: 0 10px 22px -12px var(--navy);
 }
 /* Noi Due 1.2.0 — Liste della spesa */
-.list-card .group-card-text span:last-child {
-  font-size: 11.5px;
-  opacity: .85;
-}
-.list-count {
-  min-width: 28px;
-  height: 28px;
-  padding: 0 8px;
-  border-radius: 999px;
-  display: grid;
-  place-items: center;
-  font-weight: 800;
-  font-size: 14px;
-  background: linear-gradient(145deg,#f7c463,#e48d24);
-  color: #241800;
-  font-variant-numeric: tabular-nums;
-}
-.list-count.zero {
-  background: var(--surface-strong);
-  color: var(--ink-soft);
-}
-.list-add {
-  display: grid;
-  gap: 8px;
-  margin: 2px 0 12px;
-}
-.list-add .text-input {
-  min-width: 0;
-}
-.list-price-input {
-  text-align: center;
-}
+
 .list-add-btn {
   border: 0;
   border-radius: 14px;
   background: linear-gradient(145deg,#f7c463,#e48d24);
   color: #241800;
-  font-size: 24px;
+  font-size: 22px;
   font-weight: 800;
   line-height: 1;
 }
@@ -5023,7 +4943,7 @@ html.amounts-hidden :is(.budget-spent,.budget-limit,.budget-earned,.top-category
   border: 2px solid var(--ink-soft);
   display: grid;
   place-items: center;
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 800;
   color: #fff;
   transition: background .15s ease,border-color .15s ease;
@@ -5091,38 +5011,9 @@ html.amounts-hidden :is(.budget-spent,.budget-limit,.budget-earned,.top-category
 .home-lists[hidden] {
   display: none;
 }
-.home-list-chip {
-  flex: 0 0 auto;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 7px 8px 7px 12px;
-  border-radius: 999px;
-  border: 1px solid var(--glass-edge,var(--line));
-  background: var(--glass-card,var(--card));
-  color: var(--ink);
-  font: inherit;
-  font-size: 14px;
-  font-weight: 600;
-  -webkit-backdrop-filter: blur(14px);
-  backdrop-filter: blur(14px);
-}
-.home-list-chip .list-count {
-  min-width: 24px;
-  height: 24px;
-  font-size: 12.5px;
-}
+
 /* Noi Due 1.3.0 — Prodotti con foto e codice a barre; importazione con scelta */
-.list-add {
-  grid-template-columns: 1fr 64px 44px 44px;
-}
-.list-scan-btn {
-  border: 1px solid var(--glass-edge,var(--line));
-  border-radius: 14px;
-  background: var(--glass-card,var(--card));
-  font-size: 20px;
-  line-height: 1;
-}
+
 .list-item {
   grid-template-columns: auto auto 1fr auto auto;
 }
@@ -5180,7 +5071,7 @@ html.amounts-hidden :is(.budget-spent,.budget-limit,.budget-earned,.top-category
   gap: 8px;
 }
 .scan-code-row .list-add-btn {
-  font-size: 18px;
+  font-size: 17px;
 }
 .scan-card {
   padding: 14px;
@@ -5202,7 +5093,7 @@ html.amounts-hidden :is(.budget-spent,.budget-limit,.budget-earned,.top-category
   margin: 0 0 10px;
   text-align: center;
   font-weight: 700;
-  font-size: 14px;
+  font-size: 15px;
 }
 .item-links {
   display: flex;
@@ -5250,7 +5141,7 @@ html.amounts-hidden :is(.budget-spent,.budget-limit,.budget-earned,.top-category
   border-radius: var(--radius-card);
   border: 1px solid var(--glass-edge,var(--line));
   background: var(--glass-card,var(--card));
-  font-size: 12.5px;
+  font-size: 13px;
   min-width: 0;
 }
 .ic-card strong {
@@ -5286,10 +5177,10 @@ html.amounts-hidden :is(.budget-spent,.budget-limit,.budget-earned,.top-category
   text-align: left;
 }
 .import-opt strong {
-  font-size: 15.5px;
+  font-size: 15px;
 }
 .import-opt span {
-  font-size: 12.5px;
+  font-size: 13px;
   color: var(--ink-soft);
 }
 .import-opt.recommended {
@@ -5357,12 +5248,12 @@ html.amounts-hidden :is(.budget-spent,.budget-limit,.budget-earned,.top-category
 .movement-action-btn.add-settle-small .movement-action-icon {
   background: linear-gradient(145deg,#e7a3cf,#c25b9e)!important;
   color: #fff!important;
-  font-size: 19px;
+  font-size: 17px;
 }
 .movement-action-btn.add-list .movement-action-icon {
   background: linear-gradient(145deg,#9fd8c2,#3aa684)!important;
   color: #fff!important;
-  font-size: 19px;
+  font-size: 17px;
 }
 /* Noi Due 1.5.0 — solo spese e rimborsi, niente macrocategorie né budget, tutto in Home */
 .mv-amt.expense,.tx-detail-row .v.expense {
@@ -5393,7 +5284,7 @@ html.amounts-hidden :is(.budget-spent,.budget-limit,.budget-earned,.top-category
   background: transparent;
   color: var(--ink-soft);
   font: inherit;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 800;
   font-style: italic;
   line-height: 1;
@@ -5411,12 +5302,7 @@ html.amounts-hidden :is(.budget-spent,.budget-limit,.budget-earned,.top-category
 .list-done-head {
   margin: 16px 0 10px!important;
 }
-.list-tools {
-  justify-content: flex-start;
-}
-.list-tools .pill-btn {
-  min-height: 34px;
-}
+
 .paste-text {
   width: 100%;
   min-height: 180px;
@@ -5544,12 +5430,12 @@ html.amounts-hidden :is(.budget-spent,.budget-limit,.budget-earned,.top-category
 }
 .app-update-card h3 {
   margin: 0 0 6px;
-  font-size: 18px;
+  font-size: 17px;
   color: var(--ink);
 }
 .app-update-card p {
   margin: 0 0 16px;
-  font-size: 14px;
+  font-size: 15px;
   line-height: 1.45;
   color: var(--ink-soft);
 }
@@ -5591,7 +5477,7 @@ html.amounts-hidden :is(.budget-spent,.budget-limit,.budget-earned,.top-category
   padding-top: 4px;
 }
 .nd-cal .cal-amt {
-  font-size: 9.5px;
+  font-size: 11px;
   font-weight: 700;
   color: var(--ink-soft);
   line-height: 1;
@@ -5614,7 +5500,7 @@ html.amounts-hidden :is(.budget-spent,.budget-limit,.budget-earned,.top-category
   width: auto;
   height: auto;
   background: none;
-  font-size: 8px;
+  font-size: 11px;
   line-height: 1;
 }
 #calLegend {
@@ -5642,7 +5528,7 @@ html.amounts-hidden :is(.budget-spent,.budget-limit,.budget-earned,.top-category
 .movement-action-btn.add-fixed .movement-action-icon {
   background: linear-gradient(145deg,#c9c0f0,#8e7cc3)!important;
   color: #fff!important;
-  font-size: 18px;
+  font-size: 17px;
 }
 .nd-fixed-total {
   margin: -4px 2px 10px;
@@ -5654,48 +5540,23 @@ html.amounts-hidden :is(.budget-spent,.budget-limit,.budget-earned,.top-category
   opacity: .55;
 }
 .fixed-card .group-card-text span:last-child {
-  font-size: 11.5px;
+  font-size: 11px;
 }
 #recurringTypeToggle[hidden] {
   display: none!important;
 }
 /* Noi Due 1.7.0 — Liste migliorate */
-.list-tools {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin: -4px 0 12px;
-}
+
 .list-suggest {
   margin: 0 0 12px;
 }
 .list-suggest[hidden] {
   display: none;
 }
-.list-suggest-title {
-  margin: 0 2px 6px;
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--ink-soft);
-  text-transform: uppercase;
-  letter-spacing: .04em;
-}
-.list-suggest-chips {
-  display: flex;
-  gap: 6px;
-  overflow-x: auto;
-  padding-bottom: 4px;
-  scrollbar-width: none;
-}
-.list-suggest-chips::-webkit-scrollbar {
-  display: none;
-}
-.list-suggest-chips .chip {
-  flex: 0 0 auto;
-}
+
 .list-aisle {
   margin: 12px 2px 6px;
-  font-size: 12.5px;
+  font-size: 13px;
   font-weight: 700;
   color: var(--ink-soft);
 }
@@ -5778,7 +5639,7 @@ html.amounts-hidden :is(.budget-spent,.budget-limit,.budget-earned,.top-category
   background: transparent;
   color: var(--ink);
   font: inherit;
-  font-size: 20px;
+  font-size: 22px;
   font-weight: 700;
 }
 .qty-stepper span {
@@ -5941,7 +5802,7 @@ html.amounts-hidden :is(.budget-spent,.budget-limit,.budget-earned,.top-category
   font-size: 15px;
 }
 .shared-switch-text small {
-  font-size: 12px;
+  font-size: 13px;
   color: var(--ink-soft);
 }
 #listRestockSwitch .shared-switch-text small {
@@ -6036,7 +5897,7 @@ html.amounts-hidden :is(.budget-spent,.budget-limit,.budget-earned,.top-category
 .list-gesture-hint {
   margin: 8px 2px 0;
   text-align: center;
-  font-size: 11.5px;
+  font-size: 11px;
   opacity: .8;
 }
 .list-gesture-hint[hidden] {
@@ -6052,35 +5913,7 @@ html.amounts-hidden :is(.budget-spent,.budget-limit,.budget-earned,.top-category
   box-shadow: 0 8px 20px -8px rgba(58,166,132,.8),inset 0 1px 0 rgba(255,255,255,.22)!important;
 }
 /* v1.10.0 — Comprati spesso: stellina dei preferiti accanto a ogni suggerimento */
-.sug-chip {
-  flex: 0 0 auto;
-  display: inline-flex;
-  align-items: stretch;
-  border-radius: 999px;
-  overflow: hidden;
-  border: 1px solid var(--glass-edge,var(--line));
-}
-.sug-chip .chip {
-  border: 0!important;
-  border-radius: 0!important;
-  margin: 0;
-}
-.sug-fav {
-  border: 0;
-  border-left: 1px solid var(--glass-edge,var(--line));
-  background: var(--glass-row,var(--card));
-  color: var(--ink-soft);
-  font: inherit;
-  font-size: 15px;
-  padding: 0 10px;
-  min-width: 36px;
-}
-.sug-fav.on {
-  color: #e48d24;
-}
-.sug-fav:active {
-  transform: scale(.92);
-}
+
 /* Sincronizzazione online: scheda in Altro (uguale nelle 4 app) */
 .suite-sync-card .suite-sync-status {
   display: flex;
@@ -6121,7 +5954,7 @@ html.amounts-hidden :is(.budget-spent,.budget-limit,.budget-earned,.top-category
   padding: 10px 12px;
   color: inherit;
   font: inherit;
-  font-size: 16px;
+  font-size: 17px;
   box-sizing: border-box;
 }
 .suite-sync-actions {
@@ -6207,7 +6040,7 @@ html.amounts-hidden :is(.budget-spent,.budget-limit,.budget-earned,.top-category
   text-align: center;
 }
 .suite-modal-text {
-  font-size: 13.5px;
+  font-size: 13px;
   line-height: 1.45;
   opacity: .8;
   margin: 0 0 12px!important;
@@ -6230,7 +6063,7 @@ html.amounts-hidden :is(.budget-spent,.budget-limit,.budget-earned,.top-category
   background: transparent;
   color: inherit;
   font: inherit;
-  font-size: 14px;
+  font-size: 15px;
   text-align: left;
 }
 .suite-history-row.confirm {
@@ -6357,13 +6190,13 @@ html.amounts-hidden :is(.budget-spent,.budget-limit,.budget-earned,.top-category
 }
 #pushCard .push-msg {
   margin: 10px 0 0;
-  font-size: 12.5px;
+  font-size: 13px;
   line-height: 1.4;
   color: var(--ink-soft);
 }
 /* v1.15.0 — Notifiche: interruttori del riepilogo mensile (come in Bilancio) */
 #pushCard .push-settings { display: grid; gap: 8px; margin: 0 0 10px; }
-#pushCard .toggle-line.push-line { display: flex; align-items: center; justify-content: flex-start; gap: 12px; font-size: 14px; }
+#pushCard .toggle-line.push-line { display: flex; align-items: center; justify-content: flex-start; gap: 12px; font-size: 15px; }
 #pushCard .push-settings .push-msg { margin: 0; }
 /* =====================================================================
    Altro: Sincronizzazione e Notifiche allineate alle altre sezioni
@@ -6393,7 +6226,7 @@ html.amounts-hidden :is(.budget-spent,.budget-limit,.budget-earned,.top-category
 #view-home .nd-paid-split { flex-wrap: nowrap !important; gap: 6px 14px !important; justify-content: center !important; }
 #view-home .nd-paid-split .hero-split-item { min-width: 0; gap: 5px; }
 #view-home .nd-paid-split .hero-split-label { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-#view-home .nd-paid-split .hero-split-value { color: var(--ink) !important; font-size: 14.5px !important; white-space: nowrap; }
+#view-home .nd-paid-split .hero-split-value { color: var(--ink) !important; font-size: 15px !important; white-space: nowrap; }
 /* =====================================================================
    Noi Due 1.16.0 — Pannello "Aggiungi un prodotto" alla lista (rifatto)
    Scheda in vetro come il resto della suite: campo grande in evidenza,
@@ -6462,7 +6295,7 @@ html.amounts-hidden :is(.budget-spent,.budget-limit,.budget-earned,.top-category
   border-radius: 13px;
   border: 1px solid var(--glass-edge, var(--line));
   background: var(--glass-row, var(--card));
-  font-size: 19px;
+  font-size: 17px;
   line-height: 1;
   padding: 0;
 }
@@ -6493,7 +6326,7 @@ html.amounts-hidden :is(.budget-spent,.budget-limit,.budget-earned,.top-category
   margin: 0;
 }
 #overlayRoot #sheetListDetail .lc-label {
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 700;
   letter-spacing: .04em;
   text-transform: uppercase;
@@ -6528,7 +6361,7 @@ html.amounts-hidden :is(.budget-spent,.budget-limit,.budget-earned,.top-category
   background: transparent;
   color: var(--ink);
   font: inherit;
-  font-size: 21px;
+  font-size: 22px;
   font-weight: 700;
   padding: 0;
 }
@@ -6566,7 +6399,7 @@ html.amounts-hidden :is(.budget-spent,.budget-limit,.budget-earned,.top-category
   background: transparent !important;
   box-shadow: none !important;
   color: var(--ink) !important;
-  font-size: 16px !important;
+  font-size: 17px !important;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
 }
@@ -6606,7 +6439,7 @@ html.amounts-hidden :is(.budget-spent,.budget-limit,.budget-earned,.top-category
   background: var(--glass-row, var(--card));
   color: var(--ink);
   font: inherit;
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 600;
   white-space: nowrap;
 }
@@ -6649,7 +6482,7 @@ html.amounts-hidden :is(.budget-spent,.budget-limit,.budget-earned,.top-category
   background: var(--amber-grad, linear-gradient(145deg, #f7c463, #e48d24));
   color: var(--suite-on-amber, #241800);
   font: inherit;
-  font-size: 16.5px;
+  font-size: 17px;
   font-weight: 800;
   box-shadow: 0 10px 22px -12px rgba(228, 141, 36, .9), inset 0 1px 0 rgba(255, 255, 255, .35);
 }
@@ -6684,7 +6517,7 @@ html.amounts-hidden :is(.budget-spent,.budget-limit,.budget-earned,.top-category
   background: var(--glass-card, var(--card));
   color: var(--ink);
   font: inherit;
-  font-size: 13.5px;
+  font-size: 13px;
   font-weight: 650;
   white-space: nowrap;
 }
@@ -6695,26 +6528,7 @@ html.amounts-hidden :is(.budget-spent,.budget-limit,.budget-earned,.top-category
   font-size: 13px;
 }
 /* "Comprati spesso": pillole uniche con la stellina dentro (niente più blocchetto bianco in chiaro) */
-#overlayRoot #sheetListDetail .sug-chip {
-  border-radius: 999px;
-  border: 1px solid var(--glass-edge, var(--line));
-  background: var(--glass-card, var(--card));
-}
-#overlayRoot #sheetListDetail .sug-chip .chip {
-  background: transparent !important;
-  padding: 7px 4px 7px 12px !important;
-  font-size: 14px !important;
-  font-weight: 650 !important;
-  color: var(--ink) !important;
-  border: 0 !important;
-  box-shadow: none !important;
-}
-#overlayRoot #sheetListDetail .sug-fav {
-  border: 0;
-  background: transparent;
-  padding: 0 11px 0 6px;
-  min-width: 0;
-}
+
 :root[data-theme="light"] #overlayRoot #sheetListDetail .lc-label small {
   color: #a8650f;
 }
@@ -6809,7 +6623,7 @@ html.amounts-hidden :is(.budget-spent,.budget-limit,.budget-earned,.top-category
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  font-size: 15.5px;
+  font-size: 15px;
   font-weight: 800;
   color: var(--ink);
   letter-spacing: -.2px;
@@ -6823,7 +6637,7 @@ html.amounts-hidden :is(.budget-spent,.budget-limit,.budget-earned,.top-category
   font-size: 15px;
 }
 #view-home .hl-sum {
-  font-size: 12.5px;
+  font-size: 13px;
   font-weight: 600;
   color: var(--ink-soft);
 }
@@ -6832,7 +6646,7 @@ html.amounts-hidden :is(.budget-spent,.budget-limit,.budget-earned,.top-category
   border: 0;
   background: none;
   font: inherit;
-  font-size: 13.5px;
+  font-size: 13px;
   font-weight: 700;
   padding: 4px 2px;
 }
@@ -6871,7 +6685,7 @@ html.amounts-hidden :is(.budget-spent,.budget-limit,.budget-earned,.top-category
   height: 34px;
   border-radius: 11px;
   background: color-mix(in srgb, var(--ink) 7%, transparent);
-  font-size: 18px;
+  font-size: 17px;
 }
 #view-home .hl-txt {
   display: grid;
@@ -6885,28 +6699,13 @@ html.amounts-hidden :is(.budget-spent,.budget-limit,.budget-earned,.top-category
   text-overflow: ellipsis;
 }
 #view-home .hl-txt small {
-  font-size: 12px;
+  font-size: 13px;
   white-space: nowrap;
 }
 #view-home .hl-item.empty .hl-txt small {
   color: var(--ink-soft);
 }
-#view-home .hl-bar,
-#view-liste .lv-bar {
-  grid-column: 1 / -1;
-  display: block;
-  height: 4px;
-  border-radius: 99px;
-  background: color-mix(in srgb, var(--ink) 9%, transparent);
-  overflow: hidden;
-}
-#view-home .hl-bar i,
-#view-liste .lv-bar i {
-  display: block;
-  height: 100%;
-  border-radius: inherit;
-  background: linear-gradient(90deg, #3fb38e, #6fd3ae);
-}
+
 /* ---- Vista Liste rifatta ---- */
 #view-liste .lv-grid {
   display: grid;
@@ -6926,11 +6725,7 @@ html.amounts-hidden :is(.budget-spent,.budget-limit,.budget-earned,.top-category
 #view-liste .lv-card:active {
   transform: scale(.985);
 }
-#view-liste .lv-top {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
+
 #view-liste .lv-em {
   flex: none;
   display: grid;
@@ -6952,77 +6747,9 @@ html.amounts-hidden :is(.budget-spent,.budget-limit,.budget-earned,.top-category
   overflow: hidden;
   text-overflow: ellipsis;
 }
-#view-liste .lv-count {
-  flex: none;
-  padding: 0 8px;
-  display: grid;
-  place-items: center;
-  background: linear-gradient(145deg, #f7c463, #e48d24);
-  color: #241800;
-  font-weight: 800;
-}
-#view-liste .lv-count.zero {
-  background: color-mix(in srgb, var(--ink) 8%, transparent);
-  color: var(--ink-soft);
-}
-#view-liste .lv-preview {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-#view-liste .lv-preview span {
-  max-width: 100%;
-  padding: 5px 10px;
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--ink) 6%, transparent);
-  font-size: 13px;
-  font-weight: 600;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-#view-liste .lv-preview .lv-more {
-  color: var(--ink-soft);
-}
-#view-liste .lv-foot {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-#view-liste .lv-foot .lv-bar {
-  flex: 1 1 auto;
-}
-#view-liste .lv-pct,
-#view-liste .lv-due {
-  flex: none;
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--ink-soft);
-}
-#view-liste .lv-due {
-  color: #e48d24;
-}
+
 /* ---- Dettaglio lista: striscia "Da ricomprare" ---- */
-#overlayRoot #sheetListDetail .list-suggest-title {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-#overlayRoot #sheetListDetail .ls-more {
-  border: 0;
-  background: none;
-  color: #e48d24;
-  font: inherit;
-  font-size: 13px;
-  font-weight: 700;
-  text-transform: none;
-  letter-spacing: 0;
-  padding: 2px 0;
-}
-#overlayRoot #sheetListDetail .sug-chip.due {
-  border-color: color-mix(in srgb, #e48d24 55%, transparent);
-  background: color-mix(in srgb, #e48d24 12%, var(--glass-card, var(--card)));
-}
+
 #overlayRoot #sheetListDetail .list-swipe-wrap.ls-new .list-item {
   animation: ls-new 1.1s ease-out;
 }
@@ -7068,16 +6795,11 @@ html.amounts-hidden :is(.budget-spent,.budget-limit,.budget-earned,.top-category
   transform: translateX(2px) scale(.97);
 }
 .ls-ic {
-  font-size: 18px;
+  font-size: 17px;
   line-height: 1;
   color: #3fb38e;
 }
-.ls-lb {
-  font-size: 9.5px;
-  font-weight: 800;
-  letter-spacing: .02em;
-  color: var(--ink-soft);
-}
+
 .ls-badge {
   position: absolute;
   top: -6px;
@@ -7176,12 +6898,12 @@ body.ls-dragging .ls-scrim {
   border: 0;
   background: none;
   color: var(--ink-soft);
-  font-size: 16px;
+  font-size: 17px;
 }
 .ls-dr-hint {
   margin: 0;
   padding: 2px 14px 8px;
-  font-size: 12px;
+  font-size: 13px;
   color: var(--ink-soft);
 }
 .ls-dr-list {
@@ -7241,14 +6963,14 @@ body.ls-dragging .ls-scrim {
   min-width: 0;
 }
 .ls-tx b {
-  font-size: 14.5px;
+  font-size: 15px;
   font-weight: 700;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 .ls-tx small {
-  font-size: 11.5px;
+  font-size: 11px;
   line-height: 1.3;
   color: var(--ink-soft);
 }
@@ -7266,7 +6988,7 @@ body.ls-dragging .ls-scrim {
   background: linear-gradient(145deg, #f7c463, #e48d24);
   color: #241800;
   font-weight: 800;
-  font-size: 16px;
+  font-size: 17px;
 }
 .ls-card.in .ls-add {
   background: color-mix(in srgb, #3fb38e 30%, transparent);
@@ -7274,7 +6996,7 @@ body.ls-dragging .ls-scrim {
 }
 .ls-empty {
   margin: 10px 4px;
-  font-size: 13.5px;
+  font-size: 13px;
   line-height: 1.45;
   color: var(--ink-soft);
 }
@@ -7292,7 +7014,7 @@ body.ls-dragging .ls-scrim {
   background: color-mix(in srgb, var(--ink) 6%, transparent);
   color: var(--ink);
   font: inherit;
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 750;
 }
 .ls-foot-btn.primary {
@@ -7318,7 +7040,7 @@ body.ls-dragging .ls-scrim {
   backdrop-filter: blur(16px);
   box-shadow: 0 18px 40px -12px rgba(0,0,0,.6);
   color: var(--ink);
-  font-size: 14.5px;
+  font-size: 15px;
   transition: transform .06s linear;
 }
 .ls-ghost b {
@@ -7360,7 +7082,7 @@ body.ls-over #sheetListDetail #listTodo {
   align-items: center !important;
 }
 #views #view-stats .pie-legend-item .lbl {
-  font-size: 14px !important;
+  font-size: 15px !important;
   font-weight: 600 !important;
   min-width: 0;
   overflow: hidden;
@@ -7372,7 +7094,7 @@ body.ls-over #sheetListDetail #listTodo {
   align-items: baseline;
   gap: 6px;
   margin-left: auto;
-  font-size: 13.5px !important;
+  font-size: 13px !important;
   white-space: nowrap;
 }
 #views #view-stats .pie-legend-item .val b {
@@ -7381,7 +7103,7 @@ body.ls-over #sheetListDetail #listTodo {
 #views #view-stats .pie-legend-item .val small {
   min-width: 34px;
   text-align: right;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 600;
   color: var(--ink-soft);
 }
@@ -7414,7 +7136,7 @@ html.amounts-hidden #views #view-stats .pie-legend-item .val::after {
   width: 40px !important;
   height: 40px !important;
   border-radius: 13px !important;
-  font-size: 20px !important;
+  font-size: 22px !important;
   line-height: 1;
 }
 #view-liste .lv-head {
@@ -7424,27 +7146,18 @@ html.amounts-hidden #views #view-stats .pie-legend-item .val::after {
   min-width: 0;
 }
 #view-liste .lv-head b {
-  font-size: 16px !important;
+  font-size: 17px !important;
   line-height: 1.2;
 }
 #view-liste .lv-head small {
-  font-size: 12.5px !important;
+  font-size: 13px !important;
   line-height: 1.25;
 }
-#view-liste .lv-head .lv-bar {
-  height: 3px;
-  margin-top: 3px;
-}
-#view-liste .lv-count {
-  min-width: 30px !important;
-  height: 30px !important;
-  border-radius: 10px !important;
-  font-size: 14px !important;
-}
+
 #view-liste .lv-chev {
   flex: none;
   color: var(--ink-soft);
-  font-size: 20px;
+  font-size: 22px;
   line-height: 1;
 }
 #view-home .hl-item {
@@ -7468,7 +7181,7 @@ html.amounts-hidden #views #view-stats .pie-legend-item .val::after {
   background: linear-gradient(145deg, #f7c463, #e48d24) !important;
 }
 .ls-tab .ls-ic {
-  font-size: 21px !important;
+  font-size: 22px !important;
   color: #fff !important;
   filter: drop-shadow(0 1px 1px rgba(0,0,0,.25));
 }
@@ -7476,9 +7189,7 @@ html.amounts-hidden #views #view-stats .pie-legend-item .val::after {
   color: #3a2600 !important;
   filter: none;
 }
-.ls-tab .ls-lb {
-  display: none !important;
-}
+
 .ls-badge {
   background: #e85d55 !important;
   color: #fff !important;
@@ -7486,7 +7197,7 @@ html.amounts-hidden #views #view-stats .pie-legend-item .val::after {
 /* ---- Cassetto: cronologia acquisti ---- */
 .ls-day {
   margin: 8px 4px 0;
-  font-size: 11.5px;
+  font-size: 11px;
   font-weight: 800;
   letter-spacing: .05em;
   text-transform: uppercase;
@@ -7498,7 +7209,7 @@ html.amounts-hidden #views #view-stats .pie-legend-item .val::after {
 /* ---- Dettaglio lista: sezione Acquistato con data e ora, cestino ---- */
 #overlayRoot #sheetListDetail .list-when {
   margin-top: 1px;
-  font-size: 11.5px;
+  font-size: 11px;
   font-weight: 600;
   color: #3fb38e;
   text-decoration: none !important;
@@ -7513,7 +7224,7 @@ html.amounts-hidden #views #view-stats .pie-legend-item .val::after {
   background: transparent;
   color: var(--ink-soft);
   font: inherit;
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 700;
 }
 #overlayRoot #sheetListDetail .lt-open[hidden] {
@@ -7526,7 +7237,7 @@ html.amounts-hidden #views #view-stats .pie-legend-item .val::after {
 }
 #overlayRoot #sheetListTrash .lt-day {
   margin: 8px 2px 0;
-  font-size: 11.5px;
+  font-size: 11px;
   font-weight: 800;
   letter-spacing: .05em;
   text-transform: uppercase;
@@ -7563,7 +7274,7 @@ html.amounts-hidden #views #view-stats .pie-legend-item .val::after {
   text-overflow: ellipsis;
 }
 #overlayRoot #sheetListTrash .lt-tx small {
-  font-size: 12px;
+  font-size: 13px;
   color: var(--ink-soft);
 }
 #overlayRoot #sheetListTrash .lt-restore {
@@ -7574,7 +7285,7 @@ html.amounts-hidden #views #view-stats .pie-legend-item .val::after {
   border: 1px solid var(--glass-edge, var(--line));
   background: color-mix(in srgb, #3fb38e 18%, transparent);
   color: #3fb38e;
-  font-size: 18px;
+  font-size: 17px;
   font-weight: 800;
 }
 /* ---- Scorrimento sul prodotto: la riga scorre ma non si restringe, pulsanti di misura fissa ---- */
@@ -7591,10 +7302,10 @@ html.amounts-hidden #views #view-stats .pie-legend-item .val::after {
   width: 62px;
 }
 .list-actions .la-ico {
-  font-size: 19px !important;
+  font-size: 17px !important;
 }
 .list-actions small {
-  font-size: 10.5px !important;
+  font-size: 11px !important;
 }
 .list-swipe-wrap.swipe-far .list-actions {
   width: max(136px, calc(var(--dx, 0px) * -1)) !important;
@@ -7613,12 +7324,12 @@ html.amounts-hidden #views #view-stats .pie-legend-item .val::after {
 #sheetPeriodPicker .pp-month-total {
   margin: 6px 0 0;
   text-align: center;
-  font-size: 12.5px;
+  font-size: 13px;
   color: var(--ink-soft);
 }
 #sheetPeriodPicker .calendar-cell .cal-amt {
   display: block;
-  font-size: 10px;
+  font-size: 11px;
   line-height: 1;
   font-weight: 700;
   color: var(--ink-soft);
@@ -7704,7 +7415,7 @@ html.amounts-hidden #views #view-stats .pie-legend-item .val::after {
 }
 .lr-ring b {
   position: relative;
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 800;
   color: var(--ink);
   font-variant-numeric: tabular-nums;
@@ -7732,7 +7443,7 @@ html.amounts-hidden :is(.mv-amt,.stat-card-value,.tx-amount,.rp-amt)::after {
   color: var(--ink);
 }
 html.amounts-hidden .stat-card-value::after {
-  font-size: 20px;
+  font-size: 22px;
 }
 /* ---- Suite: titolo di pagina piccolo e uniforme dove non c'è il titolo del periodo ---- */
 #views .view:not(:has(> .topbar)) > .view-title {
@@ -7788,7 +7499,7 @@ html body .mv-meta-text > .mv-list-badge {
   border: 1px solid color-mix(in srgb, #3fb38e 30%, transparent);
 }
 #overlayRoot .tx-list-link .tx-list-ic {
-  font-size: 20px;
+  font-size: 22px;
 }
 #overlayRoot .tx-list-link .tx-list-tx {
   flex: 1 1 auto;
@@ -7796,10 +7507,10 @@ html body .mv-meta-text > .mv-list-badge {
   min-width: 0;
 }
 #overlayRoot .tx-list-link b {
-  font-size: 14px;
+  font-size: 15px;
 }
 #overlayRoot .tx-list-link small {
-  font-size: 12px;
+  font-size: 13px;
   color: var(--ink-soft);
   white-space: nowrap;
   overflow: hidden;
@@ -7827,7 +7538,7 @@ html body .mv-meta-text > .mv-list-badge {
   font-size: 15px;
 }
 #view-liste .lm-head small {
-  font-size: 12px;
+  font-size: 13px;
   color: var(--ink-soft);
 }
 #view-liste .lm-bar {

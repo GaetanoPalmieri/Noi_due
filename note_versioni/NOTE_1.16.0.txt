@@ -1,0 +1,11 @@
+VERSIONE 1.16.0 — Nuovo pannello per aggiungere un prodotto alla lista
+
+- Il pannello in cima alla lista è stato rifatto: una scheda in vetro con il campo grande
+  "Cosa serve? (anche un link)" e la fotocamera a fianco.
+- Mentre scrivi si aprono i dettagli: quantità con − / +, prezzo cad. con €, reparto
+  (riconosciuto da solo mentre scrivi, puoi sceglierne un altro) e per chi
+  (Tutti e due / solo uno dei due), poi il pulsante "＋ Aggiungi alla lista".
+- Scrivere "2 latte" funziona come prima: la quantità parte già da 2.
+- Dopo l'aggiunta il pannello si richiude e resta pronto per il prossimo prodotto.
+- Sotto: Preferiti, Incolla lista, Lista base, In ordine / Per reparto come pulsanti rapidi.
+- "Comprati spesso": pillole uniche con la stellina dentro (sparito il riquadro bianco in chiaro).

@@ -4,11 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
 <title>Noi Due — Spese di coppia</title>
-<meta name="app-version" content="1.16.0">
+<meta name="app-version" content="1.18.0">
 <meta name="description" content="Spese di coppia: chi ha pagato, chi deve a chi, budget e statistiche.">
 
 <!-- PWA / iOS home screen -->
-<link rel="manifest" href="manifest.json?v=1.16.0">
+<link rel="manifest" href="manifest.json?v=1.18.0">
 <meta name="theme-color" content="#12181F">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -16,11 +16,11 @@
 <!-- iPhone: icona nella cartella principale, senza ?v=, con la dimensione dichiarata (la legge anche Safari più vecchio). -->
 <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
 <link rel="apple-touch-icon-precomposed" sizes="180x180" href="apple-touch-icon-precomposed.png">
-<link rel="icon" href="icons/icon-192.png?v=1.16.0">
+<link rel="icon" href="icons/icon-192.png?v=1.18.0">
 
-<link rel="stylesheet" href="style.css?v=1.16.0">
+<link rel="stylesheet" href="style.css?v=1.18.0">
 <!-- Token grafici condivisi dalle 4 app: va caricato per ultimo. -->
-<link rel="stylesheet" href="suite-tokens.css?v=1.16.0">
+<link rel="stylesheet" href="suite-tokens.css?v=1.18.0">
 </head>
 <body>
 
@@ -28,6 +28,7 @@
 
   <!-- ===== HEADER ===== -->
   <header class="topbar">
+    <button type="button" class="back-to-current" id="backToCurrentMonth" aria-label="Torna al mese corrente" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12a8 8 0 1 0 2.4-5.7"/><path d="M4 4v4.5h4.5"/></svg><span>Oggi</span></button>
     <button class="month-nav" id="prevMonth" aria-label="Mese precedente">‹</button>
     <div class="period-picker">
       <button class="month-label" id="monthLabel" title="Tocca per vedere un singolo giorno">Settembre 2026</button><button type="button" class="period-x" id="periodX" aria-label="Torna alla vista del mese" hidden>×</button>
@@ -67,7 +68,7 @@
         <span class="couple-strip-text"><span id="stripWho">Siete in pari</span><strong id="stripAmount">0,00 €</strong></span>
         <span class="chev" aria-hidden="true">›</span>
       </button>
-      <div class="home-lists" id="homeLists" aria-label="Liste"></div>
+      <section class="home-lists hl-card" id="homeLists" aria-label="Liste della spesa"></section>
 
       <!-- Elementi ereditati da Bilancio, non usati in Noi Due: restano nascosti perché il codice comune li aggiorna. -->
       <div class="nd-legacy" hidden aria-hidden="true">
@@ -158,7 +159,7 @@
       <h1 class="view-title">Liste</h1>
       <div class="section-block">
         <div class="section-head"><h2>Cosa comprare <button type="button" class="nd-info" data-nd-info="liste" aria-label="Come funzionano le liste">i</button></h2><button type="button" class="pill-btn mini-btn" id="addListBtn">＋ Nuova lista</button></div>
-        <div id="coupleLists" class="couple-groups"></div>
+        <div id="coupleLists" class="lv-grid"></div>
       </div>
     </section>
 
@@ -188,7 +189,7 @@
 
     <!-- ===== STATISTICHE ===== -->
     <section class="view" id="view-stats" data-view="stats">
-      <h1 class="view-title">Grafici</h1>
+      <h1 class="view-title">Statistiche</h1>
       <div class="stats-period-filter">
         <label for="statsRangeSelect">Periodo statistiche</label>
         <select id="statsRangeSelect" aria-label="Periodo delle statistiche">
@@ -310,7 +311,7 @@
     </button>
     <button class="tab" data-view="stats">
       <svg viewBox="0 0 24 24" width="22" height="22"><path d="M4 20V10M11 20V4M18 20v-7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
-      <span>Grafici</span>
+      <span>Statistiche</span>
     </button>
     <button class="tab" data-view="more">
       <svg viewBox="0 0 24 24" width="22" height="22"><circle cx="5" cy="12" r="1.6" fill="currentColor"/><circle cx="12" cy="12" r="1.6" fill="currentColor"/><circle cx="19" cy="12" r="1.6" fill="currentColor"/></svg>
@@ -436,7 +437,7 @@
     <div class="sheet-head">
       <h3 id="listDetailTitle">Lista</h3><button type="button" class="pill-btn mini-btn" id="listEditBtn">Modifica</button>
     </div>
-    <!-- Noi Due 1.16.0 — Pannello "Aggiungi un prodotto" rifatto: nome (o link) in evidenza, poi
+    <!-- Noi Due 1.18.0 — Pannello "Aggiungi un prodotto" rifatto: nome (o link) in evidenza, poi
          quantità, prezzo, reparto riconosciuto da solo e per chi. I dettagli compaiono mentre scrivi. -->
     <section class="lc" id="listComposer" aria-label="Aggiungi un prodotto">
       <div class="lc-main">
@@ -875,7 +876,7 @@
   </div>
 </template>
 
-<script src="suite.js?v=1.16.0"></script>
-<script src="app.js?v=1.16.0"></script>
+<script src="suite.js?v=1.18.0"></script>
+<script src="app.js?v=1.18.0"></script>
 </body>
 </html>

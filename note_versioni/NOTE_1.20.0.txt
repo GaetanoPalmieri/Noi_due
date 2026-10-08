@@ -1,0 +1,5 @@
+VERSIONE 1.20.0 — Nuovo stile delle liste
+
+- Home ("Liste della spesa") e pagina Liste: schede piene invece del vetro trasparente.
+- Al posto del riquadro giallo con il numero c'è un anello: il numero dice quanto resta da
+  comprare, l'arco verde quanto è già stato preso; ✓ quando non manca niente.

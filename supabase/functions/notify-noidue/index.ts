@@ -1,5 +1,8 @@
 // Noi Due — notifiche push "Il tuo partner ha aggiunto/rimosso qualcosa" + "Riepilogo mensile".
 //
+// v1.21.0: nelle liste la notifica dice quali prodotti sono stati aggiunti ("➕ Spesa: latte, pane, mele")
+// e quali sono stati presi ("✓ Preso da Spesa: …").
+//
 // v1.15.0: un cron chiama la funzione ogni ora con {"mode":"monthly"} (stessa intestazione
 // x-noidue-secret del trigger). Il giorno 1 di ogni mese, dalle 9:00 nel fuso del telefono,
 // ogni telefono della coppia riceve il riepilogo del mese appena chiuso: spese di coppia,
@@ -63,7 +66,19 @@ function buildMessage(oldData: any, newData: any) {
   newLists.forEach((l, id) => {
     const old = oldLists.get(id);
     const d = diffIds(old?.items, l.items);
-    if (d.added.length) { itemsAdded += d.added.length; addedByList.push(`${d.added.length} a ${l.name || "una lista"}`); lines.push(`➕ ${d.added.length} · 📝 ${l.name || "Lista"}`); }
+    // v1.21.0 — nella notifica anche i nomi dei prodotti aggiunti (i primi 3)
+    if (d.added.length) {
+      itemsAdded += d.added.length; addedByList.push(`${d.added.length} a ${l.name || "una lista"}`);
+      const names = d.added.map((i: any) => `${Number(i.qty) > 1 ? i.qty + "× " : ""}${String(i.text || "").slice(0, 30)}`).filter(Boolean);
+      lines.push(`➕ ${l.name || "Lista"}: ${names.slice(0, 3).join(", ")}${names.length > 3 ? ` e altri ${names.length - 3}` : ""}`);
+    }
+    // prodotti presi (segnati come acquistati)
+    const pd = diffIds(old?.purchases, l.purchases);
+    if (pd.added.length) {
+      itemsAdded += pd.added.length;
+      const names = pd.added.map((x: any) => String(x.text || "").slice(0, 30)).filter(Boolean);
+      lines.push(`✓ Preso da ${l.name || "Lista"}: ${names.slice(0, 3).join(", ")}${names.length > 3 ? ` e altri ${names.length - 3}` : ""}`);
+    }
     if (d.removed.length) { itemsRemoved += d.removed.length; removedByList.push(`${d.removed.length} da ${l.name || "una lista"}`); lines.push(`➖ ${d.removed.length} · 📝 ${l.name || "Lista"}`); }
   });
   // liste cancellate del tutto: i loro articoli contano come rimossi
@@ -196,6 +211,12 @@ function monthlyMessage(data: any, key: string, today: string, showAmounts: bool
     const pct = Math.round(((total - prevTotal) / prevTotal) * 100);
     lines.push(pct === 0 ? `➖ Spese stabili vs ${monthName(prevKey)}` : `${pct > 0 ? "📈 +" : "📉 −"}${Math.abs(pct)}% spese vs ${monthName(prevKey)}`);
   }
+  // v1.21.0 — chi ha preso cosa dalle liste nel mese
+  const bought: Record<string, number> = { a: 0, b: 0 };
+  (Array.isArray(data?.lists) ? data.lists : []).forEach((l: any) => (Array.isArray(l?.purchases) ? l.purchases : []).forEach((p: any) => {
+    if (p && typeof p.at === "string" && p.at.startsWith(key) && (p.by === "a" || p.by === "b")) bought[p.by]++;
+  }));
+  if (bought.a + bought.b > 0) lines.push("🛒 Presi " + (["a", "b"] as const).filter((k) => bought[k] > 0).map((k) => `${C.name(k)} ${bought[k]}`).join(" · "));
   lines.push(balance);
   const m = monthName(key);
   return { title: `📊 ${m.charAt(0).toUpperCase() + m.slice(1)}`, body: lines.join("\n"), tag: `noidue-riepilogo-${key}`, url: "./" };

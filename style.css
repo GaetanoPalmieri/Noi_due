@@ -471,7 +471,6 @@ button:active {
   flex-shrink: 0;
 }
 .template-manage-row .ic {
-  width: auto;
   border-radius: 8px;
   background: none!important;
   display: flex;
@@ -781,7 +780,6 @@ button:active {
 .overlay-backdrop {
   position: absolute;
   inset: 0;
-  background: rgba(20, 24, 26, 0.42);
   opacity: 0;
   transition: opacity 0.2s ease;
   pointer-events: auto;
@@ -1106,10 +1104,7 @@ input, select, textarea, .text-input {
   transform: translateX(-50%);
   width: min(280px, calc(100vw - 24px));
   padding: 10px;
-  background: var(--glass-card,var(--card));
   border: 1px solid var(--glass-edge,var(--line));
-  -webkit-backdrop-filter: blur(16px) saturate(1.5);
-  backdrop-filter: blur(16px) saturate(1.5);
   border-radius: 16px;
   box-shadow: 0 8px 28px #0003;
   z-index: 40;
@@ -1448,7 +1443,7 @@ input[type="date"] {
   background: var(--navy);
   animation: load-slide 0.7s ease-in-out infinite alternate;
 }
-@keyframes load-slide{
+@keyframes load-slide {
   to {
     transform: translateX(125%);
   }
@@ -1623,7 +1618,7 @@ input[type="date"] {
 .app-loader .loader-content i::after {
   background: #1f5d4c;
 }
-@keyframes loader-enter{
+@keyframes loader-enter {
   from {
     opacity: 0;
     transform: translateY(10px) scale(0.93);
@@ -1633,7 +1628,7 @@ input[type="date"] {
     transform: none;
   }
 }
-@keyframes money-pulse{
+@keyframes money-pulse {
   to {
     transform: translateY(-3px) scale(1.035);
     box-shadow:
@@ -2057,7 +2052,7 @@ html, body, button, input, select, textarea, .sheet, .view, .tab, .chip, .pill-b
 .view.view-swipe-prev {
   animation: viewSwipePrev 0.24s cubic-bezier(0.22, 0.72, 0.28, 1) both;
 }
-@keyframes viewSwipeNext{
+@keyframes viewSwipeNext {
   from {
     opacity: 0.28;
     transform: translateX(34px);
@@ -2067,7 +2062,7 @@ html, body, button, input, select, textarea, .sheet, .view, .tab, .chip, .pill-b
     transform: translateX(0);
   }
 }
-@keyframes viewSwipePrev{
+@keyframes viewSwipePrev {
   from {
     opacity: 0.28;
     transform: translateX(-34px);
@@ -2436,12 +2431,7 @@ html, body, button, input, select, textarea, .sheet, .view, .tab, .chip, .pill-b
   color: var(--rust) !important;
 }
 /* Action sheet contestuale coerente con entrambi i temi. */
-.movement-action-overlay.show {
-  background: var(--overlay-backdrop) !important;
-}
 .movement-action-menu {
-  background: var(--overlay-surface) !important;
-  border-color: var(--line) !important;
   color: var(--ink) !important;
 }
 .movement-action-title {
@@ -3355,7 +3345,6 @@ svg text {
   align-self: center;
   display: flex;
   flex-direction: row;
-  width: auto;
   align-items: center;
   justify-content: center;
   gap: 1px;
@@ -4081,8 +4070,8 @@ mark.hl {
   stroke-linejoin: round;
 }
 /* Transizioni tra pagina e sotto-pagina + swipe indietro */
-@keyframes mtViewPush{from{transform:translateX(26%);opacity:0;}to{transform:none;opacity:1;}}
-@keyframes mtViewPop{from{transform:translateX(-16%);opacity:0;}to{transform:none;opacity:1;}}
+@keyframes mtViewPush {from{transform:translateX(26%);opacity:0;}to{transform:none;opacity:1;}}
+@keyframes mtViewPop {from{transform:translateX(-16%);opacity:0;}to{transform:none;opacity:1;}}
 .view.view-push {
   animation: mtViewPush .3s cubic-bezier(.2,.8,.2,1);
 }
@@ -4232,9 +4221,6 @@ body::before {
   color: #241800!important;
   box-shadow: 0 14px 30px -8px rgba(232,147,44,.65),inset 0 1px 0 rgba(255,255,255,.35)!important;
 }
-.fab:active {
-  transform: scale(.94);
-}
 #views .section-head .pill-btn,.period-chip,#views input[type="search"].text-input {
   -webkit-backdrop-filter: blur(12px);
   backdrop-filter: blur(12px);
@@ -4273,9 +4259,6 @@ body::before {
 }
 /* Pannelli: vetro smerigliato e sfondo sfocato */
 .sheet {
-  background: color-mix(in srgb,var(--paper) 86%,transparent)!important;
-  -webkit-backdrop-filter: blur(26px) saturate(1.6);
-  backdrop-filter: blur(26px) saturate(1.6);
   border-top: 1px solid var(--glass-edge);
   box-shadow: 0 -16px 40px -12px rgba(0,0,0,.35);
 }
@@ -4285,10 +4268,6 @@ body::before {
 }
 .sheet-handle {
   background: color-mix(in srgb,var(--ink) 25%,transparent)!important;
-}
-.movement-action-menu {
-  -webkit-backdrop-filter: blur(22px) saturate(1.6);
-  backdrop-filter: blur(22px) saturate(1.6);
 }
 /* v1.9.1 — Calendari: grassetto solo su titolo, mese/anno; spazi ridotti */
 #overlayRoot :is(#sheetPeriodPicker,#sheetCalendar) :is(.calendar-weekdays span,.calendar-cell,.cal-day-num,.pp-months button,.pp-months button *,.pp-hint,.calendar-legend,.cal-leg-item) {
@@ -4470,9 +4449,6 @@ html.amounts-hidden :is(.budget-spent,.budget-limit,.budget-earned,.top-category
   font-size: 13px;
   letter-spacing: 1px;
   color: var(--ink);
-}
-html.amounts-hidden .stat-card-value::after {
-  font-size: 20px;
 }
 /* Le etichette dei grafici restano visibili; le cifre sono sostituite da pallini nel codice. */
 /* v1.10.6 — icona libera con emoji (anche più di una) */
@@ -5981,8 +5957,6 @@ html.amounts-hidden .stat-card-value::after {
   overflow: hidden;
 }
 .list-swipe-wrap > .list-item {
-  transform: translateX(max(0px,var(--dx,0px)))!important;
-  width: calc(100% + min(0px,var(--dx,0px)));
   box-sizing: border-box;
   z-index: 1;
 }
@@ -6004,7 +5978,6 @@ html.amounts-hidden .stat-card-value::after {
   background: var(--card);
 }
 .list-swipe-wrap.swipe-right .list-swipe-bg {
-  display: flex;
   background: color-mix(in srgb,var(--emerald) 30%,transparent);
   color: var(--ink);
 }
@@ -6019,14 +5992,12 @@ html.amounts-hidden .stat-card-value::after {
   display: flex;
   gap: 4px;
   padding: 3px;
-  width: max(136px,calc(var(--dx,0px) * -1));
   box-sizing: border-box;
 }
 .list-swipe-wrap:not(.swipe-left):not(.open) .list-actions {
   visibility: hidden;
 }
 .list-actions button {
-  flex: 1 1 0;
   min-width: 0;
   display: flex;
   flex-direction: column;
@@ -6041,11 +6012,9 @@ html.amounts-hidden .stat-card-value::after {
   transition: flex-grow .18s ease;
 }
 .list-actions .la-ico {
-  font-size: 20px;
   line-height: 1;
 }
 .list-actions small {
-  font-size: 11px;
   font-weight: 700;
 }
 .list-act-fav {
@@ -6141,7 +6110,7 @@ html.amounts-hidden .stat-card-value::after {
   background: #e8a33d;
   animation: suiteSyncPulse 1s ease-in-out infinite;
 }
-@keyframes suiteSyncPulse{50%{opacity:.35;}}
+@keyframes suiteSyncPulse {50%{opacity:.35;}}
 .suite-sync-form {
   display: grid;
   gap: 8px;
@@ -6150,9 +6119,6 @@ html.amounts-hidden .stat-card-value::after {
   width: 100%;
   min-height: 44px;
   padding: 10px 12px;
-  border-radius: 12px;
-  border: 1px solid rgba(127,140,150,.28);
-  background: rgba(127,140,150,.1);
   color: inherit;
   font: inherit;
   font-size: 16px;
@@ -6208,11 +6174,6 @@ html.amounts-hidden .stat-card-value::after {
   background: rgba(127,140,150,.1)!important;
   border: 1px solid rgba(127,140,150,.28)!important;
   border-radius: 12px!important;
-}
-.suite-sync-more button {
-  font-size: 13px!important;
-  font-weight: 600!important;
-  padding: 8px 6px!important;
 }
 .suite-sync-link {
   justify-self: center;
@@ -6301,7 +6262,6 @@ html.amounts-hidden .stat-card-value::after {
   display: flex;
   justify-content: center;
 }
-
 /* =====================================================================
    v1.13.6 — Passaggio finale di trasparenza (portato da Bilancio).
    Pannelli, popup e riquadri secondari: più trasparenti, con sfocatura
@@ -6401,12 +6361,10 @@ html.amounts-hidden .stat-card-value::after {
   line-height: 1.4;
   color: var(--ink-soft);
 }
-
 /* v1.15.0 — Notifiche: interruttori del riepilogo mensile (come in Bilancio) */
 #pushCard .push-settings { display: grid; gap: 8px; margin: 0 0 10px; }
 #pushCard .toggle-line.push-line { display: flex; align-items: center; justify-content: flex-start; gap: 12px; font-size: 14px; }
 #pushCard .push-settings .push-msg { margin: 0; }
-
 /* =====================================================================
    Altro: Sincronizzazione e Notifiche allineate alle altre sezioni
    (stesso rientro delle righe di Gestione/Dati, titolo come "Aspetto").
@@ -6430,14 +6388,12 @@ html.amounts-hidden .stat-card-value::after {
   width: 100%;
   box-sizing: border-box;
 }
-
 /* 1.15.2 — Spese totali: importi per persona leggibili in entrambi i temi (prima erano bianchi,
    invisibili in chiaro) e le due persone sulla stessa riga anche con il nuovo formato 1.234,56 € */
 #view-home .nd-paid-split { flex-wrap: nowrap !important; gap: 6px 14px !important; justify-content: center !important; }
 #view-home .nd-paid-split .hero-split-item { min-width: 0; gap: 5px; }
 #view-home .nd-paid-split .hero-split-label { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 #view-home .nd-paid-split .hero-split-value { color: var(--ink) !important; font-size: 14.5px !important; white-space: nowrap; }
-
 /* =====================================================================
    Noi Due 1.16.0 — Pannello "Aggiungi un prodotto" alla lista (rifatto)
    Scheda in vetro come il resto della suite: campo grande in evidenza,
@@ -6527,7 +6483,6 @@ html.amounts-hidden .stat-card-value::after {
 }
 #overlayRoot #sheetListDetail .lc-grid {
   display: grid;
-  grid-template-columns: auto 1fr;
   gap: 10px;
   align-items: end;
 }
@@ -6779,145 +6734,10 @@ html.amounts-hidden .stat-card-value::after {
   max-width: none !important;
   box-sizing: border-box;
 }
-
 /* =====================================================================
    Noi Due 1.17.0
    ===================================================================== */
-
-/* ---- "Oggi": torna al mese corrente (identico a Bilancio) ---- */
-.topbar .back-to-current {
-  position: absolute;
-  left: 12px;
-  top: 50%;
-  transform: translateY(-50%);
-  z-index: 2;
-  height: 34px;
-  padding: 0 13px 0 10px;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  border-radius: 999px;
-  border: 1px solid var(--glass-edge, var(--line));
-  background: color-mix(in srgb, var(--card) 60%, transparent);
-  -webkit-backdrop-filter: blur(14px) saturate(1.5);
-  backdrop-filter: blur(14px) saturate(1.5);
-  box-shadow: 0 6px 16px -8px rgba(0,0,0,.45);
-  color: var(--ink);
-  font: inherit;
-  font-size: 13px;
-  font-weight: 700;
-  line-height: 1;
-  white-space: nowrap;
-  transition: transform .12s ease, background .12s ease;
-}
-#views .view > .topbar .back-to-current {
-  top: calc(50% + (env(safe-area-inset-top) - 2px) / 2);
-}
-.topbar .back-to-current[hidden] {
-  display: none;
-}
-.topbar .back-to-current svg {
-  width: 15px;
-  height: 15px;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 2.2;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  color: #3fb38e;
-}
-:root[data-theme="dark"] .topbar .back-to-current {
-  color: #fff;
-}
-.topbar .back-to-current:active {
-  transform: translateY(-50%) scale(.95);
-}
-
-/* ---- Tieni premuto: menu veloce dei mesi (come Bilancio) ---- */
-.lp-target {
-  -webkit-touch-callout: none;
-  -webkit-user-select: none;
-  user-select: none;
-}
-.lp-pressing {
-  opacity: .75;
-  transition: opacity .2s ease;
-}
-.lp-popup {
-  position: fixed;
-  z-index: 400;
-  color: var(--ink);
-  border: 1px solid var(--glass-edge, var(--line));
-  border-radius: 16px;
-  box-shadow: 0 16px 40px rgba(0,0,0,.38);
-  background: color-mix(in srgb, var(--card) 86%, transparent);
-  -webkit-backdrop-filter: blur(18px) saturate(1.8);
-  backdrop-filter: blur(18px) saturate(1.8);
-  padding: 10px 8px 8px;
-  opacity: 0;
-  transform: translateY(-4px) scale(.98);
-  transition: opacity .14s ease, transform .14s ease;
-}
-.lp-popup.show {
-  opacity: 1;
-  transform: none;
-}
-.lp-head {
-  font-size: 12px;
-  font-weight: 800;
-  color: var(--ink-soft);
-  text-transform: uppercase;
-  letter-spacing: .4px;
-  margin: 2px 4px 6px;
-}
-.mp-list {
-  display: flex;
-  flex-direction: column;
-}
-.mp-row {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 10px;
-  width: 100%;
-  padding: 9px 10px;
-  border: 0;
-  border-top: 1px solid color-mix(in srgb, var(--ink) 9%, transparent);
-  background: none;
-  text-align: left;
-  font-family: inherit;
-  color: var(--ink);
-  border-radius: 10px;
-}
-.mp-row:first-of-type {
-  border-top: 0;
-}
-.mp-row b {
-  font-size: 15px;
-  font-weight: 700;
-  text-transform: capitalize;
-}
-.mp-row.mp-all b {
-  text-transform: none;
-  white-space: nowrap;
-}
-.mp-row small {
-  white-space: nowrap;
-}
-.mp-row small {
-  font-size: 12.5px;
-  color: var(--ink-soft);
-}
-.mp-row.active {
-  background: color-mix(in srgb, #3fb38e 18%, transparent);
-}
-.mp-row.active b {
-  color: #3fb38e;
-}
-.mp-row:active {
-  background: color-mix(in srgb, var(--ink) 10%, transparent);
-}
-
+/* "Oggi", menu veloce dei mesi (tieni premuto): ora in suite-ui.css, comuni a Bilancio e Noi Due. */
 /* ---- Calendario "Cosa vuoi vedere?": layout di Bilancio, pallini colorati per chi ha pagato ---- */
 #sheetPeriodPicker .sheet-head {
   gap: 8px;
@@ -6962,7 +6782,6 @@ html.amounts-hidden .stat-card-value::after {
 #sheetPeriodPicker .calendar-cell .cal-dot.settle {
   background: #e8a33d;
 }
-
 /* ---- Home: scheda "Liste della spesa" ---- */
 #view-home .hl-card {
   display: block !important;
@@ -7001,7 +6820,6 @@ html.amounts-hidden .stat-card-value::after {
   width: 28px;
   height: 28px;
   border-radius: 9px;
-  background: linear-gradient(145deg, #f7c463, #e48d24);
   font-size: 15px;
 }
 #view-home .hl-sum {
@@ -7013,7 +6831,6 @@ html.amounts-hidden .stat-card-value::after {
   margin-left: auto;
   border: 0;
   background: none;
-  color: #e48d24;
   font: inherit;
   font-size: 13.5px;
   font-weight: 700;
@@ -7033,18 +6850,12 @@ html.amounts-hidden .stat-card-value::after {
 #view-home .hl-item {
   flex: 0 0 auto;
   scroll-snap-align: start;
-  display: grid;
   grid-template-columns: 34px auto;
   grid-template-rows: auto auto;
   column-gap: 9px;
   row-gap: 8px;
-  align-items: center;
-  min-width: 150px;
   max-width: 220px;
-  padding: 10px 12px 10px 10px;
   border-radius: 16px;
-  border: 1px solid var(--glass-edge, var(--line));
-  background: var(--glass-row, var(--card));
   color: var(--ink);
   font: inherit;
   text-align: left;
@@ -7075,8 +6886,6 @@ html.amounts-hidden .stat-card-value::after {
 }
 #view-home .hl-txt small {
   font-size: 12px;
-  font-weight: 600;
-  color: #e48d24;
   white-space: nowrap;
 }
 #view-home .hl-item.empty .hl-txt small {
@@ -7098,18 +6907,12 @@ html.amounts-hidden .stat-card-value::after {
   border-radius: inherit;
   background: linear-gradient(90deg, #3fb38e, #6fd3ae);
 }
-
 /* ---- Vista Liste rifatta ---- */
 #view-liste .lv-grid {
   display: grid;
-  gap: 10px;
 }
 #view-liste .lv-card {
-  display: grid;
-  gap: 10px;
   width: 100%;
-  padding: 14px;
-  border-radius: 20px;
   border: 1px solid var(--glass-edge, var(--line));
   background: var(--glass-card, var(--card));
   box-shadow: var(--glass-shadow, none);
@@ -7132,30 +6935,18 @@ html.amounts-hidden .stat-card-value::after {
   flex: none;
   display: grid;
   place-items: center;
-  width: 46px;
-  height: 46px;
-  border-radius: 15px;
   background: color-mix(in srgb, #e48d24 16%, transparent);
   border: 1px solid color-mix(in srgb, #e48d24 28%, transparent);
-  font-size: 24px;
 }
 #view-liste .lv-card.empty .lv-em {
   background: color-mix(in srgb, var(--ink) 6%, transparent);
   border-color: var(--glass-edge, var(--line));
 }
-#view-liste .lv-head {
-  flex: 1 1 auto;
-  display: grid;
-  gap: 2px;
-  min-width: 0;
-}
 #view-liste .lv-head b {
-  font-size: 17px;
   font-weight: 800;
   letter-spacing: -.2px;
 }
 #view-liste .lv-head small {
-  font-size: 13px;
   color: var(--ink-soft);
   white-space: nowrap;
   overflow: hidden;
@@ -7163,16 +6954,12 @@ html.amounts-hidden .stat-card-value::after {
 }
 #view-liste .lv-count {
   flex: none;
-  min-width: 34px;
-  height: 34px;
   padding: 0 8px;
   display: grid;
   place-items: center;
-  border-radius: 12px;
   background: linear-gradient(145deg, #f7c463, #e48d24);
   color: #241800;
   font-weight: 800;
-  font-size: 15px;
 }
 #view-liste .lv-count.zero {
   background: color-mix(in srgb, var(--ink) 8%, transparent);
@@ -7215,7 +7002,6 @@ html.amounts-hidden .stat-card-value::after {
 #view-liste .lv-due {
   color: #e48d24;
 }
-
 /* ---- Dettaglio lista: striscia "Da ricomprare" ---- */
 #overlayRoot #sheetListDetail .list-suggest-title {
   display: flex;
@@ -7252,7 +7038,6 @@ html.amounts-hidden .stat-card-value::after {
   0% { filter: brightness(1.25); }
   100% { filter: none; }
 }
-
 /* ---- Linguette laterali e cassetto "Spesso / Preferiti" ---- */
 .ls-tabs {
   position: fixed;
@@ -7272,17 +7057,10 @@ html.amounts-hidden .stat-card-value::after {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 2px;
-  width: 36px;
-  height: 60px;
   padding: 0;
   border-radius: 14px 0 0 14px;
-  border: 1px solid var(--glass-edge, var(--line));
   border-right: 0;
   background: color-mix(in srgb, var(--card) 72%, transparent);
-  -webkit-backdrop-filter: blur(18px) saturate(1.6);
-  backdrop-filter: blur(18px) saturate(1.6);
-  box-shadow: -6px 8px 22px -10px rgba(0,0,0,.55);
   color: var(--ink);
   font: inherit;
 }
@@ -7293,9 +7071,6 @@ html.amounts-hidden .stat-card-value::after {
   font-size: 18px;
   line-height: 1;
   color: #3fb38e;
-}
-.ls-tab.fav .ls-ic {
-  color: #f7c463;
 }
 .ls-lb {
   font-size: 9.5px;
@@ -7311,8 +7086,6 @@ html.amounts-hidden .stat-card-value::after {
   height: 18px;
   padding: 0 5px;
   border-radius: 99px;
-  background: linear-gradient(145deg, #f7c463, #e48d24);
-  color: #241800;
   font-style: normal;
   font-size: 11px;
   font-weight: 800;
@@ -7576,7 +7349,6 @@ body.ls-over #sheetListDetail #listTodo {
   outline-color: rgba(228,141,36,.95);
   background: color-mix(in srgb, #e48d24 8%, transparent);
 }
-
 /* ---- Statistiche: testo della legenda "Spese per categoria" più piccolo ---- */
 #views #view-stats .pie-legend {
   gap: 6px !important;
@@ -7616,11 +7388,9 @@ body.ls-over #sheetListDetail #listTodo {
 html.amounts-hidden #views #view-stats .pie-legend-item .val::after {
   content: none !important;
 }
-
 /* =====================================================================
    Noi Due 1.19.0
    ===================================================================== */
-
 /* ---- Pagina Liste: schede compatte su una riga ---- */
 #view-liste .section-head .lv-actions {
   display: inline-flex;
@@ -7681,7 +7451,6 @@ html.amounts-hidden #views #view-stats .pie-legend-item .val::after {
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
 }
-
 /* ---- Linguette laterali: solo icone, colorate ---- */
 .ls-tab {
   width: 42px !important;
@@ -7714,7 +7483,6 @@ html.amounts-hidden #views #view-stats .pie-legend-item .val::after {
   background: #e85d55 !important;
   color: #fff !important;
 }
-
 /* ---- Cassetto: cronologia acquisti ---- */
 .ls-day {
   margin: 8px 4px 0;
@@ -7727,10 +7495,8 @@ html.amounts-hidden #views #view-stats .pie-legend-item .val::after {
 .ls-day:first-child {
   margin-top: 0;
 }
-
 /* ---- Dettaglio lista: sezione Acquistato con data e ora, cestino ---- */
 #overlayRoot #sheetListDetail .list-when {
-  display: block;
   margin-top: 1px;
   font-size: 11.5px;
   font-weight: 600;
@@ -7811,7 +7577,6 @@ html.amounts-hidden #views #view-stats .pie-legend-item .val::after {
   font-size: 18px;
   font-weight: 800;
 }
-
 /* ---- Scorrimento sul prodotto: la riga scorre ma non si restringe, pulsanti di misura fissa ---- */
 .list-swipe-wrap > .list-item {
   transform: translateX(var(--dx, 0px)) !important;
@@ -7837,7 +7602,6 @@ html.amounts-hidden #views #view-stats .pie-legend-item .val::after {
 .list-swipe-wrap.swipe-far .list-act-del {
   flex: 1 1 auto !important;
 }
-
 /* ---- Calendario: legenda e spesa del giorno ---- */
 #sheetPeriodPicker .pp-legend {
   display: flex;
@@ -7869,7 +7633,6 @@ html.amounts-hidden #views #view-stats .pie-legend-item .val::after {
   background: var(--card) !important;
   background-image: none !important;
 }
-
 /* =====================================================================
    Noi Due 1.20.0 — Liste in Home e pagina Liste: schede piene (niente
    vetro trasparente) e anello di avanzamento al posto del riquadro giallo.
@@ -7953,4 +7716,156 @@ html.amounts-hidden #views #view-stats .pie-legend-item .val::after {
 #view-liste .lv-card .lr-ring {
   width: 38px;
   height: 38px;
+}
+/* =====================================================================
+   Noi Due 1.21.0
+   ===================================================================== */
+/* Importi nascosti ovunque (come in Bilancio): movimenti, statistiche, budget. */
+html.amounts-hidden :is(.mv-amt,.budget-spent,.budget-limit,.budget-earned,.stat-card-value,.top-category-meta strong,.tx-amount,.rp-amt) {
+  font-size: 0 !important;
+  letter-spacing: 0 !important;
+}
+html.amounts-hidden :is(.mv-amt,.stat-card-value,.tx-amount,.rp-amt)::after {
+  content: "••••";
+  font-size: 15px;
+  letter-spacing: 1px;
+  color: var(--ink);
+}
+html.amounts-hidden .stat-card-value::after {
+  font-size: 20px;
+}
+/* ---- Suite: titolo di pagina piccolo e uniforme dove non c'è il titolo del periodo ---- */
+#views .view:not(:has(> .topbar)) > .view-title {
+  display: block !important;
+  margin: 4px 2px 14px !important;
+  padding: 0 !important;
+  font-size: 22px !important;
+  font-weight: 800 !important;
+  letter-spacing: -.4px !important;
+  line-height: 1.15 !important;
+  text-align: left !important;
+  color: var(--ink) !important;
+}
+/* ---- Suite: nessun testo sotto gli 11 px (leggibilità su iPhone) ---- */
+html body :is(#couplePaidALabel, #couplePaidBLabel, .forecast-card.wide > span, .hero-liquidity-item > span, .mv-row > .mv-date, .mv-meta-text > span, .mv-meta-text > .mv-acc, .mv-meta-text > .mv-sep, .mv-meta-text > .mv-split) {
+  font-size: 11px !important;
+}
+html body #views :is(#couplePaidALabel, #couplePaidBLabel, .forecast-card.wide > span, .forecast-card > span) {
+  font-size: 11px !important;
+}
+/* Pagatore: pallino del colore della persona invece del riquadro */
+html body .mv-meta-text > .mv-acc.mv-payer {
+  display: inline-flex !important;
+  align-items: center;
+  gap: 4px;
+  padding: 0 !important;
+  background: none !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  font-weight: 650;
+  color: var(--ink-soft) !important;
+}
+.mv-payer .mv-dot {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+/* Spesa registrata da una lista */
+html body .mv-meta-text > .mv-list-badge {
+  color: #3fb38e !important;
+  font-weight: 700;
+  font-size: 11px !important;
+}
+#overlayRoot .tx-list-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 12px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: color-mix(in srgb, #3fb38e 12%, transparent);
+  border: 1px solid color-mix(in srgb, #3fb38e 30%, transparent);
+}
+#overlayRoot .tx-list-link .tx-list-ic {
+  font-size: 20px;
+}
+#overlayRoot .tx-list-link .tx-list-tx {
+  flex: 1 1 auto;
+  display: grid;
+  min-width: 0;
+}
+#overlayRoot .tx-list-link b {
+  font-size: 14px;
+}
+#overlayRoot .tx-list-link small {
+  font-size: 12px;
+  color: var(--ink-soft);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+/* Resoconto del mese delle liste */
+#view-liste .lm-card {
+  margin: 14px 0 0;
+  padding: 14px;
+  border-radius: 18px;
+  background: var(--card);
+  border: 1px solid color-mix(in srgb, var(--ink) 8%, transparent);
+  box-shadow: 0 1px 2px rgba(0,0,0,.06), 0 8px 22px -14px rgba(0,0,0,.35);
+}
+#view-liste .lm-card[hidden] {
+  display: none;
+}
+#view-liste .lm-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+#view-liste .lm-head b {
+  font-size: 15px;
+}
+#view-liste .lm-head small {
+  font-size: 12px;
+  color: var(--ink-soft);
+}
+#view-liste .lm-bar {
+  display: flex;
+  height: 6px;
+  margin: 10px 0 8px;
+  border-radius: 99px;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--ink) 9%, transparent);
+}
+#view-liste .lm-people {
+  display: flex;
+  gap: 16px;
+  font-size: 13px;
+  color: var(--ink-soft);
+}
+#view-liste .lm-people span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+#view-liste .lm-people i {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+#view-liste .lm-people b {
+  color: var(--ink);
+}
+#view-liste .lm-top {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+}
+#view-liste .lm-chip {
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--ink) 6%, transparent);
+  font-size: 13px;
 }

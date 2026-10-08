@@ -1022,8 +1022,9 @@ function renderTxRows(container, list, {paidLabel=false}={}){
     const sLabel = splitLabel(t) ? `${groupsById()[groupOf(t)]?.emoji||""} ${splitLabel(t)}`.trim() : "";
     const metaParts=isTransfer
       ? `<span>${settle?`Rimborso tra voi · ${t.settleAlloc?"tutti i gruppi":escapeHtml(groupLabel(groupOf(t)))}`:t.atm?"Prelievo ATM":"Trasferimento"}</span>`
-      : `<span>${hlText(cat.name)}</span><span class="mv-sep" aria-hidden="true">·</span><span class="mv-acc">${hlText(acc.name)}</span>${sLabel?`<span class="mv-sep" aria-hidden="true">·</span><span class="mv-split">${escapeHtml(sLabel)}</span>`:""}`;
-    row.innerHTML = movementRowHtml({emoji:cat.emoji,color:cat.color,title,badges:statusBadge,meta:metaParts,
+      : `<span>${hlText(cat.name)}</span><span class="mv-sep" aria-hidden="true">·</span><span class="mv-acc mv-payer"><i class="mv-dot" style="background:${safeColor(personColor(acc.owner||"joint"))}" aria-hidden="true"></i>${hlText(acc.name)}</span>${sLabel?`<span class="mv-sep" aria-hidden="true">·</span><span class="mv-split">${escapeHtml(sLabel)}</span>`:""}`;
+    const listBadge = t.listId ? `<span class="mv-list-badge" title="Spesa registrata dalla lista ${escapeHtml(state.lists.find(x=>x.id===t.listId)?.name||"")}" aria-label="Dalla lista">🛒</span>` : "";
+    row.innerHTML = movementRowHtml({emoji:cat.emoji,color:cat.color,title,badges:statusBadge,meta:listBadge+metaParts,
       amountHtml:`${isTransfer?"↔":t.type==="income"?"+":""}${fmt(t.amount)}`,type:t.type,date:t.date,relative:!!t.planned,
       kind:t.recurringId?"recurring":(t.plannedId?"planned":null),paid:!t.planned&&paidLabel});
     const openRow=()=>{
@@ -1707,27 +1708,7 @@ document.getElementById("backToCurrentMonth")?.addEventListener("click",()=>{
   periodModes[activeView]="month";txVisibleLimit=TX_PAGE_SIZE;closeDatePicker();closePeriodMenu();renderAll();
 });
 /* v1.17.0 — Tieni premuto sul titolo: menu veloce dei mesi (come in Bilancio), con "Tutti i movimenti". */
-function lpOutside(e){ if(!e.target.closest("#lpPopup")) closeLongPressPopup(); }
-function closeLongPressPopup(){
-  document.getElementById("lpPopup")?.remove();
-  document.removeEventListener("pointerdown",lpOutside,true);
-}
-var lpSuppressClick=false;
-document.addEventListener("click",e=>{ if(lpSuppressClick){ e.preventDefault(); e.stopPropagation(); lpSuppressClick=false; } },true);
-function bindLongPress(el,handler){
-  if(!el || el.dataset.lpBound) return;
-  el.dataset.lpBound="1"; el.classList.add("lp-target");
-  let timer=null,x=0,y=0;
-  const cancel=()=>{clearTimeout(timer);timer=null;el.classList.remove("lp-pressing");};
-  el.addEventListener("pointerdown",e=>{
-    if(e.button!==undefined && e.button!==0) return;
-    x=e.clientX;y=e.clientY;el.classList.add("lp-pressing");
-    timer=setTimeout(()=>{timer=null;el.classList.remove("lp-pressing");lpSuppressClick=true;setTimeout(()=>{lpSuppressClick=false;},700);try{navigator.vibrate?.(12);}catch(_){};handler(e);},480);
-  });
-  el.addEventListener("pointermove",e=>{if(timer && Math.hypot(e.clientX-x,e.clientY-y)>10) cancel();});
-  ["pointerup","pointercancel","pointerleave"].forEach(ev=>el.addEventListener(ev,cancel));
-  el.addEventListener("contextmenu",e=>e.preventDefault());
-}
+/* lpOutside, closeLongPressPopup e bindLongPress ora sono in suite.js (comuni a Bilancio e Noi Due). */
 function showMonthQuickPicker(anchor){
   closeLongPressPopup();
   const pop=document.createElement("div");
@@ -2243,6 +2224,25 @@ function renderCoupleLists(){
     card.addEventListener("keydown",e=>{ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); openListDetail(l.id); } });
     box.appendChild(card);
   });
+  renderListsMonth(box);
+}
+/* v1.21.0 — Resoconto del mese: chi ha preso cosa (dagli acquisti segnati nelle liste). */
+function renderListsMonth(after){
+  let el=document.getElementById("listsMonth");
+  if(!el){ el=document.createElement("section"); el.id="listsMonth"; el.className="lm-card"; after.after(el); }
+  const now=new Date(), key=`${now.getFullYear()}-${pad2(now.getMonth()+1)}`;
+  const all=state.lists.flatMap(l=>(l.purchases||[]).filter(p=>String(p.at).startsWith(key)).map(p=>({...p,list:l})));
+  if(!all.length){ el.hidden=true; return; }
+  el.hidden=false;
+  const per={a:0,b:0,"":0}; all.forEach(p=>{ per[p.by||""]=(per[p.by||""]||0)+1; });
+  const byText=new Map(); all.forEach(p=>{ const k=historyKey(p.text); const v=byText.get(k)||{text:p.text,n:0,by:{a:0,b:0}}; v.n+=1; if(p.by) v.by[p.by]++; byText.set(k,v); });
+  const top=[...byText.values()].sort((x,y)=>y.n-x.n).slice(0,6);
+  const total=all.length;
+  const bar=["a","b"].filter(k=>per[k]>0).map(k=>`<i style="width:${Math.round(per[k]/total*100)}%;background:${safeColor(personColor(k))}"></i>`).join("");
+  el.innerHTML=`<div class="lm-head"><b>🛒 ${MESI[now.getMonth()]}: chi ha preso cosa</b><small>${total} ${total===1?"prodotto preso":"prodotti presi"}</small></div>
+    <div class="lm-bar" aria-hidden="true">${bar}</div>
+    <div class="lm-people">${["a","b"].map(k=>`<span><i style="background:${safeColor(personColor(k))}"></i>${escapeHtml(personName(k))} <b>${per[k]||0}</b></span>`).join("")}</div>
+    <div class="lm-top">${top.map(t=>`<span class="lm-chip">${escapeHtml(t.text)}${t.n>1?` <b>×${t.n}</b>`:""}</span>`).join("")}</div>`;
 }
 var listDetailRefresh=null;
 function listCategoryFor(l){
@@ -2746,7 +2746,7 @@ function openListDetail(listId){
           const payer=accOwner(payerAcc);
           const mode=payer===who?"personal":(payer==="joint"?"personal":"other");
           state.transactions.push({id:uid(),date:date||todayISO(),amount,type:"expense",name:`${l.name} – solo ${personName(who)}`,categoryId:listCategoryFor(l),
-            accountId:payer==="joint"?payerAcc:payerAcc,toAccountId:null,note:its.map(label).join(", ").slice(0,500),split:{mode,pctA:50},groupId:l.groupId});
+            accountId:payer==="joint"?payerAcc:payerAcc,toAccountId:null,note:its.map(label).join(", ").slice(0,500),split:{mode,pctA:50},groupId:l.groupId,listId:l.id});
         });
         if(cur){ recordPurchased(cur,done); if(cur.restockOnExit) cur.items.forEach(i=>{ if(ids.has(i.id)){ i.done=false; i.counted=""; } }); else { markDeleted([...ids]); cur.items=cur.items.filter(i=>!ids.has(i.id)); } }
         persist(); renderAll();
@@ -2757,12 +2757,12 @@ function openListDetail(listId){
         // Solo articoli personali: si chiede solo chi ha pagato tramite il modulo, con importo personale.
         const who=personal[0].forWhom, amount=sum(personal);
         openAddTransaction(null,{split:{mode:"personal",pctA:50},name:`${l.name} – solo ${personName(who)}`,amount,categoryId:listCategoryFor(l),groupId:l.groupId,note:personal.map(label).join(", ").slice(0,500),
-          onSaved:t=>{ const cur=state.lists.find(x=>x.id===listId); if(cur){ recordPurchased(cur,done); if(cur.restockOnExit) cur.items.forEach(i=>{ if(ids.has(i.id)){ i.done=false; i.counted=""; } }); else { markDeleted([...ids]); cur.items=cur.items.filter(i=>!ids.has(i.id)); } } }});
+          onSaved:t=>{ t.listId=listId; const cur=state.lists.find(x=>x.id===listId); if(cur){ recordPurchased(cur,done); if(cur.restockOnExit) cur.items.forEach(i=>{ if(ids.has(i.id)){ i.done=false; i.counted=""; } }); else { markDeleted([...ids]); cur.items=cur.items.filter(i=>!ids.has(i.id)); } } }});
         return;
       }
       const amount=sum(shared);
       openAddTransaction(null,{name:l.name,amount,categoryId:listCategoryFor(l),groupId:l.groupId,note:shared.map(label).join(", ").slice(0,500),
-        onSaved:t=>finish(t.accountId,t.date)});
+        onSaved:t=>{ t.listId=listId; finish(t.accountId,t.date); }});
       if(!(amount>0)) setTimeout(()=>showToast(personal.length?"Inserisci l'importo degli articoli condivisi (senza quelli personali)":"Inserisci l'importo dello scontrino"),400);
     });
     listDetailRefresh=paint;
@@ -3479,6 +3479,14 @@ function openAddTransaction(txId,prefill=null){
   let destinationAccountId = existing?.toAccountId || null;
 
   openSheet("tpl-add-transaction", (node, close)=>{
+    // v1.21.0 — spesa registrata da una lista: si vede da quale lista e cosa c'era, con il link alla lista.
+    if(existing?.listId){
+      const ll=state.lists.find(x=>x.id===existing.listId);
+      const box=document.createElement("div"); box.className="tx-list-link";
+      box.innerHTML=`<span class="tx-list-ic" aria-hidden="true">🛒</span><span class="tx-list-tx"><b>Dalla lista ${escapeHtml(ll?`${ll.emoji} ${ll.name}`:"(lista eliminata)")}</b>${existing.note?`<small>${escapeHtml(existing.note)}</small>`:""}</span>${ll?`<button type="button" class="pill-btn mini-btn">Apri ›</button>`:""}`;
+      box.querySelector("button")?.addEventListener("click",()=>{ close(); setTimeout(()=>openListDetail(ll.id),250); });
+      const head=node.querySelector(".sheet-head"); (head||node.firstElementChild).after(box);
+    }
     const amountInput = node.querySelector("#amountInput");
     const nameInput=node.querySelector("#txNameInput");
     amountInput.value = existing ? String(existing.amount).replace(".",",") : (prefill?.amount>0 ? String(Math.round(prefill.amount*100)/100).replace(".",",") : "");

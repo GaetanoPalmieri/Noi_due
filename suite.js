@@ -1181,6 +1181,9 @@ function bindLongPress(el,handler){
   }
   function erroreDa(e) {
     var st = e && e.status;
+    /* la funzione suite-ai spiega il problema nel campo "error": lo mostriamo così com'è */
+    var m = e && e.message && /"error"\s*:\s*"([^"]+)"/.exec(e.message);
+    if (m) { ultimoErrore = { status: st || 0, messaggio: m[1] }; return; }
     var msg = st === 404 ? 'la funzione suite-ai non è pubblicata su Supabase'
       : st === 401 ? 'accesso scaduto: rientra in Altro › Sincronizzazione'
       : st === 403 ? 'questa email non è abilitata (SUITE_AI_EMAILS)'

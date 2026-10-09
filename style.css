@@ -7972,3 +7972,23 @@ html body .mv-meta-text > .mv-list-badge {
   font-size: 13px !important;
   line-height: 1;
 }
+
+/* =====================================================================
+   v1.26.0 — Un filo piu larghi, come in Bilancio
+   Il margine laterale delle schede scende da 16 a 10 px: i riquadri guadagnano
+   circa 12 px di larghezza. Il pannello in alto resta allineato ai riquadri.
+   ===================================================================== */
+#view-home,
+#view-coppia,
+#view-liste,
+#view-transactions,
+#view-stats,
+#view-more {
+  padding-left: 10px !important;
+  padding-right: 10px !important;
+}
+#view-home .hero,
+#view-coppia .hero {
+  margin-left: -2px;
+  margin-right: -2px;
+}

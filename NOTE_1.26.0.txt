@@ -1,0 +1,6 @@
+VERSIONE 1.26.0
+
+Riquadri un filo piu larghi
+- Il margine laterale scende da 16 a 10 px in tutte le schede (Home, Coppia,
+  Liste, Movimenti, Statistiche, Altro): i riquadri guadagnano circa 12 px.
+- E' lo stesso stretch gia fatto in Bilancio.

@@ -2190,6 +2190,7 @@ function renderCouple(){
   renderCoupleGroups();
   renderFixedExpenses();
   renderCoupleLists();
+  renderAiCoppia();
   if(groupDetailRefresh) groupDetailRefresh();
   if(listDetailRefresh) listDetailRefresh();
 }
@@ -2775,8 +2776,19 @@ function openListDetail(listId){
       const l=list(); if(!l||!lines.length) return 0;
       const existing=new Set(l.items.filter(i=>!i.done).map(i=>normName(parseQty(i.text).text)));
       let n=0; const toEnrich=[];
-      lines.forEach(text=>{ const url=extractUrl(text); const label=url?(text.replace(url,"").trim()||"Carico il prodotto dal link…"):text;
-        const it=newListItem(label,{url:url||""}); const k=normName(url||it.text); if(!k||existing.has(k)) return; existing.add(k);
+      lines.forEach(riga=>{
+        /* v1.28.0 — una riga può essere testo semplice oppure {nome, quantita, reparto}
+           (dettato o scontrino): nel secondo caso quantità e reparto arrivano già pronti. */
+        const og=typeof riga==="object"&&riga?riga:null;
+        const text=String(og?og.nome:riga||"").trim();
+        if(!text) return;
+        const url=extractUrl(text); const label=url?(text.replace(url,"").trim()||"Carico il prodotto dal link…"):text;
+        const extra={url:url||""};
+        if(og&&og.reparto&&aisleKeys().includes(og.reparto)) extra.aisle=og.reparto;
+        const it=newListItem(label,extra);
+        if(og&&Number(og.quantita)>1) it.qty=Math.min(99,Math.round(Number(og.quantita)));
+        if(og&&Number(og.prezzo)>0) it.price=Math.round(Number(og.prezzo)*100)/100/(it.qty||1);
+        const k=normName(url||it.text); if(!k||existing.has(k)) return; existing.add(k);
         l.items.push(it); if(url) toEnrich.push([it.id,url]); n++; });
       if(n) save();
       toEnrich.forEach(([id,url],i)=>setTimeout(()=>enrichListItem(listId,id,url),i*400));
@@ -2789,6 +2801,38 @@ function openListDetail(listId){
       if(lines.length>1){ e.preventDefault(); const n=addMany(lines); showToast(n?`${n} articoli aggiunti`:"Erano già tutti nella lista"); input.value=""; }
     });
     node.querySelector("#listPasteBtn").addEventListener("click",()=>openListPaste(lines=>{ const n=addMany(lines); showToast(n?`${n} ${n===1?"articolo aggiunto":"articoli aggiunti"}`:"Erano già tutti nella lista"); }));
+    /* v1.28.0 — Scontrino dalla foto: le voci entrano in lista gia spuntate, con il
+       prezzo di riga, e resta pronto il pulsante per registrarle come spesa. */
+    {
+      const rb=node.querySelector("#listReceiptBtn");
+      if(rb && window.SuiteAI && SuiteAI.disponibile()){
+        rb.hidden=false;
+        const cam=document.createElement("input");
+        cam.type="file"; cam.accept="image/*"; cam.capture="environment"; cam.hidden=true;
+        node.appendChild(cam);
+        rb.addEventListener("click",()=>cam.click());
+        cam.addEventListener("change",async()=>{
+          const f=cam.files&&cam.files[0]; cam.value="";
+          if(!f) return;
+          rb.disabled=true; showToast("Sto leggendo lo scontrino…");
+          const d=await SuiteAI.daFoto("scontrino",f,{
+            contesto:{oggi:todayISO()},
+            opzioni:aisleKeys().filter(k=>k!=="altro").map(k=>{const a=aisleInfo(k);return {chiave:a.key,nome:a.name};})
+          });
+          rb.disabled=false;
+          if(!node.isConnected) return;
+          const voci=d&&Array.isArray(d.voci)?d.voci.filter(v=>v&&v.nome):[];
+          if(!voci.length){ showToast("Non sono riuscito a leggere le voci dello scontrino"); return; }
+          const prima=new Set((list()?.items||[]).map(i=>i.id));
+          const n=addMany(voci);
+          /* quello che è appena entrato è già nel carrello: lo scontrino l'hai pagato */
+          const l=list();
+          if(l){ l.items.filter(i=>!prima.has(i.id)).forEach(i=>{ i.done=true; i.boughtAt=new Date().toISOString(); }); save(); }
+          const tot=Number(d.totale)>0?` · totale ${fmt(d.totale)}`:"";
+          showToast(n?`${n} ${n===1?"voce letta":"voci lette"}${tot}`:"Erano già tutte in lista");
+        });
+      }
+    }
     node.querySelector("#listSortBtn").addEventListener("click",()=>{ const l=list(); l.sortMode=l.sortMode==="manual"?"aisle":"manual"; save(); });
     node.querySelector("#listBaseBtn").addEventListener("click",()=>{ const n=addMany(list().template||[]); showToast(n?`Lista base: ${n} ${n===1?"articolo aggiunto":"articoli aggiunti"}`:"La lista base è già tutta in lista"); });
     node.querySelector("#listScanBtn").addEventListener("click",()=>openProductScan(item=>{
@@ -2890,6 +2934,25 @@ function openListPaste(onAdd){
     const area=node.querySelector("#pasteText"), hint=node.querySelector("#pasteHint"), btn=node.querySelector("#pasteAddBtn");
     const paint=()=>{ const n=parseShoppingLines(area.value).length; btn.textContent=n?`Aggiungi ${n}`:"Aggiungi"; hint.textContent=n?`${n} ${n===1?"articolo":"articoli"} pronti. Ogni riga diventa un articolo.`:"Scrivi o incolla: ogni riga diventa un articolo. Puoi separare anche con la virgola."; };
     area.addEventListener("input",paint);
+    /* v1.28.0 — "Leggi la frase": "servono latte, due pacchi di pasta e il detersivo"
+       diventa un elenco con quantità e reparto già messi. Il pulsante normale
+       (una riga = un articolo) resta: questo è in più, non al posto suo. */
+    if(window.SuiteAI && SuiteAI.disponibile()){
+      const aiBtn=document.createElement("button");
+      aiBtn.type="button"; aiBtn.className="pill-btn ai-dictate"; aiBtn.textContent="✨ Leggi la frase";
+      aiBtn.addEventListener("click",async()=>{
+        const t=area.value.trim();
+        if(!t){ area.focus(); return; }
+        aiBtn.disabled=true; hint.textContent="Sto leggendo la frase…";
+        const d=await SuiteAI.ask("lista",t,{opzioni:aisleKeys().filter(k=>k!=="altro").map(k=>{const a=aisleInfo(k);return {chiave:a.key,nome:a.name};})});
+        aiBtn.disabled=false;
+        if(!node.isConnected) return;
+        const arr=d&&Array.isArray(d.articoli)?d.articoli.filter(x=>x&&x.nome):[];
+        if(!arr.length){ hint.textContent="Non ho capito: scrivi un articolo per riga e usa “Aggiungi”."; return; }
+        onAdd(arr); close();
+      });
+      hint.after(aiBtn);
+    }
     // Prova a leggere subito gli appunti (l'iPhone può chiedere conferma con "Incolla").
     if(navigator.clipboard?.readText){ navigator.clipboard.readText().then(t=>{ if(t && !area.value){ area.value=t; paint(); } }).catch(()=>{}); }
     setTimeout(()=>area.focus(),300);
@@ -3832,6 +3895,49 @@ document.getElementById("fabAdd").addEventListener("click", e=>{
 document.getElementById("toggleHomeBalance").addEventListener("click",toggleBalances);
 /* v1.24.0 — Un solo occhio, fermo in alto a destra in tutte le schede. */
 document.getElementById("toggleBalanceFixed")?.addEventListener("click",toggleBalances);
+
+/* ===================== v1.28.0 — "Com'è andato il mese" (coppia) =====================
+   Legge i numeri che l'app ha già — chi ha pagato, le quote, il saldo fra voi, le
+   spese fisse, le liste — e li racconta in due righe. Niente cifre inventate. */
+function riepilogoCoppiaContesto(){
+  const st=coupleMonthStats(viewYear,viewMonth);
+  const tot=st.paid.a+st.paid.b+st.paid.joint;
+  const saldo=groupBalance(null);
+  const tx=state.transactions.filter(t=>t.date.startsWith(`${viewYear}-${pad2(viewMonth+1)}`)&&t.type==="expense"&&!t.isBalanceAdjustment);
+  const perCat={};
+  tx.forEach(t=>{ const c=categoriesById()[t.categoryId]; const k=c?c.name:"Senza categoria"; perCat[k]=(perCat[k]||0)+t.amount; });
+  const categorie=Object.entries(perCat).sort((a,b)=>b[1]-a[1]).slice(0,6).map(([nome,v])=>({nome,speso:Math.round(v*100)/100}));
+  const liste=state.lists.map(l=>({nome:l.name,daComprare:l.items.filter(i=>!i.done).length}));
+  return {
+    mese:`${MESI[viewMonth]} ${viewYear}`,
+    totaleSpeso:Math.round(tot*100)/100,
+    haPagato:{[personName("a")]:Math.round(st.paid.a*100)/100,[personName("b")]:Math.round(st.paid.b*100)/100,cassaComune:Math.round(st.paid.joint*100)/100},
+    quote:{[personName("a")]:Math.round(st.quota.a*100)/100,[personName("b")]:Math.round(st.quota.b*100)/100},
+    saldoFraVoi:Math.abs(saldo)<0.005?"in pari":`${personName(saldo>0?"b":"a")} deve ${fmt(Math.abs(saldo))} a ${personName(saldo>0?"a":"b")}`,
+    numeroSpeseDivise:st.shared.length,
+    listeDellaSpesa:liste,
+    numeroMovimenti:tx.length
+  };
+}
+function renderAiCoppia(){
+  const box=document.getElementById("aiCoupleBlock");
+  if(!box) return;
+  const on=!!(window.SuiteAI && SuiteAI.disponibile());
+  box.hidden=!on;
+  if(!on || box._bound) return;
+  box._bound=true;
+  const btn=document.getElementById("aiCoupleBtn"), out=document.getElementById("aiCoupleBox");
+  btn.addEventListener("click",async()=>{
+    btn.disabled=true;
+    out.innerHTML=`<p class="ai-note">Sto guardando le spese di ${MESI[viewMonth].toLowerCase()}…</p>`;
+    const r=await SuiteAI.riepilogo(riepilogoCoppiaContesto(),`Com'è andato ${MESI[viewMonth].toLowerCase()} per noi due?`);
+    btn.disabled=false;
+    if(!r){ out.innerHTML=`<p class="ai-note">Non ci sono riuscito adesso. Riprova fra poco.</p>`; return; }
+    out.innerHTML=`<p>${escapeHtml(r.testo)}</p>`+
+      (r.punti.length?`<ul>${r.punti.map(x=>`<li>${escapeHtml(x)}</li>`).join("")}</ul>`:"")+
+      `<p class="ai-note">Scritto leggendo le vostre spese di ${escapeHtml(MESI[viewMonth])} ${viewYear}. Ricontrolla sempre le cifre.</p>`;
+  });
+}
 
 function openTrash(){
   openSheet("tpl-trash", (node)=>{

@@ -1,0 +1,18 @@
+VERSIONE 1.28.0
+
+Lista dettata
+- "Incolla lista" > "Leggi la frase": "servono latte, due pacchi di pasta e il
+  detersivo" diventa un elenco con quantita' e reparto gia' messi.
+- Il pulsante normale (una riga = un articolo) resta: questo e' in piu'.
+
+Scontrino dalla foto
+- Nella lista, pulsante "Scontrino": fotografi lo scontrino e le voci entrano in
+  lista gia' spuntate, con il prezzo di riga. Da li' il pulsante "Registra come
+  spesa" fa il resto come sempre.
+
+Com'e' andato il mese
+- Nuovo riquadro nella scheda Coppia: tocchi "Spiegamelo" e in due righe dice chi
+  ha pagato cosa, come siete messi e cosa e' cambiato.
+- Legge solo i numeri che l'app ha gia': quote, saldo fra voi, categorie, liste.
+
+Tutto questo compare solo con l'AI accesa (vedi GUIDA_AI.txt).

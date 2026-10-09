@@ -2828,7 +2828,7 @@ function openListDetail(listId){
           /* quello che è appena entrato è già nel carrello: lo scontrino l'hai pagato */
           const l=list();
           if(l){ l.items.filter(i=>!prima.has(i.id)).forEach(i=>{ i.done=true; i.boughtAt=new Date().toISOString(); }); save(); }
-          const tot=Number(d.totale)>0?` · totale ${fmt(d.totale)}`:"";
+          const totN=SuiteAI.numero(d.totale); const tot=totN>0?` · totale ${fmt(totN)}`:"";
           showToast(n?`${n} ${n===1?"voce letta":"voci lette"}${tot}`:"Erano già tutte in lista");
         });
       }

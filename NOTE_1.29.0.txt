@@ -1,0 +1,6 @@
+VERSIONE 1.29.0
+
+- Messaggi in basso: riquadro di vetro trasparente con pallino verde, come in tutte le app
+  (prima verde pieno).
+- AI: l'importo dello scontrino viene letto anche se scritto come testo ("12,50");
+  se l'AI non risponde compare il motivo invece di un generico "non ho capito".

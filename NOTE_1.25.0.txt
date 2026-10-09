@@ -1,0 +1,15 @@
+VERSIONE 1.25.0
+
+Stesso impianto di Bilancio in tutte le sezioni
+- Ogni sezione sta dentro un riquadro esterno tenue, come in Bilancio:
+  Movimenti recenti, Budget, Gruppi, Spese fisse, Quote del mese,
+  Ultime spese divise, Rimborsi, Cosa comprare, In arrivo questo mese.
+- Il titolo della sezione e' piccolo e in stampatello, alla stessa distanza dal
+  bordo del riquadro e dalla lista.
+- Stando dentro il riquadro, le righe dei movimenti sono piu corte: stesso
+  effetto che ha gia Bilancio.
+
+"Vedi tutti" piu piccolo
+- "Vedi tutti" con il pallino del numero, il calendario, "+ Nuova", "Modifica",
+  il cestino: tutti i pulsantini di sezione scendono a 24 px di altezza, con il
+  pallino del numero a 15 px.

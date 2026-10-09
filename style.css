@@ -7900,3 +7900,75 @@ html body .mv-meta-text > .mv-list-badge {
 #sheetItemSummary .item-photo img {
   max-height: 180px;
 }
+
+/* =====================================================================
+   v1.25.0 — Stesso impianto di Bilancio: riquadro contenitore per ogni
+   sezione, nome piccolo in stampatello, "Vedi tutti" piccolo.
+   Le righe dei movimenti stanno dentro al riquadro, quindi risultano
+   piu corte: e' lo stesso effetto che ha gia Bilancio.
+   ===================================================================== */
+#views .section-block:not(.suite-sync-card):not([hidden]) {
+  margin-top: 18px;
+  padding: 9px 12px 12px;
+  border-radius: 20px;
+  border: 1px solid color-mix(in srgb, var(--ink) 7%, transparent);
+  background: color-mix(in srgb, var(--ink) 2%, transparent);
+  -webkit-backdrop-filter: blur(8px) saturate(1.2);
+  backdrop-filter: blur(8px) saturate(1.2);
+}
+:root[data-theme="light"] #views .section-block:not(.suite-sync-card):not([hidden]) {
+  border-color: color-mix(in srgb, var(--ink) 8%, transparent);
+  background: color-mix(in srgb, #ffffff 40%, transparent);
+}
+#views .section-block:not(.suite-sync-card) > .section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 0 2px 7px !important;
+  min-height: 22px;
+  padding: 0;
+}
+#views .section-block:not(.suite-sync-card) > .section-head h2,
+#views .section-block:not(.suite-sync-card) > h2 {
+  margin: 0 !important;
+  font-size: 11px !important;
+  font-weight: 800 !important;
+  text-transform: uppercase;
+  letter-spacing: .5px !important;
+  line-height: 1.2;
+  color: var(--ink-soft) !important;
+}
+#views .section-block:not(.suite-sync-card) > .empty-hint:last-child {
+  margin-bottom: 0;
+}
+/* Il pallino "i" accanto al titolo resta leggibile anche in stampatello */
+#views .section-head h2 .nd-info {
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+/* ---- "Vedi tutti" e gli altri pulsantini di sezione, piccoli come in Bilancio ---- */
+#views .section-head .pill-btn,
+#views .section-head-actions .pill-btn,
+#views .lv-actions .pill-btn {
+  min-height: 24px !important;
+  padding: 2px 7px 2px 9px !important;
+  gap: 4px !important;
+  font-size: 11px !important;
+  border-radius: 999px !important;
+}
+#views .section-head .pill-btn.mini-btn {
+  padding: 2px 8px !important;
+}
+#views .pill-btn .count-badge {
+  min-width: 15px !important;
+  height: 15px !important;
+  padding: 0 4px !important;
+  font-size: 11px !important;
+  margin: 0 !important;
+}
+#views .section-head .pill-btn .chev {
+  font-size: 13px !important;
+  line-height: 1;
+}

@@ -1,0 +1,21 @@
+VERSIONE 1.38.0
+
+Scontrino dalla foto
+- Nuovo movimento > "Leggi lo scontrino": fotografi (o scegli dalla galleria) e
+  riempie importo, negozio, data e categoria. Le singole voci finiscono nelle note,
+  se le note sono vuote.
+- Le foto vengono rimpicciolite prima di partire: parte un decimo di quello che pesa
+  lo scatto.
+
+Ricorrente scritto a parole
+- Nuovo ricorrente > campo in alto: "ogni 5 del mese 12 euro Netflix sulla carta"
+  compila importo, cadenza, giorno, conto e categoria.
+
+Com'e' andato il mese
+- Nuovo riquadro in Home, sopra i budget: tocchi "Spiegamelo" e in due righe ti dice
+  com'e' andato il mese, con 2-4 punti su cosa merita attenzione.
+- Legge solo i numeri che l'app ha gia': entrate, uscite, categorie, budget, cosa
+  e' in arrivo, confronto con il mese scorso. Non inventa cifre e non fa previsioni.
+
+Tutto questo compare solo con l'AI accesa (vedi GUIDA_AI.txt). Senza, l'app e'
+identica a prima.

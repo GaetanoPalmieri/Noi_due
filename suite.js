@@ -728,11 +728,31 @@
       e.stopPropagation();
     }, { capture: true, passive: false });
   });
+  /* Sul telefono bloccare il touchstart cancella anche il "click" che segue: per questo il
+     menu si apre alla fine del tocco (se il dito non si è mosso), non sul click. */
+  var tStart = null, lastTouchOpen = 0;
+  document.addEventListener('touchstart', function (e) {
+    var sel = target(e);
+    var t = e.touches && e.touches[0];
+    tStart = sel && t ? { sel: sel, x: t.clientX, y: t.clientY } : null;
+  }, { capture: true, passive: true });
+  document.addEventListener('touchend', function (e) {
+    if (!tStart) return;
+    var st = tStart; tStart = null;
+    var t = e.changedTouches && e.changedTouches[0];
+    if (!t || Math.abs(t.clientX - st.x) > 10 || Math.abs(t.clientY - st.y) > 10) return;
+    if (e.cancelable) e.preventDefault();
+    e.stopPropagation();
+    try { st.sel.blur(); } catch (_) {}
+    lastTouchOpen = Date.now();
+    openFor(st.sel);
+  }, { capture: true, passive: false });
   document.addEventListener('click', function (e) {
     var sel = target(e);
     if (!sel) return;
     e.preventDefault();
     e.stopPropagation();
+    if (Date.now() - lastTouchOpen < 700) return;   // già aperto dal tocco
     try { sel.blur(); } catch (_) {}
     openFor(sel);
   }, true);

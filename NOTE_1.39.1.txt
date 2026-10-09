@@ -1,0 +1,4 @@
+VERSIONE 1.39.1
+
+- Pannelli: chiudendoli trascinando verso il basso (o di lato) escono alla velocità del dito,
+  senza l'effetto rallentatore. Durante l'uscita si spegne la sfocatura (più fluido su iPhone).

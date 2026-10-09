@@ -1,0 +1,23 @@
+VERSIONE 1.40.0
+
+Ricorrente con numero di rate / con scadenza
+- I menu a tendina (Durata, Cadenza, ecc.) su iPhone non si aprivano più: il tocco veniva
+  bloccato prima che arrivasse il "click". Ora il menu si apre alla fine del tocco.
+  Quindi "Durata > Numero di rate" e "Fino a una data" funzionano di nuovo.
+  La correzione vale per tutti i menu a tendina di tutte le app.
+
+R&P
+- Tieni premuto su una ricorrente o una pianificata: oltre a Modifica ed Elimina c'è Duplica.
+  La copia si apre subito per cambiare quello che serve; "Annulla" nel messaggio la toglie.
+
+Pannelli
+- Trascinandoli verso il basso ora seguono il dito senza scatti: mentre si muovono la
+  sfocatura si spegne (su iPhone veniva ricalcolata a ogni fotogramma e rallentava tutto).
+
+Icone con 2 o più emoji
+- Restano larghe come quelle singole: le emoji si rimpiccioliscono e il testo dei movimenti,
+  delle categorie e di R&P resta allineato, senza spostarsi a destra.
+
+Home
+- Il riquadro "Totale effettivo" con crediti e debiti a 0,00 € non compare più quando non
+  ci sono prestiti aperti.

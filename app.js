@@ -760,6 +760,9 @@ function setEyeIcon(btn,hidden,showLabel,hideLabel){
   const closed='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17.9 17.9A10.4 10.4 0 0 1 12 19C5.6 19 2 12 2 12a18.6 18.6 0 0 1 5.1-5.9"/><path d="M9.9 5.2A9.6 9.6 0 0 1 12 5c6.4 0 10 7 10 7a18.7 18.7 0 0 1-2.2 3.2"/><path d="M14.1 14.2a3 3 0 1 1-4.2-4.2"/><path d="M2 2l20 20"/></svg>';
   btn.innerHTML=hidden?closed:open;
   btn.setAttribute("aria-label",hidden?(showLabel||"Mostra importi"):(hideLabel||"Nascondi importi"));
+  /* v1.24.0 — L'occhio fisso in alto a destra segue sempre lo stesso stato. */
+  const fixed=document.getElementById("toggleBalanceFixed");
+  if(fixed && btn!==fixed) setEyeIcon(fixed,hidden);
 }
 
 /* ---------------- Noi Due: card principale della Home (spese e chi ha pagato) ---------------- */
@@ -2210,7 +2213,7 @@ function renderHomeLists(){
     const todo=l.items.filter(i=>!i.done).length, done=l.items.length-todo, due=smartSuggestions(l).filter(x=>x.isDue).length;
     const pct=l.items.length?Math.round(done/l.items.length*100):0;
     const b=document.createElement("div"); b.setAttribute("role","button"); b.tabIndex=0; b.className="hl-item"+(todo?"":" empty");
-    b.innerHTML=`<span class="hl-em" aria-hidden="true">${escapeHtml(l.emoji)}</span><span class="hl-txt"><b>${escapeHtml(l.name)}</b><small>${todo?`${todo} da comprare`:"Tutto preso"}${due?` · ⏰ ${due}`:""}</small></span>${listRingHtml(todo,l.items.length)}`;
+    b.innerHTML=`<span class="hl-em" aria-hidden="true">${emojiIconHtml(l.emoji)}</span><span class="hl-txt"><b>${escapeHtml(l.name)}</b><small>${todo?`${todo} da comprare`:"Tutto preso"}${due?` · ⏰ ${due}`:""}</small></span>${listRingHtml(todo,l.items.length)}`;
     b.setAttribute("aria-label",`Lista ${l.name}: ${todo} da comprare${due?`, ${due} da ricomprare`:""}`);
     b.addEventListener("click",()=>openListDetail(l.id));
     row.appendChild(b);
@@ -2230,7 +2233,7 @@ function renderCoupleLists(){
     const pct=l.items.length?Math.round(done/l.items.length*100):0;
     const card=document.createElement("div");
     card.className="lv-card"+(todo?"":" empty"); card.setAttribute("role","button"); card.tabIndex=0;
-    card.innerHTML=`<span class="lv-em" aria-hidden="true">${escapeHtml(l.emoji)}</span><span class="lv-head"><b>${escapeHtml(l.name)}</b><small>${todo?`${todo} da comprare`:"Niente da comprare"}${done?` · ${done} acquistati`:""}${due?` · ⏰ ${due}`:""}${g?` · ${escapeHtml(g.emoji+" "+g.name)}`:""}</small></span>${listRingHtml(todo,l.items.length)}<span class="lv-chev" aria-hidden="true">›</span>`;
+    card.innerHTML=`<span class="lv-em" aria-hidden="true">${emojiIconHtml(l.emoji)}</span><span class="lv-head"><b>${escapeHtml(l.name)}</b><small>${todo?`${todo} da comprare`:"Niente da comprare"}${done?` · ${done} acquistati`:""}${due?` · ⏰ ${due}`:""}${g?` · ${escapeHtml(g.emoji+" "+g.name)}`:""}</small></span>${listRingHtml(todo,l.items.length)}<span class="lv-chev" aria-hidden="true">›</span>`;
     card.setAttribute("aria-label",`${l.name}: ${todo} da comprare`);
     card.addEventListener("click",()=>openListDetail(l.id));
     card.addEventListener("keydown",e=>{ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); openListDetail(l.id); } });
@@ -2510,12 +2513,12 @@ function openListDetail(listId){
       wrap.className="list-swipe-wrap";
       const fav=isFavorite(it.text);
       if(it.id===lastAddedId){ wrap.classList.add("ls-new"); lastAddedId=null; }
-      wrap.innerHTML=`<span class="list-actions" aria-hidden="true"><button type="button" class="list-act-fav${fav?" on":""}" tabindex="-1" aria-label="${fav?"Togli dai preferiti":"Aggiungi ai preferiti"}"><span class="la-ico">${fav?"★":"☆"}</span><small>${fav?"Togli":"Preferito"}</small></button><button type="button" class="list-act-del" tabindex="-1" aria-label="Elimina"><span class="la-ico">🗑️</span><small>Elimina</small></button></span>`;
+      wrap.innerHTML=`<span class="list-actions" aria-hidden="true"><button type="button" class="list-act-edit" tabindex="-1" aria-label="Modifica"><span class="la-ico">✎</span><small>Modifica</small></button><button type="button" class="list-act-fav${fav?" on":""}" tabindex="-1" aria-label="${fav?"Togli dai preferiti":"Aggiungi ai preferiti"}"><span class="la-ico">${fav?"★":"☆"}</span><small>${fav?"Togli":"Preferito"}</small></button><button type="button" class="list-act-del" tabindex="-1" aria-label="Elimina"><span class="la-ico">🗑️</span><small>Elimina</small></button></span>`;
       const row=document.createElement("div");
       wrap.appendChild(row);
       row.className="list-item"+(it.done?" done":"");
       row.setAttribute("role","button"); row.tabIndex=0;
-      const pic=photoSrc(it.photo)||it.image;
+      const pic=photoSrc(it.photo)||it.image||(Array.isArray(it.links)?it.links.find(k=>k.image)?.image:"")||"";
       const who=(it.forWhom==="a"||it.forWhom==="b"?`<small class="list-for" style="color:${safeColor(personColor(it.forWhom))}">solo ${escapeHtml(personName(it.forWhom))}</small>`:"")
         +(it.addedBy&&it.addedBy!==myPerson()?`<small class="list-by" style="color:${safeColor(personColor(it.addedBy))}">da ${escapeHtml(personName(it.addedBy))}</small>`:it.via?`<small class="list-by">da ${escapeHtml(it.via)}</small>`:"");
       row.innerHTML=`<span class="list-swipe-bg" aria-hidden="true"><span>${it.done?"↩︎ Da comprare":"✓ Acquistato"}</span><span></span></span>
@@ -2527,15 +2530,15 @@ function openListDetail(listId){
       row.querySelector("img")?.addEventListener("error",e=>{ e.target.remove(); });
       row.setAttribute("aria-pressed",String(it.done));
       const toggle=()=>{ it.done=!it.done; if(it.done) markBought(list(),it); else unmarkBought(list(),it); save(); };
-      // v1.9.0 — Gesti: scorri a destra = carrello; scorri a sinistra = compaiono ★ Preferito e Elimina
-      // (uno swipe lungo elimina subito); tieni premuto = dettagli.
-      const OPEN=-136;
+      // v1.24.0 — Gesti: scorri a destra = carrello; scorri a sinistra = ✎ Modifica, ★ Preferito, Elimina
+      // (uno swipe lungo elimina subito); tieni premuto = scheda del prodotto.
+      const OPEN=-200;
       const setOpen=on=>{ wrap.classList.toggle("open",on); if(!on) wrap.classList.remove("swipe-left","swipe-far"); wrap.style.setProperty("--dx",on?`${OPEN}px`:"0px"); if(on){ if(openSwipeRow&&openSwipeRow!==wrap) openSwipeRow._close(); openSwipeRow=wrap; } else if(openSwipeRow===wrap) openSwipeRow=null; };
       wrap._close=()=>setOpen(false);
       let sx=0,sy=0,dx=0,base=0,moved=false,swiping=false,suppress=false,pressTimer=null;
       row.addEventListener("touchstart",e=>{ e.stopPropagation(); if(openSwipeRow&&openSwipeRow!==wrap) openSwipeRow._close();
         const t=e.touches[0]; sx=t.clientX; sy=t.clientY; dx=0; moved=false; swiping=false; base=wrap.classList.contains("open")?OPEN:0;
-        pressTimer=setTimeout(()=>{ if(!moved&&!base){ suppress=true; if(navigator.vibrate) navigator.vibrate(15); openListItem(listId,it.id); } },550); },{passive:true});
+        pressTimer=setTimeout(()=>{ if(!moved&&!base){ suppress=true; if(navigator.vibrate) navigator.vibrate(15); openItemSummary(listId,it.id); } },550); },{passive:true});
       row.addEventListener("touchmove",e=>{ const t=e.touches[0]; dx=t.clientX-sx; if(swiping||Math.abs(dx)>14) e.stopPropagation(); const dy=t.clientY-sy;
         if(Math.abs(dx)>8||Math.abs(dy)>8){ moved=true; clearTimeout(pressTimer); }
         if(!swiping && Math.abs(dx)>14 && Math.abs(dx)>Math.abs(dy)*1.3) swiping=true;
@@ -2554,7 +2557,8 @@ function openListDetail(listId){
       row.addEventListener("touchcancel",()=>{ clearTimeout(pressTimer); row.classList.remove("swiping"); setOpen(wrap.classList.contains("open")); });
       row.addEventListener("click",e=>{ if(suppress||e.target.closest(".list-del")) return; if(wrap.classList.contains("open")){ setOpen(false); return; } toggle(); });
       activateRowFromKeyboard(row,toggle);
-      row.querySelector(".list-del").addEventListener("click",e=>{ e.stopPropagation(); openListItem(listId,it.id); });
+      row.querySelector(".list-del").addEventListener("click",e=>{ e.stopPropagation(); openItemSummary(listId,it.id); });
+      wrap.querySelector(".list-act-edit").addEventListener("click",e=>{ e.stopPropagation(); setOpen(false); openListItem(listId,it.id); });
       wrap.querySelector(".list-act-fav").addEventListener("click",e=>{ e.stopPropagation(); const on=!isFavorite(it.text); setFavorite(it.text,on,it.aisle||""); setOpen(false); save(); showToast(on?`★ “${it.text}” nei preferiti`:`“${it.text}” tolto dai preferiti`); });
       wrap.querySelector(".list-act-del").addEventListener("click",e=>{ e.stopPropagation(); setOpen(false); removeItem(it,{purchased:it.done}); });
       return wrap;
@@ -2692,7 +2696,7 @@ function openListDetail(listId){
     function paintDrawer(){
       drawer.querySelectorAll("[data-dr-tab]").forEach(b=>{ const on=b.dataset.drTab===drTab; b.classList.toggle("on",on); b.setAttribute("aria-selected",String(on)); });
       const items=drawerItems(), box=drawer.querySelector(".ls-dr-list"), foot=drawer.querySelector(".ls-dr-foot");
-      box.innerHTML=items.length?items.map((x,i)=>x.head?`<p class="ls-day">${escapeHtml(x.head)}</p>`:`<div class="ls-card${x.due?" due":""}${x.inList?" in":""}" data-i="${i}" role="button" tabindex="0" aria-label="${x.inList?"Già in lista":"Aggiungi"} ${escapeHtml(x.text)}"><span class="ls-em" aria-hidden="true">${escapeHtml(aisleInfo(x.aisle).emoji)}</span><span class="ls-tx"><b>${escapeHtml(x.label||x.text)}</b><small>${escapeHtml(x.meta)}</small></span><span class="ls-add" aria-hidden="true">${x.inList?"✓":"＋"}</span></div>`).join("")
+      box.innerHTML=items.length?items.map((x,i)=>x.head?`<p class="ls-day">${escapeHtml(x.head)}</p>`:`<div class="ls-card${x.due?" due":""}${x.inList?" in":""}" data-i="${i}" role="button" tabindex="0" aria-label="${x.inList?"Già in lista":"Aggiungi"} ${escapeHtml(x.text)}"><span class="ls-em" aria-hidden="true">${emojiIconHtml(aisleInfo(x.aisle).emoji)}</span><span class="ls-tx"><b>${escapeHtml(x.label||x.text)}</b><small>${escapeHtml(x.meta)}</small></span><span class="ls-add" aria-hidden="true">${x.inList?"✓":"＋"}</span></div>`).join("")
         :`<p class="ls-empty">${drTab==="fav"?"Nessun preferito. Scorri su un prodotto della lista e tocca ☆, oppure aggiungili da “Gestisci preferiti”.":"Ancora nessun acquisto. Tocca un prodotto della lista quando lo prendete: finisce in “Acquistato” e qui, con data e ora."}</p>`;
       const due=items.filter(x=>!x.head&&x.due&&!x.inList);
       foot.innerHTML=drTab==="fav"?`<button type="button" class="ls-foot-btn" data-manage>★ Gestisci preferiti</button>`:due.length>1?`<button type="button" class="ls-foot-btn primary" data-add-due>＋ Aggiungi i ${due.length} da ricomprare</button>`:"";
@@ -2847,10 +2851,12 @@ async function enrichListItem(listId,itemId,url){
     if(p.image && !it.photo) it.image=p.image;
     if(p.price && !it.price) it.price=p.price;
     it.url=p.url||url;
+    { const ls=itemLinks(it); if(!ls.some(k=>k.url===it.url)) ls.push({id:uid(),url:it.url,title:p.title||"",price:p.price||null,publisher:p.publisher||siteOf(it.url),image:p.image||"",at:new Date().toISOString()}); }
     showToast(p.price?"Dati del prodotto presi dal sito, prezzo compreso":"Dati del prodotto presi dal sito");
   } else {
     if(it.text.startsWith("Carico")) it.text=(()=>{ try{ return new URL(url).hostname.replace(/^www\./,""); }catch(e){ return "Prodotto dal link"; } })();
     it.url=url;
+    { const ls=itemLinks(it); if(!ls.some(k=>k.url===url)) ls.push({id:uid(),url,title:"",price:null,publisher:siteOf(url),image:"",at:new Date().toISOString()}); }
     showToast("Non riesco a leggere il sito: ho salvato il link, scrivi tu il nome");
   }
   persist(); renderCoupleLists(); if(listDetailRefresh) listDetailRefresh();
@@ -3197,7 +3203,7 @@ function openListTrash(listId,onChange){
       let last="", html="";
       all.forEach(({e,l},i)=>{
         const h=dayHeading(e.deletedAt); if(h!==last){ html+=`<p class="lt-day">${escapeHtml(h)}</p>`; last=h; }
-        html+=`<div class="lt-row"><span class="lt-em" aria-hidden="true">${escapeHtml(aisleInfo(e.aisle||guessAisle(e.text)).emoji)}</span><span class="lt-tx"><b>${e.qty>1?e.qty+"× ":""}${escapeHtml(e.text)}</b><small>🗑 ${escapeHtml(whenLabel(e.deletedAt))}${listId?"":` · ${escapeHtml(l.emoji+" "+l.name)}`}${e.by?` · ${escapeHtml(personName(e.by))}`:""}</small></span><button type="button" class="lt-restore" data-i="${i}" aria-label="Rimetti ${escapeHtml(e.text)} nella lista">↩︎</button></div>`;
+        html+=`<div class="lt-row"><span class="lt-em" aria-hidden="true">${emojiIconHtml(aisleInfo(e.aisle||guessAisle(e.text)).emoji)}</span><span class="lt-tx"><b>${e.qty>1?e.qty+"× ":""}${escapeHtml(e.text)}</b><small>🗑 ${escapeHtml(whenLabel(e.deletedAt))}${listId?"":` · ${escapeHtml(l.emoji+" "+l.name)}`}${e.by?` · ${escapeHtml(personName(e.by))}`:""}</small></span><button type="button" class="lt-restore" data-i="${i}" aria-label="Rimetti ${escapeHtml(e.text)} nella lista">↩︎</button></div>`;
       });
       box.innerHTML=html;
       box.querySelectorAll("[data-i]").forEach(b=>b.addEventListener("click",()=>{ const {e,l}=all[Number(b.dataset.i)]; restoreTrashEntry(l,e.id); persist(); renderAll(); paint(); onChange&&onChange(); showToast(`↩︎ “${e.text}” di nuovo in ${l.name}`); }));
@@ -3410,6 +3416,77 @@ function openProductScan(onAdd){
     }
   });
 }
+/* ===================== v1.24.0 — Registro dei link di un prodotto =====================
+   Ogni articolo può avere più link. Di ognuno restano negozio, nome del prodotto sul
+   sito e prezzo, così li si confronta senza riaprirli. Il primo link che porta
+   un'immagine la dà alla scheda; il nome dell'articolo non viene mai cambiato. */
+function siteOf(url){
+  try{ return new URL(url).hostname.replace(/^www\./,""); }catch(e){ return ""; }
+}
+/* Legge i link di un articolo e, la prima volta, recupera quello singolo salvato prima. */
+function itemLinks(it){
+  if(!Array.isArray(it.links)){
+    it.links = it.url ? [{id:uid(),url:it.url,title:"",price:it.price||null,publisher:siteOf(it.url),image:it.image||"",at:new Date().toISOString()}] : [];
+  }
+  return it.links;
+}
+function linkRegistryHtml(links,{editable=true}={}){
+  if(!links.length) return `<p class="link-empty">Nessun link salvato.</p>`;
+  return links.map((k,i)=>`<div class="link-row" data-i="${i}">
+      <span class="link-thumb">${k.image?`<img src="${escapeHtml(k.image)}" alt="" loading="lazy" referrerpolicy="no-referrer">`:"🔗"}</span>
+      <span class="link-info">
+        <b>${escapeHtml(k.publisher||siteOf(k.url)||"Link")}</b>
+        <small>${escapeHtml(k.title||"Nome non letto dal sito")}</small>
+      </span>
+      <span class="link-price">${k.price?escapeHtml(fmt(k.price)):"—"}</span>
+      <a class="link-open" href="${escapeHtml(k.url)}" target="_blank" rel="noopener noreferrer" aria-label="Apri su ${escapeHtml(k.publisher||"il sito")}">↗</a>
+      ${editable?`<button type="button" class="link-del" data-del="${i}" aria-label="Togli questo link">✕</button>`:""}
+    </div>`).join("");
+}
+/* Aggiunge un link all'articolo: legge i dati dal sito, non tocca il nome dell'articolo
+   e usa l'immagine solo se la scheda non ne ha ancora una. */
+async function addLinkToItem(it,rawUrl,{onImage=null}={}){
+  const url=extractUrl(rawUrl);
+  if(!url) return {ok:false,msg:"Incolla un link che inizi con https://"};
+  const links=itemLinks(it);
+  if(links.some(k=>k.url===url)) return {ok:false,msg:"Questo link c'è già."};
+  const p=await fetchLinkPreview(url);
+  const entry={id:uid(),url:(p&&p.url)||url,title:(p&&p.title)||"",price:(p&&p.price)||null,
+    publisher:(p&&p.publisher)||siteOf(url),image:(p&&p.image)||"",at:new Date().toISOString()};
+  links.push(entry);
+  if(entry.image && onImage) onImage(entry.image);
+  return {ok:true,entry,read:!!p,
+    msg:p?`Salvato da ${entry.publisher||"sito"}${entry.price?` · ${fmt(entry.price)}`:" (prezzo non indicato)"}`
+         :"Non riesco a leggere questo sito: il link resta salvato."};
+}
+/* Riepilogo dell'articolo: si apre tenendo premuto sulla riga. Solo lettura. */
+function openItemSummary(listId,itemId){
+  const l=state.lists.find(x=>x.id===listId), it=l?.items.find(x=>x.id===itemId);
+  if(!it) return;
+  openSheet("tpl-item-summary",(node,close)=>{
+    const a=aisleInfo(it.aisle||guessAisle(it.text));
+    node.querySelector("#isumTitle").textContent=it.text;
+    const pic=photoSrc(it.photo)||it.image||itemLinks(it).find(k=>k.image)?.image||"";
+    const box=node.querySelector("#isumPhoto");
+    box.innerHTML=pic?`<img src="${escapeHtml(pic)}" alt="" referrerpolicy="no-referrer">`:"";
+    box.hidden=!pic;
+    box.querySelector("img")?.addEventListener("error",()=>{ box.hidden=true; });
+    const who=it.forWhom==="a"||it.forWhom==="b"?`Solo ${personName(it.forWhom)}`:"Tutti e due";
+    const rows=[
+      ["Reparto",`${a.emoji} ${a.name}`],
+      ["Quantità",String(it.qty||1)],
+      ["Prezzo", it.price?`${fmt(it.price)}${(it.qty||1)>1?` · ${fmt(it.price*(it.qty||1))} in tutto`:""}`:"non indicato"],
+      ["Per chi",who],
+      ["Preferito", isFavorite(it.text)?"★ sì":"no"],
+      ["Stato", it.done?`✓ acquistato${it.boughtAt?` · ${whenLabel(it.boughtAt)}`:""}`:"da comprare"],
+      ["Aggiunto da", it.addedBy?personName(it.addedBy):(it.via||"—")],
+      ["Codice a barre", it.code||"—"],
+    ];
+    node.querySelector("#isumRows").innerHTML=rows.map(([k,v])=>`<div class="isum-row"><dt>${escapeHtml(k)}</dt><dd>${escapeHtml(v)}</dd></div>`).join("");
+    node.querySelector("#isumLinks").innerHTML=linkRegistryHtml(itemLinks(it),{editable:false});
+    node.querySelector("#isumEditBtn").addEventListener("click",()=>{ close(); openListItem(listId,itemId); });
+  });
+}
 function openListItem(listId,itemId){
   const l=state.lists.find(x=>x.id===listId), it=l?.items.find(x=>x.id===itemId);
   if(!it) return;
@@ -3434,25 +3511,39 @@ function openListItem(listId,itemId){
     const paintFav=()=>{ favSw.classList.toggle("on",draft.fav); favSw.setAttribute("aria-pressed",String(draft.fav)); };
     favSw.addEventListener("click",()=>{ draft.fav=!draft.fav; paintFav(); });
     paintFav();
+    /* v1.24.0 — Registro dei link: se ne salvano quanti si vuole, il nome non cambia mai. */
     const urlInput=node.querySelector("#itemUrlInput"), urlHint=node.querySelector("#itemUrlHint");
-    urlInput.value=it.url||"";
-    async function fetchFromUrl(){
-      const url=extractUrl(urlInput.value);
-      if(!url){ urlHint.textContent="Incolla un link che inizi con https://"; return; }
-      urlHint.textContent="Leggo il sito…";
-      const p=await fetchLinkPreview(url);
+    const linkList=node.querySelector("#itemLinkList");
+    draft.links=itemLinks(it).map(k=>({...k}));
+    const paintLinks=()=>{
+      linkList.innerHTML=linkRegistryHtml(draft.links,{editable:true});
+      linkList.querySelectorAll("[data-del]").forEach(b=>b.addEventListener("click",e=>{
+        e.preventDefault(); e.stopPropagation();
+        draft.links.splice(Number(b.dataset.del),1);
+        draft.url=draft.links[0]?.url||"";
+        paintLinks(); paint();
+      }));
+    };
+    let adding=false;
+    async function addFromUrl(){
+      if(adding) return;
+      const raw=urlInput.value;
+      if(!extractUrl(raw)){ urlHint.textContent="Incolla un link che inizi con https://"; return; }
+      adding=true; urlHint.textContent="Leggo il sito…";
+      const shadow={links:draft.links};
+      const res=await addLinkToItem(shadow,raw,{onImage:img=>{ if(!draft.photo && !draft.image) draft.image=img; }});
+      adding=false;
       if(!node.isConnected) return;
-      if(!p){ draft.url=url; urlHint.textContent="Non riesco a leggere questo sito: il link resta salvato, scrivi tu il nome."; paint(); return; }
-      if(p.title) nameInput.value=p.title;
-      if(p.image) draft.image=p.image;
-      if(p.price && !parseAmount(priceInput.value)) priceInput.value=String(p.price).replace(".",",");
-      draft.url=p.url||url;
-      urlHint.textContent=`Dati presi da ${p.publisher||"sito"}${p.price?"":" (prezzo non indicato dal sito)"}.`;
-      paint();
+      urlHint.textContent=res.msg;
+      if(!res.ok) return;
+      if(res.entry.price && !parseAmount(priceInput.value)) priceInput.value=String(res.entry.price).replace(".",",");
+      draft.url=draft.links[0]?.url||res.entry.url;
+      urlInput.value="";
+      paintLinks(); paint();
     }
-    node.querySelector("#itemUrlFetchBtn").addEventListener("click",fetchFromUrl);
-    urlInput.addEventListener("paste",()=>setTimeout(fetchFromUrl,50));
-    urlInput.addEventListener("change",()=>{ draft.url=extractUrl(urlInput.value)||""; paint(); });
+    node.querySelector("#itemUrlFetchBtn").addEventListener("click",addFromUrl);
+    urlInput.addEventListener("paste",()=>setTimeout(addFromUrl,60));
+    paintLinks();
     const photoBox=node.querySelector("#itemPhoto"), links=node.querySelector("#itemLinks"), removeBtn=node.querySelector("#itemPhotoRemove");
     function paint(){
       const pic=photoSrc(draft.photo)||draft.image;
@@ -3460,7 +3551,7 @@ function openListItem(listId,itemId){
       photoBox.hidden=!pic;
       photoBox.querySelector("img")?.addEventListener("error",()=>{ photoBox.hidden=true; });
       removeBtn.hidden=!draft.photo;
-      links.innerHTML=productLinksHtml({name:nameInput.value,code:codeInput.value,url:draft.url});
+      links.innerHTML=productLinksHtml({name:nameInput.value,code:codeInput.value,url:draft.links[0]?.url||draft.url});
     }
     nameInput.addEventListener("input",paint); codeInput.addEventListener("input",()=>{ draft.url=""; paint(); });
     node.querySelector("#itemLookupBtn").addEventListener("click",async()=>{
@@ -3495,7 +3586,7 @@ function openListItem(listId,itemId){
       const text=nameInput.value.trim();
       if(!text){ showToast("Scrivi il nome"); nameInput.focus(); return; }
       const price=parseAmount(priceInput.value);
-      Object.assign(it,{text:text.slice(0,120),price:price>0?Math.round(price*100)/100:null,code:cleanCode(codeInput.value),photo:draft.photo,image:draft.image,url:draft.url,qty:draft.qty,aisle:draft.aisle,forWhom:draft.forWhom});
+      Object.assign(it,{text:text.slice(0,120),price:price>0?Math.round(price*100)/100:null,code:cleanCode(codeInput.value),photo:draft.photo,image:draft.image,links:draft.links,url:draft.links[0]?.url||draft.url||"",qty:draft.qty,aisle:draft.aisle,forWhom:draft.forWhom});
       if(draft.fav!==isFavorite(it.text)) setFavorite(it.text,draft.fav,draft.aisle);
       if(!persist()){ showToast("Spazio pieno: togli qualche foto dalle liste"); return; }
       renderCoupleLists(); if(listDetailRefresh) listDetailRefresh(); close();
@@ -3720,6 +3811,8 @@ document.getElementById("fabAdd").addEventListener("click", e=>{
   openAddChoice();
 });
 document.getElementById("toggleHomeBalance").addEventListener("click",toggleBalances);
+/* v1.24.0 — Un solo occhio, fermo in alto a destra in tutte le schede. */
+document.getElementById("toggleBalanceFixed")?.addEventListener("click",toggleBalances);
 
 function openTrash(){
   openSheet("tpl-trash", (node)=>{

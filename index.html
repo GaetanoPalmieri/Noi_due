@@ -4,11 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
 <title>Noi Due — Spese di coppia</title>
-<meta name="app-version" content="1.23.1">
+<meta name="app-version" content="1.24.0">
 <meta name="description" content="Spese di coppia: chi ha pagato, chi deve a chi, budget e statistiche.">
 
 <!-- PWA / iOS home screen -->
-<link rel="manifest" href="manifest.json?v=1.23.1">
+<link rel="manifest" href="manifest.json?v=1.24.0">
 <meta name="theme-color" content="#12181F">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -16,12 +16,12 @@
 <!-- iPhone: icona nella cartella principale, senza ?v=, con la dimensione dichiarata (la legge anche Safari più vecchio). -->
 <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
 <link rel="apple-touch-icon-precomposed" sizes="180x180" href="apple-touch-icon-precomposed.png">
-<link rel="icon" href="icons/icon-192.png?v=1.23.1">
+<link rel="icon" href="icons/icon-192.png?v=1.24.0">
 
-<link rel="stylesheet" href="style.css?v=1.23.1">
+<link rel="stylesheet" href="style.css?v=1.24.0">
 <!-- Token grafici condivisi dalle 4 app: va caricato per ultimo. -->
-<link rel="stylesheet" href="suite-ui.css?v=1.23.1">
-<link rel="stylesheet" href="suite-tokens.css?v=1.23.1">
+<link rel="stylesheet" href="suite-ui.css?v=1.24.0">
+<link rel="stylesheet" href="suite-tokens.css?v=1.24.0">
 </head>
 <body>
 
@@ -46,6 +46,9 @@
           <div id="dateField" hidden><label for="periodDate">Giorno da visualizzare</label><input type="date" id="periodDate" class="text-input"></div>
         </div>
   </div>
+
+  <!-- Occhio "nascondi importi": uno solo, fisso in alto a destra, uguale in ogni scheda -->
+  <button class="balance-hide eye-fixed" id="toggleBalanceFixed" type="button" aria-label="Nascondi importi"></button>
 
   <main id="views">
 
@@ -438,7 +441,7 @@
     <div class="sheet-head">
       <h3 id="listDetailTitle">Lista</h3><button type="button" class="pill-btn mini-btn" id="listEditBtn">Modifica</button>
     </div>
-    <!-- Noi Due 1.23.1 — Pannello "Aggiungi un prodotto" rifatto: nome (o link) in evidenza, poi
+    <!-- Noi Due 1.24.0 — Pannello "Aggiungi un prodotto" rifatto: nome (o link) in evidenza, poi
          quantità, prezzo, reparto riconosciuto da solo e per chi. I dettagli compaiono mentre scrivi. -->
     <section class="lc" id="listComposer" aria-label="Aggiungi un prodotto">
       <div class="lc-main">
@@ -468,7 +471,7 @@
     </div>
     <div class="list-suggest" id="listSuggest" hidden></div>
     <div id="listTodo" class="list-items"></div>
-    <p class="field-hint list-gesture-hint" id="listGestureHint">Tocca: acquistato · scorri a sinistra: ☆ preferito o 🗑 elimina · tieni premuto: dettagli</p>
+    <p class="field-hint list-gesture-hint" id="listGestureHint">Tocca: acquistato · scorri a sinistra: ✎ modifica, ☆ preferito, 🗑 elimina · tieni premuto: scheda del prodotto</p>
     <p class="empty-hint" id="listEmpty" hidden>La lista è vuota. Scrivi qui sopra cosa comprare.</p>
     <div id="listDoneWrap" hidden>
       <div class="list-done-head"><h4 class="gd-sub" id="listDoneTitle">✓ Acquistato</h4><button type="button" class="pill-btn mini-btn" id="listClearDone">Togli</button></div>
@@ -524,9 +527,10 @@
     <button type="button" class="shared-switch item-fav-switch" id="itemFavSwitch" aria-pressed="false"><span class="shared-knob" aria-hidden="true"></span><span class="shared-switch-text"><strong>★ Nei preferiti</strong><small>Lo ritrovi in “★ Preferiti” per rimetterlo in lista con un tocco</small></span></button>
     <div class="field-row"><label>Per chi</label><div class="chip-row" id="itemForChips"></div></div>
     <div class="field-row"><label>Reparto</label><div class="chip-row" id="itemAisleChips"></div></div>
-    <div class="field-row"><label>Link del prodotto (facoltativo)</label>
-      <div class="scan-code-row"><input type="url" id="itemUrlInput" class="text-input" inputmode="url" placeholder="Incolla il link dal sito del negozio" autocomplete="off"><button type="button" class="list-add-btn" id="itemUrlFetchBtn" aria-label="Prendi i dati dal sito">⬇︎</button></div>
-      <small class="field-hint" id="itemUrlHint"></small>
+    <div class="field-row"><label>Link del prodotto</label>
+      <div class="scan-code-row"><input type="url" id="itemUrlInput" class="text-input" inputmode="url" placeholder="Incolla un link e tocca +" autocomplete="off"><button type="button" class="list-add-btn" id="itemUrlFetchBtn" aria-label="Aggiungi questo link">＋</button></div>
+      <small class="field-hint" id="itemUrlHint">Puoi salvarne quanti vuoi: per ognuno restano negozio, nome e prezzo. Il nome dell'articolo non cambia.</small>
+      <div class="link-registry" id="itemLinkList"></div>
     </div>
     <div class="field-row" hidden><label>Codice a barre (facoltativo)</label>
       <div class="scan-code-row"><input type="text" id="itemCodeInput" class="text-input" inputmode="numeric" autocomplete="off"><button type="button" class="list-add-btn" id="itemLookupBtn" aria-label="Cerca il prodotto online">🔎</button></div>
@@ -540,6 +544,17 @@
     <input type="file" accept="image/*" capture="environment" id="itemPhotoInput" hidden>
     <input type="file" accept="image/*" id="itemGalleryInput" hidden>
     <button class="text-danger-btn" id="deleteItemBtn">Elimina articolo</button>
+  </div>
+</template>
+
+<template id="tpl-item-summary">
+  <div class="sheet" id="sheetItemSummary">
+    <div class="sheet-handle"></div>
+    <div class="sheet-head"><h3 id="isumTitle">Articolo</h3><button class="primary-btn" id="isumEditBtn">✎ Modifica</button></div>
+    <div class="item-photo" id="isumPhoto"></div>
+    <dl class="isum-rows" id="isumRows"></dl>
+    <p class="isum-label">Link salvati</p>
+    <div class="link-registry" id="isumLinks"></div>
   </div>
 </template>
 
@@ -888,7 +903,7 @@
   </div>
 </template>
 
-<script src="suite.js?v=1.23.1"></script>
-<script src="app.js?v=1.23.1"></script>
+<script src="suite.js?v=1.24.0"></script>
+<script src="app.js?v=1.24.0"></script>
 </body>
 </html>

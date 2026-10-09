@@ -172,7 +172,7 @@ button:active {
 /* ---------- Titolo di sezione (nome della vista, es. Home, Ricorrenti) ---------- */
 .view-title {
   font-family: var(--font-display);
-  font-size: 34px;
+  font-size: 22px;
   font-weight: 800;
   text-align: center;
   color: var(--ink);
@@ -191,17 +191,17 @@ button:active {
 }
 .hero-label {
   margin: 0 0 4px;
-  font-size: 13px;
+  font-size: 11px;
   color: rgba(255, 255, 255, 0.65);
 }
 .hero-amount {
   font-family: var(--font-display);
   font-weight: 700;
-  font-size: 46px;
+  font-size: 33px;
   letter-spacing: -0.5px;
   margin: 0 0 16px;
   font-variant-numeric: tabular-nums;
-  color: #fff;
+  color: var(--num-plain);
 }
 .hero-split {
   display: flex;
@@ -210,7 +210,7 @@ button:active {
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 15px;
+  font-size: 13px;
 }
 .hero-split-item .dot {
   width: 8px;
@@ -226,7 +226,7 @@ button:active {
 .hero-split-value {
   font-weight: 700;
   font-variant-numeric: tabular-nums;
-  color: #fff;
+  color: var(--num-plain);
 }
 /* ---------- Section blocks ---------- */
 .section-block {
@@ -239,7 +239,7 @@ button:active {
   margin-bottom: 10px;
 }
 .section-head h2 {
-  font-size: 17px;
+  font-size: 15px;
   font-weight: 600;
   margin: 0;
   color: var(--ink);
@@ -261,11 +261,11 @@ button:active {
   padding: 6px 12px;
   border-radius: 20px;
   border: 1px solid var(--line);
-  font-size: 15px;
+  font-size: 13px;
   font-weight: 600;
 }
 .pill-btn .chev {
-  font-size: 13px;
+  font-size: 11px;
 }
 .pill-btn:active {
   background: var(--paper);
@@ -321,7 +321,7 @@ button:active {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 13px;
+  font-size: 11px;
 }
 .pie-legend-item .sw {
   width: 10px;
@@ -356,7 +356,7 @@ button:active {
   display: flex;
   align-items: center;
   gap: 7px;
-  font-size: 15px;
+  font-size: 13px;
   font-weight: 600;
   color: var(--ink-soft);
   margin: 0 0 2px 2px;
@@ -386,11 +386,11 @@ button:active {
   border: 1.5px solid var(--line);
   border-radius: 10px;
   padding: 8px 13px;
-  font-size: 15px;
+  font-size: 13px;
   font-weight: 600;
 }
 .graph-macro-node .em {
-  font-size: 15px;
+  font-size: 13px;
 }
 .graph-branch {
   margin-left: 17px;
@@ -406,7 +406,7 @@ button:active {
   display: flex;
   align-items: center;
   gap: 7px;
-  font-size: 13px;
+  font-size: 11px;
   color: var(--ink-soft);
   padding: 5px 0;
 }
@@ -420,7 +420,7 @@ button:active {
   background: var(--line);
 }
 .graph-cat-node .em {
-  font-size: 15px;
+  font-size: 13px;
 }
 /* ---------- Accounts ---------- */
 /* ---------- Categories/templates manage ---------- */
@@ -466,7 +466,7 @@ button:active {
   justify-content: center;
   gap: 1px;
   overflow: visible;
-  font-size: 17px;
+  font-size: 15px;
   flex-shrink: 0;
 }
 .template-manage-row .ic {
@@ -489,7 +489,7 @@ button:active {
 }
 .category-row .nm {
   font-weight: 600;
-  font-size: 17px;
+  font-size: 15px;
   margin: 0;
 }
 .template-manage-row .nm {
@@ -497,7 +497,7 @@ button:active {
   margin: 0;
 }
 .category-row .sub {
-  font-size: 13px;
+  font-size: 11px;
   color: var(--ink-soft);
   margin: 1px 0 0;
 }
@@ -508,7 +508,7 @@ button:active {
 /* Ricorrenti/Pianificate: righe con testo più grande e più leggibile */
 .chev {
   color: var(--ink-soft);
-  font-size: 17px;
+  font-size: 15px;
 }
 .amt {
   font-weight: 700;
@@ -546,7 +546,7 @@ button:active {
 .stat-card-value {
   font-family: var(--font-display);
   font-weight: 700;
-  font-size: 22px;
+  font-size: 17px;
   margin: 0;
   font-variant-numeric: tabular-nums;
 }
@@ -565,7 +565,7 @@ button:active {
   justify-content: flex-start;
 }
 .stat-card-grid .stat-card-value {
-  font-size: 17px;
+  font-size: 15px;
 }
 /* alias retro-compatibile */
 /* ---------- Calendario spese ---------- */
@@ -591,7 +591,7 @@ button:active {
 .calendar-month-label {
   font-family: var(--font-display);
   font-weight: 600;
-  font-size: 17px;
+  font-size: 15px;
   min-width: 150px;
   text-align: center;
   text-transform: capitalize;
@@ -600,7 +600,7 @@ button:active {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
   text-align: center;
-  font-size: 13px;
+  font-size: 11px;
   color: var(--ink-soft);
   margin-bottom: 6px;
   font-weight: 600;
@@ -622,7 +622,7 @@ button:active {
   align-items: center;
   justify-content: center;
   gap: 3px;
-  font-size: 13px;
+  font-size: 11px;
   color: var(--ink);
   padding: 2px;
 }
@@ -669,7 +669,7 @@ button:active {
   gap: 16px;
   justify-content: center;
   margin-top: 16px;
-  font-size: 13px;
+  font-size: 11px;
   color: var(--ink-soft);
   flex-wrap: wrap;
 }
@@ -712,7 +712,7 @@ button:active {
   padding: 13px 14px;
   background: none;
   border: none;
-  font-size: 15px;
+  font-size: 13px;
   color: var(--ink);
   border-bottom: 1px solid var(--line);
 }
@@ -820,13 +820,13 @@ button:active {
 }
 .sheet-head h3 {
   font-family: var(--font-display);
-  font-size: 22px;
+  font-size: 17px;
   margin: 0;
 }
 .sheet-close {
   background: none;
   border: none;
-  font-size: 17px;
+  font-size: 15px;
   color: var(--ink-soft);
   padding: 6px;
 }
@@ -841,7 +841,7 @@ button:active {
 }
 .field-row label {
   display: block;
-  font-size: 15px;
+  font-size: 13px;
   color: var(--ink-soft);
   margin-bottom: 7px;
   font-weight: 600;
@@ -872,7 +872,7 @@ button:active {
   border: none;
   background: none;
   border-radius: 10px;
-  font-size: 17px;
+  font-size: 15px;
   font-weight: 700;
   color: var(--ink-soft);
   display: flex;
@@ -885,7 +885,7 @@ button:active {
   box-shadow: 0 2px 7px rgba(0, 0, 0, 0.16);
 }
 .type-toggle.three .type-opt {
-  font-size: 15px;
+  font-size: 13px;
   padding: 12px 4px;
 }
 .amount-field {
@@ -898,13 +898,13 @@ button:active {
 }
 .currency-sign {
   font-family: var(--font-display);
-  font-size: 32px;
+  font-size: 26px;
   font-weight: 600;
   color: var(--ink-soft);
 }
 .amount-field input {
   font-family: var(--font-display);
-  font-size: 44px;
+  font-size: 32px;
   font-weight: 700;
   border: none;
   background: none;
@@ -928,7 +928,7 @@ button:active {
   border-radius: 13px;
   border: 1.5px solid var(--line);
   background: var(--card);
-  font-size: 17px;
+  font-size: 15px;
   font-weight: 700;
   color: var(--ink);
   display: flex;
@@ -936,7 +936,7 @@ button:active {
   gap: 6px;
 }
 .chip .em {
-  font-size: 15px;
+  font-size: 13px;
 }
 /* Selettori "grandi" tipo pulsante (Statistiche, Ricorrenti, evoluzione conto) */
 .chip-groups {
@@ -974,7 +974,7 @@ button:active {
   padding: 15px;
   border-radius: 13px;
   border: none;
-  font-size: 17px;
+  font-size: 15px;
   font-weight: 600;
 }
 .primary-btn:active {
@@ -986,7 +986,7 @@ button:active {
   border: none;
   background: none;
   color: var(--rust);
-  font-size: 17px;
+  font-size: 15px;
   font-weight: 600;
   margin-top: 10px;
 }
@@ -998,7 +998,7 @@ button:active {
 .tx-detail-row {
   display: flex;
   justify-content: space-between;
-  font-size: 15px;
+  font-size: 13px;
 }
 .tx-detail-row .k {
   color: var(--ink-soft);
@@ -1023,16 +1023,16 @@ button:focus-visible, input:focus-visible {
   display: none !important;
 }
 .hero-split-value {
-  font-size: 17px;
+  font-size: 15px;
 }
 .pie-legend-item .val {
-  font-size: 15px;
+  font-size: 13px;
 }
 .amt, .tx-detail-row .v {
-  font-size: 17px;
+  font-size: 15px;
 }
 .calendar-cell.today {
-  font-size: 15px;
+  font-size: 13px;
 }
 strong, b {
   font-size: 1.12em;
@@ -1066,7 +1066,7 @@ html, body {
   max-width: 100%;
 }
 input, select, textarea, .text-input {
-  font-size: 17px;
+  font-size: 15px;
 }
 .topbar {
   gap: 6px;
@@ -1077,13 +1077,13 @@ input, select, textarea, .text-input {
   width: 48px;
   height: 48px;
   min-width: 48px;
-  font-size: 30px;
+  font-size: 24px;
 }
 .month-label {
   min-width: 0;
   width: 100%;
   min-height: 48px;
-  font-size: 17px;
+  font-size: 15px;
   padding: 6px;
 }
 .period-picker {
@@ -1114,13 +1114,13 @@ input, select, textarea, .text-input {
   border-radius: 10px;
   color: var(--ink);
   background: transparent;
-  font-size: 17px;
+  font-size: 15px;
 }
 .period-menu label {
   display: block;
   color: var(--ink-soft);
   margin: 12px 4px 6px;
-  font-size: 15px;
+  font-size: 13px;
 }
 .period-menu input {
   display: block;
@@ -1156,7 +1156,7 @@ input, select, textarea, .text-input {
   overflow-wrap: anywhere;
 }
 .budget-period-hint {
-  font-size: 13px;
+  font-size: 11px;
   color: var(--ink-soft);
   margin: 0 0 12px;
 }
@@ -1171,7 +1171,7 @@ input, select, textarea, .text-input {
   --rust: #ff8d85;
 }
 .stat-card-value.zero {
-  color: #fff;
+  color: var(--num-zero);
 }
 /* Gli importi restano puliti: nessun riquadro nero per lo zero. */
 .stat-card-value.zero {
@@ -1219,7 +1219,7 @@ input[type="date"] {
   display: block;
   margin-bottom: 8px;
   color: var(--ink-soft);
-  font-size: 15px;
+  font-size: 13px;
 }
 .period-return {
   max-width: 520px;
@@ -1256,7 +1256,7 @@ input[type="date"] {
   margin-bottom: 12px;
 }
 .sheet .type-opt {
-  font-size: 15px;
+  font-size: 13px;
   padding: 10px 7px;
 }
 .sheet .chip {
@@ -1266,7 +1266,7 @@ input[type="date"] {
   margin-bottom: 13px;
 }
 .sheet .field-row label {
-  font-size: 13px;
+  font-size: 11px;
   margin-bottom: 5px;
 }
 .sheet .text-input {
@@ -1280,7 +1280,7 @@ input[type="date"] {
 }
 .sheet .text-danger-btn {
   padding: 11px;
-  font-size: 15px;
+  font-size: 13px;
 }
 .sheet-handle, .sheet-head {
   touch-action: none;
@@ -1314,7 +1314,7 @@ input[type="date"] {
   border: 0;
   background: transparent;
   box-shadow: none;
-  font-size: 50px;
+  font-size: 36px;
 }
 .sheet .compact-amount {
   margin: 0 0 4px;
@@ -1322,10 +1322,10 @@ input[type="date"] {
   justify-content: flex-start;
 }
 .sheet .compact-amount .currency-sign {
-  font-size: 27px;
+  font-size: 22px;
 }
 .sheet .compact-amount input {
-  font-size: 38px;
+  font-size: 27px;
   text-align: left;
 }
 /* Celle data/nota: larghezze rigide per evitare sovrapposizioni in Safari iPhone. */
@@ -1345,20 +1345,20 @@ input[type="date"] {
 }
 .sheet .primary-btn::after {
   content: "✓";
-  font-size: 22px;
+  font-size: 17px;
   font-weight: 800;
 }
 /* Comandi e contorni verde-grigio chiaro. */
 .mini-btn {
   min-height: 30px !important;
   padding: 5px 8px !important;
-  font-size: 13px;
+  font-size: 11px;
 }
 .section-head-actions {
   margin-left: auto;
 }
 .chip-group-title {
-  font-size: 13px;
+  font-size: 11px;
 }
 .sheet .note-field {
   width: 100%;
@@ -1366,7 +1366,7 @@ input[type="date"] {
 .sheet .note-field .text-input {
   min-height: 36px;
   padding: 7px 9px;
-  font-size: 13px;
+  font-size: 11px;
 }
 #appToast {
   position: fixed;
@@ -1376,7 +1376,7 @@ input[type="date"] {
   opacity: 0;
   pointer-events: none;
   z-index: 200;
-  font-size: 15px;
+  font-size: 13px;
   font-weight: 700;
   transition: 0.18s;
 }
@@ -1388,7 +1388,7 @@ input[type="date"] {
 .type-toggle .type-opt {
   min-height: 31px;
   padding: 5px 8px;
-  font-size: 13px;
+  font-size: 11px;
 }
 .tx-type-toggle {
   margin: 7px 0 10px;
@@ -1501,10 +1501,10 @@ input[type="date"] {
   width: auto;
   min-width: 32px;
   height: 32px;
-  font-size: 17px;
+  font-size: 15px;
 }
 .template-manage-row .nm {
-  font-size: 15px;
+  font-size: 13px;
   line-height: 1.25;
 }
 .template-manage-row .sub {
@@ -1512,7 +1512,7 @@ input[type="date"] {
   line-height: 1.3;
 }
 .template-manage-row .amt {
-  font-size: 13px;
+  font-size: 11px;
 }
 /* Budget Home: macro compatte, categorie chiuse finché non richieste. */
 /* Ultimi ritocchi iPhone: controlli compatti e palette verde bottiglia. */
@@ -1532,7 +1532,7 @@ input[type="date"] {
   min-height: 34px !important;
   height: 34px !important;
   padding: 4px 9px !important;
-  font-size: 13px !important;
+  font-size: 11px !important;
   line-height: 1.1;
 }
 #sheetRecurringForm #recurringFreqSelect {
@@ -1570,7 +1570,7 @@ input[type="date"] {
   height: 38px;
   min-height: 38px;
   padding: 5px 4px;
-  font-size: 13px !important;
+  font-size: 11px !important;
   white-space: nowrap;
 }
 /* Splash iniziale: icona denaro e caricamento leggero. */
@@ -1591,7 +1591,7 @@ input[type="date"] {
   background: linear-gradient(145deg, #3aa684, #1f5d4c);
   border: 4px solid color-mix(in srgb, var(--line) 70%, #fff);
   font-family: var(--font-display);
-  font-size: 40px;
+  font-size: 29px;
   font-weight: 800;
   box-shadow: 0 10px 24px rgba(31, 93, 76, 0.28),
     inset 0 2px 5px #ffffff44;
@@ -1601,7 +1601,7 @@ input[type="date"] {
   margin: 0;
   color: var(--ink);
   font-family: var(--font-display);
-  font-size: 17px;
+  font-size: 15px;
   font-weight: 700;
   letter-spacing: 0.1px;
 }
@@ -1660,7 +1660,7 @@ input[type="date"] {
   border-radius: 12px;
 }
 .stats-period-filter label {
-  font-size: 13px;
+  font-size: 11px;
   font-weight: 700;
   color: var(--ink-soft);
 }
@@ -1672,7 +1672,7 @@ input[type="date"] {
   border-radius: 9px;
   background: var(--paper);
   color: var(--ink);
-  font: 700 13px var(--font-body);
+  font: 700 11px var(--font-body);
 }
 /* Coerenza completa con il font e i comandi del Bet Tracker. */
 html, body, button, input, select, textarea, .sheet, .view, .tab, .chip, .pill-btn, .primary-btn, .text-danger-btn {
@@ -1684,7 +1684,7 @@ html, body, button, input, select, textarea, .sheet, .view, .tab, .chip, .pill-b
 .fab {
   aspect-ratio: 1;
   border: 0 !important;
-  font-size: 31px !important;
+  font-size: 25px !important;
   font-weight: 700;
   line-height: 1 !important;
   display: flex !important;
@@ -1708,7 +1708,7 @@ html, body, button, input, select, textarea, .sheet, .view, .tab, .chip, .pill-b
   width: 32px !important;
   height: 32px !important;
   min-width: 32px !important;
-  font-size: 22px !important;
+  font-size: 17px !important;
   box-shadow: none !important;
 }
 .add-btn:active {
@@ -1774,7 +1774,7 @@ html, body, button, input, select, textarea, .sheet, .view, .tab, .chip, .pill-b
 #sheetAddTx .primary-btn::after, #sheetRecurringForm .primary-btn::after, #sheetCategoryForm .primary-btn::after {
   content: "✓";
   color: #241800;
-  font-size: 22px;
+  font-size: 17px;
   font-weight: 900;
 }
 #sheetAddTx .primary-btn:active, #sheetRecurringForm .primary-btn:active, #sheetCategoryForm .primary-btn:active {
@@ -1826,7 +1826,7 @@ html, body, button, input, select, textarea, .sheet, .view, .tab, .chip, .pill-b
 .forecast-card strong {
   display: block;
   margin-top: 5px;
-  font-size: 17px;
+  font-size: 15px;
   font-variant-numeric: tabular-nums;
 }
 .tx-search-filter {
@@ -1835,7 +1835,7 @@ html, body, button, input, select, textarea, .sheet, .view, .tab, .chip, .pill-b
 .tx-search-filter .text-input {
   height: 38px;
   padding: 7px 10px;
-  font-size: 13px;
+  font-size: 11px;
 }
 .tx-custom-range {
   display: grid;
@@ -1851,7 +1851,7 @@ html, body, button, input, select, textarea, .sheet, .view, .tab, .chip, .pill-b
 .tx-custom-range .text-input {
   height: 35px;
   padding: 5px;
-  font-size: 13px;
+  font-size: 11px;
 }
 .recurring-options {
   display: grid;
@@ -1860,14 +1860,14 @@ html, body, button, input, select, textarea, .sheet, .view, .tab, .chip, .pill-b
   margin: -2px 0 14px;
 }
 .recurring-options label {
-  font-size: 13px;
+  font-size: 11px;
   font-weight: 700;
 }
 .recurring-options input[type="date"] {
   margin-top: 5px;
   height: 35px;
   padding: 5px;
-  font-size: 13px;
+  font-size: 11px;
 }
 .toggle-line {
   display: flex;
@@ -1879,7 +1879,7 @@ html, body, button, input, select, textarea, .sheet, .view, .tab, .chip, .pill-b
 }
 .backup-status {
   margin: 0 0 9px;
-  font-size: 13px;
+  font-size: 11px;
 }
 #appToast {
   display: flex;
@@ -1890,7 +1890,7 @@ html, body, button, input, select, textarea, .sheet, .view, .tab, .chip, .pill-b
   border: 0;
   border-radius: 8px;
   padding: 5px 8px;
-  font: 800 13px system-ui;
+  font: 800 11px system-ui;
 }
 .wide-stat {
   grid-column: 1/-1;
@@ -1909,7 +1909,7 @@ html, body, button, input, select, textarea, .sheet, .view, .tab, .chip, .pill-b
 .stats-nature-toggle .type-opt {
   min-height: 32px !important;
   padding: 5px !important;
-  font-size: 13px !important;
+  font-size: 11px !important;
 }
 #typeToggle .type-opt {
   min-width: 0;
@@ -1961,7 +1961,7 @@ html, body, button, input, select, textarea, .sheet, .view, .tab, .chip, .pill-b
   padding: 0;
   border-radius: 50%;
   border: 1px solid #2b3640;
-  font: 800 13px system-ui;
+  font: 800 11px system-ui;
 }
 .chart-wrap {
   position: relative;
@@ -2005,7 +2005,7 @@ html, body, button, input, select, textarea, .sheet, .view, .tab, .chip, .pill-b
 }
 .chart-sheet-help {
   margin: 0 0 12px;
-  font-size: 13px;
+  font-size: 11px;
 }
 .chart-fullscreen-body {
   min-height: 260px;
@@ -2027,7 +2027,7 @@ html, body, button, input, select, textarea, .sheet, .view, .tab, .chip, .pill-b
 .chart-info-card {
   padding: 8px;
   line-height: 1.6;
-  font-size: 15px;
+  font-size: 13px;
 }
 @media (max-width: 380px) {
   .tx-custom-range {
@@ -2082,7 +2082,7 @@ html, body, button, input, select, textarea, .sheet, .view, .tab, .chip, .pill-b
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
-  font-size: 22px !important;
+  font-size: 17px !important;
   line-height: 1 !important;
   padding: 0 !important;
   border-radius: 50% !important;
@@ -2097,7 +2097,7 @@ html, body, button, input, select, textarea, .sheet, .view, .tab, .chip, .pill-b
   margin: 14px 0 20px;
   padding: 10px 18px 0;
   font-family: var(--font-display);
-  font-size: 34px;
+  font-size: 22px;
   font-weight: 800;
   line-height: 1.2;
   letter-spacing: -0.3px;
@@ -2115,7 +2115,7 @@ html, body, button, input, select, textarea, .sheet, .view, .tab, .chip, .pill-b
   margin: 14px 0 20px;
   padding: 10px 18px 0;
   font-family: var(--font-display);
-  font-size: 34px;
+  font-size: 22px;
   font-weight: 800;
   line-height: 1.2;
   letter-spacing: -0.3px;
@@ -2266,7 +2266,7 @@ html, body, button, input, select, textarea, .sheet, .view, .tab, .chip, .pill-b
   margin-top: 9px;
   border: 1px solid #34414a;
   border-radius: 14px;
-  font: 800 13px system-ui;
+  font: 800 11px system-ui;
 }
 .movement-action-cancel:active {
   background: #25313b;
@@ -2308,7 +2308,7 @@ html, body, button, input, select, textarea, .sheet, .view, .tab, .chip, .pill-b
   min-width: 0;
 }
 .recurring-installments-input span {
-  font-size: 13px;
+  font-size: 11px;
   font-weight: 800;
   color: var(--muted, #9fb0ab);
   white-space: nowrap;
@@ -2586,7 +2586,7 @@ html, body, button, input, select, textarea, .sheet, .view, .tab, .chip, .pill-b
   #view-transactions #clearCustomRange {
     padding-left: 6px;
     padding-right: 6px;
-    font-size: 13px;
+    font-size: 11px;
   }
 }
 /* v1.3.3 — R&P: elementi pagati nel mese + data di partenza esplicita */
@@ -2688,7 +2688,7 @@ html, body, button, input, select, textarea, .sheet, .view, .tab, .chip, .pill-b
   color: var(--ink) !important;
   margin: 16px 0 22px !important;
   padding: 10px 12px 0 !important;
-  font-size: 34px !important;
+  font-size: 22px !important;
   line-height: 1.2 !important;
   position: relative;
   z-index: 1;
@@ -2726,8 +2726,8 @@ button.hero-liquidity-item {
 .hero-liquidity-item strong {
   display: block;
   margin-top: 4px;
-  font-size: 15px;
-  color: #fff;
+  font-size: 13px;
+  color: var(--num-plain);
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
   overflow: hidden;
@@ -2741,7 +2741,7 @@ button.hero-liquidity-item {
     padding: 8px;
   }
   .hero-liquidity-item strong {
-    font-size: 15px;
+    font-size: 13px;
   }
 }
 /* v1.3.7 — iPhone/PWA safe-area: titoli di Statistiche, Conti e Altro sotto Dynamic Island */
@@ -2765,7 +2765,7 @@ button.hero-liquidity-item {
   place-items: center;
   background: var(--accent-soft);
   color: var(--accent);
-  font-size: 24px;
+  font-size: 19px;
   font-weight: 800;
 }
 .app-update-actions {
@@ -2777,7 +2777,7 @@ button.hero-liquidity-item {
 .app-update-actions button {
   min-height: 44px;
   border-radius: 12px;
-  font: 800 13px system-ui;
+  font: 800 11px system-ui;
   border: 1px solid var(--line);
 }
 .app-update-later {
@@ -2844,7 +2844,7 @@ button.hero-liquidity-item {
 }
 .top-category-emoji {
   flex: 0 0 auto;
-  font-size: 13px;
+  font-size: 11px;
 }
 .top-category-meta strong {
   flex: 0 0 auto;
@@ -2942,7 +2942,7 @@ button.hero-liquidity-item {
   font-weight: 700 !important;
 }
 #view-home .forecast-card:not(.wide) strong {
-  font-size: 15px !important;
+  font-size: 13px !important;
 }
 /* =========================================================
    v1.3.21 — Fix review grafica
@@ -3048,14 +3048,14 @@ button.hero-liquidity-item {
 }
 /* 8) Messaggi "vuoto" più discreti. */
 .empty-hint {
-  font-size: 15px !important;
+  font-size: 13px !important;
 }
 /* v1.4.0 — Sezione Categorie unificata */
 #catHubToggle {
   margin: 0 0 14px;
 }
 #catHubToggle .type-opt {
-  font-size: 13px;
+  font-size: 11px;
   padding: 10px 6px;
 }
 #sheetCategoriesHub [hidden] {
@@ -3093,7 +3093,7 @@ button.hero-liquidity-item {
 }
 .ask-dialog .ask-msg {
   margin: 0 0 18px;
-  font-size: 17px;
+  font-size: 15px;
   line-height: 1.45;
 }
 .ask-dialog .ask-actions {
@@ -3105,7 +3105,7 @@ button.hero-liquidity-item {
   min-height: 46px;
   border-radius: 13px;
   font: inherit;
-  font-size: 15px;
+  font-size: 13px;
   font-weight: 700;
   border: 1px solid var(--line);
   background: var(--paper);
@@ -3155,7 +3155,7 @@ button.hero-liquidity-item {
   height: 42px !important;
   padding: 0 16px !important;
   border-radius: 12px !important;
-  font-size: 15px !important;
+  font-size: 13px !important;
   font-weight: 800 !important;
   flex: 0 0 auto !important;
   position: static !important;
@@ -3212,7 +3212,7 @@ button.hero-liquidity-item {
   border: 1px solid var(--glass-edge,var(--line));
   background: var(--glass-row,var(--card));
   color: var(--ink-soft);
-  font-size: 17px;
+  font-size: 15px;
   line-height: 1;
   align-items: center;
   justify-content: center;
@@ -3243,13 +3243,13 @@ button.hero-liquidity-item {
   border-radius: 12px;
 }
 .topbar .month-label .pl-main {
-  font-size: 17px;
+  font-size: 15px;
   font-weight: 800;
   color: var(--ink);
   white-space: nowrap;
 }
 .topbar .month-label .pl-sub {
-  font-size: 13px;
+  font-size: 11px;
   font-weight: 700;
   color: var(--ink-soft);
 }
@@ -3578,7 +3578,7 @@ svg text {
    ========================================================= */
 /* Card movimenti: testi ancora un'unità più piccoli */
 .mv-row .mv-title {
-  font-size: 13px!important;
+  font-size: 11px!important;
 }
 .mv-row .mv-amt {
   font-size: 11px!important;
@@ -3602,7 +3602,7 @@ svg text {
   min-width: 28px;
   min-height: 26px;
   height: auto!important;
-  font-size: 17px!important;
+  font-size: 15px!important;
 }
 .tx-row.mv-row,.template-manage-row.mv-row {
   row-gap: 3px!important;
@@ -3624,7 +3624,7 @@ svg text {
 }
 #view-home .forecast-card strong,#view-home .forecast-card.wide strong {
   margin-top: 3px!important;
-  font-size: 15px!important;
+  font-size: 13px!important;
 }
 #view-home .forecast-grid {
   margin: 8px 0 16px!important;
@@ -3670,7 +3670,7 @@ svg text {
 #view-home .section-head .pill-btn {
   min-height: 30px!important;
   padding: 4px 10px!important;
-  font-size: 13px!important;
+  font-size: 11px!important;
 }
 /* Barra del periodo: niente frecce, si sceglie dal calendario; in Home c'è il pulsante calendario a destra */
 .topbar #prevMonth,.topbar #nextMonth {
@@ -3703,7 +3703,7 @@ svg text {
   background: transparent;
   color: var(--ink);
   font: inherit;
-  font-size: 17px;
+  font-size: 15px;
   font-weight: 800;
   padding: 6px 10px;
   border-radius: 10px;
@@ -3712,7 +3712,7 @@ svg text {
   background: var(--surface-strong);
 }
 .pp-caret {
-  font-size: 13px;
+  font-size: 11px;
   color: var(--ink-soft);
 }
 .pp-months {
@@ -3730,7 +3730,7 @@ svg text {
   backdrop-filter: blur(12px);
   color: var(--ink);
   font: inherit;
-  font-size: 15px;
+  font-size: 13px;
   font-weight: 700;
 }
 .pp-month.today {
@@ -3752,7 +3752,7 @@ svg text {
 }
 .pp-hint {
   margin: 0 0 10px;
-  font-size: 13px;
+  font-size: 11px;
   color: var(--ink-soft);
   text-align: center;
   min-height: 18px;
@@ -3771,7 +3771,7 @@ svg text {
   backdrop-filter: blur(12px);
   color: var(--ink);
   font: inherit;
-  font-size: 15px;
+  font-size: 13px;
   font-weight: 700;
 }
 .pp-btn.active {
@@ -3805,7 +3805,7 @@ svg text {
   padding: 0 12px;
   color: var(--ink);
   font: inherit;
-  font-size: 13px;
+  font-size: 11px;
   font-weight: 700;
   white-space: nowrap;
   overflow: hidden;
@@ -3855,7 +3855,7 @@ mark.hl {
 }
 /* Tipografia */
 #views .section-head h2 {
-  font-size: 17px!important;
+  font-size: 15px!important;
   font-weight: 700!important;
   letter-spacing: -.2px;
 }
@@ -4320,7 +4320,7 @@ html:not(.is-scrolled) #app::before {
   border: 0!important;
 }
 #overlayRoot .sheet .field-row > label,#overlayRoot .sheet .chip-group-title,#overlayRoot .sheet .chip-groups > p {
-  font-size: 13px!important;
+  font-size: 11px!important;
   font-weight: 600!important;
   letter-spacing: .02em;
   color: var(--ink-soft)!important;
@@ -4400,7 +4400,7 @@ html:not(.is-scrolled) #app::before {
 /* v1.10.4 — Saldo nascosto = tutti gli importi nascosti (Home, R&P, Movimenti, Statistiche) */
 html.amounts-hidden :is(.budget-spent,.budget-limit,.budget-earned,.top-category-meta strong,.pie-legend-item .val)::after {
   content: "••••";
-  font-size: 13px;
+  font-size: 11px;
   letter-spacing: 1px;
   color: var(--ink);
 }
@@ -4416,14 +4416,14 @@ html.amounts-hidden :is(.budget-spent,.budget-limit,.budget-earned,.top-category
   align-items: center;
 }
 #overlayRoot .sheet .emoji-input {
-  font-size: 22px!important;
+  font-size: 17px!important;
   letter-spacing: 2px;
   min-height: 54px;
   padding: 8px 44px 8px 14px!important;
   width: 100%;
 }
 #overlayRoot .sheet .emoji-input::placeholder {
-  font-size: 15px;
+  font-size: 13px;
   letter-spacing: 0;
 }
 .emoji-clear {
@@ -4435,17 +4435,17 @@ html.amounts-hidden :is(.budget-spent,.budget-limit,.budget-earned,.top-category
   border: 0;
   background: color-mix(in srgb,var(--ink) 10%,transparent);
   color: var(--ink-soft);
-  font-size: 13px;
+  font-size: 11px;
 }
 .emoji-hint {
   margin: 0;
-  font-size: 13px;
+  font-size: 11px;
   color: var(--ink-soft);
 }
 /* v1.10.7 — scelta del "+" (movimento, ricorrente, pianificato, prelievo ATM) e azioni "rendi ricorrente/pianifica" */
 .add-choice-grid .movement-action-btn {
   min-height: 84px;
-  font-size: 13px;
+  font-size: 11px;
 }
 .movement-action-btn.recurring .movement-action-icon,.movement-action-btn.edit[data-add-kind="recurring"] .movement-action-icon {
   background: #cbbcf0!important;
@@ -4458,7 +4458,7 @@ html.amounts-hidden :is(.budget-spent,.budget-limit,.budget-earned,.top-category
 .movement-action-btn.add-recent .movement-action-icon {
   background: linear-gradient(145deg,#f7c463,#e48d24)!important;
   color: #241800!important;
-  font-size: 22px;
+  font-size: 17px;
   font-weight: 800;
 }
 .fab.is-hidden {
@@ -4545,7 +4545,7 @@ html.amounts-hidden :is(.budget-spent,.budget-limit,.budget-earned,.top-category
   display: inline-grid;
   place-items: center;
   font-weight: 700;
-  font-size: 17px;
+  font-size: 15px;
   color: #fff;
   border: 2.5px solid var(--card);
   box-shadow: 0 4px 12px -4px var(--shadow-soft);
@@ -4556,7 +4556,7 @@ html.amounts-hidden :is(.budget-spent,.budget-limit,.budget-earned,.top-category
 .couple-av.sm {
   width: 30px;
   height: 30px;
-  font-size: 13px;
+  font-size: 11px;
   border-width: 2px;
 }
 .couple-av.sm.b {
@@ -4586,7 +4586,7 @@ html.amounts-hidden :is(.budget-spent,.budget-limit,.budget-earned,.top-category
   display: flex;
   justify-content: space-between;
   margin: 0 2px;
-  font-size: 13px;
+  font-size: 11px;
   font-weight: 600;
   color: var(--ink-soft);
 }
@@ -4623,7 +4623,7 @@ html.amounts-hidden :is(.budget-spent,.budget-limit,.budget-earned,.top-category
 }
 #view-coppia .forecast-card strong {
   margin-top: 3px!important;
-  font-size: 15px!important;
+  font-size: 13px!important;
   line-height: 1.1!important;
 }
 .couple-shares {
@@ -4639,12 +4639,12 @@ html.amounts-hidden :is(.budget-spent,.budget-limit,.budget-earned,.top-category
   display: flex;
   justify-content: space-between;
   align-items: baseline;
-  font-size: 13px;
+  font-size: 11px;
   margin-bottom: 5px;
 }
 .cs-lbl strong {
   font-variant-numeric: tabular-nums;
-  font-size: 15px;
+  font-size: 13px;
 }
 .cs-bar {
   height: 8px;
@@ -4689,18 +4689,18 @@ html.amounts-hidden :is(.budget-spent,.budget-limit,.budget-earned,.top-category
   gap: 1px;
 }
 .couple-strip-text span {
-  font-size: 13px;
+  font-size: 11px;
   color: var(--ink-soft);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 .couple-strip-text strong {
-  font-size: 17px;
+  font-size: 15px;
   font-variant-numeric: tabular-nums;
 }
 .couple-strip .chev {
-  font-size: 22px;
+  font-size: 17px;
   color: var(--ink-soft);
 }
 .split-field .split-chips[hidden],.split-field .split-custom[hidden] {
@@ -4711,7 +4711,7 @@ html.amounts-hidden :is(.budget-spent,.budget-limit,.budget-earned,.top-category
   align-items: center;
   gap: 10px;
   margin-top: 10px;
-  font-size: 13px;
+  font-size: 11px;
   font-variant-numeric: tabular-nums;
 }
 .split-custom span {
@@ -4752,7 +4752,7 @@ html.amounts-hidden :is(.budget-spent,.budget-limit,.budget-earned,.top-category
 #sheetTransfer .sheet-head h3 {
   white-space: nowrap;
   margin-right: 8px;
-  font-size: clamp(17px,5vw,21px);
+  font-size: clamp(15px,5vw,17px);
   flex: 0 1 auto;
   min-width: 0;
 }
@@ -4763,7 +4763,7 @@ html.amounts-hidden :is(.budget-spent,.budget-limit,.budget-earned,.top-category
 /* Noi Due 1.1.0 — Gruppi con saldo proprio */
 .couple-total-note {
   margin: 6px 0 0;
-  font-size: 13px;
+  font-size: 11px;
   color: var(--ink-soft);
 }
 .couple-groups-block {
@@ -4803,7 +4803,7 @@ html.amounts-hidden :is(.budget-spent,.budget-limit,.budget-earned,.top-category
   justify-content: center;
   gap: 1px;
   overflow: visible;
-  font-size: 22px;
+  font-size: 17px;
   flex-shrink: 0;
 }
 .group-card-text {
@@ -4813,10 +4813,10 @@ html.amounts-hidden :is(.budget-spent,.budget-limit,.budget-earned,.top-category
   gap: 2px;
 }
 .group-card-text strong {
-  font-size: 15px;
+  font-size: 13px;
 }
 .group-card-text span {
-  font-size: 13px;
+  font-size: 11px;
   color: var(--ink-soft);
   white-space: nowrap;
   overflow: hidden;
@@ -4824,11 +4824,11 @@ html.amounts-hidden :is(.budget-spent,.budget-limit,.budget-earned,.top-category
 }
 .group-card-amt {
   font-weight: 800;
-  font-size: 17px;
+  font-size: 15px;
   font-variant-numeric: tabular-nums;
 }
 .group-card .chev {
-  font-size: 22px;
+  font-size: 17px;
   color: var(--ink-soft);
 }
 .group-detail-hero {
@@ -4841,12 +4841,12 @@ html.amounts-hidden :is(.budget-spent,.budget-limit,.budget-earned,.top-category
 }
 .group-detail-hero .hero-label {
   margin: 0;
-  font-size: 13px;
+  font-size: 11px;
   color: var(--ink-soft);
 }
 .group-detail-hero .hero-amount {
   margin: 2px 0 0;
-  font-size: 38px;
+  font-size: 27px;
   font-weight: 800;
   letter-spacing: -.5px;
   font-variant-numeric: tabular-nums;
@@ -4867,7 +4867,7 @@ html.amounts-hidden :is(.budget-spent,.budget-limit,.budget-earned,.top-category
   text-overflow: ellipsis;
 }
 .group-detail-grid .forecast-card strong {
-  font-size: 15px!important;
+  font-size: 13px!important;
   margin-top: 3px!important;
 }
 .gd-month {
@@ -4875,7 +4875,7 @@ html.amounts-hidden :is(.budget-spent,.budget-limit,.budget-earned,.top-category
 }
 .gd-sub {
   margin: 6px 2px 8px;
-  font-size: 15px;
+  font-size: 13px;
 }
 #sheetGroupDetail .sheet-head .pill-btn {
   margin-left: auto;
@@ -4906,7 +4906,7 @@ html.amounts-hidden :is(.budget-spent,.budget-limit,.budget-earned,.top-category
   color: #fff;
   font: inherit;
   font-weight: 700;
-  font-size: 15px;
+  font-size: 13px;
   box-shadow: 0 10px 22px -12px var(--navy);
 }
 /* Noi Due 1.2.0 — Liste della spesa */
@@ -4916,7 +4916,7 @@ html.amounts-hidden :is(.budget-spent,.budget-limit,.budget-earned,.top-category
   border-radius: 14px;
   background: linear-gradient(145deg,#f7c463,#e48d24);
   color: #241800;
-  font-size: 22px;
+  font-size: 17px;
   font-weight: 800;
   line-height: 1;
 }
@@ -4946,7 +4946,7 @@ html.amounts-hidden :is(.budget-spent,.budget-limit,.budget-earned,.top-category
   border: 2px solid var(--ink-soft);
   display: grid;
   place-items: center;
-  font-size: 15px;
+  font-size: 13px;
   font-weight: 800;
   color: #fff;
   transition: background .15s ease,border-color .15s ease;
@@ -4957,7 +4957,7 @@ html.amounts-hidden :is(.budget-spent,.budget-limit,.budget-earned,.top-category
 }
 .list-text {
   min-width: 0;
-  font-size: 15px;
+  font-size: 13px;
   overflow-wrap: anywhere;
 }
 .list-item.done .list-text {
@@ -4965,7 +4965,7 @@ html.amounts-hidden :is(.budget-spent,.budget-limit,.budget-earned,.top-category
   color: var(--ink-soft);
 }
 .list-price {
-  font-size: 13px;
+  font-size: 11px;
   font-weight: 600;
   color: var(--ink-soft);
   font-variant-numeric: tabular-nums;
@@ -5037,7 +5037,7 @@ html.amounts-hidden :is(.budget-spent,.budget-limit,.budget-earned,.top-category
   background: #fff;
 }
 .list-del {
-  font-size: 22px;
+  font-size: 17px;
 }
 .scan-video-wrap {
   position: relative;
@@ -5074,7 +5074,7 @@ html.amounts-hidden :is(.budget-spent,.budget-limit,.budget-earned,.top-category
   gap: 8px;
 }
 .scan-code-row .list-add-btn {
-  font-size: 17px;
+  font-size: 15px;
 }
 .scan-card {
   padding: 14px;
@@ -5096,7 +5096,7 @@ html.amounts-hidden :is(.budget-spent,.budget-limit,.budget-earned,.top-category
   margin: 0 0 10px;
   text-align: center;
   font-weight: 700;
-  font-size: 15px;
+  font-size: 13px;
 }
 .item-links {
   display: flex;
@@ -5110,7 +5110,7 @@ html.amounts-hidden :is(.budget-spent,.budget-limit,.budget-earned,.top-category
 .item-link {
   text-decoration: none;
   color: var(--ink);
-  font-size: 13px;
+  font-size: 11px;
   min-height: 34px;
   padding: 6px 12px;
   display: inline-flex;
@@ -5144,11 +5144,11 @@ html.amounts-hidden :is(.budget-spent,.budget-limit,.budget-earned,.top-category
   border-radius: var(--radius-card);
   border: 1px solid var(--glass-edge,var(--line));
   background: var(--glass-card,var(--card));
-  font-size: 13px;
+  font-size: 11px;
   min-width: 0;
 }
 .ic-card strong {
-  font-size: 15px;
+  font-size: 13px;
   margin-bottom: 2px;
 }
 .ic-card span {
@@ -5180,10 +5180,10 @@ html.amounts-hidden :is(.budget-spent,.budget-limit,.budget-earned,.top-category
   text-align: left;
 }
 .import-opt strong {
-  font-size: 15px;
+  font-size: 13px;
 }
 .import-opt span {
-  font-size: 13px;
+  font-size: 11px;
   color: var(--ink-soft);
 }
 .import-opt.recommended {
@@ -5251,12 +5251,12 @@ html.amounts-hidden :is(.budget-spent,.budget-limit,.budget-earned,.top-category
 .movement-action-btn.add-settle-small .movement-action-icon {
   background: linear-gradient(145deg,#e7a3cf,#c25b9e)!important;
   color: #fff!important;
-  font-size: 17px;
+  font-size: 15px;
 }
 .movement-action-btn.add-list .movement-action-icon {
   background: linear-gradient(145deg,#9fd8c2,#3aa684)!important;
   color: #fff!important;
-  font-size: 17px;
+  font-size: 15px;
 }
 /* Noi Due 1.5.0 — solo spese e rimborsi, niente macrocategorie né budget, tutto in Home */
 .mv-amt.expense,.tx-detail-row .v.expense {
@@ -5287,7 +5287,7 @@ html.amounts-hidden :is(.budget-spent,.budget-limit,.budget-earned,.top-category
   background: transparent;
   color: var(--ink-soft);
   font: inherit;
-  font-size: 13px;
+  font-size: 11px;
   font-weight: 800;
   font-style: italic;
   line-height: 1;
@@ -5297,7 +5297,7 @@ html.amounts-hidden :is(.budget-spent,.budget-limit,.budget-earned,.top-category
 .section-head h2 .nd-info {
   width: 22px;
   height: 22px;
-  font-size: 13px;
+  font-size: 11px;
 }
 .chip-group-title .nd-info {
   text-transform: none;
@@ -5326,7 +5326,7 @@ html.amounts-hidden :is(.budget-spent,.budget-limit,.budget-earned,.top-category
   flex: 0 0 auto!important;
   display: block!important;
   padding: 14px 16px!important;
-  font-size: 15px;
+  font-size: 13px;
   line-height: 1.5;
 }
 .nd-info-sheet {
@@ -5426,19 +5426,19 @@ html.amounts-hidden :is(.budget-spent,.budget-limit,.budget-earned,.top-category
   border-radius: 50%;
   display: grid;
   place-items: center;
-  font-size: 22px;
+  font-size: 17px;
   font-weight: 800;
   background: color-mix(in srgb,var(--emerald) 18%,transparent);
   color: var(--emerald);
 }
 .app-update-card h3 {
   margin: 0 0 6px;
-  font-size: 17px;
+  font-size: 15px;
   color: var(--ink);
 }
 .app-update-card p {
   margin: 0 0 16px;
-  font-size: 15px;
+  font-size: 13px;
   line-height: 1.45;
   color: var(--ink-soft);
 }
@@ -5452,7 +5452,7 @@ html.amounts-hidden :is(.budget-spent,.budget-limit,.budget-earned,.top-category
   border-radius: 14px;
   font: inherit;
   font-weight: 700;
-  font-size: 15px;
+  font-size: 13px;
   border: 1px solid var(--glass-edge,var(--line));
   background: transparent;
   color: var(--ink);
@@ -5531,7 +5531,7 @@ html.amounts-hidden :is(.budget-spent,.budget-limit,.budget-earned,.top-category
 .movement-action-btn.add-fixed .movement-action-icon {
   background: linear-gradient(145deg,#c9c0f0,#8e7cc3)!important;
   color: #fff!important;
-  font-size: 17px;
+  font-size: 15px;
 }
 .nd-fixed-total {
   margin: -4px 2px 10px;
@@ -5559,7 +5559,7 @@ html.amounts-hidden :is(.budget-spent,.budget-limit,.budget-earned,.top-category
 
 .list-aisle {
   margin: 12px 2px 6px;
-  font-size: 13px;
+  font-size: 11px;
   font-weight: 700;
   color: var(--ink-soft);
 }
@@ -5595,7 +5595,7 @@ html.amounts-hidden :is(.budget-spent,.budget-limit,.budget-earned,.top-category
   align-items: center;
   justify-content: space-between;
   padding: 0 16px;
-  font-size: 13px;
+  font-size: 11px;
   font-weight: 700;
   pointer-events: none;
 }
@@ -5642,7 +5642,7 @@ html.amounts-hidden :is(.budget-spent,.budget-limit,.budget-earned,.top-category
   background: transparent;
   color: var(--ink);
   font: inherit;
-  font-size: 22px;
+  font-size: 17px;
   font-weight: 700;
 }
 .qty-stepper span {
@@ -5738,7 +5738,7 @@ html.amounts-hidden :is(.budget-spent,.budget-limit,.budget-earned,.top-category
 }
 .fav-text {
   min-width: 0;
-  font-size: 15px;
+  font-size: 13px;
 }
 .fav-text small {
   display: block;
@@ -5753,7 +5753,7 @@ html.amounts-hidden :is(.budget-spent,.budget-limit,.budget-earned,.top-category
   border-radius: 10px;
   background: transparent;
   color: var(--ink-soft);
-  font-size: 15px;
+  font-size: 13px;
 }
 /* Interruttori (come in Bilancio) */
 .shared-switch {
@@ -5802,10 +5802,10 @@ html.amounts-hidden :is(.budget-spent,.budget-limit,.budget-earned,.top-category
   gap: 1px;
 }
 .shared-switch-text strong {
-  font-size: 15px;
+  font-size: 13px;
 }
 .shared-switch-text small {
-  font-size: 13px;
+  font-size: 11px;
   color: var(--ink-soft);
 }
 #listRestockSwitch .shared-switch-text small {
@@ -5923,7 +5923,7 @@ html.amounts-hidden :is(.budget-spent,.budget-limit,.budget-earned,.top-category
   gap: 8px;
   align-items: flex-start;
   margin: 6px 0 10px;
-  font-size: 13px;
+  font-size: 11px;
   line-height: 1.45;
   opacity: .85;
 }
@@ -5957,7 +5957,7 @@ html.amounts-hidden :is(.budget-spent,.budget-limit,.budget-earned,.top-category
   padding: 10px 12px;
   color: inherit;
   font: inherit;
-  font-size: 17px;
+  font-size: 15px;
   box-sizing: border-box;
 }
 .suite-sync-actions {
@@ -5974,7 +5974,7 @@ html.amounts-hidden :is(.budget-spent,.budget-limit,.budget-earned,.top-category
   color: inherit;
   font: inherit;
   font-weight: 700;
-  font-size: 15px;
+  font-size: 13px;
 }
 .suite-sync-card .suite-sync-primary {
   border: 0;
@@ -5987,7 +5987,7 @@ html.amounts-hidden :is(.budget-spent,.budget-limit,.budget-earned,.top-category
 }
 /* Allineamento stile pulsanti notifiche/sync a RecompApp (gym_tracker) */
 .suite-sync-card p.suite-sync-status {
-  font-size: 13px!important;
+  font-size: 11px!important;
   line-height: 1.45!important;
   margin: 6px 0 10px!important;
 }
@@ -6017,7 +6017,7 @@ html.amounts-hidden :is(.budget-spent,.budget-limit,.budget-earned,.top-category
   border: 0!important;
   background: transparent!important;
   box-shadow: none!important;
-  font-size: 13px!important;
+  font-size: 11px!important;
   font-weight: 600!important;
   text-decoration: underline;
   opacity: .75;
@@ -6029,7 +6029,7 @@ html.amounts-hidden :is(.budget-spent,.budget-limit,.budget-earned,.top-category
   margin-top: 8px;
 }
 .suite-sync-more button {
-  font-size: 13px!important;
+  font-size: 11px!important;
   font-weight: 600!important;
   padding: 8px 6px!important;
 }
@@ -6043,7 +6043,7 @@ html.amounts-hidden :is(.budget-spent,.budget-limit,.budget-earned,.top-category
   text-align: center;
 }
 .suite-modal-text {
-  font-size: 13px;
+  font-size: 11px;
   line-height: 1.45;
   opacity: .8;
   margin: 0 0 12px!important;
@@ -6066,7 +6066,7 @@ html.amounts-hidden :is(.budget-spent,.budget-limit,.budget-earned,.top-category
   background: transparent;
   color: inherit;
   font: inherit;
-  font-size: 15px;
+  font-size: 13px;
   text-align: left;
 }
 .suite-history-row.confirm {
@@ -6177,7 +6177,7 @@ html.amounts-hidden :is(.budget-spent,.budget-limit,.budget-earned,.top-category
   color: inherit;
   font: inherit;
   font-weight: 700;
-  font-size: 15px;
+  font-size: 13px;
 }
 #pushCard .suite-sync-actions {
   display: grid !important;
@@ -6193,13 +6193,13 @@ html.amounts-hidden :is(.budget-spent,.budget-limit,.budget-earned,.top-category
 }
 #pushCard .push-msg {
   margin: 10px 0 0;
-  font-size: 13px;
+  font-size: 11px;
   line-height: 1.4;
   color: var(--ink-soft);
 }
 /* v1.15.0 — Notifiche: interruttori del riepilogo mensile (come in Bilancio) */
 #pushCard .push-settings { display: grid; gap: 8px; margin: 0 0 10px; }
-#pushCard .toggle-line.push-line { display: flex; align-items: center; justify-content: flex-start; gap: 12px; font-size: 15px; }
+#pushCard .toggle-line.push-line { display: flex; align-items: center; justify-content: flex-start; gap: 12px; font-size: 13px; }
 #pushCard .push-settings .push-msg { margin: 0; }
 /* =====================================================================
    Altro: Sincronizzazione e Notifiche allineate alle altre sezioni
@@ -6210,7 +6210,7 @@ html.amounts-hidden :is(.budget-spent,.budget-limit,.budget-earned,.top-category
   padding: 14px 14px 15px !important;
 }
 #views .section-block.suite-sync-card > h2 {
-  font-size: 17px !important;
+  font-size: 15px !important;
   font-weight: 700 !important;
   letter-spacing: -0.2px !important;
   line-height: 1.25 !important;
@@ -6229,7 +6229,7 @@ html.amounts-hidden :is(.budget-spent,.budget-limit,.budget-earned,.top-category
 #view-home .nd-paid-split { flex-wrap: nowrap !important; gap: 6px 14px !important; justify-content: center !important; }
 #view-home .nd-paid-split .hero-split-item { min-width: 0; gap: 5px; }
 #view-home .nd-paid-split .hero-split-label { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-#view-home .nd-paid-split .hero-split-value { color: var(--ink) !important; font-size: 15px !important; white-space: nowrap; }
+#view-home .nd-paid-split .hero-split-value { color: var(--ink) !important; font-size: 13px !important; white-space: nowrap; }
 /* =====================================================================
    Noi Due 1.16.0 — Pannello "Aggiungi un prodotto" alla lista (rifatto)
    Scheda in vetro come il resto della suite: campo grande in evidenza,
@@ -6268,7 +6268,7 @@ html.amounts-hidden :is(.budget-spent,.budget-limit,.budget-earned,.top-category
   border-radius: 9px;
   background: var(--amber-grad, linear-gradient(145deg, #f7c463, #e48d24));
   color: var(--suite-on-amber, #241800);
-  font-size: 17px;
+  font-size: 15px;
   font-weight: 800;
   line-height: 1;
 }
@@ -6283,7 +6283,7 @@ html.amounts-hidden :is(.budget-spent,.budget-limit,.budget-earned,.top-category
   background: transparent !important;
   box-shadow: none !important;
   color: var(--ink) !important;
-  font-size: 17px !important;
+  font-size: 15px !important;
   font-weight: 600;
 }
 #overlayRoot #sheetListDetail .lc .lc-input::placeholder {
@@ -6298,7 +6298,7 @@ html.amounts-hidden :is(.budget-spent,.budget-limit,.budget-earned,.top-category
   border-radius: 13px;
   border: 1px solid var(--glass-edge, var(--line));
   background: var(--glass-row, var(--card));
-  font-size: 17px;
+  font-size: 15px;
   line-height: 1;
   padding: 0;
 }
@@ -6329,7 +6329,7 @@ html.amounts-hidden :is(.budget-spent,.budget-limit,.budget-earned,.top-category
   margin: 0;
 }
 #overlayRoot #sheetListDetail .lc-label {
-  font-size: 13px;
+  font-size: 11px;
   font-weight: 700;
   letter-spacing: .04em;
   text-transform: uppercase;
@@ -6364,7 +6364,7 @@ html.amounts-hidden :is(.budget-spent,.budget-limit,.budget-earned,.top-category
   background: transparent;
   color: var(--ink);
   font: inherit;
-  font-size: 22px;
+  font-size: 17px;
   font-weight: 700;
   padding: 0;
 }
@@ -6375,7 +6375,7 @@ html.amounts-hidden :is(.budget-spent,.budget-limit,.budget-earned,.top-category
   min-width: 30px;
   text-align: center;
   font-weight: 800;
-  font-size: 17px;
+  font-size: 15px;
   font-variant-numeric: tabular-nums;
   color: var(--ink);
 }
@@ -6402,7 +6402,7 @@ html.amounts-hidden :is(.budget-spent,.budget-limit,.budget-earned,.top-category
   background: transparent !important;
   box-shadow: none !important;
   color: var(--ink) !important;
-  font-size: 17px !important;
+  font-size: 15px !important;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
 }
@@ -6442,7 +6442,7 @@ html.amounts-hidden :is(.budget-spent,.budget-limit,.budget-earned,.top-category
   background: var(--glass-row, var(--card));
   color: var(--ink);
   font: inherit;
-  font-size: 15px;
+  font-size: 13px;
   font-weight: 600;
   white-space: nowrap;
 }
@@ -6485,7 +6485,7 @@ html.amounts-hidden :is(.budget-spent,.budget-limit,.budget-earned,.top-category
   background: var(--amber-grad, linear-gradient(145deg, #f7c463, #e48d24));
   color: var(--suite-on-amber, #241800);
   font: inherit;
-  font-size: 17px;
+  font-size: 15px;
   font-weight: 800;
   box-shadow: 0 10px 22px -12px rgba(228, 141, 36, .9), inset 0 1px 0 rgba(255, 255, 255, .35);
 }
@@ -6520,7 +6520,7 @@ html.amounts-hidden :is(.budget-spent,.budget-limit,.budget-earned,.top-category
   background: var(--glass-card, var(--card));
   color: var(--ink);
   font: inherit;
-  font-size: 13px;
+  font-size: 11px;
   font-weight: 650;
   white-space: nowrap;
 }
@@ -6528,7 +6528,7 @@ html.amounts-hidden :is(.budget-spent,.budget-limit,.budget-earned,.top-category
   display: none;
 }
 #overlayRoot #sheetListDetail .lc-tool span {
-  font-size: 13px;
+  font-size: 11px;
 }
 /* "Comprati spesso": pillole uniche con la stellina dentro (niente più blocchetto bianco in chiaro) */
 
@@ -6568,7 +6568,7 @@ html.amounts-hidden :is(.budget-spent,.budget-limit,.budget-earned,.top-category
   background: color-mix(in srgb, var(--ink) 6%, transparent);
   color: var(--ink);
   font: inherit;
-  font-size: 13px;
+  font-size: 11px;
   font-weight: 700;
   white-space: nowrap;
 }
@@ -6626,7 +6626,7 @@ html.amounts-hidden :is(.budget-spent,.budget-limit,.budget-earned,.top-category
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  font-size: 15px;
+  font-size: 13px;
   font-weight: 800;
   color: var(--ink);
   letter-spacing: -.2px;
@@ -6637,10 +6637,10 @@ html.amounts-hidden :is(.budget-spent,.budget-limit,.budget-earned,.top-category
   width: 28px;
   height: 28px;
   border-radius: 9px;
-  font-size: 15px;
+  font-size: 13px;
 }
 #view-home .hl-sum {
-  font-size: 13px;
+  font-size: 11px;
   font-weight: 600;
   color: var(--ink-soft);
 }
@@ -6649,7 +6649,7 @@ html.amounts-hidden :is(.budget-spent,.budget-limit,.budget-earned,.top-category
   border: 0;
   background: none;
   font: inherit;
-  font-size: 13px;
+  font-size: 11px;
   font-weight: 700;
   padding: 4px 2px;
 }
@@ -6690,21 +6690,21 @@ html.amounts-hidden :is(.budget-spent,.budget-limit,.budget-earned,.top-category
   height: 34px;
   border-radius: 11px;
   background: color-mix(in srgb, var(--ink) 7%, transparent);
-  font-size: 17px;
+  font-size: 15px;
 }
 #view-home .hl-txt {
   display: grid;
   min-width: 0;
 }
 #view-home .hl-txt b {
-  font-size: 15px;
+  font-size: 13px;
   font-weight: 750;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 #view-home .hl-txt small {
-  font-size: 13px;
+  font-size: 11px;
   white-space: nowrap;
 }
 #view-home .hl-item.empty .hl-txt small {
@@ -6800,7 +6800,7 @@ html.amounts-hidden :is(.budget-spent,.budget-limit,.budget-earned,.top-category
   transform: translateX(2px) scale(.97);
 }
 .ls-ic {
-  font-size: 17px;
+  font-size: 15px;
   line-height: 1;
   color: #3fb38e;
 }
@@ -6888,7 +6888,7 @@ body.ls-dragging .ls-scrim {
   background: transparent;
   color: var(--ink-soft);
   font: inherit;
-  font-size: 13px;
+  font-size: 11px;
   font-weight: 700;
 }
 .ls-seg button.on {
@@ -6903,12 +6903,12 @@ body.ls-dragging .ls-scrim {
   border: 0;
   background: none;
   color: var(--ink-soft);
-  font-size: 17px;
+  font-size: 15px;
 }
 .ls-dr-hint {
   margin: 0;
   padding: 2px 14px 8px;
-  font-size: 13px;
+  font-size: 11px;
   color: var(--ink-soft);
 }
 .ls-dr-list {
@@ -6960,7 +6960,7 @@ body.ls-dragging .ls-scrim {
   height: 34px;
   border-radius: 11px;
   background: color-mix(in srgb, var(--ink) 7%, transparent);
-  font-size: 17px;
+  font-size: 15px;
 }
 .ls-tx {
   flex: 1 1 auto;
@@ -6968,7 +6968,7 @@ body.ls-dragging .ls-scrim {
   min-width: 0;
 }
 .ls-tx b {
-  font-size: 15px;
+  font-size: 13px;
   font-weight: 700;
   white-space: nowrap;
   overflow: hidden;
@@ -6993,7 +6993,7 @@ body.ls-dragging .ls-scrim {
   background: linear-gradient(145deg, #f7c463, #e48d24);
   color: #241800;
   font-weight: 800;
-  font-size: 17px;
+  font-size: 15px;
 }
 .ls-card.in .ls-add {
   background: color-mix(in srgb, #3fb38e 30%, transparent);
@@ -7001,7 +7001,7 @@ body.ls-dragging .ls-scrim {
 }
 .ls-empty {
   margin: 10px 4px;
-  font-size: 13px;
+  font-size: 11px;
   line-height: 1.45;
   color: var(--ink-soft);
 }
@@ -7019,7 +7019,7 @@ body.ls-dragging .ls-scrim {
   background: color-mix(in srgb, var(--ink) 6%, transparent);
   color: var(--ink);
   font: inherit;
-  font-size: 15px;
+  font-size: 13px;
   font-weight: 750;
 }
 .ls-foot-btn.primary {
@@ -7045,7 +7045,7 @@ body.ls-dragging .ls-scrim {
   backdrop-filter: blur(16px);
   box-shadow: 0 18px 40px -12px rgba(0,0,0,.6);
   color: var(--ink);
-  font-size: 15px;
+  font-size: 13px;
   transition: transform .06s linear;
 }
 .ls-ghost b {
@@ -7087,7 +7087,7 @@ body.ls-over #sheetListDetail #listTodo {
   align-items: center !important;
 }
 #views #view-stats .pie-legend-item .lbl {
-  font-size: 15px !important;
+  font-size: 13px !important;
   font-weight: 600 !important;
   min-width: 0;
   overflow: hidden;
@@ -7099,7 +7099,7 @@ body.ls-over #sheetListDetail #listTodo {
   align-items: baseline;
   gap: 6px;
   margin-left: auto;
-  font-size: 13px !important;
+  font-size: 11px !important;
   white-space: nowrap;
 }
 #views #view-stats .pie-legend-item .val b {
@@ -7108,7 +7108,7 @@ body.ls-over #sheetListDetail #listTodo {
 #views #view-stats .pie-legend-item .val small {
   min-width: 34px;
   text-align: right;
-  font-size: 13px;
+  font-size: 11px;
   font-weight: 600;
   color: var(--ink-soft);
 }
@@ -7141,7 +7141,7 @@ html.amounts-hidden #views #view-stats .pie-legend-item .val::after {
   width: 40px !important;
   height: 40px !important;
   border-radius: 13px !important;
-  font-size: 22px !important;
+  font-size: 17px !important;
   line-height: 1;
 }
 #view-liste .lv-head {
@@ -7151,18 +7151,18 @@ html.amounts-hidden #views #view-stats .pie-legend-item .val::after {
   min-width: 0;
 }
 #view-liste .lv-head b {
-  font-size: 17px !important;
+  font-size: 15px !important;
   line-height: 1.2;
 }
 #view-liste .lv-head small {
-  font-size: 13px !important;
+  font-size: 11px !important;
   line-height: 1.25;
 }
 
 #view-liste .lv-chev {
   flex: none;
   color: var(--ink-soft);
-  font-size: 22px;
+  font-size: 17px;
   line-height: 1;
 }
 #view-home .hl-item {
@@ -7186,7 +7186,7 @@ html.amounts-hidden #views #view-stats .pie-legend-item .val::after {
   background: linear-gradient(145deg, #f7c463, #e48d24) !important;
 }
 .ls-tab .ls-ic {
-  font-size: 22px !important;
+  font-size: 17px !important;
   color: #fff !important;
   filter: drop-shadow(0 1px 1px rgba(0,0,0,.25));
 }
@@ -7229,7 +7229,7 @@ html.amounts-hidden #views #view-stats .pie-legend-item .val::after {
   background: transparent;
   color: var(--ink-soft);
   font: inherit;
-  font-size: 15px;
+  font-size: 13px;
   font-weight: 700;
 }
 #overlayRoot #sheetListDetail .lt-open[hidden] {
@@ -7265,7 +7265,7 @@ html.amounts-hidden #views #view-stats .pie-legend-item .val::after {
   height: 34px;
   border-radius: 11px;
   background: color-mix(in srgb, var(--ink) 7%, transparent);
-  font-size: 17px;
+  font-size: 15px;
 }
 #overlayRoot #sheetListTrash .lt-tx {
   flex: 1 1 auto;
@@ -7273,13 +7273,13 @@ html.amounts-hidden #views #view-stats .pie-legend-item .val::after {
   min-width: 0;
 }
 #overlayRoot #sheetListTrash .lt-tx b {
-  font-size: 15px;
+  font-size: 13px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 #overlayRoot #sheetListTrash .lt-tx small {
-  font-size: 13px;
+  font-size: 11px;
   color: var(--ink-soft);
 }
 #overlayRoot #sheetListTrash .lt-restore {
@@ -7290,7 +7290,7 @@ html.amounts-hidden #views #view-stats .pie-legend-item .val::after {
   border: 1px solid var(--glass-edge, var(--line));
   background: color-mix(in srgb, #3fb38e 18%, transparent);
   color: #3fb38e;
-  font-size: 17px;
+  font-size: 15px;
   font-weight: 800;
 }
 /* ---- Scorrimento sul prodotto: la riga scorre ma non si restringe, pulsanti di misura fissa ---- */
@@ -7307,7 +7307,7 @@ html.amounts-hidden #views #view-stats .pie-legend-item .val::after {
   width: 62px;
 }
 .list-actions .la-ico {
-  font-size: 17px !important;
+  font-size: 15px !important;
 }
 .list-actions small {
   font-size: 11px !important;
@@ -7329,7 +7329,7 @@ html.amounts-hidden #views #view-stats .pie-legend-item .val::after {
 #sheetPeriodPicker .pp-month-total {
   margin: 6px 0 0;
   text-align: center;
-  font-size: 13px;
+  font-size: 11px;
   color: var(--ink-soft);
 }
 #sheetPeriodPicker .calendar-cell .cal-amt {
@@ -7420,14 +7420,14 @@ html.amounts-hidden #views #view-stats .pie-legend-item .val::after {
 }
 .lr-ring b {
   position: relative;
-  font-size: 15px;
+  font-size: 13px;
   font-weight: 800;
   color: var(--ink);
   font-variant-numeric: tabular-nums;
 }
 .lr-ring.zero b {
   color: #3fb38e;
-  font-size: 15px;
+  font-size: 13px;
 }
 #view-liste .lv-card .lr-ring {
   width: 38px;
@@ -7443,19 +7443,19 @@ html.amounts-hidden :is(.mv-amt,.budget-spent,.budget-limit,.budget-earned,.stat
 }
 html.amounts-hidden :is(.mv-amt,.stat-card-value,.tx-amount,.rp-amt)::after {
   content: "••••";
-  font-size: 15px;
+  font-size: 13px;
   letter-spacing: 1px;
   color: var(--ink);
 }
 html.amounts-hidden .stat-card-value::after {
-  font-size: 22px;
+  font-size: 17px;
 }
 /* ---- Suite: titolo di pagina piccolo e uniforme dove non c'è il titolo del periodo ---- */
 #views .view:not(:has(> .topbar)) > .view-title {
   display: block !important;
   margin: 4px 2px 14px !important;
   padding: 0 !important;
-  font-size: 22px !important;
+  font-size: 17px !important;
   font-weight: 800 !important;
   letter-spacing: -.4px !important;
   line-height: 1.15 !important;
@@ -7504,7 +7504,7 @@ html body .mv-meta-text > .mv-list-badge {
   border: 1px solid color-mix(in srgb, #3fb38e 30%, transparent);
 }
 #overlayRoot .tx-list-link .tx-list-ic {
-  font-size: 22px;
+  font-size: 17px;
 }
 #overlayRoot .tx-list-link .tx-list-tx {
   flex: 1 1 auto;
@@ -7512,10 +7512,10 @@ html body .mv-meta-text > .mv-list-badge {
   min-width: 0;
 }
 #overlayRoot .tx-list-link b {
-  font-size: 15px;
+  font-size: 13px;
 }
 #overlayRoot .tx-list-link small {
-  font-size: 13px;
+  font-size: 11px;
   color: var(--ink-soft);
   white-space: nowrap;
   overflow: hidden;
@@ -7540,10 +7540,10 @@ html body .mv-meta-text > .mv-list-badge {
   gap: 10px;
 }
 #view-liste .lm-head b {
-  font-size: 15px;
+  font-size: 13px;
 }
 #view-liste .lm-head small {
-  font-size: 13px;
+  font-size: 11px;
   color: var(--ink-soft);
 }
 #view-liste .lm-bar {
@@ -7557,7 +7557,7 @@ html body .mv-meta-text > .mv-list-badge {
 #view-liste .lm-people {
   display: flex;
   gap: 16px;
-  font-size: 13px;
+  font-size: 11px;
   color: var(--ink-soft);
 }
 #view-liste .lm-people span {
@@ -7583,7 +7583,7 @@ html body .mv-meta-text > .mv-list-badge {
   padding: 5px 10px;
   border-radius: 999px;
   background: color-mix(in srgb, var(--ink) 6%, transparent);
-  font-size: 13px;
+  font-size: 11px;
 }
 
 /* =========================================================
@@ -7633,10 +7633,10 @@ html body .mv-meta-text > .mv-list-badge {
 .category-row .ic,
 .template-manage-row .ic,
 .top-category-emoji {
-  font-size: 17px !important;
+  font-size: 15px !important;
 }
 #view-home .hl-title-ic {
-  font-size: 15px !important;
+  font-size: 13px !important;
 }
 /* La colonna dell'icona resta larga uguale in tutte le righe, anche con una sola emoji. */
 .mv-ic,
@@ -7654,4 +7654,249 @@ html body .mv-meta-text > .mv-list-badge {
 .mv-ic-item {
   display: inline-block !important;
   line-height: 1;
+}
+
+/* =====================================================================
+   v1.24.0 — Icone multiple: si rimpiccioliscono loro, il testo resta fermo
+   Prima con due emoji la colonna si allargava e spingeva il testo a destra.
+   Ora la colonna è sempre della stessa larghezza e sono le emoji a ridursi.
+   ===================================================================== */
+.mv-ic,
+#view-home .hl-em,
+#view-liste .lv-em,
+.ls-em,
+#overlayRoot #sheetListTrash .lt-em,
+.category-row .ic,
+.template-manage-row .ic {
+  width: 28px !important;
+  min-width: 28px !important;
+  max-width: 28px !important;
+  flex: 0 0 28px !important;
+  justify-content: center !important;
+  gap: 0 !important;
+  overflow: visible !important;
+}
+:is(.mv-ic, .hl-em, .lv-em, .ls-em, .lt-em, .ic):has(.mv-ic-item + .mv-ic-item) .mv-ic-item {
+  font-size: .64em;
+  line-height: 1;
+}
+:is(.mv-ic, .hl-em, .lv-em, .ls-em, .lt-em, .ic):has(.mv-ic-item + .mv-ic-item + .mv-ic-item) .mv-ic-item {
+  font-size: .5em;
+}
+#overlayRoot #sheetListDetail .lc-icon {
+  width: 34px !important;
+  min-width: 34px !important;
+  max-width: 34px !important;
+  flex: 0 0 34px !important;
+}
+#overlayRoot #sheetListDetail .lc-icon:has(.mv-ic-item + .mv-ic-item) .mv-ic-item {
+  font-size: .64em;
+}
+
+/* =====================================================================
+   v1.24.0 — Saldi e cifre come in Bilancio
+   Un solo occhio fisso in alto a destra, e due grigi al posto del bianco:
+   chiaro per le cifre normali, spento per quelle a zero. Verde e rosso restano.
+   ===================================================================== */
+:root {
+  --num-plain: color-mix(in srgb, var(--ink) 82%, transparent);
+  --num-zero: color-mix(in srgb, var(--ink) 46%, transparent);
+}
+/* L'occhio: uno solo, fermo in alto a destra, resta lì anche scorrendo */
+#views .balance-hide:not(.eye-fixed) {
+  display: none !important;
+}
+.eye-fixed {
+  position: fixed !important;
+  top: calc(env(safe-area-inset-top, 0px) + 8px);
+  right: 10px;
+  z-index: 60;
+  width: 40px !important;
+  min-width: 40px !important;
+  height: 40px !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid color-mix(in srgb, var(--ink) 10%, transparent) !important;
+  border-radius: 13px;
+  background: color-mix(in srgb, var(--card) 72%, transparent) !important;
+  -webkit-backdrop-filter: blur(16px) saturate(1.5);
+  backdrop-filter: blur(16px) saturate(1.5);
+  color: var(--ink-soft) !important;
+  box-shadow: 0 6px 18px -10px rgba(0, 0, 0, .5);
+}
+.eye-fixed svg { width: 20px; height: 20px; }
+.eye-fixed:active { transform: scale(.94); }
+/* Niente finisce sotto l'occhio; sulla barra del periodo lo spazio è da tutti e due
+   i lati, così il nome del mese resta in mezzo. */
+#views .view > .topbar {
+  padding-left: 50px;
+  padding-right: 50px;
+}
+#views .view > .view-title,
+#views .view > .rp-title-row {
+  padding-right: 50px;
+}
+
+/* I due grigi su ogni cifra neutra dell'app */
+#views :is(.mv-amt, .amt, .account-balance, .stat-card-value, .budget-spent,
+           .hero-amount, .hero-split-value, .pie-legend-item .val,
+           .lv-count, .list-price, .ls-price, .nd-amt, .gd-amt
+          ):not(.pos):not(.neg):not(.income):not(.expense):not(.zero),
+#overlayRoot :is(.mv-amt, .amt):not(.pos):not(.neg):not(.income):not(.expense) {
+  color: var(--num-plain);
+}
+#views :is(.mv-amt, .amt, .account-balance, .stat-card-value, .budget-spent,
+           .hero-amount, .hero-split-value, .pie-legend-item .val).zero {
+  color: var(--num-zero) !important;
+}
+
+/* =====================================================================
+   v1.24.0 — Tre azioni nello scorrimento, registro dei link, scheda prodotto
+   ===================================================================== */
+/* Scorri a sinistra: ✎ Modifica · ★ Preferito · 🗑 Elimina */
+.list-actions {
+  width: 200px !important;
+}
+.list-actions button {
+  flex: 0 0 62px !important;
+  width: 62px;
+}
+.list-act-edit {
+  background: linear-gradient(145deg, #5b8def, #3a66c4) !important;
+}
+.list-swipe-wrap.swipe-far .list-actions {
+  width: max(200px, calc(var(--dx, 0px) * -1)) !important;
+}
+
+/* ---- Registro dei link ---- */
+.link-registry {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 8px;
+}
+.link-empty {
+  margin: 6px 2px 0;
+  font-size: 11px;
+  color: var(--ink-soft);
+}
+.link-row {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 7px 9px;
+  border-radius: 13px;
+  border: 1px solid var(--glass-edge, var(--line));
+  background: color-mix(in srgb, var(--ink) 4%, transparent);
+  min-width: 0;
+}
+.link-thumb {
+  flex: 0 0 32px;
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border-radius: 9px;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--ink) 7%, transparent);
+  font-size: 13px;
+}
+.link-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.link-info {
+  display: grid;
+  flex: 1 1 auto;
+  min-width: 0;
+  line-height: 1.25;
+}
+.link-info b {
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.link-info small {
+  font-size: 11px;
+  color: var(--ink-soft);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.link-price {
+  flex: 0 0 auto;
+  font-size: 13px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--num-plain);
+  white-space: nowrap;
+}
+.link-open,
+.link-del {
+  flex: 0 0 28px;
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 9px;
+  background: color-mix(in srgb, var(--ink) 7%, transparent);
+  color: var(--ink);
+  font: inherit;
+  font-size: 13px;
+  text-decoration: none;
+}
+.link-del {
+  color: #e2554e;
+}
+
+/* ---- Scheda del prodotto (tieni premuto) ---- */
+#sheetItemSummary .isum-rows {
+  margin: 10px 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+#sheetItemSummary .isum-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 7px 2px;
+  border-top: 1px solid color-mix(in srgb, var(--ink) 9%, transparent);
+}
+#sheetItemSummary .isum-row:first-child {
+  border-top: 0;
+}
+#sheetItemSummary .isum-row dt {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .4px;
+  color: var(--ink-soft);
+  white-space: nowrap;
+}
+#sheetItemSummary .isum-row dd {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  text-align: right;
+  min-width: 0;
+}
+#sheetItemSummary .isum-label {
+  margin: 14px 2px 0;
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  color: var(--ink-soft);
+}
+#sheetItemSummary .item-photo img {
+  max-height: 180px;
 }

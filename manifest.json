@@ -1,7 +1,7 @@
 {
-  "name": "Bilancio — Tracker Spese",
-  "short_name": "Bilancio",
-  "description": "Tracciamento mensile delle spese con conti multipli, categorie e budget.",
+  "name": "Noi Due — Spese di coppia",
+  "short_name": "Noi Due",
+  "description": "Spese di coppia: chi ha pagato, chi deve a chi, budget e statistiche.",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
@@ -11,25 +11,25 @@
   "lang": "it",
   "icons": [
     {
-      "src": "icons/icon-192.png?v=1.40.0",
+      "src": "icons/icon-192.png?v=1.30.0",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "icons/icon-512.png?v=1.40.0",
+      "src": "icons/icon-512.png?v=1.30.0",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "icons/icon-maskable-192.png?v=1.40.0",
+      "src": "icons/icon-maskable-192.png?v=1.30.0",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "maskable"
     },
     {
-      "src": "icons/icon-maskable-512.png?v=1.40.0",
+      "src": "icons/icon-maskable-512.png?v=1.30.0",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"

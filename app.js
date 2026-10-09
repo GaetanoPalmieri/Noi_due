@@ -1,10 +1,10 @@
 /* =========================================================
-   Bilancio — logica app
+   Noi Due — spese di coppia (derivata da Bilancio 1.10.7)
    Stato persistito in localStorage, nessuna dipendenza esterna.
    ========================================================= */
 
-const STORAGE_KEY = "bilancio_v1";
-const THEME_KEY = "bilancio_theme";
+const STORAGE_KEY = "noidue_v1";
+const THEME_KEY = "noidue_theme";
 const MESI = ["Gennaio","Febbraio","Marzo","Aprile","Maggio","Giugno","Luglio","Agosto","Settembre","Ottobre","Novembre","Dicembre"];
 const MESI_BREVI = ["Gen","Feb","Mar","Apr","Mag","Giu","Lug","Ago","Set","Ott","Nov","Dic"];
 const FREQ_LABEL = { weekly: "Ogni settimana", monthly: "Ogni mese", bimonthly:"Ogni 2 mesi", quarterly:"Ogni 3 mesi", semiannual:"Ogni 6 mesi", yearly: "Ogni anno" };
@@ -23,7 +23,7 @@ function fmt(n){
   return v.toLocaleString("it-IT", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + "\u00a0€";
 }
 function fmtSigned(n){ return (n>=0?"+":"−") + fmt(Math.abs(n)); }
-/* v1.10.9 — Con il saldo nascosto le cifre dei grafici diventano pallini (non spariscono). */
+/* Con il saldo nascosto le cifre dei grafici diventano pallini (non spariscono). */
 function maskAmt(text,dots="••••"){ return balancesHidden ? dots : text; }
 function parseAmount(str){
   if(!str) return 0;
@@ -31,28 +31,11 @@ function parseAmount(str){
   const v = window.SuiteFmt ? SuiteFmt.parse(str) : parseFloat(String(str).replace(/[€\s]/g,"").replace(",","."));
   return isNaN(v) ? 0 : Math.abs(v);
 }
-/* v1.39.0 — La casella dell'importo è larga esattamente quanto la cifra (misurata col font vero),
-   così cifra e simbolo € restano uniti e centrati. */
-let _amtCanvas=null;
-function fitAmountInput(el){
-  if(!el) return;
-  try{
-    const cs=getComputedStyle(el);
-    _amtCanvas=_amtCanvas||document.createElement("canvas");
-    const ctx=_amtCanvas.getContext("2d");
-    ctx.font=`${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`;
-    const txt=el.value||el.placeholder||"0";
-    const ls=parseFloat(cs.letterSpacing)||0;
-    const w=Math.ceil(ctx.measureText(txt).width+ls*txt.length)+6;
-    el.style.width=Math.max(w,Math.ceil(ctx.measureText("00").width))+"px";
-  }catch(e){ el.style.width=Math.max(2,el.value.length+1)+"ch"; }
-}
 function autoGrowAmountInput(el){
-  const grow = ()=>fitAmountInput(el);
+  const grow = ()=>{ el.style.width = Math.max(2, el.value.length + 1) + "ch"; };
   el.addEventListener("input", grow);
-  grow(); requestAnimationFrame(grow);
+  grow();
 }
-document.addEventListener("input",e=>{ if(e.target?.matches?.(".amount-field input")) fitAmountInput(e.target); },true);
 function stepDateISO(iso, freq, anchorISO=iso){
   const d = new Date(iso+"T00:00:00");
   const anchor = new Date(anchorISO+"T00:00:00");
@@ -73,39 +56,37 @@ function stepDateISO(iso, freq, anchorISO=iso){
 
 /* ---------------- Default seed data ---------------- */
 function seedState(){
-  const accId = { cash: uid(), bbva: uid(), fineco: uid(), ca: uid() };
-  const macroId = { giornaliere: uid(), casa: uid(), trasporti: uid(), salute: uid(), entrate: uid() };
-  const catId = { spesa: uid(), trasporti: uid(), bollette: uid(), casa: uid(), salute: uid(), svago: uid(), stipendio: uid(), altreEntrate: uid() };
+  const accId = { a: uid(), b: uid(), joint: uid() };
+  const macroId = { casa: uid(), quotidiane: uid(), insieme: uid(), trasporti: uid(), entrate: uid() };
+  const C=(name,emoji,color,kind,budget,macro)=>({ id: uid(), name, emoji, color, kind, budget, macroCategoryId: macro });
+  const seedGroups = defaultGroups();
   return {
+    couple: { a: { name: "Persona 1", color: "#3AA684" }, b: { name: "Persona 2", color: "#C25B9E" }, defaultSplit: "half", lastGroupId: null },
+    groups: seedGroups,
+    lists: defaultLists(seedGroups),
     accounts: [
-      { id: accId.cash, name: "Contanti", balance: 0, color: PALETTE[7] },
-      { id: accId.bbva, name: "BBVA", balance: 0, color: PALETTE[0] },
-      { id: accId.fineco, name: "Fineco", balance: 0, color: PALETTE[6] },
-      { id: accId.ca, name: "Credit Agricole", balance: 0, color: PALETTE[3] },
+      { id: accId.a, name: "Persona 1", balance: 0, color: "#3AA684", owner: "a" },
+      { id: accId.b, name: "Persona 2", balance: 0, color: "#C25B9E", owner: "b" },
+      { id: accId.joint, name: "Cassa comune", balance: 0, color: "#D4A83A", owner: "joint" },
     ],
-    macroCategories: [
-      { id: macroId.giornaliere, name: "Spese giornaliere", emoji: "🛒", color: PALETTE[1], budget: 400, kind:"expense" },
-      { id: macroId.casa, name: "Casa e utenze", emoji: "🏠", color: PALETTE[4], budget: null, kind:"expense" },
-      { id: macroId.trasporti, name: "Trasporti", emoji: "🚗", color: PALETTE[2], budget: null, kind:"expense" },
-      { id: macroId.salute, name: "Salute e benessere", emoji: "💊", color: PALETTE[5], budget: null, kind:"expense" },
-      { id: macroId.entrate, name: "Entrate", emoji: "💰", color: PALETTE[0], budget: null, kind:"income" },
-    ],
+    macroCategories: [],
     categories: [
-      { id: catId.spesa, name: "Spesa", emoji: "🛒", color: PALETTE[1], kind: "expense", budget: 300, macroCategoryId: macroId.giornaliere },
-      { id: catId.trasporti, name: "Trasporti", emoji: "🚗", color: PALETTE[2], kind: "expense", budget: 100, macroCategoryId: macroId.trasporti },
-      { id: catId.bollette, name: "Bollette", emoji: "💡", color: PALETTE[3], kind: "expense", budget: 150, macroCategoryId: macroId.casa },
-      { id: catId.casa, name: "Casa", emoji: "🏠", color: PALETTE[4], kind: "expense", budget: null, macroCategoryId: macroId.casa },
-      { id: catId.salute, name: "Salute", emoji: "💊", color: PALETTE[5], kind: "expense", budget: null, macroCategoryId: macroId.salute },
-      { id: catId.svago, name: "Svago", emoji: "🎬", color: PALETTE[6], kind: "expense", budget: 80, macroCategoryId: macroId.giornaliere },
-      { id: catId.stipendio, name: "Stipendio", emoji: "💰", color: PALETTE[0], kind: "income", budget: null, macroCategoryId: macroId.entrate },
-      { id: catId.altreEntrate, name: "Altre entrate", emoji: "➕", color: PALETTE[7], kind: "income", budget: null, macroCategoryId: macroId.entrate },
+      C("Affitto / mutuo","🔑",PALETTE[4],"expense",null,null),
+      C("Bollette","💡",PALETTE[2],"expense",null,null),
+      C("Casa","🏠",PALETTE[9],"expense",null,null),
+      C("Spesa","🛒",PALETTE[1],"expense",null,null),
+      C("Farmacia","💊",PALETTE[3],"expense",null,null),
+      C("Ristoranti","🍝",PALETTE[10],"expense",null,null),
+      C("Svago","🎬",PALETTE[5],"expense",null,null),
+      C("Viaggi","✈️",PALETTE[6],"expense",null,null),
+      C("Regali","🎁",PALETTE[12],"expense",null,null),
+      C("Trasporti","🚗",PALETTE[2],"expense",null,null),
     ],
     recurring: [],
     transactions: [],
     planned: [],
-    loanRates: [],
     trash: [],
-    mainAccountId: null,
+    mainAccountId: accId.joint,
   };
 }
 
@@ -136,21 +117,6 @@ function migrate(parsed){
     }
   });
   parsed.categories.forEach(c=>{ if(c.macroCategoryId===undefined) c.macroCategoryId = null; });
-  // v1.37.0 — sottocategorie: un solo livello, e ereditano tipo e macro dalla madre.
-  {
-    const byId = Object.fromEntries((parsed.categories||[]).map(c=>[c.id,c]));
-    (parsed.categories||[]).forEach(c=>{
-      if(c.parentCategoryId===undefined) c.parentCategoryId = null;
-      const p = c.parentCategoryId ? byId[c.parentCategoryId] : null;
-      if(!p || p.id===c.id || p.parentCategoryId){ c.parentCategoryId = null; return; }
-      c.kind = p.kind;
-      c.macroCategoryId = p.macroCategoryId || null;
-    });
-  }
-  // v1.25.1: la categoria automatica "Pagate da altri" non serve più; se non è mai stata usata la tolgo.
-  { const used=new Set([...(parsed.transactions||[]),...(parsed.recurring||[]),...(parsed.planned||[]),...(parsed.trash||[]).map(x=>x&&(x.item||x.tx||x))].map(x=>x&&x.categoryId).filter(Boolean));
-    parsed.categories=parsed.categories.filter(c=>!(c.otherPaidDefault&&!used.has(c.id)));
-    parsed.categories.forEach(c=>{ if(c.otherPaidDefault) delete c.otherPaidDefault; }); }
   if(!Array.isArray(parsed.recurring)) parsed.recurring = [];
   parsed.recurring.forEach(r=>{
     if(r.active===undefined) r.active=true;
@@ -158,12 +124,12 @@ function migrate(parsed){
     if(r.maxOccurrences===undefined) r.maxOccurrences=null;
   });
   if(!Array.isArray(parsed.planned)) parsed.planned = [];
-  if(!Array.isArray(parsed.loanRates)) parsed.loanRates = [];
   if(!Array.isArray(parsed.trash)) parsed.trash = [];
   if(parsed.mainAccountId===undefined) parsed.mainAccountId = null;
   if(parsed.mainAccountId && !parsed.accounts.some(a=>String(a.id)===String(parsed.mainAccountId))) parsed.mainAccountId = null;
   parsed.trash = pruneTrashArray(parsed.trash);
   sanitizeLoadedState(parsed);
+  sanitizeCouple(parsed);
   // I modelli rapidi sono stati sostituiti da categorie/macrocategorie: rimuovi eventuali residui.
   delete parsed.templates;
   return parsed;
@@ -178,11 +144,10 @@ function sanitizeLoadedState(data){
   data.mainAccountId=data.mainAccountId==null?null:id(data.mainAccountId);
   if(data.mainAccountId && !data.accounts.some(a=>a.id===data.mainAccountId)) data.mainAccountId=null;
   data.macroCategories=(Array.isArray(data.macroCategories)?data.macroCategories:[]).map(m=>({...m,id:id(m.id),name:text(m.name,120),emoji:text(m.emoji,12),color:safeColor(m.color,PALETTE[0]),kind:m.kind==="income"?"income":"expense",budget:m.budget==null?null:amount(m.budget)}));
-  data.categories=(Array.isArray(data.categories)?data.categories:[]).map(c=>({...c,id:id(c.id),name:text(c.name,120),emoji:text(c.emoji,12),color:safeColor(c.color,PALETTE[0]),kind:c.kind==="income"?"income":"expense",budget:c.budget==null?null:amount(c.budget),macroCategoryId:c.macroCategoryId==null?null:id(c.macroCategoryId),parentCategoryId:c.parentCategoryId==null?null:id(c.parentCategoryId)}));
+  data.categories=(Array.isArray(data.categories)?data.categories:[]).map(c=>({...c,id:id(c.id),name:text(c.name,120),emoji:text(c.emoji,12),color:safeColor(c.color,PALETTE[0]),kind:c.kind==="income"?"income":"expense",budget:c.budget==null?null:amount(c.budget),macroCategoryId:c.macroCategoryId==null?null:id(c.macroCategoryId)}));
   data.transactions=(Array.isArray(data.transactions)?data.transactions:[]).map(t=>({...t,id:id(t.id),date:date(t.date,todayISO()),amount:amount(t.amount),type:["income","expense","transfer"].includes(t.type)?t.type:"expense",name:text(t.name,160),note:text(t.note,500),categoryId:t.categoryId==null?null:id(t.categoryId),accountId:t.accountId==null?null:id(t.accountId),toAccountId:t.toAccountId==null?null:id(t.toAccountId),recurringId:t.recurringId==null?undefined:id(t.recurringId),plannedId:t.plannedId==null?undefined:id(t.plannedId)}));
   const freqs=new Set(["weekly","monthly","bimonthly","quarterly","semiannual","yearly"]);
   data.recurring=(Array.isArray(data.recurring)?data.recurring:[]).map(r=>({...r,id:id(r.id),name:text(r.name,160),note:text(r.note,500),amount:amount(r.amount),type:r.type==="income"?"income":"expense",categoryId:r.categoryId==null?null:id(r.categoryId),accountId:r.accountId==null?null:id(r.accountId),freq:freqs.has(r.freq)?r.freq:"monthly",startDate:date(r.startDate,todayISO()),nextDate:date(r.nextDate,date(r.startDate,todayISO())),endDate:date(r.endDate,""),active:r.active!==false,maxOccurrences:Number.isFinite(Number(r.maxOccurrences))&&Number(r.maxOccurrences)>0?Math.floor(Number(r.maxOccurrences)):null}));
-  data.loanRates=(Array.isArray(data.loanRates)?data.loanRates:[]).filter(r=>r&&r.accId).map(r=>({id:id(r.id||uid()),accId:id(r.accId),date:date(r.date,todayISO()),amount:amount(r.amount),n:Number(r.n)||1,of:Number(r.of)||0}));
   data.planned=(Array.isArray(data.planned)?data.planned:[]).map(p=>({...p,id:id(p.id),name:text(p.name,160),note:text(p.note,500),amount:amount(p.amount),type:p.type==="income"?"income":"expense",categoryId:p.categoryId==null?null:id(p.categoryId),accountId:p.accountId==null?null:id(p.accountId),date:date(p.date,todayISO()),recurringId:p.recurringId==null?undefined:id(p.recurringId)}));
 }
 function pruneTrashArray(items){
@@ -203,31 +168,82 @@ function safeSetLocalStorage(key,value,{notify=true}={}){
     return false;
   }
 }
+/* v1.10.0 — Foto dei prodotti in IndexedDB.
+   Prima erano dentro i dati (localStorage, ~5 MB in tutto): con molte foto lo spazio finiva e l'app
+   non salvava più. Ora nei dati resta solo un riferimento "idb:<id>"; le foto stanno in IndexedDB.
+   Il backup continua a contenere le foto (vengono reinserite all'esportazione). */
+const PhotoStore=(()=>{
+  const cache=new Map(); let dbp=null, ok=!!window.indexedDB;
+  function db(){
+    if(!ok) return Promise.reject(new Error("no idb"));
+    if(!dbp) dbp=new Promise((res,rej)=>{ const r=indexedDB.open("noidue_photos",1); r.onupgradeneeded=()=>r.result.createObjectStore("photos"); r.onsuccess=()=>res(r.result); r.onerror=()=>{ ok=false; rej(r.error); }; });
+    return dbp;
+  }
+  function tx(mode,fn){ return db().then(d=>new Promise((res,rej)=>{ const t=d.transaction("photos",mode), st=t.objectStore("photos"); const out=fn(st); t.oncomplete=()=>res(out&&out.result); t.onerror=()=>rej(t.error); t.onabort=()=>rej(t.error); })); }
+  // v1.11.0: foto aggiunte dall'altro telefono: si scaricano dal database online la prima volta che servono.
+  const pending=new Set(), failed=new Set();
+  function fetchRemote(key){
+    const S=window.syncNoiDue;
+    if(!S||!S.coupleId||!window.SuiteSync?.signedIn||pending.has(key)||failed.has(key)) return;
+    pending.add(key);
+    S.downloadPhoto(`coppia/${S.coupleId}/${key}.jpg`).then(blob=>new Promise((res,rej)=>{ const r=new FileReader(); r.onload=()=>res(r.result); r.onerror=rej; r.readAsDataURL(blob); }))
+      .then(data=>{ cache.set(key,data); return tx("readwrite",st=>st.put(data,key)).catch(()=>{}); })
+      .then(()=>{ markUploaded(key); if(typeof listDetailRefresh==="function") listDetailRefresh(); })
+      .catch(()=>failed.add(key)).finally(()=>pending.delete(key));
+  }
+  return {
+    get available(){ return ok; },
+    has(key){ return cache.has(key); },
+    src(ref){ if(!ref) return ""; if(String(ref).startsWith("idb:")){ const k=ref.slice(4); if(!cache.has(k)) fetchRemote(k); return cache.get(k)||""; } return ref; },
+    data(ref){ return this.src(ref); },
+    put(key,dataUrl){ cache.set(key,dataUrl); return tx("readwrite",st=>st.put(dataUrl,key)); },
+    async loadAll(){ const keys=await tx("readonly",st=>st.getAllKeys()); const vals=await tx("readonly",st=>st.getAll()); (keys||[]).forEach((k,i)=>cache.set(k,vals[i])); return cache.size; },
+    async prune(used){ const keys=await tx("readonly",st=>st.getAllKeys()); const dead=(keys||[]).filter(k=>!used.has(k)); if(dead.length) await tx("readwrite",st=>{ dead.forEach(k=>{ st.delete(k); cache.delete(k); }); }); return dead.length; }
+  };
+})();
+function photoSrc(ref){ return PhotoStore.src(ref); }
+function allListItems(s){ return (s?.lists||[]).flatMap(l=>l.items||[]); }
+/* Sposta in IndexedDB le foto ancora salvate dentro i dati (nuove, importate o di versioni precedenti). */
+function offloadPhotos(){
+  if(!PhotoStore.available) return;
+  allListItems(state).forEach(it=>{
+    if(!/^data:image\//.test(String(it.photo||""))) return;
+    const key=uid(), data=it.photo;
+    it.photo="idb:"+key;
+    PhotoStore.put(key,data).catch(()=>{ // IndexedDB non disponibile: la foto torna nei dati
+      allListItems(state).forEach(x=>{ if(x.photo==="idb:"+key) x.photo=data; }); safeSetLocalStorage(STORAGE_KEY, JSON.stringify(state));
+    });
+  });
+}
+/* Copia dei dati con le foto dentro (per backup e confronti). */
+function stateWithPhotos(s){
+  const c=JSON.parse(JSON.stringify(s));
+  allListItems(c).forEach(it=>{ if(String(it.photo||"").startsWith("idb:")) it.photo=PhotoStore.data(it.photo)||""; });
+  return c;
+}
 function persist(){
   balanceCache.clear();
+  offloadPhotos();
+  state.updatedAt=new Date().toISOString();
   state.trash = pruneTrashArray(state.trash);
-  state.updatedAt = new Date().toISOString();
-  const ok = safeSetLocalStorage(STORAGE_KEY, JSON.stringify(state));
-  if(ok && window.syncBilancio) syncBilancio.changed();
+  const ok=safeSetLocalStorage(STORAGE_KEY, JSON.stringify(state));
+  if(ok && window.syncNoiDue) syncNoiDue.changed();
   return ok;
 }
-function toggleBalances(){balancesHidden=!balancesHidden;safeSetLocalStorage("bilancio_hide_balances",balancesHidden?"1":"0",{notify:false});renderAll();}
-function moveToTrash(kind, item, companions=[]){
+function toggleBalances(){balancesHidden=!balancesHidden;safeSetLocalStorage("noidue_hide_balances",balancesHidden?"1":"0",{notify:false});renderAll();}
+function moveToTrash(kind, item){
   if(!Array.isArray(state.trash)) state.trash=[];
-  const entry={id:uid(),kind,data:JSON.parse(JSON.stringify(item)),deletedAt:todayISO()};
-  if(companions.length) entry.companions=JSON.parse(JSON.stringify(companions));
-  state.trash.unshift(entry);
+  state.trash.unshift({id:uid(),kind,data:JSON.parse(JSON.stringify(item)),deletedAt:todayISO()});
   state.trash=pruneTrashArray(state.trash);
 }
 function restoreTrashItem(trashId){
   const entry=state.trash.find(x=>x.id===trashId); if(!entry) return;
-  if(entry.kind==="transaction"){ state.transactions.push(entry.data); (entry.companions||[]).forEach(c=>{ if(!state.transactions.some(x=>x.id===c.id)) state.transactions.push(c); }); }
+  if(entry.kind==="transaction") state.transactions.push(entry.data);
   if(entry.kind==="planned") state.planned.push(entry.data);
   if(entry.kind==="recurring") state.recurring.push(entry.data);
   state.trash=state.trash.filter(x=>x.id!==trashId);
   sanitizeLoadedState(state);
   if(entry.kind==="recurring") refreshRecurringTransactions(String(entry.data.id));
-  if(entry.kind==="planned") generatePlannedTransactions();
   persist();renderAll();
 }
 
@@ -264,15 +280,14 @@ let txSearchQuery="", txDateFrom="", txDateTo="";
 const TX_PAGE_SIZE=50;
 let txVisibleLimit=TX_PAGE_SIZE;
 let txSearchTimer=null;
-let rpMode = "total";
 let viewDay = now.getDate();
-const periodModes = {home:"month", recurring:"month", stats:"month", transactions:"month", rpall:"month"};
-let rpAllKind="total", rpAllQuery="";
+const periodModes = {home:"all", recurring:"month", stats:"month", transactions:"all", rpall:"month"};
 function selectedDate(){return `${viewYear}-${pad2(viewMonth+1)}-${pad2(viewDay)}`;}
 /* v1.7.0 — Periodo: mese intero, singolo giorno oppure intervallo di giorni (anche tra mesi diversi). */
 let periodRange={from:null,to:null};
 function periodBounds(view){
   const mode=periodModes[view]||"month";
+  if(mode==="all") return {from:"0000-01-01",to:"9999-12-31"};
   if(mode==="day"){const d=selectedDate();return {from:d,to:d};}
   if(mode==="range" && periodRange.from && periodRange.to) return {from:periodRange.from,to:periodRange.to};
   return {from:`${viewYear}-${pad2(viewMonth+1)}-01`,to:`${viewYear}-${pad2(viewMonth+1)}-${pad2(new Date(viewYear,viewMonth+1,0).getDate())}`};
@@ -281,6 +296,7 @@ function inPeriod(view,iso){ if(!iso) return false; const b=periodBounds(view); 
 function shortDate(iso,withYear=false){const d=new Date(iso+"T00:00:00");return `${d.getDate()} ${MESI_BREVI[d.getMonth()].toLowerCase()}${withYear?" "+d.getFullYear():""}`;}
 function periodLabel(view){
   const mode=periodModes[view]||"month";
+  if(mode==="all") return "Tutti i movimenti";
   if(mode==="day"){const d=new Date(selectedDate()+"T00:00:00");const wd=["Dom","Lun","Mar","Mer","Gio","Ven","Sab"][d.getDay()];return `${wd} ${d.getDate()} ${MESI[d.getMonth()].toLowerCase()} ${d.getFullYear()}`;}
   if(mode==="range" && periodRange.from){
     const a=new Date(periodRange.from+"T00:00:00"), b=new Date(periodRange.to+"T00:00:00");
@@ -289,31 +305,248 @@ function periodLabel(view){
   }
   return `${MESI[viewMonth]} ${viewYear}`;
 }
-function periodSubLabel(view){const m=periodModes[view]||"month";return m==="day"?"Solo questo giorno":m==="range"?"Periodo scelto":"Tutto il mese";}
-function monthsInPeriod(view){
-  const b=periodBounds(view); const out=[];
-  let d=new Date(b.from+"T00:00:00"); d=new Date(d.getFullYear(),d.getMonth(),1);
-  const end=new Date(b.to+"T00:00:00");
-  while(d<=end && out.length<36){out.push([d.getFullYear(),d.getMonth()]);d=new Date(d.getFullYear(),d.getMonth()+1,1);}
-  return out;
-}
-function plannedItemsInPeriod(view){
-  return monthsInPeriod(view).flatMap(([y,m])=>plannedItemsForMonth(y,m)).filter(t=>inPeriod(view,t.date));
-}
+function periodSubLabel(view){const m=periodModes[view]||"month";return m==="all"?"Filtra per mese o giorno":m==="day"?"Solo questo giorno":m==="range"?"Periodo scelto":"Tutto il mese";}
 function periodTx(view){
+  if(periodModes[view]==="all") return state.transactions.slice();
   if((periodModes[view]||"month")==="month") return monthTx();
   return state.transactions.filter(t=>inPeriod(view,t.date));
 }
-function sumTransactions(tx){
-  // v1.12.5: rettifiche di saldo e prestiti vecchi (fuori saldo) non sono entrate né uscite del periodo.
-  const real=tx.filter(t=>!t.isBalanceAdjustment&&!t.loanOld);
-  const income=real.filter(t=>t.type==="income").reduce((s,t)=>s+t.amount,0);
-  const expense=real.filter(t=>t.type==="expense").reduce((s,t)=>s+t.amount,0);
-  return {income,expense,net:income-expense};
+
+/* ---------------- Noi Due — logica di coppia ----------------
+   Ogni conto appartiene a una persona ("a", "b") o è "joint" (comune).
+   Una spesa pagata da un conto personale si divide con t.split:
+     half = a metà · pct = percentuale (pctA = quota di A) · other = tutto all'altro · personal = solo chi paga.
+   Le spese dal conto comune non creano debiti. Un trasferimento tra conti di persone diverse è un rimborso.
+   Saldo di coppia > 0: B deve ad A. */
+// Funzione (non const): sanitizeCouple gira già durante load(), prima che le const più in basso esistano.
+function coupleDefaults(){ return {a:{name:"Persona 1",color:"#3AA684"},b:{name:"Persona 2",color:"#C25B9E"},defaultSplit:"half"}; }
+function sanitizeCouple(data){
+  const c=data.couple&&typeof data.couple==="object"?data.couple:{};
+  const COUPLE_DEFAULT=coupleDefaults();
+  const person=(p,def)=>({name:String(p?.name||def.name).trim().slice(0,24)||def.name,color:safeColor(p?.color,def.color)});
+  data.couple={a:person(c.a,COUPLE_DEFAULT.a),b:person(c.b,COUPLE_DEFAULT.b),defaultSplit:c.defaultSplit==="personal"?"personal":"half",lastGroupId:c.lastGroupId?String(c.lastGroupId):null,onboarded:!!c.onboarded};
+  (data.accounts||[]).forEach(a=>{ if(!["a","b","joint"].includes(a.owner)) a.owner="joint"; });
+  if(["a","b","joint"].includes(c.lastPayer)) data.couple.lastPayer=c.lastPayer;
+  // Noi Due 1.4.0: niente conti. Ci sono solo tre "pagatori": persona 1, persona 2 e cassa comune.
+  // I conti in più di una stessa persona vengono uniti; i giroconti tra di loro spariscono.
+  if(!Array.isArray(data.accounts)) data.accounts=[];
+  const canon={};
+  ["a","b","joint"].forEach(o=>{ const first=data.accounts.find(a=>a.owner===o); if(first) canon[o]=first.id; else { const acc={id:uid(),name:"",balance:0,color:"#D4A83A",owner:o}; data.accounts.push(acc); canon[o]=acc.id; } });
+  const remap={}; data.accounts.forEach(a=>{ if(canon[a.owner]!==a.id) remap[a.id]=canon[a.owner]; });
+  if(Object.keys(remap).length){
+    const m=id=>remap[id]||id;
+    ["transactions","recurring","planned"].forEach(k=>{ data[k]=(data[k]||[]).map(t=>({...t,accountId:m(t.accountId),toAccountId:t.toAccountId?m(t.toAccountId):t.toAccountId})).filter(t=>!(t.type==="transfer"&&t.accountId===t.toAccountId)); });
+    if(data.mainAccountId) data.mainAccountId=m(data.mainAccountId);
+  }
+  data.accounts=["a","b","joint"].map(o=>{ const acc=data.accounts.find(a=>a.id===canon[o]); return {...acc,owner:o,name:o==="joint"?"Cassa comune":data.couple[o].name,color:o==="joint"?"#D4A83A":data.couple[o].color}; });
+  data.mainAccountId=canon.joint;
+  // Gruppi (Casa, Spese di coppia, …): ognuno ha il suo saldo; il totale è la somma.
+  data.groups=(Array.isArray(data.groups)?data.groups:[]).filter(g=>g&&g.id).map(g=>({id:String(g.id).slice(0,120),name:String(g.name||"Gruppo").slice(0,40),emoji:cleanEmoji(String(g.emoji||"👥"))||"👥",color:safeColor(g.color,PALETTE[4]),defaultSplit:g.defaultSplit==="personal"?"personal":"half"}));
+  if(!data.groups.length) data.groups=defaultGroups();
+  const ids=new Set(data.groups.map(g=>g.id));
+  const fallback=(data.groups.find(g=>/coppia/i.test(g.name))||data.groups[0]).id;
+  [...(data.transactions||[]),...(data.recurring||[]),...(data.planned||[])].forEach(t=>{ if(t.groupId!=null && !ids.has(t.groupId)) t.groupId=fallback; if(t.groupId==null && t.type!=="transfer") t.groupId=fallback; });
+  (data.transactions||[]).forEach(t=>{ if(t.settleAlloc){ Object.keys(t.settleAlloc).forEach(k=>{ if(!ids.has(k)){ t.settleAlloc[fallback]=(t.settleAlloc[fallback]||0)+t.settleAlloc[k]; delete t.settleAlloc[k]; } }); } });
+  if(data.couple.lastGroupId && !ids.has(data.couple.lastGroupId)) data.couple.lastGroupId=null;
+  // Noi Due 1.5.0: solo categorie di spesa, senza macrocategorie né budget.
+  const usedCat=new Set([...(data.transactions||[]),...(data.recurring||[]),...(data.planned||[])].map(t=>t.categoryId));
+  data.macroCategories=[];
+  data.categories=(data.categories||[]).filter(c=>c.kind!=="income"||usedCat.has(c.id)).map(c=>({...c,macroCategoryId:null,budget:null}));
+  // Liste della spesa / cose da comprare.
+  if(!Array.isArray(data.lists)) data.lists=defaultLists(data.groups);
+  data.lists=data.lists.filter(l=>l&&l.id).map(l=>({id:String(l.id).slice(0,120),name:String(l.name||"Lista").slice(0,40),emoji:cleanEmoji(String(l.emoji||"🛒"))||"🛒",groupId:ids.has(l.groupId)?l.groupId:fallback,
+    items:(Array.isArray(l.items)?l.items:[]).filter(i=>i&&i.id).map(i=>({id:String(i.id).slice(0,120),text:String(i.text||"").slice(0,120),price:Number.isFinite(Number(i.price))&&Number(i.price)>0?Math.round(Number(i.price)*100)/100:null,done:!!i.done,
+      code:String(i.code||"").replace(/[^0-9A-Za-z-]/g,"").slice(0,32),image:/^https:\/\//.test(String(i.image||""))?String(i.image).slice(0,500):"",url:/^https:\/\//.test(String(i.url||""))?String(i.url).slice(0,500):"",
+      photo:/^data:image\/(jpeg|png|webp);base64,/.test(String(i.photo||""))&&String(i.photo).length<300000?String(i.photo):/^idb:[\w-]{1,120}$/.test(String(i.photo||""))?String(i.photo):"",
+      qty:Math.min(99,Math.max(1,Math.round(Number(i.qty)||1))),aisle:typeof i.aisle==="string"?i.aisle.slice(0,20):"",forWhom:["a","b"].includes(i.forWhom)?i.forWhom:"both",addedBy:["a","b"].includes(i.addedBy)?i.addedBy:"",via:typeof i.via==="string"?i.via.slice(0,20):"",counted:/^\d{4}-\d{2}-\d{2}$/.test(String(i.counted||""))?String(i.counted):"",boughtAt:/^\d{4}-\d{2}-\d{2}T[\d:.]+Z?$/.test(String(i.boughtAt||""))?String(i.boughtAt):""})),
+    sortMode:l.sortMode==="manual"?"manual":"aisle",
+    restockOnExit:typeof l.restockOnExit==="boolean"?l.restockOnExit:/spesa|supermercat/i.test(String(l.name||"")),
+    template:(Array.isArray(l.template)?l.template:[]).map(t=>String(t||"").slice(0,120)).filter(Boolean).slice(0,200),
+    // v1.19.0 — Acquisti nel tempo (con data e ora automatiche) e cestino della lista.
+    purchases:(Array.isArray(l.purchases)?l.purchases:[]).filter(x=>x&&x.id&&x.text&&/^\d{4}-\d{2}-\d{2}T/.test(String(x.at||""))).map(x=>({id:String(x.id).slice(0,120),itemId:String(x.itemId||"").slice(0,120),text:String(x.text).slice(0,120),qty:Math.min(99,Math.max(1,Math.round(Number(x.qty)||1))),aisle:typeof x.aisle==="string"?x.aisle.slice(0,20):"",at:String(x.at).slice(0,30),by:["a","b"].includes(x.by)?x.by:""})).sort((a,b)=>a.at.localeCompare(b.at)).slice(-400),
+    trash:(Array.isArray(l.trash)?l.trash:[]).filter(x=>x&&x.id&&x.text&&/^\d{4}-\d{2}-\d{2}T/.test(String(x.deletedAt||""))).map(x=>({id:String(x.id).slice(0,120),text:String(x.text).slice(0,120),qty:Math.min(99,Math.max(1,Math.round(Number(x.qty)||1))),price:Number(x.price)>0?Math.round(Number(x.price)*100)/100:null,aisle:typeof x.aisle==="string"?x.aisle.slice(0,20):"",forWhom:["a","b"].includes(x.forWhom)?x.forWhom:"both",url:/^https:\/\//.test(String(x.url||""))?String(x.url).slice(0,500):"",image:/^https:\/\//.test(String(x.image||""))?String(x.image).slice(0,500):"",deletedAt:String(x.deletedAt).slice(0,30),by:["a","b"].includes(x.by)?x.by:""})).sort((a,b)=>b.deletedAt.localeCompare(a.deletedAt)).slice(0,200),
+    history:Object.fromEntries(Object.entries(l.history&&typeof l.history==="object"?l.history:{}).filter(([k,v])=>k&&v&&v.text).slice(-300).map(([k,v])=>[k.slice(0,120),{text:String(v.text).slice(0,120),count:Math.max(1,Number(v.count)||1),last:String(v.last||"").slice(0,10),aisle:typeof v.aisle==="string"?v.aisle.slice(0,20):"",dates:(Array.isArray(v.dates)?v.dates:[]).map(d=>String(d||"").slice(0,10)).filter(d=>/^\d{4}-\d{2}-\d{2}$/.test(d)).slice(-12),qty:Math.min(99,Math.max(1,Math.round(Number(v.qty)||1)))}]))}));
+  // Preferiti: prodotti da rimettere in lista con un tocco (comuni a tutte le liste).
+  data.favorites=(Array.isArray(data.favorites)?data.favorites:[]).filter(f=>f&&f.text).map(f=>({id:String(f.id||uid()).slice(0,120),text:String(f.text).slice(0,120),aisle:typeof f.aisle==="string"?f.aisle.slice(0,20):""})).slice(0,300);
+  // Elementi eliminati (liste, articoli, gruppi, conti, categorie): servono a unire i backup senza farli ricomparire.
+  const del=data.deleted&&typeof data.deleted==="object"?data.deleted:{};
+  const cut=new Date(); cut.setDate(cut.getDate()-180); const cutISO=`${cut.getFullYear()}-${pad2(cut.getMonth()+1)}-${pad2(cut.getDate())}`;
+  data.deleted=Object.fromEntries(Object.entries(del).filter(([k,v])=>k&&/^\d{4}-\d{2}-\d{2}$/.test(String(v))&&v>=cutISO).slice(-5000));
 }
-/* Colore delle cifre: verde se positiva, rosso se negativa, grigio scuro sullo zero
-   (le cifre neutre non azzerate restano sul grigio chiaro definito nel CSS). */
-function moneyColor(value){return value>0?"var(--emerald)":value<0?"var(--rust)":"var(--num-zero)";}
+function defaultLists(groups){
+  const casa=(groups.find(g=>/casa/i.test(g.name))||groups[0])?.id, coppia=(groups.find(g=>/coppia/i.test(g.name))||groups[0])?.id;
+  return [
+    {id:uid(),name:"Spesa",emoji:"🛒",groupId:coppia,items:[],restockOnExit:true,sortMode:"aisle",template:[],history:{}},
+    {id:uid(),name:"Per la casa",emoji:"🏠",groupId:casa,items:[],restockOnExit:false,sortMode:"aisle",template:[],history:{}},
+  ];
+}
+function defaultGroups(){
+  return [
+    {id:uid(),name:"Casa",emoji:"🏠",color:"#6B7FD7",defaultSplit:"half"},
+    {id:uid(),name:"Spese di coppia",emoji:"💑",color:"#C25B9E",defaultSplit:"half"},
+    {id:uid(),name:"Viaggi",emoji:"✈️",color:"#159C9C",defaultSplit:"half"},
+  ];
+}
+function groupsById(){ return Object.fromEntries(state.groups.map(g=>[g.id,g])); }
+function defaultPayerId(){
+  const o=["a","b","joint"].includes(state.couple?.lastPayer)?state.couple.lastPayer:"a";
+  return state.accounts.find(a=>a.owner===o)?.id || state.accounts[0]?.id || null;
+}
+function defaultGroupId(){
+  const last=state.couple.lastGroupId;
+  if(last && state.groups.some(g=>g.id===last)) return last;
+  return (state.groups.find(g=>/coppia/i.test(g.name))||state.groups[0])?.id||null;
+}
+function groupOf(t){ return state.groups.some(g=>g.id===t.groupId) ? t.groupId : (state.groups.find(g=>/coppia/i.test(g.name))||state.groups[0])?.id; }
+function groupLabel(gid){ const g=groupsById()[gid]; return g?`${g.emoji} ${g.name}`:"Gruppo"; }
+/* v1.12.0 — Chi usa questo telefono (non viene sincronizzato): serve per "da Giulia" nelle liste e per gli avvisi. */
+function myPerson(){ const v=localStorage.getItem("noidue_me"); return v==="a"||v==="b"?v:""; }
+function askWhoAmI(){
+  if(!window.SuiteSync||document.querySelector(".noidue-me-modal")) return;
+  SuiteSync.modal(`<h3>Chi usa questo telefono?</h3><p class="suite-modal-text">Così nelle liste vedi cosa ha aggiunto l'altra persona e ricevi un avviso quando aggiunge qualcosa.</p><div class="app-update-actions"><button type="button" class="noidue-me-btn" data-me="a" style="border-color:${safeColor(personColor("a"))}">${escapeHtml(personName("a"))}</button><button type="button" class="noidue-me-btn" data-me="b" style="border-color:${safeColor(personColor("b"))}">${escapeHtml(personName("b"))}</button></div>`,(wrap,close)=>{
+    wrap.classList.add("noidue-me-modal");
+    wrap.querySelectorAll("[data-me]").forEach(b=>b.addEventListener("click",()=>{ safeSetLocalStorage("noidue_me",b.dataset.me,{notify:false}); close(); renderAll(); if(typeof listDetailRefresh==="function") listDetailRefresh(); if(typeof renderPushCard==="function") renderPushCard(); showToast(`Ok: su questo telefono sei ${personName(b.dataset.me)}`); }));
+  });
+}
+function personName(k){ return k==="a"||k==="b" ? state.couple[k].name : "Cassa comune"; }
+function personColor(k){ return k==="a"||k==="b" ? state.couple[k].color : "#D4A83A"; }
+function personInitial(k){ return (personName(k).trim()[0]||(k==="a"?"1":"2")).toUpperCase(); }
+function otherPerson(k){ return k==="a"?"b":"a"; }
+function accOwner(id){ return state.accounts.find(a=>a.id===id)?.owner || "joint"; }
+function defaultSplitFor(type,gid=null){
+  if(type==="income") return "personal";
+  const g=gid?groupsById()[gid]:null;
+  return g?.defaultSplit || state.couple.defaultSplit || "half";
+}
+function splitShareA(split,owner,type,gid=null){
+  const mode=split?.mode || defaultSplitFor(type,gid);
+  if(mode==="pct") return Math.min(100,Math.max(0,Number(split?.pctA ?? 50)))/100;
+  if(mode==="other") return owner==="a"?0:1;
+  if(mode==="personal") return owner==="a"?1:0;
+  return 0.5;
+}
+function txDebt(t){
+  if(!t || t.isBalanceAdjustment) return 0;
+  const amount=Number(t.amount)||0;
+  if(t.type==="transfer"){
+    const from=accOwner(t.accountId), to=accOwner(t.toAccountId);
+    if(from==="a"&&to==="b") return amount;
+    if(from==="b"&&to==="a") return -amount;
+    return 0;
+  }
+  const owner=accOwner(t.accountId);
+  if(owner!=="a"&&owner!=="b") return 0;
+  const shareA=splitShareA(t.split,owner,t.type,t.groupId);
+  const v=owner==="a" ? amount*(1-shareA) : -amount*shareA;
+  return t.type==="income" ? -v : v;
+}
+function isCoupleSettle(t){ return t.type==="transfer" && txDebt(t)!==0; }
+function coupleBalance(){
+  const today=todayISO();
+  return Math.round(state.transactions.filter(t=>t.date<=today).reduce((s,t)=>s+txDebt(t),0)*100)/100;
+}
+/* Quota di un movimento in un gruppo. Un rimborso "di tutti i gruppi" porta in settleAlloc
+   la parte assegnata a ciascun gruppo (la somma è uguale al rimborso). */
+function txDebtIn(t,gid){
+  if(t.settleAlloc) return Number(t.settleAlloc[gid])||0;
+  return groupOf(t)===gid ? txDebt(t) : 0;
+}
+function rescaleAlloc(t){
+  const target=txDebt(t), keys=Object.keys(t.settleAlloc||{});
+  const sum=keys.reduce((s,k)=>s+(Number(t.settleAlloc[k])||0),0);
+  if(!keys.length||Math.abs(sum)<0.005){ delete t.settleAlloc; return; }
+  keys.forEach(k=>{ t.settleAlloc[k]=Math.round(t.settleAlloc[k]*target/sum*100)/100; });
+  const diff=Math.round((target-keys.reduce((s,k)=>s+t.settleAlloc[k],0))*100)/100;
+  if(diff){ const big=keys.reduce((m,k)=>Math.abs(t.settleAlloc[k])>Math.abs(t.settleAlloc[m])?k:m,keys[0]); t.settleAlloc[big]=Math.round((t.settleAlloc[big]+diff)*100)/100; }
+}
+function groupBalance(gid){
+  const today=todayISO();
+  return Math.round(state.transactions.filter(t=>t.date<=today).reduce((s,t)=>s+txDebtIn(t,gid),0)*100)/100;
+}
+function debtSentence(v,{future=false}={}){
+  if(Math.abs(v)<0.005) return "Siete in pari";
+  const debtor=v>0?"b":"a", creditor=otherPerson(debtor);
+  return `${personName(debtor)} ${future?"dovrà":"deve"} ${fmt(Math.abs(v))} a ${personName(creditor)}`;
+}
+function splitLabel(t){
+  if(t.type==="transfer"||t.isBalanceAdjustment) return "";
+  const owner=accOwner(t.accountId);
+  if(owner!=="a"&&owner!=="b") return "comune";
+  const mode=t.split?.mode || defaultSplitFor(t.type,t.groupId);
+  if(mode==="half") return "a metà";
+  if(mode==="pct"){const p=Math.round(Number(t.split?.pctA ?? 50));return `${p}/${100-p}`;}
+  if(mode==="other") return `per ${personName(otherPerson(owner))}`;
+  return "personale";
+}
+function coupleMonthStats(y,m,gid=null){
+  const prefix=y==null?"":`${y}-${pad2(m+1)}`; // y nullo = tutti i movimenti
+  const tx=state.transactions.filter(t=>t.date.startsWith(prefix) && t.type==="expense" && !t.isBalanceAdjustment && (!gid || groupOf(t)===gid));
+  const out={paid:{a:0,b:0,joint:0},quota:{a:0,b:0},shared:[]};
+  tx.forEach(t=>{
+    const owner=accOwner(t.accountId);
+    out.paid[owner==="a"||owner==="b"?owner:"joint"]+=t.amount;
+    if(owner==="a"||owner==="b"){
+      const sA=splitShareA(t.split,owner,t.type,t.groupId);
+      out.quota.a+=t.amount*sA; out.quota.b+=t.amount*(1-sA);
+      if(Math.abs(txDebt(t))>=0.005) out.shared.push(t);
+    }
+  });
+  return out;
+}
+/* Campi "Gruppo" e "Come dividere" riutilizzati da movimento, ricorrente, pianificato e trasferimento. */
+function mountSplitPicker(node, afterRow, {account, toAccount=()=>null, type, amount, initial, initialGroup=null}){
+  const row=document.createElement("div");
+  row.className="field-row split-field";
+  row.innerHTML=`<label class="grp-lbl">Gruppo <button type="button" class="nd-info" data-nd-info="gruppo" aria-label="A cosa serve il gruppo">i</button></label><div class="chip-row group-chips"></div>
+    <label class="split-lbl">Come dividere <button type="button" class="nd-info" data-nd-info="dividi" aria-label="Come funziona la divisione">i</button></label><div class="chip-row split-chips"></div>
+    <div class="split-custom" hidden><span class="sc-a"></span><input type="range" min="0" max="100" step="5" aria-label="Percentuale a carico della persona 1"><span class="sc-b"></span></div>
+    <p class="field-hint split-hint"></p>`;
+  afterRow.after(row);
+  let mode=initial?.mode || null;
+  let groupId=state.groups.some(g=>g.id===initialGroup)?initialGroup:defaultGroupId();
+  const chips=row.querySelector(".split-chips"), custom=row.querySelector(".split-custom"), range=custom.querySelector("input"), hint=row.querySelector(".split-hint"), label=row.querySelector(".split-lbl");
+  const gChips=row.querySelector(".group-chips"), gLabel=row.querySelector(".grp-lbl");
+  range.value=String(Number.isFinite(Number(initial?.pctA))?Number(initial.pctA):50);
+  function get(){ return {mode:mode||defaultSplitFor(type(),groupId), pctA:Number(range.value)}; }
+  function renderGroups(show){
+    gChips.hidden=!show; gLabel.hidden=!show;
+    if(!show) return;
+    gChips.innerHTML=state.groups.map(g=>`<button type="button" class="chip${g.id===groupId?" active":""}" data-group="${escapeHtml(g.id)}"><span class="em">${escapeHtml(g.emoji)}</span>${escapeHtml(g.name)}</button>`).join("");
+    gChips.querySelectorAll("[data-group]").forEach(b=>b.addEventListener("click",e=>{e.stopPropagation();groupId=b.dataset.group;refresh();}));
+  }
+  function refresh(){
+    const t=type(), owner=accOwner(account());
+    row.hidden=false; label.hidden=false; chips.hidden=false;
+    if(t==="transfer"){
+      const to=toAccount()?accOwner(toAccount()):null;
+      chips.hidden=true; custom.hidden=true; label.hidden=true;
+      const settle=to && (owner==="a"||owner==="b") && (to==="a"||to==="b") && owner!==to;
+      renderGroups(!!settle);
+      hint.textContent=settle?`🤝 Conta come rimborso nel gruppo scelto: ${personName(owner)} dà a ${personName(to)}.`:"";
+      row.hidden=!settle; return;
+    }
+    renderGroups(true);
+    if(owner!=="a"&&owner!=="b"){
+      chips.hidden=true; custom.hidden=true; label.hidden=true;
+      hint.textContent="Dalla cassa comune: non cambia il saldo tra voi."; return;
+    }
+    const cur=mode||defaultSplitFor(t,groupId), other=otherPerson(owner);
+    const opts=[["half","A metà"],["pct","Percentuale"],["other",`Tutto a ${personName(other)}`],["personal",`Solo ${personName(owner)}`]];
+    chips.innerHTML=opts.map(([k,l])=>`<button type="button" class="chip${cur===k?" active":""}" data-split="${k}">${escapeHtml(l)}</button>`).join("");
+    chips.querySelectorAll("[data-split]").forEach(b=>b.addEventListener("click",e=>{e.stopPropagation();mode=b.dataset.split;refresh();}));
+    custom.hidden=cur!=="pct";
+    custom.querySelector(".sc-a").textContent=`${personName("a")} ${range.value}%`;
+    custom.querySelector(".sc-b").textContent=`${100-Number(range.value)}% ${personName("b")}`;
+    const amt=amount();
+    const v=txDebt({type:t,amount:amt||0,accountId:account(),split:get(),groupId});
+    hint.textContent=amt>0 ? (Math.abs(v)<0.005 ? (t==="income"?"Entrata personale: non cambia il saldo tra voi.":"Spesa personale: non cambia il saldo tra voi.") : debtSentence(v,{future:true})+".") : "";
+  }
+  range.addEventListener("input",refresh);
+  node.addEventListener("click",()=>setTimeout(refresh,0));
+  node.addEventListener("input",e=>{ if(e.target!==range) refresh(); });
+  refresh();
+  return {get,refresh,getGroup:()=>{ state.couple.lastGroupId=groupId; return groupId; }};
+}
 
 let txType = "expense";
 let selectedCategoryId = null;
@@ -325,76 +558,12 @@ function accountsById(){ return Object.fromEntries(state.accounts.map(a=>[a.id,a
 function categoriesById(){ return Object.fromEntries(state.categories.map(c=>[c.id,c])); }
 function macroCategoriesById(){ return Object.fromEntries(state.macroCategories.map(m=>[m.id,m])); }
 
-/* ===================== v1.37.0 — Sottocategorie =====================
-   Tre livelli: macrocategoria › categoria › sottocategoria.
-   Esempio: Tempo libero › Viaggi › Mangiare fuori.
-   Una sottocategoria è una categoria con parentCategoryId valorizzato: eredita
-   tipo e macrocategoria dalla madre, e si ferma lì (niente quarto livello).
-   I movimenti puntano alla sottocategoria, ma nelle somme contano nella madre. */
-function isSubCategory(c){ return !!(c && c.parentCategoryId); }
-function subCategoriesOf(catId){ return state.categories.filter(c=>c.parentCategoryId===catId); }
-function topCategories(kind){ return state.categories.filter(c=>c.kind===kind && !c.parentCategoryId); }
-/* La categoria "di conto": per una sottocategoria è la madre, per le altre è se stessa. */
-function rollUpCategoryId(catId){
-  const c=categoriesById()[catId];
-  return c && c.parentCategoryId ? c.parentCategoryId : (catId||null);
-}
-/* Tutti gli id che contano in una categoria: lei più le sue sottocategorie. */
-function categoryIdsWithin(catId){ return [catId, ...subCategoriesOf(catId).map(c=>c.id)]; }
-/* Catena completa, dal più grande al più piccolo. */
-function categoryChain(catId){
-  const cats=categoriesById(), macros=macroCategoriesById();
-  const c=cats[catId]; if(!c) return [];
-  const parent=c.parentCategoryId?cats[c.parentCategoryId]:null;
-  const macro=macros[(parent||c).macroCategoryId]||null;
-  return [macro, parent, c].filter(Boolean);
-}
-/* Nomi che compaiono più di una volta fra macro, categorie e sottocategorie dello
-   stesso tipo: solo per questi serve mostrare il percorso. */
-function ambiguousCategoryNames(){
-  const norm=n=>String(n||"").trim().toLocaleLowerCase("it");
-  const count=new Map();
-  const bump=(n,kind)=>{ const k=kind+"|"+norm(n); count.set(k,(count.get(k)||0)+1); };
-  state.macroCategories.forEach(m=>bump(m.name,m.kind||"expense"));
-  state.categories.forEach(c=>bump(c.name,c.kind||"expense"));
-  const out=new Set();
-  count.forEach((v,k)=>{ if(v>1) out.add(k); });
-  return out;
-}
-/* Etichetta da mostrare: solo il nome, oppure "Madre › Nome" quando quel nome
-   esiste anche altrove. Così chi non ha doppioni non vede mai percorsi lunghi. */
-function categoryLabel(catId,opts){
-  const o=opts||{};
-  const cats=categoriesById(), c=cats[catId];
-  if(!c) return "";
-  if(!c.parentCategoryId && !o.sempre) return c.name;
-  const amb=o.ambigue||ambiguousCategoryNames();
-  const chiave=(c.kind||"expense")+"|"+String(c.name).trim().toLocaleLowerCase("it");
-  const parent=c.parentCategoryId?cats[c.parentCategoryId]:null;
-  if(!parent) return c.name;
-  return (o.sempre||amb.has(chiave)) ? `${parent.name} › ${c.name}` : c.name;
-}
-/* Vero se questo nome, con questa madre, creerebbe un doppione poco chiaro. */
-function categoryNameClash(name,kind,ignoreId){
-  const norm=n=>String(n||"").trim().toLocaleLowerCase("it");
-  const n=norm(name);
-  if(!n) return null;
-  const m=state.macroCategories.find(x=>(x.kind||"expense")===kind && norm(x.name)===n);
-  if(m) return {tipo:"macro",nome:m.name};
-  const c=state.categories.find(x=>x.id!==ignoreId && (x.kind||"expense")===kind && norm(x.name)===n);
-  if(c) return {tipo:c.parentCategoryId?"sotto":"categoria",nome:c.name};
-  return null;
-}
-
 /* Picker categoria: la macrocategoria è un filtro, ma all'apertura vengono
    mostrate tutte le categorie. Così una categoria appena creata è sempre
    disponibile subito nel nuovo movimento. */
 function renderCategoryPicker(container, kind, getSelected, onSelect){
   const macros = macroCategoriesById();
-  /* v1.37.0 — nella riga "Categoria" compaiono solo quelle di primo livello:
-     le sottocategorie stanno nella terza riga, sotto la madre scelta. */
-  const allCats = state.categories.filter(c=>c.kind===kind);
-  const cats = allCats.filter(c=>!c.parentCategoryId);
+  const cats = state.categories.filter(c=>c.kind===kind);
   const groups = new Map();
   cats.forEach(c=>{
     const key = c.macroCategoryId && macros[c.macroCategoryId] ? c.macroCategoryId : "none";
@@ -405,9 +574,7 @@ function renderCategoryPicker(container, kind, getSelected, onSelect){
   if(groups.has("none")) macroOrder.push("none");
 
   const selId = getSelected();
-  const selRaw = allCats.find(c=>c.id===selId);
-  /* Se hai scelto una sottocategoria, nella riga "Categoria" resta accesa la madre. */
-  const selCat = selRaw && selRaw.parentCategoryId ? cats.find(c=>c.id===selRaw.parentCategoryId) : selRaw;
+  const selCat = cats.find(c=>c.id===selId);
   let activeMacro = container._activeMacro;
   if(selCat) activeMacro = selCat.macroCategoryId && macros[selCat.macroCategoryId] ? selCat.macroCategoryId : "none";
   if(!activeMacro || (activeMacro!=="all" && !groups.has(activeMacro))) activeMacro = "all";
@@ -440,16 +607,14 @@ function renderCategoryPicker(container, kind, getSelected, onSelect){
 
   const catWrap = document.createElement("div");
   catWrap.className = "chip-group";
-  catWrap.innerHTML = `<p class="chip-group-title">Categoria</p>`;
+  catWrap.innerHTML = `<p class="chip-group-title">Categoria <button type="button" class="nd-info" data-nd-info="categoria" aria-label="A cosa serve la categoria">i</button></p>`;
   const catRow = document.createElement("div");
   catRow.className = "chip-row";
   const currentList = activeMacro==="all" ? cats : (groups.get(activeMacro) || []);
   currentList.forEach(c=>{
     const chip = document.createElement("button");
-    const attiva = selCat && selCat.id===c.id;
-    chip.className = "chip" + (attiva ? " active":"");
-    const figlie = subCategoriesOf(c.id).length;
-    chip.innerHTML = `<span class="em">${escapeHtml(c.emoji)}</span>${escapeHtml(c.name)}${figlie?`<span class="chip-sub-count" aria-label="${figlie} sottocategorie">${figlie}</span>`:""}`;
+    chip.className = "chip" + (getSelected()===c.id ? " active":"");
+    chip.innerHTML = `<span class="em">${escapeHtml(c.emoji)}</span>${escapeHtml(c.name)}`;
     chip.addEventListener("click", ()=>{
       onSelect(c.id);
       renderCategoryPicker(container, kind, getSelected, onSelect);
@@ -459,32 +624,7 @@ function renderCategoryPicker(container, kind, getSelected, onSelect){
   catWrap.appendChild(catRow);
   container.appendChild(catWrap);
 
-  /* Terza riga: le sottocategorie della categoria scelta. Compare solo se ce ne sono. */
-  const madre = selCat;
-  const figlie = madre ? subCategoriesOf(madre.id) : [];
-  if(madre && figlie.length){
-    const subWrap = document.createElement("div");
-    subWrap.className = "chip-group";
-    subWrap.innerHTML = `<p class="chip-group-title">Sottocategoria di ${escapeHtml(madre.name)}</p>`;
-    const subRow = document.createElement("div");
-    subRow.className = "chip-row";
-    const nessuna = document.createElement("button");
-    nessuna.className = "chip" + (getSelected()===madre.id ? " active" : "");
-    nessuna.textContent = "Nessuna";
-    nessuna.addEventListener("click", ()=>{ onSelect(madre.id); renderCategoryPicker(container, kind, getSelected, onSelect); });
-    subRow.appendChild(nessuna);
-    figlie.forEach(sc=>{
-      const chip = document.createElement("button");
-      chip.className = "chip" + (getSelected()===sc.id ? " active":"");
-      chip.innerHTML = `<span class="em">${escapeHtml(sc.emoji)}</span>${escapeHtml(sc.name)}`;
-      chip.addEventListener("click", ()=>{ onSelect(sc.id); renderCategoryPicker(container, kind, getSelected, onSelect); });
-      subRow.appendChild(chip);
-    });
-    subWrap.appendChild(subRow);
-    container.appendChild(subWrap);
-  }
-
-  if(!currentList.find(c=>c.id===rollUpCategoryId(getSelected()))) onSelect(currentList[0]?.id || null);
+  if(!currentList.find(c=>c.id===getSelected())) onSelect(currentList[0]?.id || null);
 }
 function monthTx(y=viewYear, m=viewMonth){
   const prefix = `${y}-${pad2(m+1)}`;
@@ -505,9 +645,6 @@ function accountBalance(accId){
 function totalBalance(){
   return state.accounts.reduce((sum,a)=> sum + accountBalance(a.id), 0);
 }
-/* v1.11.1 — Totale attuale = soldi sui conti; crediti = conti "Da ricevere"; effettivo = attuale + crediti. */
-function receivableTotal(){ return state.accounts.filter(a=>a.receivable).reduce((s,a)=>s+accountBalance(a.id),0); }
-function liquidBalance(){ return state.accounts.filter(a=>!a.receivable&&!a.payable).reduce((s,a)=>s+accountBalance(a.id),0); }
 function accountBalanceAtDate(accId, iso){
   // Saldo del conto al termine della giornata iso (incluso).
   const acc = state.accounts.find(a=>a.id===accId);
@@ -559,7 +696,7 @@ function generateRecurringTransactions(askConfirmation=false){
       if(!state.transactions.some(t=>t.recurringId===r.id && t.date===r.nextDate)){
         state.transactions.push({
           id: uid(), date: r.nextDate, amount: r.amount, type: r.type,
-          categoryId: r.categoryId, accountId: r.accountId, name:r.name || "", note: r.note || "", recurringId: r.id,
+          categoryId: r.categoryId, accountId: r.accountId, name:r.name || "", note: r.note || "", recurringId: r.id, split: r.split || null, groupId: r.groupId || null,
         });
       }
       r.nextDate = stepDateISO(r.nextDate, r.freq, r.startDate);
@@ -592,82 +729,6 @@ function removeRecurring(recurringId){
   state.transactions = state.transactions.filter(t=>t.recurringId!==recurringId || t.date<today);
 }
 
-/* ---------------- Spese pianificate (una tantum + proiezione ricorrenti future) ---------------- */
-function generatePlannedTransactions(){
-  // Quando arriva la data prevista (compreso oggi), la pianificata diventa un movimento reale.
-  // Il plannedId resta sul movimento per poterla mostrare nello storico "Pagati nel mese".
-  const todayStr = todayISO();
-  let changed = false;
-  state.planned = state.planned.filter(p=>{
-    if(p.date <= todayStr){
-      if(!state.transactions.some(t=>t.plannedId===p.id && t.date===p.date)){
-        state.transactions.push({
-          id: uid(), date: p.date, amount: p.amount, type: p.type,
-          categoryId: p.categoryId, accountId: p.accountId, name:p.name || "", note: p.note || "",
-          plannedId: p.id,
-        });
-      }
-      changed = true;
-      return false;
-    }
-    return true;
-  });
-  if(changed) persist();
-}
-function recurringOccurrencesInMonth(r, y, m){
-  if(r.active===false) return [];
-  // Date (future, non ancora generate) in cui un ricorrente cadrà nel mese y-m.
-  const monthStart = `${y}-${pad2(m+1)}-01`;
-  const monthEnd = `${y}-${pad2(m+1)}-31`;
-  const dates = [];
-  let d = r.nextDate;
-  let safety = 0;
-  while(d && d<=monthEnd && safety<500){
-    if(!recurringDateWithinLimits(r,d)) break;
-    if(d>=monthStart) dates.push(d);
-    d = stepDateISO(d, r.freq, r.startDate);
-    safety++;
-  }
-  return dates;
-}
-function plannedItemsForMonth(y=viewYear, m=viewMonth){
-  // Elenco "virtuale" (non incide sul saldo) delle spese pianificate visibili nel mese y-m:
-  // una tantum con data in quel mese + prossime occorrenze dei ricorrenti che cadono in quel mese.
-  const prefix = `${y}-${pad2(m+1)}`;
-  const once = state.planned.filter(p=>p.date.startsWith(prefix)).map(p=>({
-    id: "planned_"+p.id, plannedId: p.id, date: p.date, amount: p.amount, type: p.type,
-    categoryId: p.categoryId, accountId: p.accountId, name:p.name || "", note: p.note || "", planned: true,
-  }));
-  const recurringOcc = [];
-  state.recurring.forEach(r=>{
-    recurringOccurrencesInMonth(r,y,m).forEach(date=>{
-      recurringOcc.push({
-        id: "rec_"+r.id+"_"+date, recurringId: r.id, date, amount: r.amount, type: r.type,
-        categoryId: r.categoryId, accountId: r.accountId, name:r.name || "", note: r.note || "", planned: true,
-      });
-    });
-  });
-  return [...once, ...recurringOcc];
-}
-// v1.17.0: tutte le pianificate e le ricorrenti ancora da registrare da oggi fino a endISO,
-// anche se cadono in mesi diversi (serve al saldo previsto dei mesi futuri).
-function pendingPlannedUntil(endISO){
-  const today=todayISO();
-  if(!endISO || endISO<today) return [];
-  let y=Number(today.slice(0,4)), m=Number(today.slice(5,7))-1;
-  const ey=Number(endISO.slice(0,4)), em=Number(endISO.slice(5,7))-1;
-  const out=[]; let safety=0;
-  while((y<ey || (y===ey && m<=em)) && safety<240){
-    out.push(...plannedItemsForMonth(y,m));
-    m++; if(m>11){m=0;y++;} safety++;
-  }
-  return out.filter(t=>t.date>=today && t.date<=endISO);
-}
-function plannedItemsForDate(iso){
-  const y = parseInt(iso.slice(0,4),10), m = parseInt(iso.slice(5,7),10)-1;
-  return plannedItemsForMonth(y,m).filter(t=>t.date===iso);
-}
-
 /* ---------------- Rendering: header ---------------- */
 function renderHeader(){
   const daily=periodModes[activeView]==="day";
@@ -677,25 +738,19 @@ function renderHeader(){
   document.getElementById("monthLabel").setAttribute("aria-label",(daily?"Stai vedendo un solo giorno":"Stai vedendo tutto il mese")+". Tocca per cambiare");
   document.getElementById("periodDate").value=selectedDate();
   document.getElementById("periodReturn").hidden=true;
-  document.getElementById("periodX").hidden=true;
+  // Noi Due: di base si vede tutto; la × toglie il filtro di mese/giorno.
+  const filtered=periodModes[activeView]!=="all";
+  document.getElementById("periodX").hidden=!filtered;
+  document.getElementById("prevMonth").style.visibility=filtered?"":"hidden";
+  document.getElementById("nextMonth").style.visibility=filtered?"":"hidden";
   document.getElementById("dayControl").hidden=!daily;
+  // v1.17.0 — "Oggi": torna al mese corrente quando stai guardando un altro mese (come in Bilancio).
+  {const today=new Date(), cur=viewYear===today.getFullYear()&&viewMonth===today.getMonth();
+   const btn=document.getElementById("backToCurrentMonth");
+   if(btn) btn.hidden=!(filtered&&!cur&&(activeView==="home"||activeView==="transactions"));}
   document.getElementById("prevMonth").setAttribute("aria-label",daily?"Giorno precedente":"Mese precedente");
   document.getElementById("nextMonth").setAttribute("aria-label",daily?"Giorno successivo":"Mese successivo");
   document.querySelectorAll("[data-period]").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.period===periodModes[activeView])));
-  const today=new Date();
-  const isCurrentMonth=viewYear===today.getFullYear()&&viewMonth===today.getMonth();
-  const showBackToCurrent=(activeView==="home"||activeView==="recurring")&&!isCurrentMonth;
-  document.getElementById("backToCurrentMonth").hidden=!showBackToCurrent;
-}
-
-function isStandalonePWA(){
-  return Boolean(window.matchMedia?.("(display-mode: standalone)")?.matches || window.navigator.standalone===true);
-}
-function renderMainAccountSetupNotice(){
-  const notice=document.getElementById("mainAccountSetupNotice");
-  if(!notice) return;
-  const missing=!state.mainAccountId || !state.accounts.some(a=>a.id===state.mainAccountId);
-  notice.hidden=!(missing && isStandalonePWA() && state.accounts.length>0);
 }
 
 /* Icona occhio per mostra/nascondi importi (v1.3.21). */
@@ -705,176 +760,52 @@ function setEyeIcon(btn,hidden,showLabel,hideLabel){
   const closed='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17.9 17.9A10.4 10.4 0 0 1 12 19C5.6 19 2 12 2 12a18.6 18.6 0 0 1 5.1-5.9"/><path d="M9.9 5.2A9.6 9.6 0 0 1 12 5c6.4 0 10 7 10 7a18.7 18.7 0 0 1-2.2 3.2"/><path d="M14.1 14.2a3 3 0 1 1-4.2-4.2"/><path d="M2 2l20 20"/></svg>';
   btn.innerHTML=hidden?closed:open;
   btn.setAttribute("aria-label",hidden?(showLabel||"Mostra importi"):(hideLabel||"Nascondi importi"));
-  /* L'occhio fisso in alto a destra segue sempre lo stesso stato. */
+  /* v1.24.0 — L'occhio fisso in alto a destra segue sempre lo stesso stato. */
   const fixed=document.getElementById("toggleBalanceFixed");
   if(fixed && btn!==fixed) setEyeIcon(fixed,hidden);
 }
 
-/* ---------------- Rendering: Home ---------------- */
-function renderHome(){
-  const { income, expense, net } = sumTransactions(periodTx("home"));
-  document.getElementById("netAmount").textContent = balancesHidden ? "••••" : fmt(net);
-  document.getElementById("netAmount").style.color = moneyColor(net);
-  document.getElementById("incomeAmount").textContent = balancesHidden ? "••••" : fmt(income);
-  document.getElementById("expenseAmount").textContent = balancesHidden ? "••••" : fmt(expense);
-  setEyeIcon(document.getElementById("toggleHomeBalance"),balancesHidden);
-  const mainAccount=state.accounts.find(a=>a.id===state.mainAccountId) || null;
-  const mainBalance=mainAccount?accountBalance(mainAccount.id):null;
-  const allAccountsBalance=liquidBalance();
-  {
-    // v1.12.0: il riquadro compare solo se c'è davvero qualcosa da ricevere o da pagare.
-    const card=document.getElementById("homeEffectiveCard"), recv=receivableTotal(), pay=payableTotal();
-    const hasRecv=Math.abs(recv)>=0.005, hasPay=Math.abs(pay)>=0.005;
-    if(card){
-      card.hidden=!(hasRecv||hasPay);
-      if(hasRecv||hasPay){
-        const eff=allAccountsBalance+recv-pay, show=v=>balancesHidden?"••••":fmt(v);
-        const effEl=document.getElementById("homeEffectiveBalance");
-        effEl.textContent=show(eff); effEl.style.color=moneyColor(eff);
-        document.getElementById("homeRecvChip").hidden=!hasRecv; document.getElementById("homeRecvAmount").textContent=`+${show(recv)}`;
-        document.getElementById("homePayChip").hidden=!hasPay; document.getElementById("homePayAmount").textContent=`−${show(pay)}`;
-        card.querySelector(".eff-label").textContent="Totale effettivo"; // v1.26.0: corto, niente "…"
-      }
-    }
-  }
-  const mainName=document.getElementById("homeMainAccountName");
-  const mainAmount=document.getElementById("homeMainAccountBalance");
-  const allAmount=document.getElementById("homeAllAccountsBalance");
-  if(mainName) mainName.textContent=mainAccount?`Conto principale · ${mainAccount.name}`:"⚙︎ Scegli il conto principale";
-  if(mainAmount){mainAmount.textContent=mainAccount?(balancesHidden?"••••":fmt(mainBalance)):"›";mainAmount.style.color=mainAccount?moneyColor(mainBalance):"";}
-  // v1.23.0 — senza conto principale resta solo un avviso su una riga (prima occupava mezza scheda).
-  document.getElementById("homeMainAccountCard")?.classList.toggle("mt-unset",!mainAccount);
-  if(allAmount){allAmount.textContent=balancesHidden?"••••":fmt(allAccountsBalance);allAmount.style.color=moneyColor(allAccountsBalance);}
-  renderMainAccountSetupNotice();
-
-  {const c=document.getElementById("seeAllTxCount"); if(c) c.textContent=periodTx("home").filter(t=>!t.isBalanceAdjustment).length;}
-  document.querySelector("#view-home .hero-label").textContent=periodModes.home==="day"?"Saldo netto del giorno":periodModes.home==="range"?"Saldo netto del periodo":"Saldo netto del mese";
-  const today=todayISO();
-  const lastDay=`${viewYear}-${pad2(viewMonth+1)}-${pad2(new Date(viewYear,viewMonth+1,0).getDate())}`;
-  // Lista "Prossime scadenze": solo il mese visualizzato.
-  const future=plannedItemsForMonth(viewYear,viewMonth).filter(t=>t.date>=today && t.date<=lastDay);
-  // v1.17.0: il saldo previsto di un mese futuro tiene conto di tutto ciò che arriva da oggi
-  // a fine mese visualizzato (entrate e uscite, ricorrenti e pianificate, anche dei mesi in mezzo).
-  const pending=pendingPlannedUntil(lastDay);
-  const parts={recIn:0,recOut:0,planIn:0,planOut:0};
-  pending.forEach(t=>{
-    const planned=!!t.plannedId, inc=t.type==="income";
-    parts[(planned?"plan":"rec")+(inc?"In":"Out")]+=t.amount;
-  });
-  const futureNet=parts.recIn+parts.planIn-parts.recOut-parts.planOut;
-  const current=liquidBalance(), forecast=current+futureNet;
-  const show=v=>balancesHidden?"••••":fmt(v);
-  const signed=v=>balancesHidden?"••••":Math.abs(v)<0.005?fmt(0):`${v>0?"+":"−"}${fmt(Math.abs(v))}`;
-  document.getElementById("forecastBalanceAmount").textContent=show(forecast);
-  document.getElementById("upcomingImpactAmount").textContent=signed(futureNet);
-  document.getElementById("forecastTile")?.classList.toggle("neg",forecast<0);
-  document.getElementById("forecastTile")?.classList.toggle("zero",Math.abs(forecast)<0.005);
-  {const t=document.getElementById("upcomingTile"); if(t){ t.classList.toggle("neg",futureNet<0); t.classList.toggle("zero",Math.abs(futureNet)<0.005); }}
-  {
-    const isPast=lastDay<today;
-    const rng=document.getElementById("upcomingRangeLabel");
-    if(rng) rng.textContent=isPast?"Mese passato: nulla in arrivo":`Da oggi a fine ${MESI[viewMonth].toLowerCase()}${viewYear!==Number(today.slice(0,4))?" "+viewYear:""}`;
-    const setPart=id=>v=>{
-      const el=document.getElementById(id); if(!el) return;
-      el.textContent=balancesHidden?"••••":fmt(v);
-      el.closest(".fc-part").classList.toggle("zero",Math.abs(v)<0.005);
-    };
-    setPart("upRecIn")(parts.recIn); setPart("upPlanIn")(parts.planIn);
-    setPart("upRecOut")(parts.recOut); setPart("upPlanOut")(parts.planOut);
-    const tile=(dir,rec,plan,sign)=>{
-      const tot=rec+plan, zero=tot<0.005;
-      const t=document.getElementById(`up${dir}Total`);
-      if(t) t.textContent=balancesHidden?"••••":zero?fmt(0):`${sign}${fmt(tot)}`;
-      const r=document.getElementById(`up${dir}BarRec`), p=document.getElementById(`up${dir}BarPlan`);
-      if(r) r.style.width=zero?"0%":`${(rec/tot*100).toFixed(1)}%`;
-      if(p) p.style.width=zero?"0%":`${(plan/tot*100).toFixed(1)}%`;
-      t?.closest(".fc-tile")?.classList.toggle("zero",zero);
-    };
-    tile("In",parts.recIn,parts.planIn,"+"); tile("Out",parts.recOut,parts.planOut,"−");
-  }
-  // v1.14.0: saldo previsto con le rate attese entro fine mese (anche quelle in ritardo).
-  {
-    const due=allPendingRates().filter(r=>r.date<=lastDay);
-    const ratesNet=due.reduce((s,r)=>s+(loanAccount(r.accId)?.receivable?r.amount:-r.amount),0);
-    const card=document.getElementById("ratesForecastCard");
-    if(card){
-      card.hidden=!due.length;
-      document.getElementById("ratesForecastLabel").textContent=`Previsto con ${due.length===1?"la rata attesa":`le ${due.length} rate attese`} (${ratesNet>=0?"+":"−"}${balancesHidden?"••••":fmt(Math.abs(ratesNet))})`;
-      const v=forecast+ratesNet, el=document.getElementById("ratesForecastAmount");
-      el.textContent=show(v); el.style.color=moneyColor(v);
-    }
-  }
-  renderUnifiedBudgets();
-  renderAiMonth();
-
-  // Recent tx
-  const recent = periodTx("home").filter(t=>!t.isBalanceAdjustment).slice().sort((a,b)=>b.date.localeCompare(a.date)||b.id.localeCompare(a.id)).slice(0,5);
-  renderTxRows(document.getElementById("recentTx"), recent);
-  document.getElementById("txEmptyHint").hidden = recent.length>0;
-  document.getElementById("txEmptyHint").textContent=periodModes.home==="day"?"Nessun movimento in questo giorno.":periodModes.home==="range"?"Nessun movimento nel periodo.":"Nessun movimento questo mese.";
-  const upcoming=future.sort((a,b)=>a.date.localeCompare(b.date)).slice(0,3);
-  renderTxRows(document.getElementById("upcomingHomeList"),upcoming);
-  document.getElementById("upcomingHomeEmpty").hidden=upcoming.length>0;
-  renderHomeLoanRates();
-  renderLateRatesBadge();
+/* ---------------- Noi Due: card principale della Home (spese e chi ha pagato) ---------------- */
+function renderNdHome(){
+  const el=id=>document.getElementById(id);
+  if(!el("ndMonthSpent")) return;
+  const tx=periodTx("home").filter(t=>t.type==="expense"&&!t.isBalanceAdjustment);
+  const paid={a:0,b:0,joint:0};
+  tx.forEach(t=>{ const o=accOwner(t.accountId); paid[o==="a"||o==="b"?o:"joint"]+=t.amount; });
+  const total=paid.a+paid.b+paid.joint, show=v=>balancesHidden?"••••":fmt(v);
+  el("ndMonthSpent").textContent=show(total);
+  el("ndMonthSpent").style.color="var(--ink)";
+  ["a","b"].forEach(k=>{ const K=k.toUpperCase(); el("ndPaid"+K+"Label").textContent=personName(k); el("ndPaid"+K).textContent=show(paid[k]); el("ndDot"+K).style.background=personColor(k); });
+  el("ndPaidJoint").textContent=show(paid.joint);
+  // Rimborsi tra voi nel periodo (al posto del budget, tolto in 1.5.0).
+  const left=el("ndBudgetLeft");
+  const settles=periodTx("home").filter(t=>isCoupleSettle(t)).reduce((s,t)=>s+t.amount,0);
+  left.textContent=show(settles); left.style.color="";
+  return;
+  if(periodModes.home!=="month"){ left.textContent="—"; left.style.color=""; return; }
+  let budget=0; const counted=new Set();
+  state.macroCategories.filter(m=>m.kind!=="income"&&Number(m.budget)>0).forEach(m=>{ budget+=Number(m.budget); state.categories.filter(c=>c.macroCategoryId===m.id).forEach(c=>counted.add(c.id)); });
+  state.categories.filter(c=>c.kind==="expense"&&Number(c.budget)>0&&!counted.has(c.id)).forEach(c=>{ budget+=Number(c.budget); counted.add(c.id); });
+  if(!(budget>0)){ left.textContent="Nessuno"; left.style.color=""; return; }
+  const spent=tx.filter(t=>counted.has(t.categoryId)).reduce((s,t)=>s+t.amount,0);
+  const rest=budget-spent;
+  left.textContent=balancesHidden?"••••":(rest>=0?fmt(rest):`−${fmt(-rest)}`);
+  left.style.color=rest<0?"var(--rust)":"var(--emerald)";
 }
 
-const budgetExpanded = {};
-function renderUnifiedBudgets(){
-  const list=document.getElementById("budgetList");list.innerHTML="";
-  const tx=periodTx("home");
-  function renderKind(kind,title,icon){
-    /* v1.37.0 — nel budget compaiono le categorie di primo livello; le sottocategorie
-       si sommano nella madre e si vedono come righe rientrate, sotto di lei. */
-    const cats=state.categories.filter(c=>c.kind===kind && !c.parentCategoryId);
-    const groups=state.macroCategories
-      .filter(m=>m.kind===kind || cats.some(c=>c.macroCategoryId===m.id))
-      .map(m=>({...m,cats:cats.filter(c=>c.macroCategoryId===m.id)}));
-    const orphan=cats.filter(c=>!state.macroCategories.some(m=>m.id===c.macroCategoryId));
-    if(orphan.length) groups.push({id:`none-${kind}`,name:"Senza macrocategoria",emoji:"🏷️",cats:orphan,budget:null});
-    if(!groups.some(g=>g.cats.length || g.budget>0)) return false;
-    const section=document.createElement("section");section.className=`budget-kind ${kind}`;
-    section.innerHTML=`<h3>${icon} ${title}</h3>`;
-    /* Il totale di una categoria comprende le sue sottocategorie. */
-    const spentIn=ids=>{ const set=new Set(ids); return tx.filter(t=>t.type===kind && set.has(t.categoryId)).reduce((s,t)=>s+t.amount,0); };
-    const spentFor=c=>spentIn(categoryIdsWithin(c.id));
-    const row=(name,emoji,total,budget,child,livello)=>{
-      const limit=kind==="expense" && Number(budget)>0?Number(budget):0;
-      const totalClass=kind==="income"?"budget-earned":"budget-spent";
-      const word=kind==="income"?"entrate":"spesi";
-      const pct=limit?Math.round(total/limit*100):0, tone=pct>=100?"var(--rust)":pct>=80?"#E8A33D":"var(--emerald)";
-      return `<div class="${child?"budget-child":"budget-parent"}${livello===2?" budget-grand":""}"><div class="budget-item-top"><span class="mv-ic">${emojiIconHtml(emoji)}</span><span class="budget-item-name">${escapeHtml(name)}</span><span class="budget-item-amounts"><span class="${totalClass}">${fmt(total)}</span>${limit?` <span class="budget-limit">/ ${fmt(limit)} · ${pct}%</span>`:` <span class="budget-word">${word}</span>`}</span></div>${limit?`<div class="budget-bar-track"><div class="budget-bar-fill" style="width:${Math.min(100,pct)}%;background:${tone}"></div></div>`:""}</div>`;
-    };
-    groups.filter(g=>g.cats.length || g.budget>0).forEach(g=>{
-      const total=g.cats.reduce((s,c)=>s+spentFor(c),0), key=`${kind}-${g.id||g.name}`;
-      const item=document.createElement("div");item.className="budget-item";
-      item.innerHTML=`<button type="button" class="budget-macro-toggle" aria-expanded="${Boolean(budgetExpanded[key])}">${row(g.name,g.emoji,total,g.budget,false)}<span class="budget-chevron" aria-hidden="true">${budgetExpanded[key]?"▴":"▾"}</span></button><div class="budget-children" ${budgetExpanded[key]?"":"hidden"}>${g.cats.map(c=>
-        row(c.name,c.emoji,spentFor(c),c.budget,true,1) +
-        subCategoriesOf(c.id).map(sc=>row(sc.name,sc.emoji,spentIn([sc.id]),sc.budget,true,2)).join("")
-      ).join("")}</div>`;
-      const macroBtn=item.querySelector(".budget-macro-toggle");
-      macroBtn.addEventListener("click",()=>{budgetExpanded[key]=!budgetExpanded[key];renderUnifiedBudgets();});
-      // v1.10.5: tieni premuto su una macrocategoria o su una categoria per vedere gli ultimi 5 movimenti.
-      const catIds=new Set(g.cats.flatMap(c=>categoryIdsWithin(c.id)));
-      bindLongPress(macroBtn,()=>showLongPressPopup(macroBtn,`Ultimi 5 · ${g.name}`,lpLastMovements(t=>t.type===kind&&catIds.has(t.categoryId)),{emptyText:"Nessun movimento in questa macrocategoria."}));
-      /* L'elenco rientrato alterna categorie e loro sottocategorie: lo ripercorriamo
-         nello stesso ordine in cui è stato scritto, così il tieni-premuto resta giusto. */
-      const ordine=[]; g.cats.forEach(c=>{ ordine.push({c,sotto:false}); subCategoriesOf(c.id).forEach(sc=>ordine.push({c:sc,sotto:true})); });
-      item.querySelectorAll(".budget-children .budget-child").forEach((el,i)=>{
-        const v=ordine[i]; if(!v) return;
-        const ids=v.sotto?[v.c.id]:categoryIdsWithin(v.c.id);
-        const set=new Set(ids);
-        const titolo=v.sotto?`${g.name} · ${v.c.name}`:v.c.name;
-        bindLongPress(el,()=>showLongPressPopup(el,`Ultimi 5 · ${titolo}`,lpLastMovements(t=>t.type===kind&&set.has(t.categoryId)),{emptyText:"Nessun movimento qui."}));
-      });
-      section.appendChild(item);
-    });
-    list.appendChild(section);return true;
-  }
-  const expenses=renderKind("expense","Uscite per macrocategoria","↓");
-  const income=renderKind("income","Entrate per macrocategoria","↑");
-  document.getElementById("budgetEmptyHint").hidden=expenses||income;
-  document.getElementById("budgetPeriodHint").textContent=periodModes.home==="range"?"Totali del periodo selezionato · budget mensili":periodModes.home==="day"?"Totali del giorno selezionato · budget mensili":"Totali e budget del mese selezionato";
+/* ---------------- Rendering: Home ---------------- */
+function renderHome(){
+  setEyeIcon(document.getElementById("toggleHomeBalance"),balancesHidden);
+  renderCoupleStrip();
+  renderHomeLists();
+  {const c=document.getElementById("seeAllTxCount"); if(c) c.textContent=periodTx("home").filter(t=>!t.isBalanceAdjustment).length;}
+  document.querySelector("#view-home .hero-label").textContent=periodModes.home==="all"?"Spese totali":periodModes.home==="day"?"Spese del giorno":periodModes.home==="range"?"Spese del periodo":"Spese del mese";
+  renderNdHome();
+  const recent = periodTx("home").filter(t=>!t.isBalanceAdjustment).slice().sort((a,b)=>b.date.localeCompare(a.date)||b.id.localeCompare(a.id)).slice(0,5);
+  renderTxRows(document.getElementById("recentTx"), recent);
+  const hint=document.getElementById("txEmptyHint");
+  hint.hidden = recent.length>0;
+  hint.textContent=periodModes.home==="all"?"Nessun movimento. Tocca + per aggiungere una spesa.":periodModes.home==="day"?"Nessun movimento in questo giorno.":periodModes.home==="range"?"Nessun movimento nel periodo.":"Nessun movimento questo mese.";
 }
 
 /* v1.4.0 — Conferma in-app al posto del confirm() del browser. */
@@ -898,6 +829,23 @@ function askConfirm(message,{ok="Conferma",cancel="Annulla",danger=null}={}){
   });
 }
 
+/* v1.29.0 — Ogni riga che scorre di lato (anche quelle create dopo) resta ferma in verticale. */
+function fermaScorrimentoVerticale(root){
+  (root||document).querySelectorAll("body *").forEach(n=>{
+    if(n.classList.contains("nd-hscroll")) return;
+    const cs=getComputedStyle(n);
+    // solo righe vere: flex in orizzontale e senza a-capo (i pannelli che scorrono in verticale restano come sono)
+    if((cs.overflowX==="auto"||cs.overflowX==="scroll") && cs.overflowY!=="hidden" && /flex/.test(cs.display) && cs.flexDirection==="row" && cs.flexWrap==="nowrap" && n.scrollHeight<=n.clientHeight+8){
+      n.classList.add("nd-hscroll");
+    }
+  });
+}
+{
+  let t=null;
+  const giro=()=>{ clearTimeout(t); t=setTimeout(()=>{ try{ fermaScorrimentoVerticale(); }catch(e){} },150); };
+  if(document.readyState==="loading") document.addEventListener("DOMContentLoaded",giro); else giro();
+  try{ new MutationObserver(giro).observe(document.body||document.documentElement,{childList:true,subtree:true}); }catch(e){}
+}
 function showToast(message){
   let toast=document.getElementById("appToast");
   if(!toast){toast=document.createElement("div");toast.id="appToast";document.body.appendChild(toast);}
@@ -974,25 +922,9 @@ function enableLongPressActions(row,{title,onEdit,onDelete,onDuplicate,onRecurri
   row.addEventListener("touchcancel",cancel,{passive:true});
   row.addEventListener("contextmenu",e=>{e.preventDefault();row._skipClick=true;openMovementActionMenu({title,onEdit,onDelete,onDuplicate,onRecurring,onPlanned});setTimeout(()=>row._skipClick=false,250);});
 }
-/* v1.40.0 — Duplica anche in R&P: la copia nasce uguale, si apre subito per cambiare
-   quello che serve (nome, importo, data). "Annulla" nel messaggio la toglie. */
-function duplicateRP(kind,id){
-  const listName=kind==="recurring"?"recurring":"planned";
-  const src=state[listName].find(x=>x.id===id); if(!src) return;
-  const copy=JSON.parse(JSON.stringify(src)); copy.id=uid();
-  if(kind==="planned"){ delete copy.paidTxId; delete copy.done; }
-  state[listName].push(copy);
-  persist(); renderAll();
-  showActionToastOrUndo(`${kind==="recurring"?"Ricorrente":"Pianificata"} duplicata`,()=>{ state[listName]=state[listName].filter(x=>x.id!==copy.id); persist(); renderAll(); });
-  setTimeout(()=>{ if(kind==="recurring") openRecurringForm(copy.id); else openPlannedForm(copy.id); },120);
-}
-function showActionToastOrUndo(message,undo){
-  let toast=document.getElementById("appToast");
-  if(!toast){toast=document.createElement("div");toast.id="appToast";document.body.appendChild(toast);}
-  toast.innerHTML=`<span>${escapeHtml(message)}</span><button type="button">Annulla</button>`;
-  toast.classList.add("show");clearTimeout(toast._timer);
-  toast.querySelector("button").addEventListener("click",()=>{undo();toast.classList.remove("show");});
-  toast._timer=setTimeout(()=>toast.classList.remove("show"),5000);
+function futureFromTx(t){
+  const d=nextMonthSameDay(t.date);
+  return {name:t.name||"",amount:t.amount,type:t.type,categoryId:t.categoryId,accountId:t.accountId,note:t.note||"",split:t.split||null,groupId:t.groupId||null,freq:"monthly",startDate:d,date:d,active:true};
 }
 function duplicateTransaction(t){
   if(!t || t.planned || t.isBalanceAdjustment) return null;
@@ -1000,7 +932,6 @@ function duplicateTransaction(t){
   delete copy.recurringId;
   delete copy.plannedId;
   state.transactions.push(copy);
-  if(t.splitGroup){ const group=uid(); copy.splitGroup=group; const partner=splitPartner(t); if(partner) state.transactions.push({...partner,id:uid(),date:copy.date,splitGroup:group}); }
   persist();
   renderAll();
   showToast("Movimento duplicato con la data di oggi");
@@ -1044,10 +975,6 @@ function cleanEmoji(str,max=2){
   const isEmoji=g=>/\p{Extended_Pictographic}|\p{Regional_Indicator}|[\u20E3\uFE0F]/u.test(g);
   return emojiGraphemes(str).filter(g=>g.trim() && isEmoji(g)).slice(0,max).join("");
 }
-function emojiIconHtml(emoji){
-  const grs=emojiGraphemes(emoji).slice(0,2);
-  return (grs.length?grs:[emoji]).map(g=>`<span class="mv-ic-item">${escapeHtml(g)}</span>`).join("");
-}
 function buildEmojiField(row, initial, onChange){
   row.innerHTML="";row.classList.add("emoji-field");
   const wrap=document.createElement("div");wrap.className="emoji-input-wrap";
@@ -1057,7 +984,7 @@ function buildEmojiField(row, initial, onChange){
   input.autocomplete="off";input.setAttribute("autocorrect","off");input.setAttribute("autocapitalize","off");input.spellcheck=false;
   const clear=document.createElement("button");clear.type="button";clear.className="emoji-clear";clear.textContent="✕";clear.setAttribute("aria-label","Svuota icona");
   wrap.append(input,clear);
-  // v1.12.1: niente icone suggerite, solo la tastiera emoji dell'iPhone.
+  // Solo emoji dalla tastiera del telefono, niente icone suggerite.
   const hint=document.createElement("p");hint.className="field-hint emoji-hint";hint.textContent="Tocca il campo e sulla tastiera premi 😀 (o 🌐) per scegliere l'emoji. Puoi metterne fino a 2.";
   const commit=()=>{const v=cleanEmoji(input.value);onChange(v||EMOJIS[0]);};
   input.addEventListener("input",()=>{const v=cleanEmoji(input.value);if(v!==input.value&&!input.value.endsWith("\u200D"))input.value=v;commit();});
@@ -1066,8 +993,12 @@ function buildEmojiField(row, initial, onChange){
   row.append(wrap,hint);
   commit();
 }
+function emojiIconHtml(emoji){
+  const grs=emojiGraphemes(emoji).slice(0,2);
+  return (grs.length?grs:[emoji]).map(g=>`<span class="mv-ic-item">${escapeHtml(g)}</span>`).join("");
+}
 function movementRowHtml({emoji,color,title,badges="",meta="",amountHtml,type,date,relative=true,kind=null,paid=false}){
-  const nEm=Math.min(2,emojiGraphemes(emoji).length||1);
+  const nEm=Math.max(1,Math.min(2,emojiGraphemes(emoji).length||1));
   return `<span class="mv-ic${nEm>1?` mv-ic-n${nEm}`:""}">${emojiIconHtml(emoji)}</span>
     <span class="mv-title"><span class="mv-name">${hlText(title)}</span></span>
     <span class="mv-amt ${type}">${amountHtml}</span>
@@ -1082,22 +1013,17 @@ function nextMonthSameDay(iso){
   while(out<=todayISO()){const m=new Date(out+"T12:00:00");const k=new Date(m.getFullYear(),m.getMonth()+1,1);k.setDate(Math.min(day,new Date(k.getFullYear(),k.getMonth()+1,0).getDate()));out=`${k.getFullYear()}-${pad2(k.getMonth()+1)}-${pad2(k.getDate())}`;}
   return out;
 }
-function futureFromTx(t){
-  const d=nextMonthSameDay(t.date);
-  return {name:t.name||"",amount:t.amount,type:t.type,categoryId:t.categoryId,accountId:t.accountId,note:t.note||"",freq:"monthly",startDate:d,date:d,active:true};
-}
 function transferName(fromId,toId){
   const accs=accountsById();
   return `${accs[fromId]?.name||"Conto"} → ${accs[toId]?.name||"Conto"}`;
 }
 function renderTxRows(container, list, {paidLabel=false}={}){
   const cats = categoriesById(), accs = accountsById(), macros = macroCategoriesById();
-  const ambigue = ambiguousCategoryNames();   /* v1.37.0: percorso solo sui nomi doppi */
   container.innerHTML = "";
   list.forEach(t=>{
     const isTransfer=t.type==="transfer";
-    const loanInfo = (isTransfer||t.loanOld||t.loanWriteOff) ? loanRowInfo(t) : null;
-    const cat = loanInfo ? {name:loanInfo.label,emoji:loanInfo.emoji,color:loanInfo.color,macroCategoryId:null} : isTransfer ? ({name:t.atm?"Prelievo ATM":"Trasferimento",emoji:t.atm?"🏧":"↔",color:"#E8A33D",macroCategoryId:null}) : (t.isBalanceAdjustment ? {name:"Rettifica saldo",emoji:"⚖️",color:"#7BAE9D",macroCategoryId:null} : (cats[t.categoryId] ? {...cats[t.categoryId], name: categoryLabel(t.categoryId,{ambigue})} : { name:"Categoria eliminata", emoji:"❔", color:"#999" }));
+    const settle = isTransfer && isCoupleSettle(t);
+    const cat = isTransfer ? (settle ? {name:"Rimborso",emoji:"🤝",color:personColor(accOwner(t.toAccountId)),macroCategoryId:null} : {name:t.atm?"Prelievo ATM":"Trasferimento",emoji:t.atm?"🏧":"↔",color:"#E8A33D",macroCategoryId:null}) : (t.isBalanceAdjustment ? {name:"Rettifica saldo",emoji:"⚖️",color:"#7BAE9D",macroCategoryId:null} : (cats[t.categoryId] || { name:"Categoria eliminata", emoji:"❔", color:"#999" }));
     const acc = accs[t.accountId] || { name:"Conto eliminato" };
     const destination=accs[t.toAccountId] || {name:"Conto eliminato"};
     const row = document.createElement("div");
@@ -1112,15 +1038,14 @@ function renderTxRows(container, list, {paidLabel=false}={}){
       : originKind
         ? `<span class="status-badge ${originKind}">${originLabel}</span>${paidLabel?`<span class="status-badge paid">Pagato</span>`:""}`
         : "";
-    const sharePerson = t.splitGroup ? sharePersonOf(t) : "";
-    const title = loanInfo ? loanInfo.title : isTransfer ? `${acc.name} → ${destination.name}` : (t.name || t.note || cat.name);
-    const metaParts=loanInfo
-      ? `<span class="mv-loan">${loanInfo.label}</span>${loanInfo.meta?`<span class="mv-sep" aria-hidden="true">·</span><span>${hlText(loanInfo.meta)}</span>`:""}`
-      : isTransfer
-      ? `<span>${t.atm?"Prelievo ATM":"Trasferimento"}</span>`
-      : `<span>${hlText(cat.name)}</span><span class="mv-sep" aria-hidden="true">·</span><span class="mv-acc">${hlText(acc.name)}</span>${sharePerson?`<span class="mv-sep" aria-hidden="true">·</span><span class="mv-shared">divisa con ${escapeHtml(sharePerson)}</span>`:""}`;
-    row.innerHTML = movementRowHtml({emoji:cat.emoji,color:cat.color,title,badges:statusBadge,meta:metaParts,
-      amountHtml:`${isTransfer||t.loanOld||t.loanWriteOff?"↔":t.type==="income"?"+":"−"}${fmt(t.amount)}`,type:(t.loanOld||t.loanWriteOff)?"transfer":t.type,date:t.date,relative:!!t.planned,
+    const title = settle ? `${personName(accOwner(t.accountId))} → ${personName(accOwner(t.toAccountId))}` : isTransfer ? `${acc.name} → ${destination.name}` : (t.name || t.note || cat.name);
+    const sLabel = splitLabel(t) ? `${groupsById()[groupOf(t)]?.emoji||""} ${splitLabel(t)}`.trim() : "";
+    const metaParts=isTransfer
+      ? `<span>${settle?`Rimborso tra voi · ${t.settleAlloc?"tutti i gruppi":escapeHtml(groupLabel(groupOf(t)))}`:t.atm?"Prelievo ATM":"Trasferimento"}</span>`
+      : `<span>${hlText(cat.name)}</span><span class="mv-sep" aria-hidden="true">·</span><span class="mv-acc mv-payer"><i class="mv-dot" style="background:${safeColor(personColor(acc.owner||"joint"))}" aria-hidden="true"></i>${hlText(acc.name)}</span>${sLabel?`<span class="mv-sep" aria-hidden="true">·</span><span class="mv-split">${escapeHtml(sLabel)}</span>`:""}`;
+    const listBadge = t.listId ? `<span class="mv-list-badge" title="Spesa registrata dalla lista ${escapeHtml(state.lists.find(x=>x.id===t.listId)?.name||"")}" aria-label="Dalla lista">🛒</span>` : "";
+    row.innerHTML = movementRowHtml({emoji:cat.emoji,color:cat.color,title,badges:statusBadge,meta:listBadge+metaParts,
+      amountHtml:`${isTransfer?"↔":t.type==="income"?"+":""}${fmt(t.amount)}`,type:t.type,date:t.date,relative:!!t.planned,
       kind:t.recurringId?"recurring":(t.plannedId?"planned":null),paid:!t.planned&&paidLabel});
     const openRow=()=>{
       if(row._skipClick) return;
@@ -1135,21 +1060,14 @@ function renderTxRows(container, list, {paidLabel=false}={}){
       onDuplicate:canDuplicate?()=>duplicateTransaction(t):null,
       // v1.10.7: un movimento registrato può diventare ricorrente o essere pianificato di nuovo.
       onRecurring:canDuplicate&&!isTransfer&&!t.recurringId?()=>openRecurringForm(null,futureFromTx(t)):null,
-      onPlanned:canDuplicate&&!isTransfer?()=>openPlannedForm(null,futureFromTx(t)):null,
       onEdit:()=>{
         if(t.recurringId && state.recurring.some(r=>r.id===t.recurringId)) openRecurringForm(t.recurringId);
-        else if(t.planned) openPlannedForm(t.plannedId);
         else openAddTransaction(t.id);
       },
       onDelete:()=>{
         let deleted;
         if(t.planned){const p=state.planned.find(x=>x.id===t.plannedId);if(p){moveToTrash("planned",p);deleted=state.trash[0]?.id;}state.planned=state.planned.filter(p=>p.id!==t.plannedId);}
-        else {
-          const linked=linkedTx(t);
-          moveToTrash("transaction",t,linked);deleted=state.trash[0]?.id;
-          const ids=new Set([t.id,...linked.map(x=>x.id)]);
-          state.transactions=state.transactions.filter(x=>!ids.has(x.id));
-        }
+        else {moveToTrash("transaction",t);deleted=state.trash[0]?.id;state.transactions=state.transactions.filter(x=>x.id!==t.id);}
         persist();renderAll();if(deleted) showUndo("Elemento eliminato",deleted);
       }
     });
@@ -1182,7 +1100,7 @@ function renderTransactionsView(){
     if(txFilter!=="all"&&t.type!==txFilter) return false;
     if(txDateFrom&&t.date<txDateFrom) return false;if(txDateTo&&t.date>txDateTo) return false;
     const q=txSearchQuery.toLocaleLowerCase("it"); if(!q) return true;
-    const hay=[t.name,t.note,cats[t.categoryId]?.name,cats[cats[t.categoryId]?.parentCategoryId]?.name,accounts[t.accountId]?.name,accounts[t.toAccountId]?.name,t.type].filter(Boolean).join(" ").toLocaleLowerCase("it");
+    const hay=[t.name,t.note,cats[t.categoryId]?.name,accounts[t.accountId]?.name,accounts[t.toAccountId]?.name,t.type].filter(Boolean).join(" ").toLocaleLowerCase("it");
     return hay.includes(q);
   };
   const base=periodTx("transactions").filter(t=>!t.isBalanceAdjustment);
@@ -1192,274 +1110,15 @@ function renderTransactionsView(){
   const loadMore=document.getElementById("loadMoreTxBtn");
   if(loadMore){loadMore.hidden=visibleAll.length>=all.length;loadMore.textContent=`Carica altri (${all.length-visibleAll.length})`;}
   document.getElementById("allTxEmptyHint").hidden = all.length>0;
-  document.getElementById("allTxEmptyHint").textContent=periodModes.transactions==="day"?"Nessun movimento in questo giorno.":periodModes.transactions==="range"?"Nessun movimento nel periodo.":"Nessun movimento questo mese.";
+  document.getElementById("allTxEmptyHint").textContent=periodModes.transactions==="all"?"Nessun movimento.":periodModes.transactions==="day"?"Nessun movimento in questo giorno.":periodModes.transactions==="range"?"Nessun movimento nel periodo.":"Nessun movimento questo mese.";
 
-  const planned = plannedItemsInPeriod("transactions").filter(t=>matches(t)).sort((a,b)=> a.date.localeCompare(b.date));
-  const plannedWrap = document.getElementById("allTxPlannedWrap");
-  const ph=plannedWrap.querySelector("h2"); if(ph) ph.textContent=periodModes.transactions==="month"?"In arrivo questo mese":periodModes.transactions==="day"?"In arrivo in questo giorno":"In arrivo nel periodo";
-  if(planned.length){
-    plannedWrap.hidden = false;
-    withHighlight(txSearchQuery,()=>renderTxRows(document.getElementById("allTxPlanned"), planned));
-  } else {
-    plannedWrap.hidden = true;
-  }
+  const plannedWrap = document.getElementById("allTxPlannedWrap"); if(plannedWrap) plannedWrap.hidden=true;
 }
 
-function rpEstimatesForMonth(y=viewYear,m=viewMonth){
-  const prefix=`${y}-${pad2(m+1)}`;
-  const future=plannedItemsForMonth(y,m);
-  const itemsForOrigin=(origin)=>[
-    ...state.transactions.filter(t=>t[origin] && t.date.startsWith(prefix)),
-    ...future.filter(t=>t[origin])
-  ];
-  const summarize=(items)=>{
-    const income=items.filter(t=>t.type==="income").reduce((sum,t)=>sum+t.amount,0);
-    const expense=items.filter(t=>t.type==="expense").reduce((sum,t)=>sum+t.amount,0);
-    const byAccount={};
-    items.forEach(t=>{
-      if(!t.accountId || !["income","expense"].includes(t.type)) return;
-      if(!byAccount[t.accountId]) byAccount[t.accountId]={income:0,expense:0,net:0};
-      byAccount[t.accountId][t.type]+=t.amount;
-      byAccount[t.accountId].net += t.type==="income"?t.amount:-t.amount;
-    });
-    return {income,expense,net:income-expense,byAccount};
-  };
-  // v1.6.0: i contatori principali mostrano solo ciò che è ANCORA da registrare;
-  // quando una voce diventa movimento esce dal contatore. Il totale del mese resta come riferimento.
-  const pending=(origin)=>future.filter(t=>t[origin]);
-  const recurring=summarize(pending("recurringId"));
-  const planned=summarize(pending("plannedId"));
-  const total=summarize([...pending("recurringId"),...pending("plannedId")]);
-  recurring.month=summarize(itemsForOrigin("recurringId"));
-  planned.month=summarize(itemsForOrigin("plannedId"));
-  total.month=summarize([...itemsForOrigin("recurringId"),...itemsForOrigin("plannedId")]);
-  return {recurring,planned,total};
-}
-function updateRPEstimates(){
-  const estimates=rpEstimatesForMonth();
-  const setMoney=(id,value,{signed=false}={})=>{
-    const el=document.getElementById(id); if(!el) return;
-    el.textContent=balancesHidden?"••••":(signed?fmtSigned(value):fmt(value));
-    if(signed) el.className=`rp-estimate-value ${value<0?"neg":value>0?"pos":"zero"}`;
-  };
-  const renderAccounts=(id,summary)=>{
-    const el=document.getElementById(id); if(!el) return;
-    const rows=state.accounts
-      .map(a=>({account:a,values:summary.byAccount[a.id]}))
-      .filter(x=>x.values && (x.values.income || x.values.expense))
-      .sort((a,b)=>Math.abs(b.values.net)-Math.abs(a.values.net));
-    el.innerHTML=rows.length
-      ? `<div class="rp-account-title">Per conto/carta</div>${rows.map(({account,values})=>`<div class="rp-account-row"><span>${escapeHtml(account.name)}</span><b class="${values.net<0?"neg":values.net>0?"pos":""}">${balancesHidden?"••••":fmtSigned(values.net)}</b></div>`).join("")}`
-      : `<div class="rp-account-empty">Nessun importo per conto/carta</div>`;
-  };
-  const setLabel=(sel,title,summary)=>{
-    const el=document.querySelector(sel); if(!el) return;
-    const m=summary.month;
-    const done=m.net-summary.net;
-    el.innerHTML=title;
-  };
-  setMoney("recurringEstimate",estimates.recurring.net,{signed:true});
-  // v1.6.5: Entrate/Uscite = totale del mese; il numero grande e "per conto/carta" = ancora da registrare.
-  setMoney("plannedEstimate",estimates.planned.net,{signed:true});
-  setMoney("rpCombinedEstimate",estimates.total.net,{signed:true});
-  // v1.19.0: riquadri Entrate / Uscite: totale del mese, barra di quanto è già registrato e quanto manca.
-  const setTiles=(pre,summary)=>{
-    [["Income","income","+"],["Expense","expense","−"]].forEach(([K,k,sign])=>{
-      const tot=summary.month[k]||0, pend=Math.min(summary[k]||0,tot), done=Math.max(0,tot-pend), zero=tot<0.005;
-      const amt=document.getElementById(`${pre}${K}Estimate`), bar=document.getElementById(`${pre}${K}Bar`), note=document.getElementById(`${pre}${K}Note`);
-      if(amt) amt.textContent=balancesHidden?"••••":zero?fmt(0):`${sign}${fmt(tot)}`;
-      if(bar) bar.style.width=zero?"0%":`${(done/tot*100).toFixed(1)}%`;
-      if(note) note.textContent=zero?"Niente nel mese":pend<0.005?"Tutto registrato":`${balancesHidden?"••••":fmt(pend)} da registrare`;
-      amt?.closest(".fc-tile")?.classList.toggle("zero",zero);
-    });
-  };
-  setTiles("recurring",estimates.recurring); setTiles("planned",estimates.planned); setTiles("rpCombined",estimates.total);
-  renderAccounts("recurringAccountBreakdown",estimates.recurring);
-  renderAccounts("plannedAccountBreakdown",estimates.planned);
-  renderAccounts("rpCombinedAccountBreakdown",estimates.total);
-  const toggle=document.getElementById("toggleRPBalance");
-  if(toggle){setEyeIcon(toggle,balancesHidden,"Mostra importi R&P","Nascondi importi R&P");}
-}
-
-
-function recurringDatesForMonth(r,y=viewYear,m=viewMonth){
-  const prefix=`${y}-${pad2(m+1)}`;
-  const actual=state.transactions.filter(t=>t.recurringId===r.id && t.date.startsWith(prefix)).map(t=>t.date);
-  const projected=recurringOccurrencesInMonth(r,y,m);
-  return [...new Set([...actual,...projected])].sort();
-}
-function rpDateMatchesPeriod(iso){
-  return inPeriod("recurring",iso);
-}
-function recurringProjectedDatesForPeriod(r){
-  return monthsInPeriod("recurring").flatMap(([y,m])=>recurringOccurrencesInMonth(r,y,m)).filter(iso=>inPeriod("recurring",iso));
-}
-function paidScheduledTransactionsForPeriod(kind,y=viewYear,m=viewMonth){
-  const key=kind==="recurring"?"recurringId":"plannedId";
-  return state.transactions
-    .filter(t=>t[key] && rpDateMatchesPeriod(t.date,y,m))
-    .slice()
-    .sort((a,b)=>b.date.localeCompare(a.date)||String(b.id).localeCompare(String(a.id)));
-}
-function plannedForRPMonth(){
-  return state.planned.filter(p=>p.date && inPeriod("recurring",p.date));
-}
-function renderRPPaidSection({sectionId,noticeId,countId,listId,paid,hasUpcoming}){
-  const section=document.getElementById(sectionId);
-  const notice=document.getElementById(noticeId);
-  const count=document.getElementById(countId);
-  const list=document.getElementById(listId);
-  if(!section || !list) return;
-  section.hidden=paid.length===0;
-  if(notice) notice.hidden=paid.length===0 || hasUpcoming;
-  if(count) count.textContent=paid.length ? `${paid.length}` : "";
-  if(paid.length){const lim=rpLimited(listId,paid);withHighlight(rpSearchQuery,()=>renderTxRows(list,lim.shown,{paidLabel:true}));rpAppendMore(list,listId,lim.hidden);}
-  else list.innerHTML="";
-}
-
-/* v1.7.0 — R&P: ricerca e liste brevi (prossimi 5 / ultimi 5 pagati, con "Mostra tutti"). */
-let rpSearchQuery="";
-const rpShowAll={};
-const RP_LIMIT=5;
-function rpMatches(name,categoryId,accountId){
-  const q=rpSearchQuery.trim().toLocaleLowerCase("it"); if(!q) return true;
-  const cats=categoriesById(), accs=accountsById();
-  return [name,cats[categoryId]?.name,cats[cats[categoryId]?.parentCategoryId]?.name,accs[accountId]?.name].filter(Boolean).join(" ").toLocaleLowerCase("it").includes(q);
-}
-function rpLimited(listId,items){
-  const searching=!!rpSearchQuery.trim(), total=items.length;
-  // v1.7.1: pulsante "Vedi tutti ›" nell'intestazione della lista, come in Home.
-  const pill=document.querySelector(`[data-see-all="${listId}"]`);
-  if(pill){
-    pill.hidden=total===0;
-    pill.innerHTML=`<span class="sa-label">Vedi tutti</span><span class="count-badge">${total}</span><span class="chev">›</span>`;
-  }
-  if(total<=RP_LIMIT) return {shown:items,hidden:0};
-  return {shown:items.slice(0,RP_LIMIT),hidden:total-RP_LIMIT};
-}
-function rpAppendMore(){}
-document.querySelectorAll("[data-see-all]").forEach(b=>b.addEventListener("click",()=>{
-  // v1.8.0: "Vedi tutti" in R&P apre un pannello dedicato, come in Home.
-  const id=b.dataset.seeAll;
-  rpAllKind=/recurring/i.test(id)?"recurring":/planned/i.test(id)?"planned":"total";
-  periodModes.rpall=periodModes.recurring; rpAllQuery=""; const inp=document.getElementById("rpAllSearchInput"); if(inp) inp.value="";
-  openSubView("rpall");
-}));
-/* ---------------- Rendering: Ricorrenti ---------------- */
-function renderRecurringList(){
-  const container = document.getElementById("recurringList");
-  container.innerHTML = "";
-  const upcoming=state.recurring
-    .map(r=>({r,dates:recurringProjectedDatesForPeriod(r)}))
-    .filter(x=>x.dates.length>0 && rpMatches(x.r.name,x.r.categoryId,x.r.accountId))
-    .sort((a,b)=>a.dates[0].localeCompare(b.dates[0]));
-  const lim=rpLimited("recurringList",upcoming);
-  withHighlight(rpSearchQuery,()=>lim.shown.forEach(({r,dates})=>container.appendChild(recurringRowElement(r,{dates}))));
-  rpAppendMore(container,"recurringList",lim.hidden);
-
-  const paid=paidScheduledTransactionsForPeriod("recurring").filter(t=>rpMatches(t.name,t.categoryId,t.accountId));
-  const empty=document.getElementById("recurringEmptyHint");
-  if(empty){
-    empty.hidden=upcoming.length>0 || paid.length>0;
-    empty.textContent=periodModes.recurring==="range"?"Nessun movimento ricorrente nel periodo.":periodModes.recurring==="day"?"Nessun movimento ricorrente nel giorno selezionato.":"Nessun movimento ricorrente nel mese selezionato.";
-  }
-  renderRPPaidSection({
-    sectionId:"recurringPaidSection",noticeId:"recurringAllPaidNotice",countId:"recurringPaidCount",listId:"recurringPaidList",
-    paid,hasUpcoming:upcoming.length>0
-  });
-  updateRPEstimates();
-}
-
-/* ---------------- Rendering: Spese pianificate ---------------- */
-function plannedRowElement(p,{compact=true}={}){
-  const cats=categoriesById(), accs=accountsById();
-  const cat=cats[p.categoryId]?{...cats[p.categoryId],name:categoryLabel(p.categoryId)}:{};
-  const acc=accs[p.accountId]||{name:"Conto eliminato"};
-  const d=p.date?new Date(p.date+"T00:00:00"):null;
-  const whenLabel=d?`${d.getDate()} ${MESI_BREVI[d.getMonth()]} ${d.getFullYear()}`:"—";
-  const days=d?Math.ceil((d-new Date(todayISO()+"T00:00:00"))/86400000):null;
-  const relative=days===0?"oggi":days===1?"domani":days>1?`tra ${days} giorni`:"";
-  const row=document.createElement("div");
-  row.setAttribute("role","button");row.tabIndex=0;
-  row.className="template-manage-row planned-row mv-row mv-kind-planned";
-  row.dataset.sortDate=p.date||"";
-  row.innerHTML=movementRowHtml({emoji:cat.emoji||"📌",color:cat.color,title:p.name||cat.name||"Pianificata",
-    badges:`<span class="status-badge planned">Pianificata</span>`,
-    meta:`<span>${hlText(cat.name||"Senza categoria")}</span><span class="mv-sep" aria-hidden="true">·</span><span class="mv-acc">${hlText(acc.name)}</span>`,
-    amountHtml:`${p.type==="income"?"+":"−"}${fmt(p.amount)}`,type:p.type,date:p.date,kind:"planned"});
-  const openRow=()=>{if(!row._skipClick) openScheduledDetail("planned",p.id);};
-  row.addEventListener("click",openRow);activateRowFromKeyboard(row,openRow);
-  enableLongPressActions(row,{title:p.name||cat.name||"Pianificata",onEdit:()=>openPlannedForm(p.id),onDuplicate:()=>duplicateRP("planned",p.id),onDelete:()=>{const item=state.planned.find(x=>x.id===p.id);if(item)moveToTrash("planned",item);const deleted=state.trash[0]?.id;state.planned=state.planned.filter(x=>x.id!==p.id);persist();renderAll();if(deleted)showUndo("Pianificata eliminata",deleted);}});
-  return row;
-}
-function recurringRowElement(r,{dates=null}={}){
-  const cats=categoriesById(),accs=accountsById();
-  const cat=cats[r.categoryId]?{...cats[r.categoryId],name:categoryLabel(r.categoryId)}:{},acc=accs[r.accountId]||{name:"Conto eliminato"};
-  const row=document.createElement("div");
-  row.setAttribute("role","button");row.tabIndex=0;row.className="template-manage-row mv-row mv-kind-recurring";
-  const displayDates=dates || recurringDatesForMonth(r,viewYear,viewMonth);
-  row.dataset.sortDate=displayDates[0]||"";
-  const extra=displayDates.length>1?`<span class="mv-sep" aria-hidden="true">·</span><span>anche ${displayDates.slice(1).map(x=>parseInt(x.slice(8,10),10)).join(", ")}</span>`:"";
-  row.innerHTML=movementRowHtml({emoji:cat.emoji||"🔁",color:cat.color,title:r.name,
-    badges:`<span class="status-badge recurring">Ricorrente</span>`,
-    meta:`<span>${hlText(cat.name||"Senza categoria")}</span><span class="mv-sep" aria-hidden="true">·</span><span class="mv-acc">${hlText(acc.name)}</span>${extra}`,
-    amountHtml:`${r.type==="income"?"+":"−"}${fmt(r.amount)}`,type:r.type,date:displayDates[0],kind:"recurring"});
-  const openRow=()=>{if(!row._skipClick)openScheduledDetail("recurring",r.id,displayDates[0]);};
-  row.addEventListener("click",openRow);activateRowFromKeyboard(row,openRow);
-  enableLongPressActions(row,{title:r.name,onEdit:()=>openRecurringForm(r.id),onDuplicate:()=>duplicateRP("recurring",r.id),onDelete:()=>{moveToTrash("recurring",r);const deleted=state.trash[0]?.id;removeRecurring(r.id);persist();renderAll();if(deleted)showUndo("Ricorrente eliminato",deleted);}});
-  return row;
-}
-function renderPlannedList(){
-  const allContainer=document.getElementById("plannedList");
-  const rpContainer=document.getElementById("plannedListRP");
-  const allItems=state.planned.slice().sort((a,b)=>(a.date||"").localeCompare(b.date||""));
-  const rpItems=plannedForRPMonth().filter(p=>rpMatches(p.name,p.categoryId,p.accountId)).slice().sort((a,b)=>(a.date||"").localeCompare(b.date||""));
-  if(allContainer){allContainer.innerHTML="";allItems.forEach(p=>allContainer.appendChild(plannedRowElement(p)));}
-  if(rpContainer){rpContainer.innerHTML="";const lim=rpLimited("plannedListRP",rpItems);withHighlight(rpSearchQuery,()=>lim.shown.forEach(p=>rpContainer.appendChild(plannedRowElement(p))));rpAppendMore(rpContainer,"plannedListRP",lim.hidden);}
-  const allHint=document.getElementById("plannedEmptyHint");if(allHint)allHint.hidden=allItems.length>0;
-
-  const paid=paidScheduledTransactionsForPeriod("planned").filter(t=>rpMatches(t.name,t.categoryId,t.accountId));
-  const rpHint=document.getElementById("plannedEmptyHintRP");
-  if(rpHint){
-    rpHint.hidden=rpItems.length>0 || paid.length>0;
-    rpHint.textContent=periodModes.recurring==="range"?"Nessun movimento pianificato nel periodo.":periodModes.recurring==="day"?"Nessun movimento pianificato nel giorno selezionato.":"Nessun movimento pianificato nel mese selezionato.";
-  }
-  renderRPPaidSection({
-    sectionId:"plannedPaidSection",noticeId:"plannedAllPaidNotice",countId:"plannedPaidCount",listId:"plannedPaidList",
-    paid,hasUpcoming:rpItems.length>0
-  });
-  renderRPTotalList();
-  updateRPEstimates();
-}
-function renderRPTotalList(){
-  const container=document.getElementById("rpTotalList");if(!container)return;
-  container.innerHTML="";
-  const recs=state.recurring
-    .map(r=>({r,dates:recurringProjectedDatesForPeriod(r)}))
-    .filter(x=>x.dates.length>0 && rpMatches(x.r.name,x.r.categoryId,x.r.accountId));
-  const planned=plannedForRPMonth().filter(p=>rpMatches(p.name,p.categoryId,p.accountId));
-  const rows=withHighlight(rpSearchQuery,()=>[...recs.map(({r,dates})=>recurringRowElement(r,{dates})),...planned.map(p=>plannedRowElement(p))])
-    .sort((a,b)=>(a.dataset.sortDate||"").localeCompare(b.dataset.sortDate||""));
-  const lim=rpLimited("rpTotalList",rows);
-  lim.shown.forEach(row=>container.appendChild(row));
-  rpAppendMore(container,"rpTotalList",lim.hidden);
-
-  const paid=[...paidScheduledTransactionsForPeriod("recurring"),...paidScheduledTransactionsForPeriod("planned")].filter(t=>rpMatches(t.name,t.categoryId,t.accountId))
-    .sort((a,b)=>b.date.localeCompare(a.date)||String(b.id).localeCompare(String(a.id)));
-  const hint=document.getElementById("rpTotalEmptyHint");
-  if(hint){
-    hint.hidden=rows.length>0 || paid.length>0;
-    hint.textContent=periodModes.recurring==="range"?"Nessun movimento R&P nel periodo.":periodModes.recurring==="day"?"Nessun movimento R&P nel giorno selezionato.":"Nessun movimento R&P nel mese selezionato.";
-  }
-  renderRPPaidSection({
-    sectionId:"rpTotalPaidSection",noticeId:"rpTotalAllPaidNotice",countId:"rpTotalPaidCount",listId:"rpTotalPaidList",
-    paid,hasUpcoming:rows.length>0
-  });
-}
 
 /* ---------------- Rendering: Stats ---------------- */
 let statsTrendRange = "1m", trendMode="flow";
-function statsTransactions(withAdjustments=false){
+function statsTransactions(){
   const end = new Date(viewYear,viewMonth+1,0);
   const start = new Date(end);
   if(statsTrendRange==="1w") start.setDate(end.getDate()-6);
@@ -1471,7 +1130,7 @@ function statsTransactions(withAdjustments=false){
   }
   const from=`${start.getFullYear()}-${pad2(start.getMonth()+1)}-${pad2(start.getDate())}`;
   const to=`${end.getFullYear()}-${pad2(end.getMonth()+1)}-${pad2(end.getDate())}`;
-  return state.transactions.filter(t=>(withAdjustments||!t.isBalanceAdjustment) && t.date>=from && t.date<=to);
+  return state.transactions.filter(t=>!t.isBalanceAdjustment && t.date>=from && t.date<=to);
 }
 function renderTopCategoriesChart(entries,cats){
   if(!entries.length) return `<div class="top-categories-empty">Nessuna spesa nel periodo selezionato.</div>`;
@@ -1479,41 +1138,22 @@ function renderTopCategoriesChart(entries,cats){
   return `<div class="top-categories-chart" role="img" aria-label="Top 5 categorie di spesa">${entries.map(([id,value],index)=>{
     const cat=cats[id]||{};
     const pct=Math.max(4,(value/max)*100);
-    const color=PALETTE[index%PALETTE.length];
+    const color=safeColor(cat.color,PALETTE[index%PALETTE.length]);
     return `<div class="top-category-row">
       <div class="top-category-meta"><span class="top-category-name"><span class="top-category-emoji">${escapeHtml(cat.emoji||"•")}</span>${escapeHtml(cat.name||"Altro")}</span><strong>${fmt(value)}</strong></div>
       <div class="top-category-track" aria-hidden="true"><span class="top-category-bar" style="width:${pct.toFixed(1)}%;background:${color}"></span></div>
     </div>`;
   }).join("")}</div>`;
 }
-/* v1.23.0 — Confronto con lo stesso mese dell'anno scorso: totale spese e categorie che cambiano di più. */
-function renderYearOverYear(){
-  const host=document.getElementById("statsInsights"); if(!host) return;
-  let box=document.getElementById("statsYoY");
-  if(!box){ box=document.createElement("div"); box.id="statsYoY"; box.className="stat-card wide-stat yoy-card"; host.after(box); }
-  const ym=(y,m)=>`${y}-${pad2(m+1)}`, cur=ym(viewYear,viewMonth), prev=ym(viewYear-1,viewMonth);
-  const sum=(pfx)=>{ const by={}; let tot=0; state.transactions.forEach(t=>{ if(t.type!=="expense"||t.isBalanceAdjustment||!String(t.date).startsWith(pfx)) return; tot+=t.amount; by[t.categoryId]=(by[t.categoryId]||0)+t.amount; }); return {tot,by}; };
-  const A=sum(cur), B=sum(prev), cats=categoriesById();
-  const amt=v=>balancesHidden?"••••":fmt(v);
-  const title=`${MESI[viewMonth]} ${viewYear} e ${MESI[viewMonth].toLowerCase()} ${viewYear-1}`;
-  if(!B.tot){ box.innerHTML=`<p class="stat-card-label">Rispetto all'anno scorso</p><p class="yoy-empty">Nessuna spesa registrata a ${MESI[viewMonth].toLowerCase()} ${viewYear-1}: il confronto comparirà quando ci saranno dati di un anno fa.</p>`; return; }
-  const diff=A.tot-B.tot, pct=Math.round(diff/B.tot*100);
-  const ids=[...new Set([...Object.keys(A.by),...Object.keys(B.by)])].map(id=>({id,a:A.by[id]||0,b:B.by[id]||0})).map(x=>({...x,d:x.a-x.b})).sort((x,y)=>Math.abs(y.d)-Math.abs(x.d)).slice(0,4);
-  box.innerHTML=`<p class="stat-card-label">Rispetto all'anno scorso · ${escapeHtml(title)}</p>
-    <div class="yoy-head"><div><small>${MESI_BREVI[viewMonth]} ${viewYear}</small><b>${amt(A.tot)}</b></div><div><small>${MESI_BREVI[viewMonth]} ${viewYear-1}</small><b>${amt(B.tot)}</b></div><div class="yoy-delta ${diff>0?"up":"down"}"><small>Differenza</small><b>${diff>0?"▲":"▼"} ${Math.abs(pct)}%</b></div></div>
-    <div class="yoy-rows">${ids.map(x=>{ const c=cats[x.id]||{name:"Altro",emoji:"❔"}; return `<div class="yoy-row"><span>${escapeHtml(c.emoji||"")} ${escapeHtml(c.name)}</span><span class="yoy-vals">${amt(x.b)} → ${amt(x.a)}</span><b class="${x.d>0?"up":"down"}">${x.d>0?"+":"−"}${balancesHidden?"••":fmt(Math.abs(x.d))}</b></div>`; }).join("")}</div>`;
-}
 function renderStats(){
   const tx=statsTransactions(), income=tx.filter(t=>t.type==="income").reduce((s,t)=>s+t.amount,0), expense=tx.filter(t=>t.type==="expense").reduce((s,t)=>s+t.amount,0);
   const days=Math.max(1,Math.ceil((new Date(viewYear,viewMonth+1,0)-new Date(viewYear,viewMonth,1))/86400000)+1);
   const cats=categoriesById(), byCat={};tx.filter(t=>t.type==="expense").forEach(t=>{byCat[t.categoryId]=(byCat[t.categoryId]||0)+t.amount;});
   const topEntries=Object.entries(byCat).sort((a,b)=>b[1]-a[1]).slice(0,5);
-  document.getElementById("statsInsights").innerHTML=`<div class="stat-card"><p class="stat-card-label">Media spese/giorno</p><p class="stat-card-value neg">${fmt(expense/days)}</p></div><div class="stat-card"><p class="stat-card-label">Saldo periodo</p><p class="stat-card-value ${income-expense<0?"neg":"pos"}">${fmtSigned(income-expense)}</p></div><div class="stat-card wide-stat top-categories-card"><p class="stat-card-label">Top 5 categorie</p>${renderTopCategoriesChart(topEntries,cats)}</div>`;
-  renderYearOverYear();
+  document.getElementById("statsInsights").innerHTML=`<div class="stat-card"><p class="stat-card-label">Media spese/giorno</p><p class="stat-card-value neg">${fmt(expense/days)}</p></div><div class="stat-card"><p class="stat-card-label">Spese del periodo</p><p class="stat-card-value neg">${fmt(expense)}</p></div><div class="stat-card wide-stat top-categories-card"><p class="stat-card-label">Top 5 categorie</p>${renderTopCategoriesChart(topEntries,cats)}</div>`;
   renderPie();
   renderTrendSection();
   renderAccountBreakdown();
-  renderLoanStats();
 }
 
 function renderPie(){
@@ -1527,7 +1167,7 @@ function renderPie(){
       const cat = cats[t.categoryId];
       key = (cat && cat.macroCategoryId && macros[cat.macroCategoryId]) ? cat.macroCategoryId : "none";
     } else {
-      key = rollUpCategoryId(t.categoryId);   /* v1.37.0: la sottocategoria conta nella madre */
+      key = t.categoryId;
     }
     totals[key] = (totals[key]||0) + t.amount;
   });
@@ -1550,7 +1190,7 @@ function renderPie(){
   const size=180, r=70, cx=size/2, cy=size/2, circumference = 2*Math.PI*r;
   let offset = 0;
   let circles = `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="var(--line)" stroke-width="26"/>`;
-  entries.forEach(([key,val],sliceIndex)=>{
+  entries.forEach(([key,val])=>{
     let info;
     if(statsGroupMode==="macro"){
       info = key==="none" ? {color:"#999",name:"Senza macrocategoria",emoji:"❔"} : macros[key];
@@ -1559,13 +1199,13 @@ function renderPie(){
     }
     const frac = val/total;
     const len = frac*circumference;
-    circles += `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${PALETTE[sliceIndex%PALETTE.length]}" stroke-width="26"
+    circles += `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${safeColor(info.color)}" stroke-width="26"
       stroke-dasharray="${len} ${circumference-len}" stroke-dashoffset="${-offset}" transform="rotate(-90 ${cx} ${cy})"/>`;
     offset += len;
 
     const legItem = document.createElement("div");
     legItem.className = "pie-legend-item";
-    legItem.innerHTML = `<span class="sw" style="background:${PALETTE[sliceIndex%PALETTE.length]}"></span><span class="lbl">${escapeHtml(info.emoji)} ${escapeHtml(info.name)}</span><span class="val">${fmt(val)} · ${Math.round(frac*100)}%</span>`;
+    legItem.innerHTML = `<span class="sw" style="background:${safeColor(info.color)}"></span><span class="lbl">${escapeHtml(info.emoji)} ${escapeHtml(info.name)}</span><span class="val"><b>${maskAmt(fmt(val))}</b><small>${Math.round(frac*100)}%</small></span>`;
     legend.appendChild(legItem);
   });
 
@@ -1700,8 +1340,8 @@ function renderAccountBreakdown(){
   const container = document.getElementById("accountBreakdown");
   container.className = "stat-card-grid";
   container.innerHTML = "";
-  state.accounts.filter(a=>!isLoanAccount(a)).forEach(a=>{
-    const net = tx.reduce((s,t)=>s+(t.type==="transfer"?(t.accountId===a.id?-t.amount:t.toAccountId===a.id?t.amount:0):(t.accountId===a.id?(t.type==="income"?t.amount:-t.amount):0)),0);
+  state.accounts.forEach(a=>{
+    const net = -tx.reduce((s,t)=>s+(t.type==="expense"&&!t.isBalanceAdjustment&&t.accountId===a.id?t.amount:0),0);
     const card = document.createElement("div");
     card.className = "stat-card";
     card.innerHTML = `
@@ -1710,107 +1350,6 @@ function renderAccountBreakdown(){
     `;
     container.appendChild(card);
   });
-}
-
-/* ---------------- Rendering: Accounts ---------------- */
-function renderAccounts(){
-  const totalEl = document.getElementById("totalBalanceAmount");
-  const total = liquidBalance();
-  totalEl.textContent = balancesHidden ? "••••" : fmt(total);
-  setEyeIcon(document.getElementById("toggleAccountsBalance"),balancesHidden);
-  totalEl.style.color = moneyColor(total);
-  {
-    const recv=receivableTotal(), pay=payableTotal(), hasRecv=Math.abs(recv)>=0.005, hasPay=Math.abs(pay)>=0.005, rows=document.getElementById("accountsEffectiveRows");
-    document.getElementById("totalBalanceLabel").textContent=(hasRecv||hasPay)?"Totale attuale sui conti":"Saldo totale su tutti i conti";
-    if(rows){
-      rows.hidden=!(hasRecv||hasPay);
-      if(hasRecv||hasPay){
-        const eff=total+recv-pay, show=v=>balancesHidden?"••••":fmt(v);
-        document.getElementById("accountsReceivableRow").hidden=!hasRecv; document.getElementById("accountsReceivable").textContent=`+${show(recv)}`;
-        document.getElementById("accountsPayableRow").hidden=!hasPay; document.getElementById("accountsPayable").textContent=`−${show(pay)}`;
-        const e=document.getElementById("accountsEffective"); e.textContent=show(eff); e.style.color=moneyColor(eff);
-      }
-    }
-    renderLoans();
-  }
-  const mainSelect=document.getElementById("mainAccountSelect");
-  if(mainSelect){
-    mainSelect.innerHTML=`<option value="">Seleziona il conto principale</option>`+state.accounts.filter(a=>!isLoanAccount(a)).map(a=>`<option value="${escapeHtml(a.id)}">${escapeHtml(a.name)}</option>`).join("");
-    mainSelect.value=state.accounts.some(a=>a.id===state.mainAccountId)?state.mainAccountId:"";
-    mainSelect.onchange=()=>{
-      state.mainAccountId=mainSelect.value || null;
-      persist();renderAll();
-      showToast(state.mainAccountId?"Conto principale impostato":"Conto principale rimosso");
-    };
-  }
-
-  const container = document.getElementById("accountsList");
-  container.innerHTML = "";
-  state.accounts.filter(a=>!isLoanAccount(a)).forEach(a=>{
-    const bal = accountBalance(a.id);
-    const card = document.createElement("button");
-    card.className = "account-card";
-    card.innerHTML = `
-      <span class="account-info">
-        <p class="account-name">${escapeHtml(a.name)}${a.id===state.mainAccountId?` <span class="main-account-badge">Principale</span>`:""}</p>
-        <p class="account-type">Saldo attuale</p>
-      </span>
-      <span class="account-balance" style="color:${balancesHidden?"var(--num-plain)":moneyColor(bal)}">${balancesHidden?"••••":fmt(bal)}</span>
-      <span class="account-edit" role="button" tabindex="0" aria-label="Modifica ${escapeHtml(a.name)}">✎</span>
-    `;
-    card.addEventListener("click", (e)=>{
-      if(e.target.closest(".account-edit")){ e.stopPropagation(); openAccountForm(a.id); return; }
-      openAccountEvolution(a.id);
-    });
-    card.querySelector(".account-edit").addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();e.stopPropagation();openAccountForm(a.id);}});
-    container.appendChild(card);
-  });
-}
-
-function renderAccountsManageList(){
-  const container = document.getElementById("accountsManageList");
-  if(!container) return;
-  container.innerHTML = "";
-  state.accounts.forEach(a=>{
-    const bal = accountBalance(a.id);
-    const row = document.createElement("button");
-    row.className = "category-row";
-    row.innerHTML = `
-      <span class="ic" style="background:${safeColor(a.color)}22;">●</span>
-      <span class="info">
-        <p class="nm">${escapeHtml(a.name)}${a.id===state.mainAccountId?` <span class="main-account-badge">Principale</span>`:""}</p>
-        <p class="sub">Saldo attuale: <span class="amt">${fmt(bal)}</span></p>
-      </span>
-      <span class="chev">›</span>
-    `;
-    row.querySelector(".ic").style.color = safeColor(a.color);
-    row.addEventListener("click", ()=> openAccountForm(a.id));
-    container.appendChild(row);
-  });
-}
-
-function renderBalanceAdjustmentHistory(){
-  const container=document.getElementById("balanceAdjustmentsList");
-  const empty=document.getElementById("balanceAdjustmentsEmpty");
-  if(!container) return;
-  const accs=accountsById();
-  const items=state.transactions.filter(t=>t.isBalanceAdjustment&&!t.loanOld&&!t.loanWriteOff).slice().sort((a,b)=>b.date.localeCompare(a.date)||b.id.localeCompare(a.id));
-  container.innerHTML="";
-  items.forEach(t=>{
-    const row=document.createElement("div");
-    row.className="balance-adjustment-row";
-    const d=new Date(t.date+"T00:00:00");
-    const sign=t.type==="income"?"+":"−";
-    row.innerHTML=`
-      <span class="balance-adjustment-icon">⚖️</span>
-      <span class="balance-adjustment-info">
-        <strong>${escapeHtml(accs[t.accountId]?.name||"Conto eliminato")}</strong>
-        <small>${d.getDate()} ${MESI_BREVI[d.getMonth()]} ${d.getFullYear()}${t.note?` · ${escapeHtml(t.note)}`:""}</small>
-      </span>
-      <span class="balance-adjustment-amount ${t.type}">${sign}${fmt(t.amount)}</span>`;
-    container.appendChild(row);
-  });
-  if(empty) empty.hidden=items.length>0;
 }
 
 /* ---------------- Rendering: More (macrocategorie, categorie, grafo, dati) ---------------- */
@@ -1825,12 +1364,6 @@ function moveCategory(id,delta){
   [state.categories[index],state.categories[targetIndex]]=[state.categories[targetIndex],state.categories[index]];
   persist();renderAll();
 }
-function moveMacroCategory(id,delta){
-  const index=state.macroCategories.findIndex(m=>m.id===id), target=index+delta;
-  if(index<0 || target<0 || target>=state.macroCategories.length) return;
-  [state.macroCategories[index],state.macroCategories[target]]=[state.macroCategories[target],state.macroCategories[index]];
-  persist();renderAll();
-}
 function reorderControls(label,onUp,onDown,canUp,canDown){
   const controls=document.createElement("span");controls.className="reorder-actions";
   const up=document.createElement("button");up.type="button";up.className="reorder-btn";up.textContent="↑";up.setAttribute("aria-label",`Sposta ${label} su`);up.disabled=!canUp;up.addEventListener("click",e=>{e.stopPropagation();onUp();});
@@ -1843,17 +1376,15 @@ function renderCategories(){
   const macros = macroCategoriesById();
   container.innerHTML = "";
 
-  function buildRow(c,position,total,sotto){
-    const wrap=document.createElement("div");wrap.className="category-manage-row"+(sotto?" is-sub":"");
+  function buildRow(c,position,total){
+    const wrap=document.createElement("div");wrap.className="category-manage-row";
     const row = document.createElement("button");
-    row.className = "category-row"+(sotto?" sub-row":"");
-    const figlie = sotto?0:subCategoriesOf(c.id).length;
-    const madre = sotto ? state.categories.find(x=>x.id===c.parentCategoryId) : null;
+    row.className = "category-row";
     row.innerHTML = `
       <span class="ic">${emojiIconHtml(c.emoji)}</span>
       <span class="info">
-        <p class="nm">${sotto?`<span class="sub-arrow" aria-hidden="true">└</span>`:""}${escapeHtml(c.name)}</p>
-        <p class="sub">${sotto?`sottocategoria di ${escapeHtml(madre?madre.name:"")}`:(c.kind==="income"?"Entrata":"Uscita")}${figlie?` · ${figlie} ${figlie===1?"sottocategoria":"sottocategorie"}`:""}${c.budget?` · budget <span class="amt">${fmt(c.budget)}</span>`:""}</p>
+        <p class="nm">${escapeHtml(c.name)}</p>
+        <p class="sub">${(n=>`${n} ${n===1?"movimento":"movimenti"}`)(state.transactions.filter(t=>t.categoryId===c.id).length)}</p>
       </span>
       <span class="chev">›</span>`;
     row.addEventListener("click", ()=> openCategoryForm(c.id));
@@ -1862,60 +1393,29 @@ function renderCategories(){
     return wrap;
   }
 
-  /* v1.37.0 — l'elenco mostra le categorie principali e, rientrate sotto, le loro
-     sottocategorie. Le frecce di riordino restano solo sulle principali. */
   const groups = new Map();
-  state.categories.filter(c=>!c.parentCategoryId).forEach(c=>{
+  state.categories.forEach(c=>{
     const key = c.macroCategoryId && macros[c.macroCategoryId] ? c.macroCategoryId : "none";
     if(!groups.has(key)) groups.set(key, []);
     groups.get(key).push(c);
   });
-  function appendCat(group,c,i,n){
-    group.appendChild(buildRow(c,i,n,false));
-    subCategoriesOf(c.id).forEach(sc=>group.appendChild(buildRow(sc,0,1,true)));
-  }
 
   state.macroCategories.forEach(m=>{
     if(!groups.has(m.id)) return;
     const group = document.createElement("div");
     group.className = "category-group";
     group.innerHTML = `<p class="category-group-title"><span>${escapeHtml(m.emoji)}</span>${escapeHtml(m.name)}</p>`;
-    const items=groups.get(m.id);items.forEach((c,i)=> appendCat(group,c,i,items.length));
+    const items=groups.get(m.id);items.forEach((c,i)=> group.appendChild(buildRow(c,i,items.length)));
     container.appendChild(group);
   });
 
   if(groups.has("none")){
     const group = document.createElement("div");
     group.className = "category-group";
-    group.innerHTML = `<p class="category-group-title">Senza macrocategoria</p>`;
-    const items=groups.get("none");items.forEach((c,i)=> appendCat(group,c,i,items.length));
+    group.innerHTML = `<p class="category-group-title">Categorie di spesa</p>`;
+    const items=groups.get("none");items.forEach((c,i)=> group.appendChild(buildRow(c,i,items.length)));
     container.appendChild(group);
   }
-}
-
-function renderMacroCategories(){
-  const container = document.getElementById("macroCategoriesList");
-  if(!container) return;
-  container.innerHTML = "";
-  state.macroCategories.forEach((m,index)=>{
-    const count = state.categories.filter(c=>c.macroCategoryId===m.id).length;
-    const wrap=document.createElement("div");wrap.className="category-manage-row";
-    const row = document.createElement("button");
-    row.className = "category-row";
-    row.innerHTML = `
-      <span class="ic">${emojiIconHtml(m.emoji)}</span>
-      <span class="info">
-        <p class="nm">${escapeHtml(m.name)}</p>
-        <p class="sub">${count} categori${count===1?"a":"e"} associat${count===1?"a":"e"}${m.budget?` · budget <span class="amt">${fmt(m.budget)}</span>`:""}</p>
-      </span>
-      <span class="chev">›</span>`;
-    row.addEventListener("click", ()=> openMacroForm(m.id));
-    wrap.appendChild(row);
-    wrap.appendChild(reorderControls(`macrocategoria ${m.name}`,()=>moveMacroCategory(m.id,-1),()=>moveMacroCategory(m.id,1),index>0,index<state.macroCategories.length-1));
-    container.appendChild(wrap);
-  });
-  const hint = document.getElementById("macroEmptyHint");
-  if(hint) hint.hidden = state.macroCategories.length>0;
 }
 
 function renderCategoryGraph(){
@@ -1962,27 +1462,19 @@ function renderAll(){
   document.documentElement.classList.toggle("amounts-hidden",!!balancesHidden);
   // Mantiene coerente lo stato anche se l'app resta aperta o torna in primo piano
   // dopo la data di scadenza: ciò che è dovuto entra subito nei Movimenti.
-  generatePlannedTransactions();
   generateRecurringTransactions(false);
   renderHeader();
   renderHome();
+  renderCouple();
   renderTransactionsView();
-  renderRecurringList();
-  renderPlannedList();
   renderStats();
-  renderAccounts();
-  renderAccountsManageList();
-  renderMacroCategories();
   renderCategories();
-  renderCategoryGraph();
-  setRPMode(rpMode);
-  renderRPAllView();
   renderBackupStatus();
 }
 function renderBackupStatus(){
   const backup=document.getElementById("backupStatus");
   if(!backup) return;
-  const last=localStorage.getItem("bilancio_last_backup");
+  const last=localStorage.getItem("noidue_last_backup");
   backup.classList.remove("warning");
   if(!last){
     backup.textContent="Backup consigliato: non risulta ancora alcuna esportazione su questo dispositivo.";
@@ -2041,8 +1533,8 @@ function switchView(view,{animate=false,direction=0,nav=null,restore=null}={}){
   }else if(["home","recurring","stats"].includes(view)){
     const today=new Date();
     viewYear=today.getFullYear();viewMonth=today.getMonth();viewDay=today.getDate();
-    periodModes[view]="month";
-    if(PAIR.includes(view)){periodModes.home="month";periodModes.recurring="month";}
+    periodModes[view]=view==="home"?"all":"month";
+    if(PAIR.includes(view)){periodModes.home="all";periodModes.recurring="month";}
   }
   document.querySelectorAll(".view").forEach(v=>{
     v.classList.remove("view-swipe-next","view-swipe-prev");
@@ -2071,7 +1563,7 @@ function switchView(view,{animate=false,direction=0,nav=null,restore=null}={}){
    "Vedi tutti" apre una sotto-pagina; si torna alla sezione da cui è stata
    aperta con il pulsante ‹, con uno swipe verso destra o con il tasto
    Indietro di Android. Periodo e posizione di scorrimento vengono ripristinati. */
-const SUBVIEW_PARENT={transactions:"home",rpall:"recurring",planned:"home"};
+const SUBVIEW_PARENT={transactions:"home"};
 var subNav=null, ignoreNextPop=false;
 try{if("scrollRestoration" in history) history.scrollRestoration="manual";}catch(e){}
 function isSubView(v){return Object.prototype.hasOwnProperty.call(SUBVIEW_PARENT,v);}
@@ -2106,25 +1598,6 @@ window.addEventListener("popstate",()=>{
   if(subNav || isSubView(activeView)) performBack();
 });
 document.querySelectorAll("[data-nav-back]").forEach(b=>b.addEventListener("click",goBack));
-function setRPMode(mode){
-  rpMode=mode;
-  const rpView=document.getElementById("view-recurring");
-  if(rpView){
-    rpView.classList.remove("rp-mode-total","rp-mode-recurring","rp-mode-planned");
-    rpView.classList.add(`rp-mode-${mode}`);
-  }
-  const total=document.getElementById("rpTotalSection"), recurring=document.getElementById("rpRecurringSection"), planned=document.getElementById("rpPlannedSection");
-  if(total) total.hidden=mode!=="total";
-  if(recurring) recurring.hidden=mode!=="recurring";
-  if(planned) planned.hidden=mode!=="planned";
-  const recurringCard=document.getElementById("recurringEstimateCard"),plannedCard=document.getElementById("plannedEstimateCard"),combined=document.getElementById("rpTotalEstimateCard"),grid=document.getElementById("rpEstimatesGrid");
-  if(recurringCard) recurringCard.hidden=mode==="planned";
-  if(plannedCard) plannedCard.hidden=mode==="recurring";
-  if(combined) combined.hidden=mode!=="total";
-  if(grid) grid.classList.toggle("single",mode!=="total");
-  document.querySelectorAll("#rpModeToggle [data-rp-mode]").forEach(btn=>btn.classList.toggle("active",btn.dataset.rpMode===mode));
-}
-document.querySelectorAll("#rpModeToggle [data-rp-mode]").forEach(btn=>btn.addEventListener("click",()=>setRPMode(btn.dataset.rpMode)));
 document.querySelectorAll(".tab").forEach(tab=>{
   tab.addEventListener("click", ()=> switchView(tab.dataset.view));
 });
@@ -2249,27 +1722,34 @@ function closePeriodMenu(){document.getElementById("periodMenu").hidden=true;doc
 document.getElementById("monthLabel").addEventListener("click",()=>{
   openPeriodPicker();
 });
-bindLongPress(document.getElementById("monthLabel"),()=>showMonthQuickPicker(document.getElementById("monthLabel")));
+document.getElementById("periodX").addEventListener("click",()=>setPeriodMode("all"));
+document.getElementById("backToCurrentMonth")?.addEventListener("click",()=>{
+  const today=new Date();
+  viewYear=today.getFullYear();viewMonth=today.getMonth();viewDay=today.getDate();
+  periodModes[activeView]="month";txVisibleLimit=TX_PAGE_SIZE;closeDatePicker();closePeriodMenu();renderAll();
+});
+/* v1.17.0 — Tieni premuto sul titolo: menu veloce dei mesi (come in Bilancio), con "Tutti i movimenti". */
+/* lpOutside, closeLongPressPopup e bindLongPress ora sono in suite.js (comuni a Bilancio e Noi Due). */
 function showMonthQuickPicker(anchor){
   closeLongPressPopup();
   const pop=document.createElement("div");
   pop.className="lp-popup mp-popup";pop.id="lpPopup";pop.setAttribute("role","dialog");pop.setAttribute("aria-label","Scegli il mese");
+  const all=periodModes[activeView]==="all", today=new Date();
+  const baseY=all?today.getFullYear():viewYear, baseM=all?today.getMonth():viewMonth;
   const items=[];
-  for(let i=-3;i<=3;i++){
-    const d=new Date(viewYear,viewMonth+i,1);
-    items.push({y:d.getFullYear(),m:d.getMonth(),cur:i===0});
-  }
-  const rows=items.map(it=>`<button type="button" class="mp-row${it.cur?" active":""}" data-y="${it.y}" data-m="${it.m}"><b>${MESI[it.m]}</b><small>${it.y}</small></button>`).join("");
-  pop.innerHTML=`<div class="lp-head">Scegli il mese</div><div class="mp-list">${rows}</div>`;
+  for(let i=-3;i<=3;i++){ const d=new Date(baseY,baseM+i,1); items.push({y:d.getFullYear(),m:d.getMonth(),cur:!all&&i===0,now:d.getFullYear()===today.getFullYear()&&d.getMonth()===today.getMonth()}); }
+  const rows=items.map(it=>`<button type="button" class="mp-row${it.cur?" active":""}" data-y="${it.y}" data-m="${it.m}"><b>${MESI[it.m]}</b><small>${it.now?"questo mese · ":""}${it.y}</small></button>`).join("");
+  pop.innerHTML=`<div class="lp-head">Scegli il mese</div><div class="mp-list"><button type="button" class="mp-row mp-all${all?" active":""}" data-all><b>Tutti i movimenti</b><small>senza filtro</small></button>${rows}</div>`;
   document.body.appendChild(pop);
+  pop.querySelector("[data-all]").addEventListener("click",()=>{ periodModes[activeView]="all"; txVisibleLimit=TX_PAGE_SIZE; closeLongPressPopup(); renderAll(); });
   pop.querySelectorAll("[data-m]").forEach(b=>b.addEventListener("click",()=>{
     viewYear=Number(b.dataset.y);viewMonth=Number(b.dataset.m);
     viewDay=Math.min(viewDay||1,new Date(viewYear,viewMonth+1,0).getDate());
     periodModes[activeView]="month";txVisibleLimit=TX_PAGE_SIZE;closeLongPressPopup();renderAll();
   }));
   const r=anchor.getBoundingClientRect(), vw=window.innerWidth, vh=window.innerHeight;
-  const w=Math.min(220,vw-24); pop.style.width=w+"px";
-  let left=Math.min(Math.max(12,r.left+r.width/2-w/2),vw-w-12);
+  const w=Math.min(250,vw-24); pop.style.width=w+"px";
+  const left=Math.min(Math.max(12,r.left+r.width/2-w/2),vw-w-12);
   const ph=pop.offsetHeight;
   let top=r.bottom+8;
   if(top+ph>vh-90) top=Math.max(12,r.top-ph-8);
@@ -2280,7 +1760,7 @@ function showMonthQuickPicker(anchor){
     window.addEventListener("scroll",closeLongPressPopup,{once:true,capture:true});
   },0);
 }
-document.getElementById("periodX").addEventListener("click",()=>setPeriodMode("month"));
+bindLongPress(document.getElementById("monthLabel"),()=>showMonthQuickPicker(document.getElementById("monthLabel")));
 /* v1.7.0 — Selettore del periodo (Home, R&P, Tutti i movimenti):
    - tocca il titolo del mese per vedere i 12 mesi e cambiare mese/anno;
    - "Tutto il mese" mostra il mese intero;
@@ -2325,6 +1805,7 @@ function openPeriodPicker(view=activeView,opts=null){
       days.hidden=showMonths; months.hidden=!showMonths; months.classList.toggle("is-years",level==="years");
       whole.textContent=`Tutto ${MESI[pMonth].toLowerCase()}`;
       whole.classList.toggle("active",!opts && mode==="month" && !selStart && pYear===viewYear && pMonth===viewMonth);
+      if(!opts && periodModes[target]==="all") whole.classList.remove("active");
       if(level==="months"){
         renderMonthsGrid(months,pYear,viewYear,viewMonth,(m)=>{pMonth=m;level="days";paint();});
       }else if(level==="years"){
@@ -2339,9 +1820,12 @@ function openPeriodPicker(view=activeView,opts=null){
           const isStart=iso===selStart, isEnd=iso===selEnd, inside=selStart&&selEnd&&iso>selStart&&iso<selEnd;
           const cell=document.createElement("button");cell.type="button";
           cell.className="calendar-cell"+(iso===todayStr?" today":"")+(isStart||isEnd?" selected":"")+(inside?" in-range":"")+(isStart&&selEnd?" range-start":"")+(isEnd?" range-end":"");
-          // v1.22.0 — stessi pallini del calendario: effettivo, una tantum, ricorrente.
-          const di=info[iso]||{};
-          cell.innerHTML=`<span class="cal-day-num">${d}</span><span class="cal-dots">${di.real?'<span class="cal-dot real"></span>':""}${di.planned?'<span class="cal-dot planned"></span>':""}${di.recurring?'<span class="cal-dot recurring"></span>':""}</span>`;
+          // v1.17.0 — come in Bilancio: un pallino sotto il giorno, qui con il colore di chi ha pagato.
+          const di=info[iso];
+          const dots=di?["a","b","joint"].filter(k=>di[k]).map(k=>`<span class="cal-dot" style="background:${safeColor(personColor(k))}"></span>`).join("")+(di.settle?'<span class="cal-dot settle"></span>':""):"";
+          const amt=di&&di.total>0?`<span class="cal-amt">${balancesHidden?"••":Math.round(di.total)}</span>`:"";
+          cell.innerHTML=`<span class="cal-day-num">${d}</span>${amt}<span class="cal-dots">${dots}</span>`;
+          if(di&&di.total>0) cell.classList.add("has-real");
           cell.setAttribute("aria-label",`${d} ${MESI[pMonth]} ${pYear}`);
           cell.addEventListener("click",()=>{
             if(!selStart || selEnd){selStart=iso;selEnd=null;}
@@ -2353,7 +1837,12 @@ function openPeriodPicker(view=activeView,opts=null){
           grid.appendChild(cell);
         }
         padCalendarGrid(grid,lead,n);
-        if(!days.querySelector(".pp-legend")){ const lg=document.createElement("div"); lg.className="calendar-legend pp-legend"; lg.innerHTML='<span class="cal-leg-item"><span class="dot real"></span>Effettivo</span><span class="cal-leg-item"><span class="dot planned"></span>Una tantum</span><span class="cal-leg-item"><span class="dot recurring"></span>Ricorrente</span>'; days.appendChild(lg); }
+        // Legenda e totale del mese, come nel calendario spese.
+        let lg=days.querySelector(".pp-legend"); if(!lg){ lg=document.createElement("div"); lg.className="calendar-legend pp-legend"; days.appendChild(lg); }
+        lg.innerHTML=["a","b","joint"].map(k=>`<span class="cal-leg-item"><span class="dot" style="background:${safeColor(personColor(k))}"></span>${escapeHtml(personName(k))}</span>`).join("")+`<span class="cal-leg-item"><span class="dot" style="background:#e8a33d"></span>Rimborso</span>`;
+        const monthTot=Object.values(info).reduce((t,x)=>t+(x.total||0),0);
+        let mt=days.querySelector(".pp-month-total"); if(!mt){ mt=document.createElement("p"); mt.className="pp-month-total"; days.appendChild(mt); }
+        mt.textContent=monthTot>0?`Spese di ${MESI[pMonth].toLowerCase()}: ${balancesHidden?"••••":fmt(monthTot)}`:`Nessuna spesa a ${MESI[pMonth].toLowerCase()}`;
         node.style.setProperty("--pp-h",days.offsetHeight+"px");
       }
       if(!selStart){hint.textContent="Tocca un giorno, oppure due giorni per un periodo.";apply.disabled=true;apply.textContent="Mostra";}
@@ -2364,6 +1853,13 @@ function openPeriodPicker(view=activeView,opts=null){
     title.addEventListener("click",()=>{level=level==="days"?"months":level==="months"?"years":"months";paint();});
     node.querySelector("#ppPrev").addEventListener("click",()=>{if(showMonths)pYear--;else{pMonth--;if(pMonth<0){pMonth=11;pYear--;}}paint();});
     node.querySelector("#ppNext").addEventListener("click",()=>{if(showMonths)pYear++;else{pMonth++;if(pMonth>11){pMonth=0;pYear++;}}paint();});
+    if(!opts && (target==="home"||target==="transactions")){
+      // v1.17.0 — "Tutti i movimenti" sta in alto: in basso restano due pulsanti come in Bilancio.
+      const allBtn=document.createElement("button"); allBtn.type="button"; allBtn.className="pp-all-chip"; allBtn.textContent="Tutti i movimenti";
+      allBtn.classList.toggle("active",periodModes[target]==="all");
+      allBtn.addEventListener("click",()=>{ periodModes[target]="all"; txVisibleLimit=TX_PAGE_SIZE; closeBtn.click(); renderAll(); });
+      closeBtn.before(allBtn);
+    }
     whole.addEventListener("click",()=>{
       if(opts){const last=new Date(pYear,pMonth+1,0).getDate();closeBtn.click();opts.onApply({from:`${pYear}-${pad2(pMonth+1)}-01`,to:`${pYear}-${pad2(pMonth+1)}-${pad2(last)}`});return;}
       viewYear=pYear;viewMonth=pMonth;viewDay=Math.min(viewDay||1,new Date(pYear,pMonth+1,0).getDate());
@@ -2421,18 +1917,11 @@ document.getElementById("chooseDay").addEventListener("click",()=>{
 document.getElementById("backToMonth").addEventListener("click",()=>{
   periodModes[activeView]="month";closeDatePicker();closePeriodMenu();renderAll();
 });
-document.getElementById("backToCurrentMonth").addEventListener("click",()=>{
-  const today=new Date();
-  viewYear=today.getFullYear();viewMonth=today.getMonth();viewDay=today.getDate();
-  periodModes.home="month";periodModes.recurring="month";
-  txVisibleLimit=TX_PAGE_SIZE;closeDatePicker();closePeriodMenu();renderAll();
-});
 document.getElementById("periodDate").addEventListener("change",e=>{
   if(!/^\d{4}-\d{2}-\d{2}$/.test(e.target.value))return;
   const [y,m,d]=e.target.value.split("-").map(Number);viewYear=y;viewMonth=m-1;viewDay=d;
   periodModes[activeView]="day";closeDatePicker();renderAll();
 });
-document.getElementById("backFromPlanned").addEventListener("click",()=>switchView("home"));
 function movePeriod(delta){
   txVisibleLimit=TX_PAGE_SIZE;
   if(periodModes[activeView]==="day"){
@@ -2477,8 +1966,8 @@ function canScrollLeftWithin(el,root){
   }
   return false;
 }
-/* Il dito è partito dentro una striscia che scorre di lato? Allora quel movimento è suo:
-   niente cambio mese. */
+/* v1.23.0 — Il dito è partito dentro una striscia che scorre di lato (es. le liste in Home)?
+   Allora quel movimento è suo: niente cambio mese e niente ritorno indietro. */
 function insideHScroller(el,root){
   for(let n=el;n && n!==root && n!==document.body;n=n.parentElement){
     if(n.scrollWidth>n.clientWidth+2){
@@ -2497,7 +1986,6 @@ function openSheet(templateId, setup){
   overlayRoot.appendChild(node);
   overlayRoot.style.pointerEvents = "auto";
   document.documentElement.classList.add("sheet-open");
-  requestAnimationFrame(()=>node.querySelectorAll(".amount-field input").forEach(fitAmountInput));
 
   let closing=false;
   function finishClose(){
@@ -2650,816 +2138,1683 @@ function openSheet(templateId, setup){
   return { node, close };
 }
 
-/* ---------------- v1.12.0 — Prestiti: da ricevere e da pagare, per persona ----------------
-   Ogni persona (o ente) ha un conto prestito nascosto dalla lista dei conti:
-   - "Da ricevere · Nome" (receivable): sale quando presto o pago la sua parte di una spesa, scende quando mi restituisce;
-   - "Da pagare · Nome" (payable): scende sotto zero quando ricevo un prestito, risale quando restituisco o pago una rata.
-   I movimenti sono trasferimenti: il saldo dei conti resta corretto e le spese contano solo la mia parte.
-   "Spesa divisa" nel nuovo movimento: Metà, Percentuale o Tutto a lui/lei (= prestito intero). */
-function isLoanAccount(a){ return !!(a && (a.receivable || a.payable)); }
-function loanAccount(id){ const a=state.accounts.find(x=>x.id===id); return isLoanAccount(a)?a:null; }
-// v1.25.0: una persona eliminata resta come conto "archiviato" (saldo zero, storico intatto) e non compare più.
-function receivableAccounts(){ return state.accounts.filter(a=>a.receivable&&!a.archived); }
-function payableAccounts(){ return state.accounts.filter(a=>a.payable&&!a.archived); }
-function payableTotal(){ return -payableAccounts().reduce((s,a)=>s+accountBalance(a.id),0); } // positivo = quanto devo
-function ensureLoanAccount(person,kind){
-  const name=String(person||"").trim().slice(0,30);
-  const flag=kind==="pay"?"payable":"receivable";
-  let acc=state.accounts.find(a=>a[flag] && String(a.person||"").toLowerCase()===name.toLowerCase());
-  if(acc && acc.archived) delete acc.archived; // la persona torna se la si usa di nuovo
-  if(!acc){
-    acc={id:uid(),name:`${kind==="pay"?"Da pagare":"Da ricevere"} · ${name}`,balance:0,color:kind==="pay"?"#C9785C":"#8E7CC3",person:name};
-    acc[flag]=true;
-    state.accounts.push(acc);
+/* ---------------- Noi Due — vista Coppia, rimborsi e impostazioni ---------------- */
+function coupleDetailRows(t){
+  if(t.isBalanceAdjustment) return "";
+  if(t.type==="transfer"){
+    if(!isCoupleSettle(t)) return "";
+    const alloc=t.settleAlloc?Object.entries(t.settleAlloc).filter(([,v])=>Math.abs(v)>=0.005).map(([g,v])=>`${groupLabel(g)} ${fmt(Math.abs(v))}`).join(", "):groupLabel(groupOf(t));
+    return `<div class="tx-detail-row"><span class="k">Rimborso</span><span class="v">${escapeHtml(personName(accOwner(t.accountId)))} → ${escapeHtml(personName(accOwner(t.toAccountId)))}</span></div>
+      <div class="tx-detail-row"><span class="k">${t.settleAlloc?"Gruppi":"Gruppo"}</span><span class="v">${escapeHtml(alloc)}</span></div>`;
   }
-  return acc;
+  const owner=accOwner(t.accountId), v=txDebt(t);
+  const payer=owner==="a"||owner==="b"?personName(owner):"Cassa comune";
+  return `<div class="tx-detail-row"><span class="k">Gruppo</span><span class="v">${escapeHtml(groupLabel(groupOf(t)))}</span></div>
+    <div class="tx-detail-row"><span class="k">${t.type==="income"?"Ricevuto da":"Pagato da"}</span><span class="v">${escapeHtml(payer)}</span></div>
+    <div class="tx-detail-row"><span class="k">Divisione</span><span class="v">${escapeHtml(splitLabel(t))}</span></div>
+    ${Math.abs(v)>=0.005?`<div class="tx-detail-row"><span class="k">Effetto</span><span class="v">${escapeHtml(debtSentence(v))}</span></div>`:""}`;
 }
-function groupParts(gid){ const parts=state.transactions.filter(x=>x.splitGroup===gid); return {id:gid,main:parts.find(x=>x.type==="expense")||null,share:parts.find(x=>x.splitShare)||null}; }
-function splitPartner(t){ return t?.splitGroup ? state.transactions.find(x=>x.splitGroup===t.splitGroup && x.id!==t.id) : null; }
-function sharePersonOf(t){
-  const share=t?.splitShare?t:splitPartner(t);
-  return share?(loanAccount(share.toAccountId)?.person||""):"";
+function paintAvatar(el,k){ if(!el) return; el.textContent=personInitial(k); el.style.background=personColor(k); }
+function renderCoupleStrip(){
+  const bal=coupleBalance();
+  paintAvatar(document.getElementById("stripAvA"),"a");
+  paintAvatar(document.getElementById("stripAvB"),"b");
+  const who=document.getElementById("stripWho"), amt=document.getElementById("stripAmount");
+  if(!who||!amt) return;
+  if(Math.abs(bal)<0.005){ who.textContent="Tra voi due"; amt.textContent="Siete in pari"; amt.style.color=""; return; }
+  const debtor=bal>0?"b":"a";
+  who.textContent=`${personName(debtor)} deve a ${personName(otherPerson(debtor))}`;
+  amt.textContent=balancesHidden?"••••":fmt(Math.abs(bal));
+  amt.style.color=personColor(otherPerson(debtor));
 }
-/* Titolo e descrizione delle righe che toccano un conto prestito. */
-function linkedTx(t){
-  return state.transactions.filter(x=>x.id!==t.id&&((t.splitGroup&&x.splitGroup===t.splitGroup)||(t.settleGroup&&x.settleGroup===t.settleGroup)));
-}
-function loanRowInfo(t){
-  if(t.loanOffset){
-    const a=loanAccount(t.accountId); if(!a) return null;
-    return {title:`Compensazione con ${a.person}`,label:a.receivable?"Credito compensato":"Debito compensato",meta:"crediti e debiti si annullano",emoji:"⚖️",color:"#7BAE9D"};
+function renderCouple(){
+  renderCoupleStrip();
+  const view=document.getElementById("view-coppia");
+  if(!view) return;
+  const bal=coupleBalance();
+  paintAvatar(document.getElementById("coupleAvA"),"a");
+  paintAvatar(document.getElementById("coupleAvB"),"b");
+  view.style.setProperty("--ca",personColor("a"));
+  view.style.setProperty("--cb",personColor("b"));
+  document.getElementById("coupleNameA").textContent=personName("a");
+  document.getElementById("coupleNameB").textContent=personName("b");
+  const who=document.getElementById("coupleWho"), amount=document.getElementById("coupleAmount");
+  if(Math.abs(bal)<0.005){ who.textContent="Siete in pari"; amount.textContent=balancesHidden?"••••":fmt(0); amount.style.color="var(--ink)"; }
+  else{
+    const debtor=bal>0?"b":"a";
+    who.textContent=`${personName(debtor)} deve a ${personName(otherPerson(debtor))}`;
+    amount.textContent=balancesHidden?"••••":fmt(Math.abs(bal));
+    amount.style.color=personColor(otherPerson(debtor));
   }
-  if(t.loanWriteOff){
-    const a=loanAccount(t.accountId); if(!a) return null;
-    return a.receivable
-      ? {title:`Abbuono a ${a.person}`,label:"Rimborso chiuso",meta:"differenza non restituita",emoji:"✅",color:"#3AA684"}
-      : {title:`Abbuono da ${a.person}`,label:"Debito chiuso",meta:"differenza non pagata",emoji:"✅",color:"#3AA684"};
-  }
-  if(t.loanOld){
-    const a=loanAccount(t.accountId); if(!a) return null;
-    return a.receivable
-      ? {title:`Prestito a ${a.person}`,label:"Prestito vecchio",meta:t.note||"fuori saldo",emoji:"🤝",color:"#8E7CC3"}
-      : {title:`Debito con ${a.person}`,label:"Debito vecchio",meta:t.note||"fuori saldo",emoji:"🏦",color:"#C9785C"};
-  }
-  if(t.type!=="transfer") return null;
-  const from=loanAccount(t.accountId), to=loanAccount(t.toAccountId);
-  const accName=id=>state.accounts.find(a=>a.id===id)?.name||"conto";
-  if(to?.receivable){
-    const quota=t.splitShare && state.transactions.some(x=>x.splitGroup===t.splitGroup && x.type==="expense");
-    return {title:`${quota?"Quota di":"Prestito a"} ${to.person}`,label:"Da ricevere",meta:t.note||accName(t.accountId),emoji:"🤝",color:"#8E7CC3"};
-  }
-  if(from?.receivable) return {title:`${from.person} ti ha restituito`,label:t.rateInfo?"Rata":"Restituzione",meta:t.rateInfo?`${rateInfoLabel(t.rateInfo)} · su ${accName(t.toAccountId)}`:`su ${accName(t.toAccountId)}`,emoji:"↩️",color:"#3AA684"};
-  if(from?.payable) return {title:`Prestito da ${from.person}`,label:"Da pagare",meta:t.note||`su ${accName(t.toAccountId)}`,emoji:"🏦",color:"#C9785C"};
-  if(to?.payable) return {title:`Restituito a ${to.person}`,label:"Rata / restituzione",meta:t.rateInfo?`${rateInfoLabel(t.rateInfo)} · da ${accName(t.accountId)}`:(t.note||`da ${accName(t.accountId)}`),emoji:"💸",color:"#C9785C"};
-  return null;
-}
-function mountSharedExpense(node, afterRow, {type, amount, group}){
-  const total=group?Number(group.main?.amount||0)+Number(group.share?.amount||0):0;
-  let on=!!group?.share;
-  let person=group?.share?(loanAccount(group.share.toAccountId)?.person||""):(state.lastSharePerson||receivableAccounts()[0]?.person||"");
-  let mode="half", pctVal=50;
-  if(group?.share){ if(!group.main) mode="all"; else { pctVal=Math.round(Number(group.main.amount)/total*100); mode=pctVal===50?"half":"pct"; } }
-  const row=document.createElement("div");
-  row.className="field-row shared-field";
-  row.innerHTML=`<button type="button" class="shared-switch" aria-pressed="false"><span class="shared-knob" aria-hidden="true"></span><span class="shared-switch-text"><strong>Spesa divisa o prestito</strong><small>Pago io: una parte o tutto me lo devono</small></span></button>
-    <div class="shared-box" hidden>
-      <label>Chi ti deve i soldi</label>
-      <div class="chip-row shared-people"></div>
-      <input type="text" class="text-input shared-new" maxlength="30" placeholder="Nuova persona, es. Ilaria" autocomplete="off">
-      <label class="shared-lbl">Quanto è tuo</label>
-      <div class="type-toggle three shared-mode"><button type="button" class="type-opt" data-m="half">Metà</button><button type="button" class="type-opt" data-m="pct">Percentuale</button><button type="button" class="type-opt" data-m="all">Tutto suo</button></div>
-      <div class="split-custom" hidden><span class="sc-me"></span><input type="range" min="5" max="95" step="5" aria-label="La tua quota in percentuale"><span class="sc-other"></span></div>
-      <p class="field-hint shared-hint"></p>
-    </div>`;
-  afterRow.after(row);
-  const sw=row.querySelector(".shared-switch"), box=row.querySelector(".shared-box"), people=row.querySelector(".shared-people"), newInput=row.querySelector(".shared-new");
-  const range=row.querySelector("input[type=range]"), custom=row.querySelector(".split-custom"), hint=row.querySelector(".shared-hint");
-  range.value=String(Math.min(95,Math.max(5,pctVal)));
-  const sharePct=()=>mode==="half"?50:mode==="all"?0:Number(range.value);
-  function refresh(){
-    row.hidden=type()!=="expense";
-    sw.classList.toggle("on",on); sw.setAttribute("aria-pressed",String(on)); box.hidden=!on;
-    if(!on) return;
-    const names=[...new Set(receivableAccounts().map(a=>a.person).filter(Boolean))];
-    if(person && !names.some(n=>n.toLowerCase()===person.toLowerCase())) names.push(person);
-    people.innerHTML=names.map(n=>`<button type="button" class="chip${n.toLowerCase()===String(person).toLowerCase()?" active":""}" data-person="${escapeHtml(n)}">${escapeHtml(n)}</button>`).join("");
-    people.querySelectorAll("[data-person]").forEach(b=>b.addEventListener("click",e=>{e.stopPropagation();person=b.dataset.person;newInput.value="";refresh();}));
-    const other=person||"l'altra persona";
-    row.querySelectorAll(".shared-mode .type-opt").forEach(b=>{ b.classList.toggle("active",b.dataset.m===mode); if(b.dataset.m==="all") b.textContent=person?`Tutto a ${person}`:"Tutto suo"; });
-    custom.hidden=mode!=="pct";
-    const p=sharePct();
-    row.querySelector(".sc-me").textContent=`Tu ${p}%`;
-    row.querySelector(".sc-other").textContent=`${100-p}% ${other}`;
-    const amt=amount();
-    if(!(amt>0)) hint.textContent="Inserisci l'importo totale che hai pagato.";
-    else if(mode==="all") hint.textContent=`Prestito: ${fmt(amt)} da ricevere da ${other}. Non conta come tua spesa; la categoria è facoltativa.`;
-    else { const mine=Math.round(amt*p)/100; hint.textContent=`Spesa tua: ${fmt(mine)} · da ricevere da ${other}: ${fmt(Math.round((amt-mine)*100)/100)}`; }
-  }
-  sw.addEventListener("click",e=>{ e.stopPropagation(); on=!on; refresh(); if(on&&!person) newInput.focus(); });
-  newInput.addEventListener("input",()=>{ const v=newInput.value.trim(); if(v) person=v; refresh(); newInput.focus(); });
-  row.querySelectorAll(".shared-mode .type-opt").forEach(b=>b.addEventListener("click",e=>{e.stopPropagation();mode=b.dataset.m;refresh();}));
-  range.addEventListener("input",refresh);
-  node.addEventListener("input",e=>{ if(!row.contains(e.target)) refresh(); });
-  node.addEventListener("click",e=>{ if(!row.contains(e.target)) setTimeout(refresh,0); });
-  refresh();
-  return {get:()=>({on:on&&type()==="expense",person:String(person||"").trim(),pct:sharePct()}),refresh,setOff:()=>{ if(on){ on=false; refresh(); } }};
-}
-/* v1.25.0 — Spesa pagata da un'altra persona: non esce dai miei conti, la mia parte diventa un debito
-   verso di lei ("Da pagare · Nome"). Conta come mia spesa (con la categoria) e pesa solo sul
-   "Totale effettivo con crediti e debiti", non sul totale dei conti. */
-function mountOtherPaid(node, afterRow, {type, amount, existing, preset, onChange}){
-  const op=existing?.otherPaid||null;
-  let on=!!op||!!preset?.otherPaid;
-  let person=op?.person||preset?.person||state.lastOtherPayer||payableAccounts()[0]?.person||"";
-  let mode=op?(op.pct===100?"all":op.pct===50?"half":"pct"):"all", pctVal=op?.pct||50;
-  const row=document.createElement("div");
-  row.className="field-row shared-field other-paid-field";
-  row.innerHTML=`<button type="button" class="shared-switch" aria-pressed="false"><span class="shared-knob" aria-hidden="true"></span><span class="shared-switch-text"><strong>Pagata da un'altra persona</strong><small>Non esce dai tuoi conti: la tua parte la devi a lui/lei</small></span></button>
-    <div class="shared-box" hidden>
-      <label>Chi ha pagato</label>
-      <div class="chip-row other-people"></div>
-      <input type="text" class="text-input other-new" maxlength="30" placeholder="Nuova persona, es. Marco" autocomplete="off">
-      <label class="shared-lbl">Quanto è tuo</label>
-      <div class="type-toggle three other-mode"><button type="button" class="type-opt" data-m="all">Tutto mio</button><button type="button" class="type-opt" data-m="half">Metà</button><button type="button" class="type-opt" data-m="pct">Percentuale</button></div>
-      <div class="split-custom" hidden><span class="sc-me"></span><input type="range" min="5" max="95" step="5" aria-label="La tua quota in percentuale"><span class="sc-other"></span></div>
-      <p class="field-hint other-hint"></p>
-    </div>`;
-  afterRow.after(row);
-  const sw=row.querySelector(".shared-switch"), box=row.querySelector(".shared-box"), people=row.querySelector(".other-people"), newInput=row.querySelector(".other-new");
-  const range=row.querySelector("input[type=range]"), custom=row.querySelector(".split-custom"), hint=row.querySelector(".other-hint");
-  range.value=String(Math.min(95,Math.max(5,pctVal)));
-  const myPct=()=>mode==="all"?100:mode==="half"?50:Number(range.value);
-  const info=()=>({on:on&&type()==="expense",person:String(person||"").trim(),pct:myPct()});
-  function refresh(silent){
-    row.hidden=type()!=="expense";
-    sw.classList.toggle("on",on); sw.setAttribute("aria-pressed",String(on)); box.hidden=!on;
-    if(on){
-      const names=[...new Set([...payableAccounts(),...receivableAccounts()].map(a=>a.person).filter(Boolean))];
-      if(person && !names.some(n=>n.toLowerCase()===person.toLowerCase())) names.push(person);
-      people.innerHTML=names.map(n=>`<button type="button" class="chip${n.toLowerCase()===String(person).toLowerCase()?" active":""}" data-person="${escapeHtml(n)}">${escapeHtml(n)}</button>`).join("");
-      people.querySelectorAll("[data-person]").forEach(b=>b.addEventListener("click",e=>{e.stopPropagation();person=b.dataset.person;newInput.value="";refresh();}));
-      row.querySelectorAll(".other-mode .type-opt").forEach(b=>b.classList.toggle("active",b.dataset.m===mode));
-      custom.hidden=mode!=="pct";
-      const p=myPct(), other=person||"l'altra persona";
-      row.querySelector(".sc-me").textContent=`Tu ${p}%`; row.querySelector(".sc-other").textContent=`${100-p}% ${other}`;
-      const amt=amount();
-      if(!(amt>0)) hint.textContent=`Inserisci l'importo totale pagato da ${other}.`;
-      else { const mine=Math.round(amt*p)/100; hint.textContent=`Tua spesa: ${fmt(mine)} · la devi a ${other} (da pagare). I tuoi conti non cambiano.`; }
-    }
-    if(!silent) onChange&&onChange(info());
-  }
-  sw.addEventListener("click",e=>{ e.stopPropagation(); on=!on; refresh(); if(on&&!person) newInput.focus(); });
-  newInput.addEventListener("input",()=>{ const v=newInput.value.trim(); if(v) person=v; refresh(); newInput.focus(); });
-  row.querySelectorAll(".other-mode .type-opt").forEach(b=>b.addEventListener("click",e=>{e.stopPropagation();mode=b.dataset.m;refresh();}));
-  range.addEventListener("input",()=>refresh());
-  node.addEventListener("input",e=>{ if(!row.contains(e.target)) refresh(true); });
-  node.addEventListener("click",e=>{ if(!row.contains(e.target)) setTimeout(()=>refresh(true),0); });
-  refresh();
-  return {get:info,refresh,setOff:()=>{ if(on){ on=false; refresh(); } }};
-}
-/* Salva una spesa divisa / prestito: crea o aggiorna la riga di spesa (mia quota) e la riga "da ricevere". */
-function saveSharedGroup({group,total,shared,fields}){
-  const gid=group?.id||uid();
-  let main=group?.main||null, share=group?.share||null;
-  const drop=x=>{ if(x) state.transactions=state.transactions.filter(y=>y.id!==x.id); };
-  if(!shared.on){
-    if(!main){ main={id:uid()}; state.transactions.push(main); }
-    Object.assign(main,{...fields,type:"expense",amount:total,toAccountId:null}); delete main.splitGroup;
-    drop(share); return main;
-  }
-  const acc=ensureLoanAccount(shared.person,"recv");
-  const mine=Math.round(total*shared.pct)/100, theirs=Math.round((total-mine)*100)/100;
-  if(mine>0){ if(!main){ main={id:uid()}; state.transactions.push(main); } Object.assign(main,{...fields,type:"expense",amount:mine,toAccountId:null,splitGroup:gid}); }
-  else { drop(main); main=null; }
-  if(!share){ share={id:uid()}; state.transactions.push(share); }
-  Object.assign(share,{date:fields.date,amount:theirs,type:"transfer",name:`${mine>0?"Quota di":"Prestito a"} ${acc.person}`,categoryId:null,loanCategoryId:fields.categoryId||null,accountId:fields.accountId,toAccountId:acc.id,note:fields.name||"",splitGroup:gid,splitShare:true,loanKind:"lend"});
-  state.lastSharePerson=acc.person;
-  return main||share;
-}
-/* ---------------- v1.13.0 — Rimborsi a rate e rimborso che chiude il prestito ----------------
-   state.loanRates: rate ancora da ricevere/pagare, una riga per rata: {id,accId,date,amount,n,of}.
-   - Le rate non toccano il saldo: si confermano con "Ricevuta"/"Pagata", che apre la restituzione già compilata.
-   - Ogni restituzione registrata scala le rate in ordine di data (una rata pagata in parte resta con il residuo).
-   - Quando il prestito arriva a zero (anche con un abbuono) le rate rimaste spariscono da sole.
-   Abbuono: rimborso parziale che vale come totale. È una riga sul conto prestito (loanWriteOff) che
-   azzera il residuo; non tocca i conti veri e non conta in Entrate/Uscite. */
-const round2=v=>Math.round((Number(v)||0)*100)/100;
-function isoAddDays(iso,days){ const d=new Date(iso+"T00:00:00"); d.setDate(d.getDate()+days); return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`; }
-function isoAddMonths(iso,months){
-  const d=new Date(iso+"T00:00:00"), day=d.getDate();
-  const t=new Date(d.getFullYear(),d.getMonth()+months,1);
-  const last=new Date(t.getFullYear(),t.getMonth()+1,0).getDate();
-  t.setDate(Math.min(day,last));
-  return `${t.getFullYear()}-${pad2(t.getMonth()+1)}-${pad2(t.getDate())}`;
-}
-function shortDate(iso){ const [y,m,d]=iso.split("-"); return `${d}/${m}${y!==String(new Date().getFullYear())?"/"+y.slice(2):""}`; }
-function daysFromToday(iso){ return Math.round((new Date(iso+"T00:00:00")-new Date(todayISO()+"T00:00:00"))/86400000); }
-function rateWhen(iso){
-  const n=daysFromToday(iso);
-  if(n<0) return {text:`in ritardo di ${-n} ${-n===1?"giorno":"giorni"}`,late:true};
-  if(n===0) return {text:"oggi",today:true};
-  if(n===1) return {text:"domani"};
-  if(n<=30) return {text:`fra ${n} giorni`};
-  return {text:shortDate(iso)};
-}
-function loanOwed(acc){ if(!acc) return 0; const b=accountBalance(acc.id); return acc.receivable?b:-b; }
-function ratesOf(accId){ return (state.loanRates||[]).filter(r=>r.accId===accId).sort((a,b)=>a.date.localeCompare(b.date)||(a.n||0)-(b.n||0)); }
-function allPendingRates(){ return (state.loanRates||[]).filter(r=>loanAccount(r.accId)).sort((a,b)=>a.date.localeCompare(b.date)); }
-/* Scala un pagamento dalle rate: prima quella scelta, poi in ordine di data. */
-function allocateToRates(accId,amount,firstRateId){
-  let rest=round2(amount); const covered=[];
-  const list=ratesOf(accId);
-  if(firstRateId){ const i=list.findIndex(r=>r.id===firstRateId); if(i>0) list.unshift(list.splice(i,1)[0]); }
-  for(const r of list){
-    if(rest<=0.004) break;
-    if(rest>=r.amount-0.004){ covered.push({n:r.n||1,of:r.of||0,date:r.date,full:true}); rest=round2(rest-r.amount); state.loanRates=state.loanRates.filter(x=>x.id!==r.id); }
-    else { covered.push({n:r.n||1,of:r.of||0,date:r.date,full:false}); r.amount=round2(r.amount-rest); rest=0; }
-  }
-  return covered;
-}
-function rateInfoLabel(info){
-  if(!Array.isArray(info)||!info.length) return "";
-  const lab=x=>`${x.full?"":"parte della "}rata ${x.n}${x.of?` di ${x.of}`:""}`;
-  const t=info.map(lab).join(" + ");
-  return t.charAt(0).toUpperCase()+t.slice(1);
-}
-/* Rate di prestiti chiusi o eliminati: si tolgono da sole. */
-function pruneLoanRates(){
-  if(!Array.isArray(state.loanRates)) state.loanRates=[];
-  state.loanRates=state.loanRates.filter(r=>{ const a=loanAccount(r.accId); return a && loanOwed(a)>0.004 && r.amount>0.004; });
-}
-function rateRowEl(r,{showPerson=false,onPay}={}){
-  const a=loanAccount(r.accId), w=rateWhen(r.date), recv=!!a?.receivable;
-  const row=document.createElement("div");
-  row.className="loan-rate-row"+(w.late?" late":"")+(w.today?" today":"");
-  row.innerHTML=`<span class="loan-rate-dot" aria-hidden="true">${recv?"↩️":"💸"}</span>
-    <span class="loan-rate-text"><strong>${showPerson?`${escapeHtml(a?.person||"")} · `:""}Rata ${r.n||1}${r.of?` di ${r.of}`:""}</strong><span>${escapeHtml(shortDate(r.date))} · ${escapeHtml(w.text)}</span></span>
-    <span class="loan-rate-amt">${balancesHidden?"••••":fmt(r.amount)}</span>
-    <button type="button" class="loan-rate-pay">${recv?"Ricevuta":"Pagata"}</button>`;
-  row.querySelector(".loan-rate-pay").addEventListener("click",e=>{ e.stopPropagation(); onPay?onPay(r):payRate(r); });
-  return row;
-}
-function payRate(r){
-  const a=loanAccount(r.accId); if(!a) return;
-  openLoanForm(null,{mode:a.receivable?"repayIn":"repayOut",person:a.person,rateId:r.id,amount:r.amount});
-}
-/* Editor delle rate: numero, frequenza, date e importi; l'ultima rata assorbe le differenze. */
-function mountRatesEditor(box,{total,existing=null,kind="recv"}){
-  let n=existing?.length||2, freq=existing?.length?"free":"monthly";
-  let rows=existing?.length?existing.map(r=>({date:r.date,amount:r.amount})):[];
-  let first=rows[0]?.date||isoAddDays(todayISO(),1);
-  let touched=new Set();
-  box.innerHTML=`<div class="rate-head">
-      <div><label>Numero di rate</label><div class="rate-count"><button type="button" data-d="-1" aria-label="Una rata in meno">−</button><strong class="rate-n-val">2</strong><button type="button" data-d="1" aria-label="Una rata in più">+</button></div></div>
-    </div>
-    <div class="type-toggle three rate-freq"><button type="button" class="type-opt" data-f="weekly">Ogni settimana</button><button type="button" class="type-opt" data-f="monthly">Ogni mese</button><button type="button" class="type-opt" data-f="free">Date libere</button></div>
-    <div class="rate-rows"></div>
-    <p class="field-hint rate-sum"></p>`;
-  const rowsBox=box.querySelector(".rate-rows"), sumEl=box.querySelector(".rate-sum");
-  function regenDates(){
-    if(freq==="free"){ while(rows.length<n) rows.push({date:isoAddMonths(rows[rows.length-1]?.date||first,rows.length?1:0),amount:0}); rows.length=n; return; }
-    rows=Array.from({length:n},(_,i)=>({date:freq==="weekly"?isoAddDays(first,7*i):isoAddMonths(first,i),amount:rows[i]?.amount||0}));
-  }
-  function rebalance(){
-    const tot=round2(total());
-    if(!touched.size){ const base=Math.floor(tot/n*100)/100; rows.forEach((r,i)=>r.amount=i<n-1?base:round2(tot-base*(n-1))); return; }
-    const lastFree=[...rows.keys()].reverse().find(i=>!touched.has(i));
-    if(lastFree==null) return;
-    const others=rows.reduce((s,r,i)=>i===lastFree?s:s+r.amount,0);
-    rows[lastFree].amount=Math.max(0,round2(tot-others));
-  }
-  function paintSum(){
-    const tot=round2(total()), sum=round2(rows.reduce((s,r)=>s+r.amount,0));
-    sumEl.classList.toggle("warn",Math.abs(sum-tot)>0.004);
-    sumEl.textContent=!(tot>0)?"Inserisci l'importo.":Math.abs(sum-tot)<=0.004?`${n} rate da ${kind==="recv"?"ricevere":"pagare"} · totale ${fmt(sum)} ✓`:sum<tot?`Le rate coprono ${fmt(sum)}: mancano ${fmt(round2(tot-sum))}.`:`Le rate superano l'importo di ${fmt(round2(sum-tot))}.`;
-  }
-  function paint(){
-    box.querySelector(".rate-n-val").textContent=String(n);
-    box.querySelectorAll(".rate-freq .type-opt").forEach(b=>b.classList.toggle("active",b.dataset.f===freq));
-    rowsBox.innerHTML="";
-    rows.forEach((r,i)=>{
-      const el=document.createElement("div"); el.className="rate-row";
-      el.innerHTML=`<span class="rate-idx">${i+1}ª</span><input type="date" class="text-input" value="${r.date}" aria-label="Data rata ${i+1}"><span class="rate-cur">€</span><input type="text" inputmode="decimal" class="text-input rate-amt" value="${String(r.amount.toFixed(2)).replace(".",",")}" aria-label="Importo rata ${i+1}">`;
-      const [d,a]=el.querySelectorAll("input");
-      d.addEventListener("change",()=>{ if(!d.value) return; r.date=d.value; if(i===0&&freq!=="free"){ first=d.value; regenDates(); } else if(i>0) freq="free"; paint(); });
-      a.addEventListener("change",()=>{ r.amount=Math.max(0,round2(parseAmount(a.value))); touched.add(i); if(touched.size>=n) touched.delete(n-1===i?n-2:n-1); rebalance(); paint(); });
-      rowsBox.appendChild(el);
-    });
-    paintSum();
-  }
-  box.querySelectorAll(".rate-count [data-d]").forEach(b=>b.addEventListener("click",()=>{ n=Math.max(1,Math.min(36,n+Number(b.dataset.d))); touched=new Set([...touched].filter(i=>i<n-1)); regenDates(); rebalance(); paint(); }));
-  box.querySelectorAll(".rate-freq .type-opt").forEach(b=>b.addEventListener("click",()=>{ freq=b.dataset.f; if(freq!=="free"){ first=rows[0]?.date||first; regenDates(); } paint(); }));
-  if(!rows.length) regenDates();
-  if(!existing?.length) rebalance();
-  paint();
-  return {
-    refresh(){ rebalance(); paint(); },
-    get(){ return rows.map((r,i)=>({date:r.date,amount:round2(r.amount),n:i+1,of:rows.length})); },
-    check(){ const tot=round2(total()), sum=round2(rows.reduce((s,r)=>s+r.amount,0)); if(rows.some(r=>!r.date||!(r.amount>0))) return "Ogni rata deve avere data e importo"; if(Math.abs(sum-tot)>0.004) return "Il totale delle rate deve essere uguale all'importo"; return ""; }
-  };
-}
-function saveRatesFor(accId,list,{replace=false}={}){
-  if(!Array.isArray(state.loanRates)) state.loanRates=[];
-  if(replace) state.loanRates=state.loanRates.filter(r=>r.accId!==accId);
-  list.forEach(r=>state.loanRates.push({id:uid(),accId,date:r.date,amount:r.amount,n:r.n,of:r.of}));
-}
-function openLoanPlan(accId){
-  const a=loanAccount(accId); if(!a) return;
-  openSheet("tpl-loan-plan",(node,close)=>{
-    const owed=round2(loanOwed(a)), existing=ratesOf(accId);
-    node.querySelector("#loanPlanTitle").textContent=`📅 Rate · ${a.person}`;
-    node.querySelector("#loanPlanIntro").textContent=owed>0
-      ?`${a.receivable?`${a.person} ti deve`:`Devi a ${a.person}`} ${fmt(owed)}. Dividi il residuo in rate: le confermi tu quando arrivano, e il saldo si aggiorna da solo.`
-      :"Il prestito è già chiuso: non ci sono rate da pianificare.";
-    const ed=mountRatesEditor(node.querySelector("#loanPlanBox"),{total:()=>owed,existing,kind:a.receivable?"recv":"pay"});
-    const del=node.querySelector("#deleteLoanPlanBtn");
-    del.hidden=!existing.length;
-    del.addEventListener("click",()=>{ state.loanRates=state.loanRates.filter(r=>r.accId!==accId); persist(); renderAll(); close(); showToast("Rate tolte"); });
-    node.querySelector("#saveLoanPlanBtn").addEventListener("click",()=>{
-      if(!(owed>0)){ close(); return; }
-      const err=ed.check(); if(err){ showToast(err); return; }
-      saveRatesFor(accId,ed.get(),{replace:true}); persist(); renderAll(); close(); showToast("Rate salvate");
-    });
-  });
-}
-/* v1.14.0 — Pallino sulla scheda Conti quando una rata è in ritardo da più di 3 giorni. */
-function renderLateRatesBadge(){
-  const tab=document.querySelector('.tabbar .tab[data-view="accounts"]'); if(!tab) return;
-  const late=allPendingRates().filter(r=>daysFromToday(r.date)< -3).length;
-  let dot=tab.querySelector(".tab-late-badge");
-  if(!late){ dot?.remove(); tab.removeAttribute("data-late"); return; }
-  if(!dot){ dot=document.createElement("span"); dot.className="tab-late-badge"; tab.appendChild(dot); }
-  dot.textContent=String(late); tab.setAttribute("data-late",String(late));
-  dot.setAttribute("aria-label",`${late} ${late===1?"rata in ritardo":"rate in ritardo"}`);
-}
-function renderLoanUpcoming(){
-  const wrap=document.getElementById("loanUpcomingWrap"), box=document.getElementById("loanUpcomingList");
-  if(!wrap||!box) return;
-  const list=allPendingRates().slice(0,6);
-  wrap.hidden=!list.length; box.innerHTML="";
-  list.forEach(r=>{ const row=rateRowEl(r,{showPerson:true}); row.addEventListener("click",()=>openLoanPerson(r.accId)); box.appendChild(row); });
-}
-function renderHomeLoanRates(){
-  const box=document.getElementById("upcomingHomeList"); if(!box) return;
-  const limit=isoAddDays(todayISO(),30);
-  const list=allPendingRates().filter(r=>r.date<=limit).slice(0,3);
-  list.forEach(r=>{ const row=rateRowEl(r,{showPerson:true}); row.classList.add("home-rate"); row.addEventListener("click",()=>{ switchView("accounts"); setAccountsMode("loans"); openLoanPerson(r.accId); }); box.appendChild(row); });
-  const empty=document.getElementById("upcomingHomeEmpty"); if(empty&&list.length) empty.hidden=true;
-}
+  setEyeIcon(document.getElementById("toggleCoupleBalance"),balancesHidden);
+  // Il nodo della fune si sposta verso chi deve ricevere: più è grande il debito, più si sposta.
+  const spent=state.transactions.filter(t=>t.type==="expense"&&!t.isBalanceAdjustment).reduce((s,t)=>s+t.amount,0);
+  const scale=Math.max(spent*0.15,50);
+  const shift=Math.max(-40,Math.min(40,bal/scale*40));
+  document.getElementById("coupleKnot").style.left=(50-shift)+"%";
 
-const LOAN_MODES={
-  lend:{title:"Ho prestato",kind:"recv",person:"A chi hai prestato",account:"Dal conto"},
-  repayIn:{title:"Mi hanno restituito",kind:"recv",person:"Chi ti ha restituito",account:"Sul conto"},
-  borrow:{title:"Ho ricevuto un prestito",kind:"pay",person:"Da chi (persona, banca o finanziaria)",account:"Sul conto"},
-  repayOut:{title:"Ho restituito / rata",kind:"pay",person:"A chi",account:"Dal conto"},
-};
-function loanModeOf(t){
-  if(t.loanOld) return t.loanKind==="borrow"?"borrow":"lend";
-  const from=loanAccount(t.accountId), to=loanAccount(t.toAccountId);
-  return to?.receivable?"lend":from?.receivable?"repayIn":from?.payable?"borrow":to?.payable?"repayOut":null;
+  const st=coupleMonthStats(null,null);
+  const show=v=>balancesHidden?"••••":fmt(v);
+  document.getElementById("couplePaidALabel").textContent=`Ha pagato ${personName("a")}`;
+  document.getElementById("couplePaidBLabel").textContent=`Ha pagato ${personName("b")}`;
+  document.getElementById("couplePaidA").textContent=show(st.paid.a);
+  document.getElementById("couplePaidB").textContent=show(st.paid.b);
+  document.getElementById("couplePaidJoint").textContent=show(st.paid.joint);
+  document.getElementById("coupleSharesTitle").textContent="Quote di ciascuno";
+  const max=Math.max(st.paid.a,st.paid.b,st.quota.a,st.quota.b,1);
+  const bar=(label,v,color,soft)=>`<div class="cs-row"><div class="cs-lbl"><span>${escapeHtml(label)}</span><strong>${show(v)}</strong></div><div class="cs-bar"><i style="width:${(v/max*100).toFixed(1)}%;background:${soft?`color-mix(in srgb,${color} 40%,transparent)`:color}"></i></div></div>`;
+  document.getElementById("coupleShares").innerHTML = (st.paid.a+st.paid.b)>0
+    ? bar(`Quota di ${personName("a")}`,st.quota.a,personColor("a"))+bar(`Pagato da ${personName("a")}`,st.paid.a,personColor("a"),true)
+      +bar(`Quota di ${personName("b")}`,st.quota.b,personColor("b"))+bar(`Pagato da ${personName("b")}`,st.paid.b,personColor("b"),true)
+      +`<p class="field-hint cs-note">La quota è la parte di spese personali che spetta a ciascuno; le spese dalla cassa comune non sono incluse.</p>`
+    : `<p class="empty-hint">Nessuna spesa pagata da uno dei due.</p>`;
+  const shared=st.shared.slice().sort((a,b)=>b.date.localeCompare(a.date)||String(b.id).localeCompare(String(a.id))).slice(0,8);
+  renderTxRows(document.getElementById("coupleSharedTx"),shared);
+  document.getElementById("coupleSharedEmpty").hidden=shared.length>0;
+  const settles=state.transactions.filter(isCoupleSettle).sort((a,b)=>b.date.localeCompare(a.date)).slice(0,10);
+  renderTxRows(document.getElementById("coupleSettleTx"),settles);
+  document.getElementById("coupleSettleEmpty").hidden=settles.length>0;
+  renderCoupleGroups();
+  renderFixedExpenses();
+  renderCoupleLists();
+  renderAiCoppia();
+  if(groupDetailRefresh) groupDetailRefresh();
+  if(listDetailRefresh) listDetailRefresh();
 }
-function openLoanForm(txId=null,preset={}){
-  const existing=txId?state.transactions.find(t=>t.id===txId):null;
-  if(existing?.splitGroup) return openAddTransaction(existing.id);
-  let mode=existing?loanModeOf(existing):(preset.mode||"lend");
-  let old=!!existing?.loanOld;
-  let person=existing?(loanAccount(existing.accountId)||loanAccount(existing.toAccountId))?.person:(preset.person||"");
-  let accId=existing?(loanAccount(existing.accountId)?existing.toAccountId:existing.accountId):(state.accounts.find(a=>a.id===state.mainAccountId&&!isLoanAccount(a))?.id||state.accounts.find(a=>!isLoanAccount(a))?.id||null);
-  // v1.13.0: rimborso che vale come totale (abbuono) e piano a rate.
-  const existingWO=existing?.settleGroup?state.transactions.find(x=>x.settleGroup===existing.settleGroup&&x.loanWriteOff):null;
-  let closeOn=!!existingWO, ratesOn=false, ratesEd=null;
-  const presetRate=preset.rateId?(state.loanRates||[]).find(r=>r.id===preset.rateId):null;
-  openSheet("tpl-loan",(node,close)=>{
-    const amountInput=node.querySelector("#loanAmountInput"), dateInput=node.querySelector("#loanDateInput"), noteInput=node.querySelector("#loanNoteInput");
-    const peopleBox=node.querySelector("#loanPeople"), newPerson=node.querySelector("#loanNewPerson"), accBox=node.querySelector("#loanAccounts"), hint=node.querySelector("#loanHint");
-    dateInput.value=existing?.date||todayISO(); dateInput.max=todayISO();
-    if(existing){ amountInput.value=String(existing.amount).replace(".",","); noteInput.value=existing.note||""; }
-    let amountTouched=!!existing;
-    amountInput.addEventListener("input",()=>{ amountTouched=true; paint(); });
-    autoGrowAmountInput(amountInput);
-    function owedBy(p,kind){ const a=(kind==="pay"?payableAccounts():receivableAccounts()).find(x=>x.person.toLowerCase()===String(p).toLowerCase()); if(!a) return 0; const b=accountBalance(a.id); return kind==="pay"?-b:b; }
-    // Quanto era dovuto prima di questo movimento (in modifica tolgo il movimento stesso e il suo abbuono).
-    function owedBefore(p,kind){
-      let o=owedBy(p,kind);
-      if(existing&&(mode==="repayIn"||mode==="repayOut")&&!existing.loanOld){ const a=loanAccount(existing.accountId)||loanAccount(existing.toAccountId); if(a&&a.person.toLowerCase()===String(p).toLowerCase()) o+=Number(existing.amount||0)+Number(existingWO?.amount||0); }
-      return round2(o);
-    }
-    const closeSw=node.querySelector("#loanCloseSwitch"), ratesSw=node.querySelector("#loanRatesSwitch"), ratesBox=node.querySelector("#loanRatesBox");
-    closeSw.addEventListener("click",()=>{ closeOn=!closeOn; paint(); });
-    // v1.26.0: cifra inferiore al dovuto → scegli se il resto resta aperto o è abbuonato
-    node.querySelectorAll("#loanRest [data-r]").forEach(b=>b.addEventListener("click",()=>{ closeOn=b.dataset.r==="close"; paint(); }));
-    ratesSw.addEventListener("click",()=>{ ratesOn=!ratesOn; if(ratesOn&&!ratesEd) ratesEd=mountRatesEditor(ratesBox,{total:()=>parseAmount(amountInput.value),kind:LOAN_MODES[mode].kind}); paint(); });
-    amountInput.addEventListener("change",()=>{ if(ratesEd) ratesEd.refresh(); });
-    function paint(){
-      const m=LOAN_MODES[mode];
-      node.querySelector("#loanTitle").textContent=m.kind==="pay"?"Debito":"Prestito";
-      node.querySelectorAll("#loanModes [data-mode]").forEach(b=>{ b.classList.toggle("active",b.dataset.mode===mode); b.disabled=!!existing&&b.dataset.mode!==mode&&LOAN_MODES[b.dataset.mode].kind!==m.kind; });
-      node.querySelector("#loanPersonLabel").textContent=m.person;
-      node.querySelector("#loanAccountLabel").textContent=m.account;
-      // Prestito vecchio: solo per "Ho prestato" e "Ho ricevuto un prestito"; niente conto.
-      const oldSw=node.querySelector("#loanOldSwitch"), canOld=mode==="lend"||mode==="borrow";
-      if(!canOld) old=false;
-      oldSw.hidden=!canOld; oldSw.classList.toggle("on",old); oldSw.setAttribute("aria-pressed",String(old));
-      oldSw.querySelector("strong").textContent=mode==="borrow"?"Debito vecchio, fuori saldo":"Prestito vecchio, fuori saldo";
-      oldSw.querySelector("small").textContent=mode==="borrow"?"Lo segno solo come debito: non aggiunge soldi ai conti di oggi":"Lo segno solo come credito: non toglie soldi dai conti di oggi";
-      accBox.closest(".field-row").hidden=old;
-      const list=(m.kind==="pay"?payableAccounts():receivableAccounts()).map(a=>({p:a.person,owed:owedBy(a.person,m.kind)}));
-      if(person && !list.some(x=>x.p.toLowerCase()===person.toLowerCase())) list.push({p:person,owed:0});
-      peopleBox.innerHTML=list.map(x=>`<button type="button" class="chip${x.p.toLowerCase()===String(person).toLowerCase()?" active":""}" data-p="${escapeHtml(x.p)}">${escapeHtml(x.p)}${Math.abs(x.owed)>=0.005?`<span class="chip-amt">${balancesHidden?"••••":fmt(x.owed)}</span>`:""}</button>`).join("");
-      peopleBox.querySelectorAll("[data-p]").forEach(b=>b.addEventListener("click",()=>{ person=b.dataset.p; newPerson.value=""; autoAmount(); paint(); }));
-      accBox.innerHTML="";
-      state.accounts.filter(a=>!isLoanAccount(a)).forEach(a=>{
-        const c=document.createElement("button"); c.type="button"; c.className="chip"+(a.id===accId?" active":"");
-        c.innerHTML=`<span class="em">●</span>${escapeHtml(a.name)}`; c.querySelector(".em").style.color=safeColor(a.color);
-        c.addEventListener("click",()=>{ accId=a.id; paint(); }); accBox.appendChild(c);
-      });
-      const amt=parseAmount(amountInput.value), owed=person?owedBefore(person,m.kind):0;
-      const isRepay=mode==="repayIn"||mode==="repayOut";
-      const residual=round2(owed-amt), canClose=isRepay&&!old&&!!person&&amt>0&&residual>0.004;
-      closeSw.hidden=true;
-      { const rr=node.querySelector("#loanRestRow"); rr.hidden=!canClose;
-        if(canClose){ const sh=fmt(Math.max(residual,0));
-          node.querySelector("#loanRestLabel").textContent=m.kind==="recv"?`Hai ricevuto meno di quanto ti deve: la differenza di ${sh}`:`Paghi meno di quanto devi: la differenza di ${sh}`;
-          rr.querySelector('[data-r="keep"] b').textContent=m.kind==="recv"?"Resta da ricevere":"Resta da pagare";
-          rr.querySelector('[data-r="close"] b').textContent=m.kind==="recv"?"Ci rinuncio":"Me la abbuona";
-          node.querySelector("#loanRestKeepAmt").textContent=m.kind==="recv"?`${person} ti dovrà ${sh}`:`dovrai ancora ${sh}`;
-          node.querySelector("#loanRestCloseAmt").textContent="abbuono, si chiude";
-          rr.querySelectorAll("[data-r]").forEach(b=>b.classList.toggle("active",(b.dataset.r==="close")===!!closeOn)); } }
-      const closing=canClose&&closeOn;
-      closeSw.classList.toggle("on",closing); closeSw.setAttribute("aria-pressed",String(closing));
-      closeSw.querySelector("strong").textContent=m.kind==="recv"?"Vale come rimborso totale":"Vale come pagamento totale";
-      closeSw.querySelector("small").textContent=m.kind==="recv"?`Chiude il prestito: abbuoni ${fmt(Math.max(residual,0))}`:`Chiude il debito: ti abbuonano ${fmt(Math.max(residual,0))}`;
-      const canRates=(mode==="lend"||mode==="borrow")&&!existing;
-      if(!canRates) ratesOn=false;
-      ratesSw.hidden=!canRates; ratesSw.classList.toggle("on",ratesOn); ratesSw.setAttribute("aria-pressed",String(ratesOn));
-      ratesSw.querySelector("small").textContent=m.kind==="recv"?"Pianifica quando e quanto ti restituiranno":"Pianifica quando e quanto restituirai";
-      ratesBox.hidden=!ratesOn;
-      const after=mode==="lend"||mode==="borrow"?owed+amt:closing?0:residual;
-      const rateNote=presetRate&&isRepay?`Rata ${presetRate.n||1}${presetRate.of?` di ${presetRate.of}`:""} prevista il ${shortDate(presetRate.date)}. `:"";
-      if(!person) hint.textContent="Scegli o scrivi la persona.";
-      else if(closing) hint.textContent=m.kind==="recv"?`${rateNote}Ricevi ${fmt(amt)}, abbuoni ${fmt(residual)}: il prestito con ${person} si chiude.`:`${rateNote}Paghi ${fmt(amt)}, ti abbuonano ${fmt(residual)}: il debito con ${person} si chiude.`;
-      else if(isRepay&&amt>0&&residual>0.004) hint.textContent=m.kind==="recv"?`${rateNote}Rimborso parziale: ${person} ti dovrà ancora ${fmt(residual)}.`:`${rateNote}Pagamento parziale: dovrai ancora ${fmt(residual)} a ${person}.`;
-      else hint.textContent=m.kind==="recv"?`${rateNote}Dopo questo movimento ${person} ti deve ${fmt(Math.max(after,0))}${after<-0.004?` (ti ha dato ${fmt(-after)} in più)`:""}.`:`${rateNote}Dopo questo movimento devi a ${person} ${fmt(Math.max(after,0))}.`;
-    }
-    function autoAmount(){
-      if(amountTouched||existing) return;
-      if(presetRate&&(mode==="repayIn"||mode==="repayOut")&&person===preset.person){ amountInput.value=String(round2(presetRate.amount)).replace(".",","); return; }
-      if(mode==="repayIn"||mode==="repayOut"){ const o=person?owedBy(person,LOAN_MODES[mode].kind):0; amountInput.value=o>0?String(Math.round(o*100)/100).replace(".",","):""; }
-    }
-    newPerson.addEventListener("input",()=>{ const v=newPerson.value.trim(); if(v){ person=v; } paint(); newPerson.focus(); });
-    node.querySelectorAll("#loanModes [data-mode]").forEach(b=>b.addEventListener("click",()=>{ if(b.disabled) return; const k=LOAN_MODES[mode].kind; mode=b.dataset.mode; if(LOAN_MODES[mode].kind!==k&&!existing) person=""; autoAmount(); paint(); }));
-    node.querySelector("#loanOldSwitch").addEventListener("click",()=>{ old=!old; paint(); });
-    const regrow=()=>fitAmountInput(amountInput);
-    const autoAmount0=autoAmount; autoAmount=function(){ autoAmount0(); regrow(); };
-    autoAmount(); paint();
-    const del=node.querySelector("#deleteLoanBtn");
-    if(existing){
-      del.hidden=false;
-      del.addEventListener("click",async()=>{
-        if(!await askConfirm("Eliminare questo movimento del prestito?",{ok:"Elimina",danger:true})) return;
-        const linked=linkedTx(existing);
-        moveToTrash("transaction",existing,linked); const trashId=state.trash[0]?.id;
-        const ids=new Set([existing.id,...linked.map(x=>x.id)]);
-        state.transactions=state.transactions.filter(x=>!ids.has(x.id));
-        pruneLoanRates();
-        persist(); renderAll(); close(); if(trashId) showUndo("Movimento eliminato",trashId);
-      });
-    }
-    node.querySelector("#saveLoanBtn").addEventListener("click",()=>{
-      const amount=parseAmount(amountInput.value);
-      const missing=[]; if(!(amount>0)) missing.push("importo"); if(!person) missing.push("persona"); if(!accId&&!old) missing.push("conto");
-      if(missing.length){ showToast("Inserisci: "+missing.join(", ")); return; }
-      if(dateInput.value>todayISO()){ showToast("Il movimento non può avere una data futura"); return; }
-      if(ratesOn&&ratesEd){ const err=ratesEd.check(); if(err){ showToast(err); return; } }
-      const isRepay=mode==="repayIn"||mode==="repayOut";
-      const owedPrev=person?owedBefore(person,LOAN_MODES[mode].kind):0;
-      const m=LOAN_MODES[mode], la=ensureLoanAccount(person,m.kind);
-      const out=mode==="lend"||mode==="repayOut";
-      const t=existing||{id:uid()};
-      if(old){
-        // Fuori saldo: rettifica sul conto prestito, i conti veri non cambiano e non entra nelle statistiche.
-        Object.assign(t,{date:dateInput.value||todayISO(),amount,type:mode==="lend"?"income":"expense",categoryId:null,accountId:la.id,toAccountId:null,note:noteInput.value.trim(),loanKind:mode,loanOld:true,isBalanceAdjustment:true,
-          name:mode==="lend"?`Prestito a ${la.person} (vecchio)`:`Debito con ${la.person} (vecchio)`});
-      } else {
-        Object.assign(t,{date:dateInput.value||todayISO(),amount,type:"transfer",categoryId:null,accountId:out?accId:la.id,toAccountId:out?la.id:accId,note:noteInput.value.trim(),loanKind:mode});
-        delete t.loanOld; delete t.isBalanceAdjustment;
-        t.name=transferName(t.accountId,t.toAccountId);
-      }
-      if(!existing) state.transactions.push(t);
-      // Abbuono: il rimborso parziale vale come totale e azzera il residuo.
-      let wo=t.settleGroup?state.transactions.find(x=>x.settleGroup===t.settleGroup&&x.loanWriteOff):null;
-      const residual=round2(owedPrev-amount);
-      if(isRepay&&!old&&closeOn&&residual>0.004){
-        const gid=t.settleGroup||uid(); t.settleGroup=gid;
-        if(!wo){ wo={id:uid()}; state.transactions.push(wo); }
-        Object.assign(wo,{date:t.date,amount:residual,type:m.kind==="recv"?"expense":"income",categoryId:null,accountId:la.id,toAccountId:null,note:"",
-          isBalanceAdjustment:true,loanWriteOff:true,settleGroup:gid,loanKind:m.kind==="recv"?"writeOffIn":"writeOffOut",name:m.kind==="recv"?`Abbuono a ${la.person}`:`Abbuono da ${la.person}`});
-      } else {
-        if(wo) state.transactions=state.transactions.filter(x=>x.id!==wo.id);
-        delete t.settleGroup;
-      }
-      balanceCache.clear();
-      // Rate: un nuovo prestito con piano; una restituzione scala le rate in ordine.
-      if(ratesOn&&ratesEd&&!existing) saveRatesFor(la.id,ratesEd.get());
-      if(isRepay&&!existing){ const cov=allocateToRates(la.id,amount,preset.rateId); if(cov.length) t.rateInfo=cov; }
-      if(isRepay&&closeOn) state.loanRates=(state.loanRates||[]).filter(r=>r.accId!==la.id);
-      pruneLoanRates();
-      // v1.25.0: arrivato da "Elimina persona" → se ora il saldo è zero la persona sparisce.
-      let archived=false;
-      if(preset.archiveAfter){ const ax=state.accounts.find(x=>x.id===preset.archiveAfter); if(ax&&Math.abs(accountBalance(ax.id))<0.005){ archiveLoanAccount(ax); archived=true; } }
-      persist(); renderAll(); close();
-      showToast(archived?`Saldo registrato: ${la.person} eliminato`:existing?"Movimento aggiornato":isRepay&&closeOn&&residual>0.004?"Registrato: prestito chiuso":ratesOn?"Registrato con le rate":"Registrato");
-    });
+/* ---------------- Liste della spesa / cose da comprare ---------------- */
+/* v1.20.0 — Anello di avanzamento con il numero di cose da comprare (al posto del riquadro giallo). */
+function listRingHtml(todo,total){
+  const pct=total?Math.round((total-todo)/total*100):0, r=15, c=2*Math.PI*r, off=c*(1-pct/100);
+  return `<span class="lr-ring${todo?"":" zero"}" aria-hidden="true"><svg viewBox="0 0 36 36"><circle class="lr-bg" cx="18" cy="18" r="${r}"/><circle class="lr-fg" cx="18" cy="18" r="${r}" stroke-dasharray="${c.toFixed(1)}" stroke-dashoffset="${off.toFixed(1)}"/></svg><b>${todo?todo:"✓"}</b></span>`;
+}
+/* v1.17.0 — Home: le liste in una scheda con titolo, così si capisce cosa sono. Ogni lista mostra quanto
+   resta da comprare, una barra di avanzamento e i prodotti "da ricomprare". */
+function renderHomeLists(){
+  const box=document.getElementById("homeLists");
+  if(!box) return;
+  box.hidden=!state.lists.length;
+  if(!state.lists.length){ box.innerHTML=""; return; }
+  const totalTodo=state.lists.reduce((n,l)=>n+l.items.filter(i=>!i.done).length,0);
+  box.innerHTML=`<div class="hl-head"><span class="hl-title"><span class="hl-title-ic" aria-hidden="true">🛒</span>Liste della spesa</span><span class="hl-sum">${totalTodo?`${totalTodo} da comprare`:"tutto preso"}</span><button type="button" class="hl-all" aria-label="Apri tutte le liste">Tutte ›</button></div><div class="hl-row"></div>`;
+  const row=box.querySelector(".hl-row");
+  state.lists.forEach(l=>{
+    const todo=l.items.filter(i=>!i.done).length, done=l.items.length-todo, due=smartSuggestions(l).filter(x=>x.isDue).length;
+    const pct=l.items.length?Math.round(done/l.items.length*100):0;
+    const b=document.createElement("div"); b.setAttribute("role","button"); b.tabIndex=0; b.className="hl-item"+(todo?"":" empty");
+    b.innerHTML=`<span class="hl-em" aria-hidden="true">${emojiIconHtml(l.emoji)}</span><span class="hl-txt"><b>${escapeHtml(l.name)}</b><small>${todo?`${todo} da comprare`:"Tutto preso"}${due?` · ⏰ ${due}`:""}</small></span>${listRingHtml(todo,l.items.length)}`;
+    b.setAttribute("aria-label",`Lista ${l.name}: ${todo} da comprare${due?`, ${due} da ricomprare`:""}`);
+    b.addEventListener("click",()=>openListDetail(l.id));
+    row.appendChild(b);
+  });
+  box.querySelector(".hl-all").addEventListener("click",()=>switchView("liste",{animate:true}));
+}
+function renderCoupleLists(){
+  renderHomeLists();
+  const box=document.getElementById("coupleLists");
+  if(!box) return;
+  box.innerHTML="";
+  if(!state.lists.length){ box.innerHTML=`<p class="empty-hint">Nessuna lista. Tocca "+ Nuova" per crearne una.</p>`; return; }
+  // v1.19.0 — Schede compatte (una riga): emoji, nome, cosa resta, barra di avanzamento, numero.
+  state.lists.forEach(l=>{
+    const todo=l.items.filter(i=>!i.done).length, done=l.items.length-todo;
+    const g=groupsById()[l.groupId], due=smartSuggestions(l).filter(x=>x.isDue).length;
+    const pct=l.items.length?Math.round(done/l.items.length*100):0;
+    const card=document.createElement("div");
+    card.className="lv-card"+(todo?"":" empty"); card.setAttribute("role","button"); card.tabIndex=0;
+    card.innerHTML=`<span class="lv-em" aria-hidden="true">${emojiIconHtml(l.emoji)}</span><span class="lv-head"><b>${escapeHtml(l.name)}</b><small>${todo?`${todo} da comprare`:"Niente da comprare"}${done?` · ${done} acquistati`:""}${due?` · ⏰ ${due}`:""}${g?` · ${escapeHtml(g.emoji+" "+g.name)}`:""}</small></span>${listRingHtml(todo,l.items.length)}<span class="lv-chev" aria-hidden="true">›</span>`;
+    card.setAttribute("aria-label",`${l.name}: ${todo} da comprare`);
+    card.addEventListener("click",()=>openListDetail(l.id));
+    card.addEventListener("keydown",e=>{ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); openListDetail(l.id); } });
+    box.appendChild(card);
+  });
+  renderListsMonth(box);
+}
+/* v1.21.0 — Resoconto del mese: chi ha preso cosa (dagli acquisti segnati nelle liste). */
+function renderListsMonth(after){
+  let el=document.getElementById("listsMonth");
+  if(!el){ el=document.createElement("section"); el.id="listsMonth"; el.className="lm-card"; after.after(el); }
+  const now=new Date(), key=`${now.getFullYear()}-${pad2(now.getMonth()+1)}`;
+  const all=state.lists.flatMap(l=>(l.purchases||[]).filter(p=>String(p.at).startsWith(key)).map(p=>({...p,list:l})));
+  if(!all.length){ el.hidden=true; return; }
+  el.hidden=false;
+  const per={a:0,b:0,"":0}; all.forEach(p=>{ per[p.by||""]=(per[p.by||""]||0)+1; });
+  const byText=new Map(); all.forEach(p=>{ const k=historyKey(p.text); const v=byText.get(k)||{text:p.text,n:0,by:{a:0,b:0}}; v.n+=1; if(p.by) v.by[p.by]++; byText.set(k,v); });
+  const top=[...byText.values()].sort((x,y)=>y.n-x.n).slice(0,6);
+  const total=all.length;
+  const bar=["a","b"].filter(k=>per[k]>0).map(k=>`<i style="width:${Math.round(per[k]/total*100)}%;background:${safeColor(personColor(k))}"></i>`).join("");
+  el.innerHTML=`<div class="lm-head"><b>🛒 ${MESI[now.getMonth()]}: chi ha preso cosa</b><small>${total} ${total===1?"prodotto preso":"prodotti presi"}</small></div>
+    <div class="lm-bar" aria-hidden="true">${bar}</div>
+    <div class="lm-people">${["a","b"].map(k=>`<span><i style="background:${safeColor(personColor(k))}"></i>${escapeHtml(personName(k))} <b>${per[k]||0}</b></span>`).join("")}</div>
+    <div class="lm-top">${top.map(t=>`<button type="button" class="lm-chip" data-lm-key="${escapeHtml(historyKey(t.text))}">${escapeHtml(t.text)}${t.n>1?` <b>×${t.n}</b>`:""}</button>`).join("")}<button type="button" class="lm-chip lm-all" data-lm-all>Tutti ›</button></div>`;
+  // v1.29.0 — tocchi un prodotto: chi l'ha preso, quando e da quale lista, con 🗑 per eliminarlo.
+  el.querySelectorAll("[data-lm-key]").forEach(b=>b.addEventListener("click",()=>openPurchaseProduct(b.dataset.lmKey)));
+  el.querySelector("[data-lm-all]")?.addEventListener("click",()=>openPurchasesMonth());
+}
+/* ---------- v1.29.0 — Dettaglio "chi ha preso cosa" con eliminazione ---------- */
+function monthPurchases(){
+  const now=new Date(), key=`${now.getFullYear()}-${pad2(now.getMonth()+1)}`;
+  return state.lists.flatMap(l=>(l.purchases||[]).filter(p=>String(p.at).startsWith(key)).map(p=>({p,list:l})));
+}
+function deletePurchases(entries){
+  if(!entries.length) return;
+  const backup=entries.map(e=>({listId:e.list.id,p:{...e.p}}));
+  entries.forEach(({p,list})=>{
+    list.purchases=(list.purchases||[]).filter(x=>x.id!==p.id);
+    const h=list.history&&list.history[historyKey(p.text)];
+    if(h){ h.count=(h.count||1)-1; if(h.count<=0) delete list.history[historyKey(p.text)]; }
+  });
+  markDeleted(...entries.map(e=>e.p.id));
+  persist(); renderAll();
+  showActionToast(entries.length===1?`🗑 “${entries[0].p.text}” tolto dagli acquisti`:`🗑 ${entries.length} acquisti eliminati`,"Annulla",()=>{
+    backup.forEach(({listId,p})=>{ const l=state.lists.find(x=>x.id===listId); if(!l) return;
+      if(state.deleted) delete state.deleted[String(p.id)];
+      if(!Array.isArray(l.purchases)) l.purchases=[]; l.purchases.push(p); l.purchases.sort((a,b)=>String(a.at).localeCompare(String(b.at)));
+      if(!l.history) l.history={}; const k=historyKey(p.text); const h=l.history[k]||{text:p.text,count:0,last:"",aisle:p.aisle||"",dates:[],qty:p.qty||1}; h.count+=1; l.history[k]=h; });
+    persist(); renderAll();
   });
 }
-function openLoanPerson(accId){
-  openSheet("tpl-loan-person",(node,close)=>{
+function purchaseOverlay(title,sub,bodyHtml,onBind){
+  document.getElementById("movementActionOverlay")?.remove();
+  const overlay=document.createElement("div");
+  overlay.id="movementActionOverlay"; overlay.className="movement-action-overlay";
+  overlay.innerHTML=`<div class="movement-action-menu pu-menu" role="dialog" aria-modal="true" aria-label="${escapeHtml(title)}">
+    <div class="movement-action-handle" aria-hidden="true"></div>
+    <p class="movement-action-title">${escapeHtml(title)}</p>${sub?`<p class="pu-sub">${escapeHtml(sub)}</p>`:""}
+    <div class="pu-body">${bodyHtml}</div>
+    <button type="button" class="movement-action-cancel">Chiudi</button></div>`;
+  const close=()=>overlay.remove();
+  overlay.querySelector(".movement-action-cancel").addEventListener("click",close);
+  overlay.addEventListener("click",e=>{ if(e.target===overlay) close(); });
+  document.body.appendChild(overlay);
+  bindOverlaySwipeDismiss(overlay);
+  requestAnimationFrame(()=>overlay.classList.add("show"));
+  if(onBind) onBind(overlay,close);
+  return overlay;
+}
+function openPurchaseProduct(key){
+  const rows=monthPurchases().filter(e=>historyKey(e.p.text)===key).sort((a,b)=>String(b.p.at).localeCompare(String(a.p.at)));
+  if(!rows.length) return;
+  const name=rows[0].p.text, a=aisleInfo(rows[0].p.aisle||guessAisle(name));
+  const now=new Date();
+  const body=rows.map((e,i)=>`<div class="pu-row" style="--ac:${aisleColor(a.key)}">
+      <span class="pu-dot" style="background:${safeColor(e.p.by?personColor(e.p.by):"#8a9490")}"></span>
+      <span class="pu-tx"><b>${escapeHtml(whenLabel(e.p.at))}</b><small>${e.p.by?escapeHtml(personName(e.p.by)):"—"} · ${escapeHtml(e.list.emoji||"🛒")} ${escapeHtml(e.list.name)}${e.p.qty>1?` · ${e.p.qty}×`:""}</small></span>
+      <button type="button" class="pu-del" data-i="${i}" aria-label="Elimina questo acquisto">🗑</button></div>`).join("")
+    +(rows.length>1?`<button type="button" class="pu-del-all">🗑 Elimina tutti (${rows.length})</button>`:"");
+  purchaseOverlay(`${a.emoji} ${name}`,`${rows.length} ${rows.length===1?"volta":"volte"} a ${MESI[now.getMonth()].toLowerCase()}`,body,(ov,close)=>{
+    ov.querySelectorAll(".pu-del").forEach(b=>b.addEventListener("click",()=>{ close(); deletePurchases([rows[Number(b.dataset.i)]]); }));
+    ov.querySelector(".pu-del-all")?.addEventListener("click",async()=>{ close(); if(await askConfirm(`Eliminare tutti i ${rows.length} acquisti di “${name}” di questo mese?`,{ok:"Elimina",danger:true})) deletePurchases(rows); });
+  });
+}
+function openPurchasesMonth(){
+  const map=new Map();
+  monthPurchases().forEach(e=>{ const k=historyKey(e.p.text); const v=map.get(k)||{k,text:e.p.text,aisle:e.p.aisle||guessAisle(e.p.text),n:0,by:{a:0,b:0}}; v.n++; if(e.p.by) v.by[e.p.by]=(v.by[e.p.by]||0)+1; map.set(k,v); });
+  const items=[...map.values()].sort((x,y)=>y.n-x.n||x.text.localeCompare(y.text,"it"));
+  const now=new Date();
+  const body=items.map(v=>{ const a=aisleInfo(v.aisle);
+    return `<button type="button" class="pu-prod" data-k="${escapeHtml(v.k)}" style="--ac:${aisleColor(a.key)}"><span class="pu-em">${a.emoji}</span><span class="pu-tx"><b>${escapeHtml(v.text)}</b><small>${["a","b"].filter(k=>v.by[k]).map(k=>`${escapeHtml(personName(k))} ${v.by[k]}`).join(" · ")||"—"}</small></span><span class="pu-n">×${v.n}</span><span class="chev">›</span></button>`; }).join("")||`<p class="pu-sub">Nessun acquisto questo mese.</p>`;
+  purchaseOverlay(`🛒 ${MESI[now.getMonth()]}: chi ha preso cosa`,"Tocca un prodotto per vedere chi l’ha preso ed eliminarlo",body,(ov,close)=>{
+    ov.querySelectorAll(".pu-prod").forEach(b=>b.addEventListener("click",()=>{ close(); openPurchaseProduct(b.dataset.k); }));
+  });
+}
+/* v1.29.0 — Un colore per reparto: le schede dei prodotti si riconoscono a colpo d'occhio. */
+const AISLE_COLORS={frutta:"#4CAF6A",pane:"#D2A04C",latte:"#E3C04A",carne:"#D9625B",dispensa:"#C9853D",surgelati:"#4FB3D9",bevande:"#3D8FD9",casa:"#8E7CC3",igiene:"#D47AB5",animali:"#A57B5A",bimbi:"#EE97B2",salute:"#3FB38E",casalinghi:"#9A8F80",biancheria:"#7C8FD1",elettro:"#6B88A8",abbigliamento:"#C46FA0",cartoleria:"#E0A030",altro:"#8A9490"};
+function aisleColor(key){ return AISLE_COLORS[key]||AISLE_COLORS.altro; }
+var listDetailRefresh=null;
+function listCategoryFor(l){
+  const exp=state.categories.filter(c=>c.kind==="expense");
+  const byName=n=>exp.find(c=>c.name.toLowerCase()===n);
+  return (byName(l.name.toLowerCase()) || (/casa/i.test(l.name)&&byName("casa")) || (/spes|super|aliment/i.test(l.name)&&byName("spesa")) || (/farmac/i.test(l.name)&&byName("farmacia")) || null)?.id || null;
+}
+/* ---------------- Noi Due 1.7.0 — Liste: quantità, reparti, comprati spesso, gesti, per chi, lista base ---------------- */
+const AISLES=[
+  /* v1.23.0 — Reparti: [chiave, emoji, nome, parole]. La scelta non è più "vince il primo
+     reparto dell'elenco" ma "vince la parola più lunga trovata nel testo": così
+     "lavastoviglie" va fra gli elettrodomestici e "detersivo lavastoviglie" fra la pulizia.
+     Il testo viene prima ripulito (minuscole, accenti, quantità), quindi qui si scrive
+     tutto senza accenti. */
+  ["frutta","🥦","Frutta e verdura",String.raw`mel[ae]\b|banan\w*|aranc\w*|mandarin\w*|clementin\w*|limon\w*|per[ae]\b|frutta|frutti di bosco|kiwi|uva\b|fragol\w*|insalat\w*|lattug\w*|songino|valeriana|pomodor\w*|pomodorin\w*|zucchin\w*|zucca|carot\w*|patat[ae]\b|patate\b|cipoll\w*|scalogno|aglio|peperon\w*|melanzan\w*|verdur\w*|ortaggi|spinac\w*|bietol\w*|broccol\w*|cavol\w*|verza|cime di rapa|fungh\w*|champignon|basilic\w*|prezzemol\w*|rosmarino|salvia|avocado|finocch\w*|sedano|rucola|radicchio|ananas|pesche\b|albicocc\w*|susine|prugne|cocomer\w*|anguria|melone|mirtill\w*|lampon\w*|more\b|ciliegi\w*|fichi|cachi|castagne|datteri|mango|papaya|lime\b|pompelmo|germogli|asparagi|piselli freschi|fave|carciof\w*|cetriol\w*|ravanelli|porri|zenzero|peperoncin\w*`],
+  ["pane","🥖","Pane e forno",String.raw`pane\b|pane integrale|pancarre|pan ?carre|panin\w*|michette|rosette|baguette|focacc\w*|grissin\w*|piadin\w*|tortillas|cornett\w*|brioche|croissant|fette biscottate|tramezzin\w*|pizza bianca|pizza margherita|schiacciata|crostini|taralli|pan di spagna|pandoro|panettone|colomba`],
+  ["latte","🧀","Latticini e uova",String.raw`latte\b|latte intero|latte scremato|latte di (soia|avena|mandorla|riso|cocco)|bevanda (di|alla) (soia|avena|mandorla)|yogurt\w*|yoghurt|burro|margarina|formagg\w*|mozzarell\w*|fiordilatte|parmigian\w*|grana\b|padano|ricott\w*|uov[ao]\b|uova\b|panna\b|panna da cucina|stracchin\w*|crescenza|squacquerone|scamorz\w*|provola|caciotta|asiago|fontina|emmental|edamer|cheddar|philadelphia|mascarpon\w*|gorgonzol\w*|pecorin\w*|taleggio|brie|camembert|feta|burrata|kefir|skyr|mozzarelline|sottilette`],
+  ["carne","🥩","Carne, pesce e salumi",String.raw`pollo|petto di pollo|manzo|maiale|carne\w*|macinat\w*|salsicc\w*|prosciutt\w*|crudo\b|cotto\b|salame|bresaol\w*|mortadell\w*|wurstel|tacchin\w*|pesce|salmone|merluzz\w*|platessa|orata|branzino|spigola|tonno fresco|gamber\w*|affettat\w*|speck|hamburger|svizzere|bistecc\w*|fettine|arrosto|spezzatino|vitello|cotolett\w*|polpo|calamar\w*|seppie|cozze|vongole|acciughe|alici|baccala|stocc?afisso|coniglio|agnello|anatra|lardo|pancetta|guanciale|coppa\b|porchetta|nuggets|cordon bleu`],
+  ["dispensa","🥫","Dispensa",String.raw`pasta\b|pasta integrale|spaghett\w*|penne\b|fusilli|rigatoni|farfalle|tagliatelle|lasagne|gnocchi|couscous|riso\b|risotto|orzo|farro|quinoa|farina\w*|semola|zucchero|dolcificante|sale\b|olio\b|olio di oliva|olio di semi|aceto\w*|caff[e]\w*|cialde|capsule|the\b|te\b|tisan\w*|camomilla|biscott\w*|cereali|muesli|fiocchi d'avena|avena|marmellat\w*|confettura|nutella|crema spalmabile|tonno\b|sgombro|passata|pelati|polpa di pomodoro|concentrato di pomodoro|legumi|ceci|fagioli|lenticchi\w*|piselli\b|mais\b|sugo\b|ragu|pesto|spezie|origano|curry|paprika|cannella|noce moscata|curcuma|miele|cioccolat\w*|cacao|snack|patatine|crackers|schiacciatine|lievito|bicarbonato|brodo|dado\b|maionese|ketchup|senape|salsa\w*|olive|capperi|sottaceti|sottoli|gallette|fette\b|pangrattato|pan grattato|noci|mandorle|nocciole|pistacchi|arachidi|anacardi|uvetta|frutta secca|merendine|wafer|caramelle|chewing ?gum|budino|preparato per`],
+  ["surgelati","🧊","Surgelati",String.raw`surgelat\w*|gelat\w*|bastoncin\w*|frozen|ghiaccio|piselli surgelati|minestrone surgelato|pizza surgelata|sofficini|cubetti di ghiaccio`],
+  ["bevande","🥤","Bevande",String.raw`acqua\b|acqua frizzante|acqua naturale|birr\w*|vino\b|vino rosso|vino bianco|succo\w*|coca ?cola|pepsi|fanta|sprite|aranciata|chinotto|gassosa|bibit\w*|spumante|prosecco|champagne|the freddo|te freddo|energy drink|red bull|sciroppo|amaro|liquore|grappa|gin\b|vodka|rum\b|whisky|tequila|aperol|campari|spritz|tonica|ginger`],
+  ["casa","🧽","Casa e pulizia",String.raw`detersiv\w*|detergente|ammorbident\w*|candeggin\w*|sgrassat\w*|sgrassatore|spugn\w*|paglietta|carta igienica|scottex|carta (da )?cucina|sacchett\w*|sacchi (della|per) (spazzatura|immondizia)|alluminio|pellicola|carta forno|lampadin\w*|pile\b|batterie\b|tovagliol\w*|piatti di carta|bicchieri di carta|posate di plastica|scopa\b|paletta|mocio|panno\b|panni\b|panno carta|panni cattura polvere|anticalcare|brillantante|sale per lavastoviglie|pastiglie (per la )?lavastoviglie|detersivo (per i |per la )?(piatti|lavatrice|lavastoviglie)|ammoniaca|alcol\b|acido citrico|aceto bianco|insetticid\w*|deodorante per ambienti|profumatore|ricarica\w* (per )?(scopa|mocio)|guanti (di|in) lattice|sacco aspirapolvere|filtri?`],
+  ["igiene","🧴","Igiene e cura",String.raw`shampoo|balsamo|bagnoschiuma|docciaschiuma|sapone\w*|dentifric\w*|spazzolin\w*|deodorant\w*|rasoi\w*|schiuma da barba|assorbent\w*|salvaslip|cotton\w*|dischetti struccanti|crema\b|crema (viso|mani|corpo|solare)|struccant\w*|salviett\w*|fazzolett\w*|cerott\w*|collutorio|lamette|profumo|filo interdentale|tampon\w*|gel doccia|lacca|schiuma per capelli|tinta per capelli|pinzette|forbicine|tagliaunghie|smalto|acetone|protezione solare|doposole`],
+  ["animali","🐾","Animali",String.raw`crocchett\w*|lettiera|cibo per (cane|cani|gatto|gatti)|scatolett\w*|snack per (cane|cani|gatto|gatti)|guinzaglio|collare antipulci|antipulci|osso per cani|tiragraffi|paletta per (cane|bisogni)`],
+  ["bimbi","🍼","Bambini",String.raw`pannolin\w*|omogeneizzat\w*|latte in polvere|latte di crescita|biberon|ciuccio|tettarella|salviettine|pappa\b|pastina|seggiolone|passeggino|fasciatoio|scalda ?biberon|bavaglin\w*|crema cambio|pasta all'ossido|sterilizzatore`],
+  ["salute","💊","Farmacia e salute",String.raw`integrator\w*|vitamin\w*|multivitaminico|magnesio|potassio|ferro \(integratore\)|omega ?3|probiotic\w*|fermenti lattici|aspirina|tachipirina|paracetamolo|ibuprofene|oki\b|moment\b|brufen|antinfiammatori\w*|antistaminic\w*|antidolorific\w*|sciroppo per la tosse|pastiglie per la gola|spray nasale|collirio|termometro|mascherine|ffp2|siringhe|garze|bende|disinfettante|amuchina|acqua ossigenata|pomata|crema antibiotica|lassativ\w*|gastroprotettore|maalox|enterogermina|sali minerali|cuscinetti|plantari|test di gravidanza|tampone rapido`],
+  ["casalinghi","🍽️","Cucina e tavola",String.raw`pentol\w*|padell\w*|tegame|casseruola|coperchio|posate\b|forchett\w*|coltell\w*|cucchia\w*|piatti\b|piatto fondo|bicchier\w*|tazz\w*|tazzine|caraff\w*|brocca|vassoio|tagliere|mestolo|schiumarola|scolapasta|colino|apribottiglie|cavatappi|apriscatole|contenitor\w*|barattol\w*|tupperware|teglia|stampo|pirofila|grattugia|frusta da cucina|matterello|guanti da forno|presine|tovaglia|tovagliette|strofinacci|canovacci|portasapone|portarotolo|set di piatti|servizio di piatti|insalatiera|zuccheriera|oliera|macinapepe|termos|borraccia|lunch box|ciotol\w*`],
+  ["biancheria","🛏️","Biancheria e arredo",String.raw`lenzuol\w*|federa|federe|copripiumino|piumon\w*|trapunta|coperta|plaid|cuscin\w*|materass\w*|coprimaterasso|topper|asciugaman\w*|accappatoio da bagno|telo mare|tend\w*|tappeto|tappeti|tappetino|zerbino|tovaglia da tavola|runner|copridivano|sedia\b|sgabello|scaffale|mensola|appendiabiti|gruccia|grucce|stendibiancheria|cesto (della|per la) biancheria|specchio|cornice|quadro\b|vaso da fiori|candela|candele|portacandele|vaso\b|vasi\b|lampada da tavolo|abat ?jour|paralume`],
+  ["elettro","🔌","Elettrodomestici ed elettronica",String.raw`aspirapolvere|aspira ?polvere|scopa elettrica|robot (aspira\w*|da cucina|lavapavimenti)|lavapavimenti|idropulitrice|macchin(a|etta) (da|del|per) (caff\w*|pane|cucire)|macchina caff\w*|frullator\w*|minipimer|mixer|planetaria|impastatrice|tostapane|tostiera|bollitore|microonde|friggitrice|air ?fryer|forno elettrico|fornetto|piastra elettrica|ferro da stiro|asse da stiro|ferro a vapore|phon\b|fon\b|asciugacapelli|piastra per capelli|arricciacapelli|rasoio elettrico|tagliacapelli|spazzolino elettrico|idropulsore|ventilator\w*|stufa\w*|condizionator\w*|climatizzatore|deumidificator\w*|umidificator\w*|purificator\w*|lavatrice|asciugatrice|lavastoviglie|frigorifero|frigo\b|congelator\w*|cappa\b|piano cottura|forno a incasso|televisor\w*|tv\b|smart ?tv|monitor|computer|portatile|notebook|pc\b|tablet|ipad|iphone|smartphone|telefono|cellulare|caricator\w*|caricabatterie|power ?bank|cavo\b|cavetto|adattator\w*|presa multipla|ciabatta elettrica|prolunga|cuffie|auricolari|airpods|cassa bluetooth|altoparlante|soundbar|stampante|cartucc\w*|toner|mouse|tastiera|hard disk|ssd\b|chiavetta usb|penna usb|router|modem|ripetitore wifi|telecomando|lampadina smart|faretto|striscia led|smart ?watch|bilancia pesapersone|bilancia da cucina|sveglia|proiettore|console|playstation|xbox|nintendo|fotocamera|action cam|droni?`],
+  ["abbigliamento","👕","Abbigliamento e scarpe",String.raw`maglia\b|maglion\w*|maglietta|magliette|t-?shirt|canottiera|camicia|camicie|felp\w*|pantalon\w*|jeans|leggings|gonna|vestito|abito|giacca|giubbotto|cappotto|piumino da|calz[ei]\b|calzini|calze\b|collant|mutand\w*|slip\b|boxer|reggisen\w*|pigiam\w*|vestaglia|accappatoio|costume da bagno|scarp\w*|sneaker\w*|stivali|anfibi|ciabatte|infradito|sandali|mocassini|cintur\w*|cappell\w*|berretto|sciarp\w*|guant\w*|ombrello|borsa\b|borsetta|zaino|portafogl\w*|occhiali da sole|orologio da polso|bracciale|collana|orecchini`],
+  ["fai-da-te","🔧","Fai da te e giardino",String.raw`vit[ei]\b|tassell\w*|chiod\w*|trapano|avvitatore|cacciavite|martello|pinz[ae]\b|chiave inglese|brugole|nastro (adesivo|isolante|biadesivo)|coll[ae]\b|attack|silicone|stucco|vernice|smalto per legno|pennell\w*|rullo\b|carta vetrata|metro\b|flessometro|livella|seghetto|sega\b|attrezzi|cassetta degli attrezzi|lucchetto|serratura|cerniera|maniglia|terriccio|concime|fertilizzante|vas[io] (da|per) (fiori|piante)|piant[ae]\b|semi\b|sementi|innaffiatoio|annaffiatoio|tubo (da|per) giardino|tosaerba|decespugliatore|cesoie|guanti da giardino|pesticid\w*|antizanzare|rete\b`],
+  ["cartoleria","✏️","Cartoleria e ufficio",String.raw`quadern\w*|block ?notes|agenda|penna\b|penne (a sfera|bic|gel)|matit\w*|gomma da cancellare|temperamatite|evidenziator\w*|pennarell\w*|colori a (matita|cera|tempera)|astuccio|righello|squadra|compasso|forbici|graffett\w*|spillatrice|punti metallici|puntine|post-?it|carta (a4|da stampa|regalo)|cartoncino|buste (da lettera|imbottite)|francobolli|cartellina|raccoglitore|classificatore|etichette|scotch|plastificatrice|calcolatrice`],
+  ["tempo-libero","🎁","Tempo libero e regali",String.raw`libro\b|libri\b|romanzo|rivista|giornale|fumetto|gioc[oh]\w*|giocattol\w*|puzzle|carte da gioco|gioco da tavolo|lego|pallone|palla\b|bicicletta|monopattino|casco\b|tappetino yoga|manubri|pesi\b|corda per saltare|borraccia sportiva|regal\w*|biglietto (di )?auguri|carta regalo|fiocco|candeline|palloncin\w*|addobbi|decorazioni|albero di natale|presepe|fiori\b|bouquet|mazzo di fiori|profumo regalo|buono regalo|gift card`],
+];
+/* Ordine di visualizzazione: prima i reparti del supermercato, poi la casa, infine il resto. */
+const AISLE_ORDER=["frutta","pane","latte","carne","dispensa","surgelati","bevande","casa","igiene","bimbi","salute","animali","casalinghi","biancheria","elettro","abbigliamento","fai-da-te","cartoleria","tempo-libero"];
+function aisleKeys(){
+  const have=AISLES.map(a=>a[0]);
+  return [...AISLE_ORDER.filter(k=>have.includes(k)),...have.filter(k=>!AISLE_ORDER.includes(k)),"altro"];
+}
+const AISLE_OTHER=["altro","🛍️","Altro"];
+function aisleInfo(key){ const a=AISLES.find(x=>x[0]===key); return a?{key:a[0],emoji:a[1],name:a[2]}:{key:"altro",emoji:AISLE_OTHER[1],name:AISLE_OTHER[2]}; }
+/* Le parole di ogni reparto diventano una sola espressione, con quelle lunghe prima:
+   così in "detersivo lavastoviglie" vince "detersivo lavastoviglie" e non "detersivo". */
+const AISLE_RE=(()=>{
+  const splitTop=s=>{ const out=[]; let buf="",d=0,esc=false;
+    for(const ch of s){
+      if(esc){buf+=ch;esc=false;continue;}
+      if(ch==="\\"){buf+=ch;esc=true;continue;}
+      if(ch==="(")d++; else if(ch===")")d--; else if(ch==="[")d++; else if(ch==="]")d--;
+      if(ch==="|"&&d===0){out.push(buf);buf="";} else buf+=ch;
+    }
+    out.push(buf); return out.filter(Boolean);
+  };
+  return AISLES.map(a=>[a[0], new RegExp("\\b(?:"+splitTop(a[3]).sort((x,y)=>y.length-x.length).join("|")+")\\b","i")]);
+})();
+/* Pulisce il testo prima di cercare: minuscole, via accenti, quantità, unità di misura,
+   marche fra parentesi lasciate (a volte dicono di che prodotto si tratta). */
+function aisleText(text){
+  let t=String(text||"").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"");
+  t=t.replace(/[()\[\]{}]/g," ");
+  t=t.replace(/[^a-z0-9'\s-]/g," ");
+  t=t.replace(/\b\d+(?:[.,]\d+)?\s*(?:x|pz|pezz\w*|gr?|kg|ml|cl|lt?|litr\w*|conf\w*|bott\w*|bust\w*|rotol\w*|vasett\w*|lattin\w*)\b/g," ");
+  t=t.replace(/\b\d+\s*x\b|\bx\s*\d+\b|\b\d+\b/g," ");
+  return t.replace(/\s+/g," ").trim();
+}
+/* Sceglie il reparto: vince la parola più lunga trovata nel testo, non il primo reparto
+   dell'elenco. Se non trova niente resta "altro". */
+function guessAisle(text){
+  const t=aisleText(text);
+  if(!t) return "altro";
+  let best="altro",bestLen=0;
+  for(const [key,re] of AISLE_RE){
+    const m=t.match(re);
+    if(m && m[0].length>bestLen){ bestLen=m[0].length; best=key; }
+  }
+  return best;
+}
+/* "2 latte", "latte x2", "3 pz uova" → quantità separata dal nome (non tocca "500 g pasta"). */
+function parseQty(text){
+  let t=String(text||"").trim(), qty=1;
+  let m=t.match(/^(\d{1,2})\s*(?:x|×|pz\.?|pezzi|conf\.?|confezioni)?\s+(?!(?:g|gr|kg|ml|cl|l|lt|litri?|grammi)\b)(.+)$/i);
+  if(m){ qty=Number(m[1]); t=m[2]; }
+  else if((m=t.match(/^(.+?)\s*(?:x|×)\s*(\d{1,2})$/i))){ t=m[1]; qty=Number(m[2]); }
+  return {text:t.trim(),qty:Math.min(99,Math.max(1,qty||1))};
+}
+function newListItem(rawText,extra={}){
+  const {text,qty}=parseQty(rawText);
+  return {id:uid(),text:text.slice(0,120),qty,price:null,done:false,code:"",image:"",url:"",photo:"",aisle:guessAisle(text),forWhom:"both",addedBy:myPerson(),...extra};
+}
+/* Noi Due 1.17.0 — Acquisti tracciati per davvero.
+   Un prodotto conta come "comprato" nel momento in cui lo segni nel carrello (spunta o scorri a destra),
+   una sola volta: se lo togli dal carrello per errore il conteggio torna indietro. Per ogni prodotto
+   l'app ricorda le ultime 12 date di acquisto, così capisce ogni quanto lo comprate e quando è ora
+   di ricomprarlo ("⏰ da ricomprare"). */
+function historyKey(text){ return normName(parseQty(text).text); }
+function markBought(list,it){
+  if(!list||!it||it.counted) return;
+  if(!list.history||typeof list.history!=="object") list.history={};
+  const k=historyKey(it.text); if(!k||k.startsWith("carico")) return;
+  const today=todayISO();
+  const h=list.history[k]||{text:it.text,count:0,last:"",aisle:it.aisle||"",dates:[],qty:1};
+  h.count+=1; h.text=parseQty(it.text).text; h.aisle=it.aisle||h.aisle||guessAisle(it.text); h.qty=it.qty||1;
+  h.dates=[...(Array.isArray(h.dates)?h.dates:[]).filter(d=>d!==today),today].slice(-12);
+  h.last=today; list.history[k]=h; it.counted=today;
+  // Acquisti nel tempo: data e ora automatiche, chi l'ha preso.
+  const at=new Date().toISOString();
+  if(!Array.isArray(list.purchases)) list.purchases=[];
+  list.purchases.push({id:uid(),itemId:it.id,text:parseQty(it.text).text,qty:it.qty||1,aisle:it.aisle||guessAisle(it.text),at,by:myPerson()||""});
+  if(list.purchases.length>400) list.purchases.splice(0,list.purchases.length-400);
+  it.boughtAt=at;
+}
+function unmarkBought(list,it){
+  if(!list||!it||!it.counted) return;
+  const k=historyKey(it.text), h=list.history&&list.history[k];
+  if(h){
+    h.count-=1;
+    if(Array.isArray(h.dates)&&h.dates[h.dates.length-1]===it.counted&&it.counted===todayISO()) h.dates.pop();
+    if(h.count<=0) delete list.history[k]; else h.last=(h.dates&&h.dates[h.dates.length-1])||h.last;
+  }
+  // Tolto dal carrello per errore: non era un acquisto, sparisce anche dalla cronologia.
+  if(Array.isArray(list.purchases)){ const drop=list.purchases.filter(p=>p.itemId===it.id&&(!it.boughtAt||p.at===it.boughtAt)); if(drop.length){ markDeleted(drop.map(p=>p.id)); list.purchases=list.purchases.filter(p=>!drop.includes(p)); } }
+  it.counted=""; it.boughtAt="";
+}
+/* Data e ora leggibili: "oggi 14:32", "ieri 09:10", "3 ott 18:20". */
+function whenLabel(iso){
+  const d=new Date(iso); if(!Number.isFinite(d.getTime())) return "";
+  const hm=`${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
+  const day=`${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`, diff=daysBetweenISO(day,todayISO());
+  if(diff===0) return `oggi ${hm}`;
+  if(diff===1) return `ieri ${hm}`;
+  return `${d.getDate()} ${MESI_BREVI[d.getMonth()].toLowerCase()}${d.getFullYear()!==new Date().getFullYear()?" "+d.getFullYear():""} ${hm}`;
+}
+function dayHeading(iso){
+  const d=new Date(iso), day=`${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`, diff=daysBetweenISO(day,todayISO());
+  if(diff===0) return "Oggi"; if(diff===1) return "Ieri";
+  return `${["Domenica","Lunedì","Martedì","Mercoledì","Giovedì","Venerdì","Sabato"][d.getDay()]} ${d.getDate()} ${MESI[d.getMonth()].toLowerCase()}${d.getFullYear()!==new Date().getFullYear()?" "+d.getFullYear():""}`;
+}
+/* Cestino delle liste: ogni prodotto eliminato con data e ora. */
+function trashListItem(list,it){
+  if(!Array.isArray(list.trash)) list.trash=[];
+  list.trash.unshift({id:uid(),text:it.text,qty:it.qty||1,price:it.price||null,aisle:it.aisle||"",forWhom:it.forWhom||"both",url:it.url||"",image:it.image||"",deletedAt:new Date().toISOString(),by:myPerson()||""});
+  if(list.trash.length>200) list.trash.length=200;
+  return list.trash[0];
+}
+function restoreTrashEntry(list,entryId){
+  const i=(list.trash||[]).findIndex(x=>x.id===entryId); if(i<0) return null;
+  const e=list.trash.splice(i,1)[0];
+  markDeleted(e.id); // la voce del cestino non torna con la sincronizzazione
+  const it=newListItem(e.text,{aisle:e.aisle,price:e.price,forWhom:e.forWhom,url:e.url,image:e.image}); it.qty=e.qty||1;
+  list.items.push(it); return it;
+}
+// Compatibilità con i punti che "chiudono" la spesa: conta solo ciò che non è già stato contato.
+function recordPurchased(list,items){ items.forEach(i=>markBought(list,i)); }
+function daysBetweenISO(a,b){ return Math.round((Date.parse(b+"T12:00:00")-Date.parse(a+"T12:00:00"))/86400000); }
+function purchaseStats(h){
+  const ds=[...new Set(Array.isArray(h.dates)?h.dates:[])].sort();
+  let every=null;
+  if(ds.length>=2){
+    const gaps=[]; for(let i=1;i<ds.length;i++){ const g=daysBetweenISO(ds[i-1],ds[i]); if(g>0) gaps.push(g); }
+    if(gaps.length){ gaps.sort((a,b)=>a-b); every=gaps[Math.floor(gaps.length/2)]; }
+  }
+  const since=h.last?Math.max(0,daysBetweenISO(h.last,todayISO())):null;
+  return {every,since,ratio:every&&since!=null?since/every:null};
+}
+/* Suggerimenti "smart": frequenza (quante volte), regolarità (ogni quanti giorni) e tempo dall'ultimo
+   acquisto. Prima i prodotti "da ricomprare", poi i più comprati; esclusi quelli già in lista o nel carrello. */
+function smartSuggestions(list,max=40){
+  const inList=new Set((list.items||[]).map(i=>historyKey(i.text)));
+  return Object.entries(list.history||{}).filter(([k,h])=>h&&h.text&&!inList.has(k)).map(([k,h])=>{
+    const st=purchaseStats(h);
+    let score=Math.log2(1+(h.count||1))*2;
+    if(st.ratio!=null) score+=st.ratio>=0.85?5+Math.min(3,st.ratio):st.ratio*3;
+    else if(st.since!=null) score+=Math.max(0,1.5-st.since/30);
+    if(st.since===0) score-=4;
+    return {...h,key:k,...st,score,isDue:st.ratio!=null&&st.ratio>=0.85&&st.since>0};
+  }).sort((a,b)=>b.score-a.score||b.count-a.count).slice(0,max);
+}
+function suggestionMeta(s){
+  const ago=s.since==null?"":s.since===0?"oggi":s.since===1?"ieri":`${s.since} gg fa`;
+  if(s.isDue) return `⏰ Da ricomprare · ogni ~${s.every} gg`;
+  const parts=[`${s.count} ${s.count===1?"volta":"volte"}`];
+  if(s.every) parts.push(`ogni ~${s.every} gg`);
+  if(ago) parts.push(`ultimo ${ago}`);
+  return parts.join(" · ");
+}
+function listSuggestions(list,max=10){ return smartSuggestions(list,max); }
+function showActionToast(message,label,fn){
+  let toast=document.getElementById("appToast");
+  if(!toast){toast=document.createElement("div");toast.id="appToast";document.body.appendChild(toast);}
+  toast.innerHTML=`<span>${escapeHtml(message)}</span><button type="button">${escapeHtml(label)}</button>`;
+  toast.classList.add("show"); toast.style.pointerEvents="auto";
+  toast.querySelector("button").onclick=()=>{ fn(); toast.classList.remove("show"); };
+  clearTimeout(toast._timer); toast._timer=setTimeout(()=>{ toast.classList.remove("show"); toast.style.pointerEvents=""; },4500);
+}
+function isFavorite(text){ const k=normName(parseQty(text).text); return (state.favorites||[]).some(f=>normName(f.text)===k); }
+function setFavorite(text,on,aisle=""){
+  if(!Array.isArray(state.favorites)) state.favorites=[];
+  const clean=parseQty(text).text, k=normName(clean);
+  const idx=state.favorites.findIndex(f=>normName(f.text)===k);
+  if(on && idx<0) state.favorites.push({id:uid(),text:clean,aisle:aisle||guessAisle(clean)});
+  if(!on && idx>=0){ markDeleted(state.favorites[idx].id); state.favorites.splice(idx,1); }
+}
+function openFavorites(listId,onAdded){
+  openSheet("tpl-favorites",(node,close)=>{
+    const box=node.querySelector("#favList"), addBtn=node.querySelector("#favAddBtn"), newInput=node.querySelector("#favNewInput");
+    const picked=new Set();
     function paint(){
-      if(!node.isConnected) return;
-      const a=state.accounts.find(x=>x.id===accId); if(!a){ close(); return; }
-      const recv=!!a.receivable, bal=accountBalance(a.id), owed=recv?bal:-bal;
-      node.querySelector("#loanPersonTitle").textContent=`${recv?"🤝":"🏦"} ${a.person}`;
-      node.querySelector("#loanPersonWho").textContent=Math.abs(owed)<0.005?"Siete in pari":recv?(owed>0?`${a.person} ti deve`:`Hai ricevuto in più da ${a.person}`):(owed>0?`Devi a ${a.person}`:`${a.person} ti deve restituire`);
-      const amt=node.querySelector("#loanPersonAmount"); amt.textContent=balancesHidden?"••••":fmt(Math.abs(owed)); amt.style.color=Math.abs(owed)<0.005?"var(--ink)":recv?"#8E7CC3":"#C9785C";
-      const p=node.querySelector("#loanPersonPrimary"), s=node.querySelector("#loanPersonSecondary");
-      p.textContent=recv?"↩️ Registra restituzione":"💸 Paga / restituisci"; s.textContent=recv?"＋ Prestito":"＋ Debito";
-      const list=state.transactions.filter(t=>t.accountId===a.id||t.toAccountId===a.id).sort((x,y)=>y.date.localeCompare(x.date)||String(y.id).localeCompare(String(x.id)));
-      renderTxRows(node.querySelector("#loanPersonTx"),list);
-      const paid=list.filter(t=>Array.isArray(t.rateInfo)&&t.rateInfo.length).sort((x,y)=>x.date.localeCompare(y.date));
-      const pbox=node.querySelector("#loanPersonPaid");
-      node.querySelector("#loanPersonPaidWrap").hidden=!paid.length;
-      pbox.innerHTML=paid.map(t=>`<div class="loan-rate-row paid"><span class="loan-rate-dot" aria-hidden="true">✅</span><span class="loan-rate-text"><strong>${escapeHtml(rateInfoLabel(t.rateInfo))}</strong><span>${recv?"ricevuta":"pagata"} il ${escapeHtml(shortDate(t.date))}${t.rateInfo[0]?.date&&t.rateInfo[0].date<t.date?` · prevista il ${escapeHtml(shortDate(t.rateInfo[0].date))}`:""}</span></span><span class="loan-rate-amt">${balancesHidden?"••••":fmt(t.amount)}</span></div>`).join("");
-      const rates=ratesOf(a.id), rbox=node.querySelector("#loanPersonRates");
-      node.querySelector("#loanPersonRatesWrap").hidden=!rates.length;
-      rbox.innerHTML=""; rates.forEach(r=>rbox.appendChild(rateRowEl(r,{onPay:r=>{ close(); payRate(r); }})));
-      const planBtn=node.querySelector("#loanPersonPlan");
-      planBtn.hidden=Math.abs(owed)<0.005&&!rates.length;
-      planBtn.textContent="📅 Rate"; planBtn.setAttribute("aria-label",rates.length?"Modifica rate":"Rate");
-      // v1.26.0: l'altra parte (se con la stessa persona ci sono sia crediti che debiti) e il netto
-      const pp=personPosition(a.person), oth=node.querySelector(".loan-person-other"), sb=node.querySelector(".loan-person-settle");
-      if(sb) sb.hidden=Math.abs(pp.credit)<0.005&&Math.abs(pp.debt)<0.005;
-      if(oth){
-        const both=Math.abs(pp.credit)>=0.005&&Math.abs(pp.debt)>=0.005;
-        oth.hidden=!both;
-        if(both){ const sh=v=>balancesHidden?"••••":fmt(v);
-          oth.innerHTML=`<span>${recv?"Inoltre gli devi":"Inoltre ti deve"} <b>${sh(recv?pp.debt:pp.credit)}</b></span><span>Netto: <b>${Math.abs(pp.net)<0.005?"siete in pari":pp.net>0?`ti deve ${sh(pp.net)}`:`gli devi ${sh(-pp.net)}`}</b></span>`; }
-      }
+      const l=state.lists.find(x=>x.id===listId);
+      const inList=new Set((l?.items||[]).filter(i=>!i.done).map(i=>normName(i.text)));
+      const favs=(state.favorites||[]).slice().sort((a,b)=>a.text.localeCompare(b.text,"it"));
+      node.querySelector("#favEmpty").hidden=favs.length>0;
+      box.innerHTML="";
+      favs.forEach(f=>{
+        const there=inList.has(normName(f.text));
+        const row=document.createElement("div"); row.className="fav-row"+(there?" in-list":"")+(picked.has(f.id)?" picked":"");
+        row.innerHTML=`<button type="button" class="fav-pick" aria-pressed="${picked.has(f.id)}"><span class="list-check" aria-hidden="true">${picked.has(f.id)?"✓":""}</span><span class="fav-text">${escapeHtml(aisleInfo(f.aisle||guessAisle(f.text)).emoji)} ${escapeHtml(f.text)}${there?`<small>già in lista</small>`:""}</span></button><button type="button" class="fav-remove" aria-label="Togli ${escapeHtml(f.text)} dai preferiti">✕</button>`;
+        row.querySelector(".fav-pick").addEventListener("click",()=>{ if(there) return; picked.has(f.id)?picked.delete(f.id):picked.add(f.id); paint(); });
+        row.querySelector(".fav-remove").addEventListener("click",()=>{ picked.delete(f.id); setFavorite(f.text,false); persist(); paint(); });
+        box.appendChild(row);
+      });
+      addBtn.textContent=picked.size?`Aggiungi ${picked.size}`:"Aggiungi";
     }
-    node.querySelector("#loanPersonPrimary").addEventListener("click",()=>{ const a=state.accounts.find(x=>x.id===accId); close(); openLoanForm(null,{mode:a.receivable?"repayIn":"repayOut",person:a.person}); });
-    node.querySelector("#loanPersonSecondary").addEventListener("click",()=>{ const a=state.accounts.find(x=>x.id===accId); close(); openLoanForm(null,{mode:a.receivable?"lend":"borrow",person:a.person}); });
-    node.querySelector("#loanPersonPlan").addEventListener("click",()=>{ close(); openLoanPlan(accId); });
-    // v1.25.0 — spesa pagata da questa persona ed eliminazione della persona
-    {
-      const a0=state.accounts.find(x=>x.id===accId);
-      const row=node.querySelector(".loan-person-actions-row");
-      // v1.26.0: pareggia in un colpo crediti e debiti con questa persona
-      const ob=document.createElement("button"); ob.type="button"; ob.className="pill-btn loan-person-settle"; ob.textContent="⚖️ Pareggia"; ob.setAttribute("aria-label","Pareggia i conti");
-      ob.addEventListener("click",()=>settlePerson(a0?.person,close));
-      row?.appendChild(ob);
-      const other=document.createElement("p"); other.className="loan-person-other"; other.hidden=true;
-      node.querySelector("#loanPersonAmount")?.after(other);
-      const del=document.createElement("button"); del.type="button"; del.className="text-danger-btn loan-person-delete"; del.textContent="Elimina persona";
-      del.addEventListener("click",()=>deleteLoanPerson(accId,close));
-      node.querySelector(".sheet")?.appendChild(del) || node.appendChild(del);
-    }
-    loanPersonRefresh=paint;
+    const addNew=()=>{ const t=newInput.value.trim(); if(!t){ newInput.focus(); return; } setFavorite(t,true); const f=state.favorites.find(x=>normName(x.text)===normName(parseQty(t).text)); if(f) picked.add(f.id); newInput.value=""; persist(); paint(); newInput.focus(); };
+    node.querySelector("#favNewBtn").addEventListener("click",addNew);
+    newInput.addEventListener("keydown",e=>{ if(e.key==="Enter"){ e.preventDefault(); addNew(); } });
+    addBtn.addEventListener("click",()=>{
+      const l=state.lists.find(x=>x.id===listId); if(!l) return close();
+      const favs=(state.favorites||[]).filter(f=>picked.has(f.id));
+      favs.forEach(f=>l.items.push(newListItem(f.text,{aisle:f.aisle||guessAisle(f.text)})));
+      persist(); close(); onAdded&&onAdded(favs.length);
+    });
     paint();
   });
 }
-var loanPersonRefresh=null;
-/* v1.25.0 — Eliminare una persona.
-   - In pari (saldo 0): si elimina subito; i movimenti passati restano nello storico (il conto viene archiviato).
-   - Con un saldo aperto si sceglie come chiuderlo prima:
-       💶 "Registra il saldo": apre la restituzione già compilata; a salvataggio fatto la persona sparisce;
-       ✅ "Abbuona": il residuo viene azzerato senza muovere soldi (riga "Abbuono"), poi la persona sparisce. */
-function archiveLoanAccount(a){
-  a.archived=true;
-  state.loanRates=(state.loanRates||[]).filter(r=>r.accId!==a.id);
+let openSwipeRow=null;
+/* v1.27.0 — Quando le parole scritte a mano non bastano, il reparto lo decide il modello.
+   Si prova una sola volta per articolo (aiAisleTried) e solo su quelli finiti in "Altro",
+   così non si fanno chiamate inutili. Se l'AI non c'e, non cambia niente. */
+async function aiFixAisles(listId){
+  if(!(window.SuiteAI && SuiteAI.disponibile())) return;
+  const l=state.lists.find(x=>x.id===listId); if(!l) return;
+  const da=l.items.filter(i=>(!i.aisle||i.aisle==="altro") && i.text && !i.aiAisleTried).slice(0,8);
+  if(!da.length) return;
+  const opzioni=aisleKeys().filter(k=>k!=="altro").map(k=>{ const a=aisleInfo(k); return {chiave:a.key,nome:a.name}; });
+  let cambiati=false;
+  for(const it of da){
+    it.aiAisleTried=true;
+    const k=await SuiteAI.scegli("reparto",parseQty(it.text).text,opzioni,0.6);
+    if(k && k!==it.aisle){ it.aisle=k; cambiati=true; }
+  }
+  persist();
+  if(cambiati){ renderCoupleLists(); if(listDetailRefresh) listDetailRefresh(); }
 }
-function chooseAction(title,text,options){
-  return new Promise(resolve=>{
-    document.getElementById("movementActionOverlay")?.remove();
-    const overlay=document.createElement("div");
-    overlay.id="movementActionOverlay"; overlay.className="movement-action-overlay";
-    overlay.innerHTML=`<div class="movement-action-menu choose-menu" role="dialog" aria-modal="true" aria-label="${escapeHtml(title)}"><div class="movement-action-handle" aria-hidden="true"></div>
-      <div class="movement-action-title">${escapeHtml(title)}</div><p class="choose-text">${escapeHtml(text)}</p>
-      <div class="choose-list">${options.map((o,i)=>`<button type="button" class="choose-opt${o.danger?" danger":""}" data-i="${i}"><span class="choose-ic" aria-hidden="true">${o.icon||""}</span><span class="choose-tx"><b>${escapeHtml(o.label)}</b>${o.hint?`<small>${escapeHtml(o.hint)}</small>`:""}</span></button>`).join("")}</div>
-      <button type="button" class="movement-action-cancel">Annulla</button></div>`;
-    const done=v=>{ overlay.remove(); resolve(v); };
-    overlay.querySelectorAll("[data-i]").forEach(b=>b.addEventListener("click",()=>done(options[Number(b.dataset.i)].value)));
-    overlay.querySelector(".movement-action-cancel").addEventListener("click",()=>done(null));
-    overlay.addEventListener("click",e=>{ if(e.target===overlay) done(null); });
-    document.body.appendChild(overlay);
-    requestAnimationFrame(()=>overlay.classList.add("show"));
+function openListDetail(listId){
+  // v1.19.0 — riclassifica i prodotti finiti in "Altro" con i reparti nuovi (es. aspirapolvere).
+  { const l0=state.lists.find(l=>l.id===listId); let ch=false; (l0?.items||[]).forEach(i=>{ if(!i.aisle||i.aisle==="altro"){ const g=guessAisle(i.text); if(g!=="altro"&&g!==i.aisle){ i.aisle=g; ch=true; } } }); if(ch) persist(); }
+  aiFixAisles(listId);
+  openSheet("tpl-list-detail",(node,close)=>{
+    const input=node.querySelector("#listItemInput"), priceInput=node.querySelector("#listPriceInput");
+    const list=()=>state.lists.find(l=>l.id===listId);
+    let lastAddedId=null;
+    function save(){ persist(); renderCoupleLists(); paint(); }
+    function removeItem(it,{purchased=false}={}){
+      const l=list(), idx=l.items.findIndex(x=>x.id===it.id); if(idx<0) return;
+      l.items.splice(idx,1); if(purchased) recordPurchased(l,[it]); markDeleted(it.id);
+      const entry=trashListItem(l,it); save();
+      showActionToast(`🗑 “${it.text}” nel cestino`,"Annulla",()=>{ const cur=list(); if(!cur) return; if(entry){ restoreTrashEntry(cur,entry.id); } else { const back=newListItem(it.text,{aisle:it.aisle,price:it.price,forWhom:it.forWhom}); back.qty=it.qty||1; cur.items.push(back); } save(); });
+    }
+    function itemRow(it){
+      const wrap=document.createElement("div");
+      wrap.className="list-swipe-wrap";
+      const fav=isFavorite(it.text);
+      if(it.id===lastAddedId){ wrap.classList.add("ls-new"); lastAddedId=null; }
+      wrap.innerHTML=`<span class="list-actions" aria-hidden="true"><button type="button" class="list-act-edit" tabindex="-1" aria-label="Modifica"><span class="la-ico">✎</span><small>Modifica</small></button><button type="button" class="list-act-fav${fav?" on":""}" tabindex="-1" aria-label="${fav?"Togli dai preferiti":"Aggiungi ai preferiti"}"><span class="la-ico">${fav?"★":"☆"}</span><small>${fav?"Togli":"Preferito"}</small></button><button type="button" class="list-act-del" tabindex="-1" aria-label="Elimina"><span class="la-ico">🗑️</span><small>Elimina</small></button></span>`;
+      const row=document.createElement("div");
+      wrap.appendChild(row);
+      row.className="list-item"+(it.done?" done":"");
+      row.style.setProperty("--ac",aisleColor(it.aisle||guessAisle(it.text)));
+      row.setAttribute("role","button"); row.tabIndex=0;
+      const pic=photoSrc(it.photo)||it.image||(Array.isArray(it.links)?it.links.find(k=>k.image)?.image:"")||"";
+      const who=(it.forWhom==="a"||it.forWhom==="b"?`<small class="list-for" style="color:${safeColor(personColor(it.forWhom))}">solo ${escapeHtml(personName(it.forWhom))}</small>`:"")
+        +(it.addedBy&&it.addedBy!==myPerson()?`<small class="list-by" style="color:${safeColor(personColor(it.addedBy))}">da ${escapeHtml(personName(it.addedBy))}</small>`:it.via?`<small class="list-by">da ${escapeHtml(it.via)}</small>`:"");
+      row.innerHTML=`<span class="list-swipe-bg" aria-hidden="true"><span>${it.done?"↩︎ Da comprare":"✓ Acquistato"}</span><span></span></span>
+        <span class="list-check" aria-hidden="true">${it.done?"✓":""}</span>
+        <span class="list-thumb">${pic?`<img src="${escapeHtml(pic)}" alt="" loading="lazy" referrerpolicy="no-referrer">`:""}</span>
+        <span class="list-text">${it.qty>1?`<b class="list-qty">${it.qty}×</b> `:""}${escapeHtml(it.text)}${fav?` <span class="list-fav" aria-label="preferito">★</span>`:""}${who}${it.done&&it.boughtAt?`<small class="list-when">✓ ${escapeHtml(whenLabel(it.boughtAt))}</small>`:""}</span>
+        <span class="list-price">${it.price?(balancesHidden?"••••":fmt(it.price*(it.qty||1))):""}</span>
+        <button type="button" class="list-del" aria-label="Dettagli di ${escapeHtml(it.text)}">›</button>`;
+      row.querySelector("img")?.addEventListener("error",e=>{ e.target.remove(); });
+      row.setAttribute("aria-pressed",String(it.done));
+      const toggle=()=>{ it.done=!it.done; if(it.done) markBought(list(),it); else unmarkBought(list(),it); save(); };
+      // v1.24.0 — Gesti: scorri a destra = carrello; scorri a sinistra = ✎ Modifica, ★ Preferito, Elimina
+      // (uno swipe lungo elimina subito); tieni premuto = scheda del prodotto.
+      const OPEN=-200;
+      const setOpen=on=>{ wrap.classList.toggle("open",on); if(!on) wrap.classList.remove("swipe-left","swipe-far"); wrap.style.setProperty("--dx",on?`${OPEN}px`:"0px"); if(on){ if(openSwipeRow&&openSwipeRow!==wrap) openSwipeRow._close(); openSwipeRow=wrap; } else if(openSwipeRow===wrap) openSwipeRow=null; };
+      wrap._close=()=>setOpen(false);
+      let sx=0,sy=0,dx=0,base=0,moved=false,swiping=false,suppress=false,pressTimer=null;
+      row.addEventListener("touchstart",e=>{ e.stopPropagation(); if(openSwipeRow&&openSwipeRow!==wrap) openSwipeRow._close();
+        const t=e.touches[0]; sx=t.clientX; sy=t.clientY; dx=0; moved=false; swiping=false; base=wrap.classList.contains("open")?OPEN:0;
+        pressTimer=setTimeout(()=>{ if(!moved&&!base){ suppress=true; if(navigator.vibrate) navigator.vibrate(15); openItemSummary(listId,it.id); } },550); },{passive:true});
+      row.addEventListener("touchmove",e=>{ const t=e.touches[0]; dx=t.clientX-sx; if(swiping||Math.abs(dx)>14) e.stopPropagation(); const dy=t.clientY-sy;
+        if(Math.abs(dx)>8||Math.abs(dy)>8){ moved=true; clearTimeout(pressTimer); }
+        if(!swiping && Math.abs(dx)>14 && Math.abs(dx)>Math.abs(dy)*1.3) swiping=true;
+        if(swiping){ const x=Math.max(-260,Math.min(base?0:140,base+dx));
+          row.classList.add("swiping"); wrap.classList.toggle("swipe-right",x>0); wrap.classList.toggle("swipe-left",x<0); wrap.classList.toggle("swipe-far",x<-210);
+          wrap.style.setProperty("--dx",`${x}px`); } },{passive:true});
+      row.addEventListener("touchend",e=>{ clearTimeout(pressTimer);
+        if(swiping){ e.stopPropagation(); suppress=true; row.classList.remove("swiping"); wrap.classList.remove("swipe-right","swipe-far");
+          const x=base+dx;
+          if(x>80&&!base){ setOpen(false); toggle(); }
+          else if(x<-210){ setOpen(false); removeItem(it,{purchased:it.done}); }
+          else if(x<-50) setOpen(true);
+          else { setOpen(false); wrap.classList.remove("swipe-left"); } }
+        else if(base&&!moved){ suppress=true; setOpen(false); }
+        setTimeout(()=>{ suppress=false; },350); });
+      row.addEventListener("touchcancel",()=>{ clearTimeout(pressTimer); row.classList.remove("swiping"); setOpen(wrap.classList.contains("open")); });
+      row.addEventListener("click",e=>{ if(suppress||e.target.closest(".list-del")) return; if(wrap.classList.contains("open")){ setOpen(false); return; } toggle(); });
+      activateRowFromKeyboard(row,toggle);
+      row.querySelector(".list-del").addEventListener("click",e=>{ e.stopPropagation(); openItemSummary(listId,it.id); });
+      wrap.querySelector(".list-act-edit").addEventListener("click",e=>{ e.stopPropagation(); setOpen(false); openListItem(listId,it.id); });
+      wrap.querySelector(".list-act-fav").addEventListener("click",e=>{ e.stopPropagation(); const on=!isFavorite(it.text); setFavorite(it.text,on,it.aisle||""); setOpen(false); save(); showToast(on?`★ “${it.text}” nei preferiti`:`“${it.text}” tolto dai preferiti`); });
+      wrap.querySelector(".list-act-del").addEventListener("click",e=>{ e.stopPropagation(); setOpen(false); removeItem(it,{purchased:it.done}); });
+      return wrap;
+    }
+    function paint(){
+      if(!node.isConnected){ listDetailRefresh=null; return; }
+      const l=list();
+      if(!l){ listDetailRefresh=null; close(); return; }
+      node.querySelector("#listDetailTitle").textContent=`${l.emoji} ${l.name}`;
+      const todo=l.items.filter(i=>!i.done), done=l.items.filter(i=>i.done);
+      const todoBox=node.querySelector("#listTodo"), doneBox=node.querySelector("#listDone");
+      todoBox.innerHTML="";
+      if(l.sortMode!=="manual"){
+        const order=aisleKeys();
+        order.forEach(key=>{
+          const its=todo.filter(i=>(i.aisle||guessAisle(i.text))===key);
+          if(!its.length) return;
+          const a=aisleInfo(key), h=document.createElement("p"); h.className="list-aisle"; h.textContent=`${a.emoji} ${a.name}`; h.style.setProperty("--ac",aisleColor(a.key));
+          todoBox.appendChild(h); its.forEach(it=>todoBox.appendChild(itemRow(it)));
+        });
+      } else todo.forEach(it=>todoBox.appendChild(itemRow(it)));
+      doneBox.innerHTML=""; done.forEach(it=>doneBox.appendChild(itemRow(it)));
+      node.querySelector("#listEmpty").hidden=l.items.length>0;
+      node.querySelector("#listGestureHint").hidden=!l.items.length;
+      node.querySelector("#listDoneWrap").hidden=!done.length;
+      const sum=arr=>arr.reduce((s,i)=>s+(i.price||0)*(i.qty||1),0);
+      const est=sum(todo), cart=sum(done);
+      const parts=[]; if(est>0) parts.push(`Stima da comprare ${balancesHidden?"••••":fmt(est)}`); if(cart>0) parts.push(`acquistato ${balancesHidden?"••••":fmt(cart)}`);
+      node.querySelector("#listTotal").textContent=parts.join(" · ");
+      const reg=node.querySelector("#listRegisterBtn");
+      reg.hidden=!done.length;
+      reg.textContent=`🧾 Registra come spesa (${done.length})`;
+      const fixed=!!l.restockOnExit;
+      node.querySelector("#listDoneTitle").textContent=`✓ Acquistato · ${done.length}`;
+      node.querySelector("#listDoneHint").hidden=!fixed;
+      node.querySelector("#listClearDone").textContent=fixed?"↩︎ Rimetti":"Togli";
+      node.querySelector("#listSortBtn").textContent=l.sortMode==="manual"?"🗂️ Per reparto":"↕︎ In ordine";
+      const baseBtn=node.querySelector("#listBaseBtn"); baseBtn.hidden=!(l.template&&l.template.length);
+      // v1.19.0 — niente più striscia "Comprati spesso": gli acquisti stanno nella linguetta 🕘 a destra.
+      const sbox=node.querySelector("#listSuggest"); sbox.hidden=true; sbox.innerHTML="";
+      const tb=node.querySelector("#listTrashBtn"), tn=(l.trash||[]).length; tb.hidden=!tn; tb.textContent=`🗑 Cestino della lista · ${tn}`;
+      paintSide();
+    }
+    /* Noi Due 1.16.0 — Pannello di aggiunta: bozza con quantità, prezzo, reparto e per chi.
+       Il reparto segue quello che scrivi finché non ne scegli uno tu. */
+    const lc={qty:1,aisle:"",aisleManual:false,forWhom:"both"};
+    const more=node.querySelector("#lcMore"), qtyOut=node.querySelector("#lcQty");
+    const aisleBox=node.querySelector("#lcAisle"), forBox=node.querySelector("#lcFor"), aisleAuto=node.querySelector("#lcAisleAuto");
+    function lcText(){ const t=input.value.trim(), url=extractUrl(t); return url?t.replace(url,"").trim():t; }
+    function lcPaint(){
+      const typed=input.value.trim();
+      const dirty=!!typed||lc.qty>1||!!priceInput.value.trim()||lc.aisleManual||lc.forWhom!=="both";
+      more.hidden=!dirty;
+      node.querySelector("#listComposer").classList.toggle("open",dirty);
+      if(!dirty) return;
+      const parsed=parseQty(lcText());
+      if(!lc.aisleManual) lc.aisle=parsed.text?guessAisle(parsed.text):"altro";
+      qtyOut.textContent=String(lc.qty>1?lc.qty:parsed.qty);
+      aisleAuto.hidden=lc.aisleManual||!parsed.text;
+      const keys=aisleKeys();
+      aisleBox.innerHTML=keys.map(k=>{ const a=aisleInfo(k); return `<button type="button" class="lc-chip${lc.aisle===k?" on":""}" data-lc-aisle="${k}" aria-pressed="${lc.aisle===k}"><span aria-hidden="true">${a.emoji}</span>${escapeHtml(a.name)}</button>`; }).join("");
+      aisleBox.querySelectorAll("[data-lc-aisle]").forEach(b=>b.addEventListener("click",()=>{ lc.aisle=b.dataset.lcAisle; lc.aisleManual=true; lcPaint(); }));
+      const on=aisleBox.querySelector(".on"); if(on&&!lc.aisleManual) aisleBox.scrollLeft=Math.max(0,on.offsetLeft-aisleBox.clientWidth/2+on.offsetWidth/2);
+      forBox.innerHTML=[["both","Tutti e due",""],["a",personName("a"),personColor("a")],["b",personName("b"),personColor("b")]].map(([k,label,c])=>`<button type="button" class="lc-seg-btn${lc.forWhom===k?" on":""}" data-lc-for="${k}" aria-pressed="${lc.forWhom===k}">${c?`<i style="background:${safeColor(c)}" aria-hidden="true"></i>${k===lc.forWhom?"Solo ":""}`:""}${escapeHtml(label)}</button>`).join("");
+      forBox.querySelectorAll("[data-lc-for]").forEach(b=>b.addEventListener("click",()=>{ lc.forWhom=b.dataset.lcFor; lcPaint(); }));
+      const n=Number(qtyOut.textContent)||1;
+      node.querySelector("#listAddBtn").textContent=typed?`＋ Aggiungi${n>1?` ${n}×`:""} alla lista`:"Scrivi cosa aggiungere";
+      node.querySelector("#listAddBtn").disabled=!typed;
+    }
+    function lcStep(d){ const base=lc.qty>1?lc.qty:parseQty(lcText()).qty; lc.qty=Math.min(99,Math.max(1,base+d)); lcPaint(); }
+    node.querySelector("#lcQtyMinus").addEventListener("click",()=>lcStep(-1));
+    node.querySelector("#lcQtyPlus").addEventListener("click",()=>lcStep(1));
+    input.addEventListener("input",lcPaint); priceInput.addEventListener("input",lcPaint);
+    function add(){
+      const text=input.value.trim();
+      if(!text){ input.focus(); return; }
+      const price=parseAmount(priceInput.value);
+      const url=extractUrl(text);
+      const label=url?(text.replace(url,"").trim()||"Carico il prodotto dal link…"):text;
+      const extra={price:price>0?Math.round(price*100)/100:null,url:url||"",forWhom:lc.forWhom};
+      if(lc.aisleManual||(!url&&lc.aisle)) extra.aisle=lc.aisleManual?lc.aisle:guessAisle(parseQty(label).text);
+      const it=newListItem(label,extra);
+      if(lc.qty>1) it.qty=lc.qty;
+      list().items.push(it);
+      input.value=""; priceInput.value="";
+      Object.assign(lc,{qty:1,aisle:"",aisleManual:false,forWhom:"both"});
+      save(); lcPaint(); input.focus();
+      showToast(`Aggiunto: ${it.qty>1?it.qty+"× ":""}${it.text}`);
+      if(url) enrichListItem(listId,it.id,url);
+    }
+    lcPaint();
+    /* ---- v1.17.0 — Cassetto laterale "Spesso / Preferiti" (linguette sul bordo destro, come in RecompApp).
+       Tocca un prodotto per aggiungerlo, oppure trascinalo verso sinistra e lascialo sulla lista. ---- */
+    function quickAdd(text,{aisle="",qty=1}={}){
+      const l=list(); if(!l) return false;
+      const k=historyKey(text), there=l.items.find(i=>historyKey(i.text)===k);
+      if(there&&!there.done){ showToast(`“${there.text}” è già in lista`); return false; }
+      if(there&&there.done){ there.done=false; unmarkBought(l,there); lastAddedId=there.id; save(); showToast(`↩︎ “${there.text}” di nuovo da comprare`); return true; }
+      const it=newListItem(text,{aisle:aisle||guessAisle(text)}); if(qty>1) it.qty=qty;
+      l.items.push(it); lastAddedId=it.id; save();
+      if(navigator.vibrate) navigator.vibrate(10);
+      showToast(`＋ ${it.qty>1?it.qty+"× ":""}${it.text}`);
+      return true;
+    }
+    const side=document.createElement("div"); side.className="ls-tabs"; side.setAttribute("aria-label","Aggiunta rapida");
+    side.innerHTML=`<button type="button" class="ls-tab acq" data-ls-tab="acq" aria-label="Acquisti nel tempo"><span class="ls-ic" aria-hidden="true">🕘</span><i class="ls-badge" hidden></i></button><button type="button" class="ls-tab fav" data-ls-tab="fav" aria-label="Preferiti"><span class="ls-ic" aria-hidden="true">★</span></button>`;
+    const scrim=document.createElement("div"); scrim.className="ls-scrim"; scrim.hidden=true;
+    const drawer=document.createElement("aside"); drawer.className="ls-drawer"; drawer.setAttribute("aria-label","Aggiunta rapida"); drawer.hidden=true;
+    drawer.innerHTML=`<div class="ls-dr-head"><div class="ls-seg" role="tablist"><button type="button" data-dr-tab="acq">🕘 Acquisti</button><button type="button" data-dr-tab="fav">★ Preferiti</button></div><button type="button" class="ls-dr-close" aria-label="Chiudi">✕</button></div><p class="ls-dr-hint">Tocca per rimetterlo in lista, oppure trascinalo ← sulla lista</p><div class="ls-dr-list"></div><div class="ls-dr-foot"></div>`;
+    document.body.append(scrim,drawer,side);
+    /* v1.29.0 — Le linguette coprivano le schede dei prodotti: dopo 5 secondi fermi si
+       nascondono fuori dal bordo; appena scorri su o giù (o tocchi la lista) ricompaiono. */
+    let lsAwayTimer=null, lsLastY=null;
+    const lsShow=()=>{
+      side.classList.remove("ls-away");
+      clearTimeout(lsAwayTimer);
+      lsAwayTimer=setTimeout(()=>{ if(drawer.hidden && node.isConnected) side.classList.add("ls-away"); },5000);
+    };
+    lsShow();
+    node.addEventListener("scroll",lsShow,{passive:true});
+    node.addEventListener("touchstart",e=>{ lsLastY=e.touches[0]?.clientY??null; },{passive:true});
+    node.addEventListener("touchmove",e=>{ const y=e.touches[0]?.clientY; if(lsLastY!=null && y!=null && Math.abs(y-lsLastY)>8){ lsLastY=y; lsShow(); } },{passive:true});
+    let drTab="acq";
+    function paintSide(){
+      const l=list(); if(!l) return;
+      const due=smartSuggestions(l).filter(x=>x.isDue).length, b=side.querySelector(".ls-badge");
+      b.hidden=!due; b.textContent=String(due);
+      if(!drawer.hidden) paintDrawer();
+    }
+    function drawerItems(){
+      const l=list(); if(!l) return [];
+      const inList=new Set(l.items.filter(i=>!i.done).map(i=>historyKey(i.text)));
+      if(drTab==="fav") return (state.favorites||[]).slice().sort((a,b)=>a.text.localeCompare(b.text,"it")).map(f=>{ const h=l.history&&l.history[historyKey(f.text)]; const st=h?purchaseStats(h):null;
+        return {text:f.text,aisle:f.aisle||guessAisle(f.text),qty:h?.qty||1,meta:h?suggestionMeta({...h,...st,isDue:st.ratio!=null&&st.ratio>=0.85&&st.since>0}):"Preferito",inList:inList.has(historyKey(f.text)),fav:true}; });
+      // Acquisti nel tempo: solo ciò che avete davvero preso (tolto dal carrello = non conta), dal più recente.
+      const out=[];
+      const due=smartSuggestions(l).filter(x=>x.isDue);
+      if(due.length){ out.push({head:`⏰ Da ricomprare · ${due.length}`}); due.forEach(x=>out.push({text:x.text,aisle:x.aisle||guessAisle(x.text),qty:x.qty||1,meta:suggestionMeta(x),due:true,inList:inList.has(historyKey(x.text))})); }
+      let last="";
+      (l.purchases||[]).slice().reverse().forEach(pu=>{
+        const h=dayHeading(pu.at); if(h!==last){ out.push({head:h}); last=h; }
+        const d=new Date(pu.at);
+        out.push({text:pu.text,aisle:pu.aisle||guessAisle(pu.text),qty:pu.qty||1,label:`${pu.qty>1?pu.qty+"× ":""}${pu.text}`,meta:`${pad2(d.getHours())}:${pad2(d.getMinutes())}${pu.by?` · ${personName(pu.by)}`:""}`,inList:inList.has(historyKey(pu.text))});
+      });
+      return out;
+    }
+    function paintDrawer(){
+      drawer.querySelectorAll("[data-dr-tab]").forEach(b=>{ const on=b.dataset.drTab===drTab; b.classList.toggle("on",on); b.setAttribute("aria-selected",String(on)); });
+      const items=drawerItems(), box=drawer.querySelector(".ls-dr-list"), foot=drawer.querySelector(".ls-dr-foot");
+      box.innerHTML=items.length?items.map((x,i)=>x.head?`<p class="ls-day">${escapeHtml(x.head)}</p>`:`<div class="ls-card${x.due?" due":""}${x.inList?" in":""}" data-i="${i}" role="button" tabindex="0" aria-label="${x.inList?"Già in lista":"Aggiungi"} ${escapeHtml(x.text)}"><span class="ls-em" aria-hidden="true">${emojiIconHtml(aisleInfo(x.aisle).emoji)}</span><span class="ls-tx"><b>${escapeHtml(x.label||x.text)}</b><small>${escapeHtml(x.meta)}</small></span><span class="ls-add" aria-hidden="true">${x.inList?"✓":"＋"}</span></div>`).join("")
+        :`<p class="ls-empty">${drTab==="fav"?"Nessun preferito. Scorri su un prodotto della lista e tocca ☆, oppure aggiungili da “Gestisci preferiti”.":"Ancora nessun acquisto. Tocca un prodotto della lista quando lo prendete: finisce in “Acquistato” e qui, con data e ora."}</p>`;
+      const due=items.filter(x=>!x.head&&x.due&&!x.inList);
+      foot.innerHTML=drTab==="fav"?`<button type="button" class="ls-foot-btn" data-manage>★ Gestisci preferiti</button>`:due.length>1?`<button type="button" class="ls-foot-btn primary" data-add-due>＋ Aggiungi i ${due.length} da ricomprare</button>`:"";
+      foot.querySelector("[data-manage]")?.addEventListener("click",()=>{ closeDrawer(); openFavorites(listId,n=>{ save(); if(n) showToast(`${n} ${n===1?"preferito aggiunto":"preferiti aggiunti"}`); }); });
+      foot.querySelector("[data-add-due]")?.addEventListener("click",()=>{ let n=0; due.forEach(x=>{ if(quickAdd(x.text,{aisle:x.aisle,qty:x.qty})) n++; }); if(n) showToast(`${n} prodotti da ricomprare aggiunti`); });
+      box.querySelectorAll(".ls-card").forEach(card=>bindDrawerCard(card,items[Number(card.dataset.i)]));
+    }
+    function bindDrawerCard(card,x){
+      let sx=0,sy=0,dragging=false,moved=false,ghost=null,pid=null;
+      const zone=()=>node.querySelector("#listTodo");
+      const overList=(cx)=>cx<drawer.getBoundingClientRect().left-8;
+      card.addEventListener("pointerdown",e=>{ if(e.button>0) return; sx=e.clientX; sy=e.clientY; dragging=false; moved=false; pid=e.pointerId; });
+      card.addEventListener("pointermove",e=>{
+        if(pid!==e.pointerId) return;
+        const dx=e.clientX-sx, dy=e.clientY-sy;
+        if(!dragging){
+          if(Math.abs(dx)>8||Math.abs(dy)>8) moved=true;
+          if(x.inList||!(dx<-12&&Math.abs(dx)>Math.abs(dy)*1.2)) return;
+          dragging=true; try{card.setPointerCapture(e.pointerId);}catch(_){}
+          ghost=document.createElement("div"); ghost.className="ls-ghost"; ghost.innerHTML=`<span aria-hidden="true">${escapeHtml(aisleInfo(x.aisle).emoji)}</span><b>${escapeHtml(x.text)}</b><i aria-hidden="true">＋</i>`; document.body.appendChild(ghost);
+          document.body.classList.add("ls-dragging"); card.classList.add("lifted");
+          if(navigator.vibrate) navigator.vibrate(8);
+        }
+        ghost.style.transform=`translate(${Math.max(6,e.clientX-ghost.offsetWidth*0.5)}px,${e.clientY-ghost.offsetHeight-14}px) rotate(-3deg) scale(${overList(e.clientX)?1.04:1})`;
+        document.body.classList.toggle("ls-over",overList(e.clientX));
+      });
+      const end=e=>{
+        if(pid!==e.pointerId) return; pid=null;
+        if(dragging){
+          const ok=overList(e.clientX);
+          document.body.classList.remove("ls-dragging","ls-over"); card.classList.remove("lifted");
+          if(ok){ ghost.classList.add("drop"); setTimeout(()=>ghost.remove(),220); quickAdd(x.text,{aisle:x.aisle,qty:x.qty}); zone()?.classList.add("ls-dropped"); setTimeout(()=>zone()?.classList.remove("ls-dropped"),600); }
+          else { ghost.classList.add("back"); setTimeout(()=>ghost.remove(),200); }
+          dragging=false; return;
+        }
+        if(e.type==="pointerup"&&!moved&&!x.inList){ card.classList.add("tapped"); quickAdd(x.text,{aisle:x.aisle,qty:x.qty}); }
+        else if(e.type==="pointerup"&&!moved&&x.inList) showToast(`“${x.text}” è già in lista`);
+      };
+      card.addEventListener("pointerup",end); card.addEventListener("pointercancel",end);
+      card.addEventListener("keydown",e=>{ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); if(!x.inList) quickAdd(x.text,{aisle:x.aisle,qty:x.qty}); } });
+    }
+    function openDrawer(tab){ drTab=tab||drTab; drawer.hidden=false; scrim.hidden=false; requestAnimationFrame(()=>{ drawer.classList.add("open"); scrim.classList.add("open"); }); paintDrawer(); }
+    function closeDrawer(){ drawer.classList.remove("open"); scrim.classList.remove("open"); setTimeout(()=>{ if(!drawer.classList.contains("open")){ drawer.hidden=true; scrim.hidden=true; } },220); lsShow(); }
+    side.querySelectorAll("[data-ls-tab]").forEach(b=>b.addEventListener("click",()=>{ const t=b.dataset.lsTab; if(!drawer.hidden&&drTab===t) closeDrawer(); else openDrawer(t); }));
+    drawer.querySelectorAll("[data-dr-tab]").forEach(b=>b.addEventListener("click",()=>{ drTab=b.dataset.drTab; paintDrawer(); }));
+    drawer.querySelector(".ls-dr-close").addEventListener("click",closeDrawer);
+    scrim.addEventListener("click",closeDrawer);
+    // Linguette visibili solo quando questa lista è il pannello in primo piano; via tutto quando si chiude.
+    const sideObs=new MutationObserver(()=>{
+      if(!node.isConnected){ sideObs.disconnect(); side.remove(); drawer.remove(); scrim.remove(); document.body.classList.remove("ls-dragging","ls-over"); return; }
+      const sheets=[...document.querySelectorAll("#overlayRoot .sheet")], top=sheets[sheets.length-1]===node;
+      side.hidden=!top; if(!top&&!drawer.hidden) closeDrawer();
+    });
+    sideObs.observe(document.getElementById("overlayRoot"),{childList:true,subtree:true});
+    node.querySelector("#listAddBtn").addEventListener("click",add);
+    function addMany(lines){
+      const l=list(); if(!l||!lines.length) return 0;
+      const existing=new Set(l.items.filter(i=>!i.done).map(i=>normName(parseQty(i.text).text)));
+      let n=0; const toEnrich=[];
+      lines.forEach(riga=>{
+        /* v1.28.0 — una riga può essere testo semplice oppure {nome, quantita, reparto}
+           (dettato o scontrino): nel secondo caso quantità e reparto arrivano già pronti. */
+        const og=typeof riga==="object"&&riga?riga:null;
+        const text=String(og?og.nome:riga||"").trim();
+        if(!text) return;
+        const url=extractUrl(text); const label=url?(text.replace(url,"").trim()||"Carico il prodotto dal link…"):text;
+        const extra={url:url||""};
+        if(og&&og.reparto&&aisleKeys().includes(og.reparto)) extra.aisle=og.reparto;
+        const it=newListItem(label,extra);
+        if(og&&Number(og.quantita)>1) it.qty=Math.min(99,Math.round(Number(og.quantita)));
+        if(og&&Number(og.prezzo)>0) it.price=Math.round(Number(og.prezzo)*100)/100/(it.qty||1);
+        const k=normName(url||it.text); if(!k||existing.has(k)) return; existing.add(k);
+        l.items.push(it); if(url) toEnrich.push([it.id,url]); n++; });
+      if(n) save();
+      toEnrich.forEach(([id,url],i)=>setTimeout(()=>enrichListItem(listId,id,url),i*400));
+      return n;
+    }
+    input.addEventListener("paste",e=>{
+      const txt=(e.clipboardData||window.clipboardData)?.getData("text")||"";
+      const lines=parseShoppingLines(txt);
+      if(lines.length===1 && extractUrl(txt)){ e.preventDefault(); input.value=txt.trim(); add(); return; }
+      if(lines.length>1){ e.preventDefault(); const n=addMany(lines); showToast(n?`${n} articoli aggiunti`:"Erano già tutti nella lista"); input.value=""; }
+    });
+    node.querySelector("#listPasteBtn").addEventListener("click",()=>openListPaste(lines=>{ const n=addMany(lines); showToast(n?`${n} ${n===1?"articolo aggiunto":"articoli aggiunti"}`:"Erano già tutti nella lista"); }));
+    /* v1.28.0 — Scontrino dalla foto: le voci entrano in lista gia spuntate, con il
+       prezzo di riga, e resta pronto il pulsante per registrarle come spesa. */
+    {
+      const rb=node.querySelector("#listReceiptBtn");
+      if(rb && window.SuiteAI && SuiteAI.disponibile()){
+        rb.hidden=false;
+        const cam=document.createElement("input");
+        cam.type="file"; cam.accept="image/*"; cam.capture="environment"; cam.hidden=true;
+        node.appendChild(cam);
+        rb.addEventListener("click",()=>cam.click());
+        cam.addEventListener("change",async()=>{
+          const f=cam.files&&cam.files[0]; cam.value="";
+          if(!f) return;
+          rb.disabled=true; showToast("Sto leggendo lo scontrino…");
+          const d=await SuiteAI.daFoto("scontrino",f,{
+            contesto:{oggi:todayISO()},
+            opzioni:aisleKeys().filter(k=>k!=="altro").map(k=>{const a=aisleInfo(k);return {chiave:a.key,nome:a.name};})
+          });
+          rb.disabled=false;
+          if(!node.isConnected) return;
+          const voci=d&&Array.isArray(d.voci)?d.voci.filter(v=>v&&v.nome):[];
+          if(!voci.length){ showToast("Non sono riuscito a leggere le voci dello scontrino"); return; }
+          const prima=new Set((list()?.items||[]).map(i=>i.id));
+          const n=addMany(voci);
+          /* quello che è appena entrato è già nel carrello: lo scontrino l'hai pagato */
+          const l=list();
+          if(l){ l.items.filter(i=>!prima.has(i.id)).forEach(i=>{ i.done=true; i.boughtAt=new Date().toISOString(); }); save(); }
+          const totN=SuiteAI.numero(d.totale); const tot=totN>0?` · totale ${fmt(totN)}`:"";
+          showToast(n?`${n} ${n===1?"voce letta":"voci lette"}${tot}`:"Erano già tutte in lista");
+        });
+      }
+    }
+    node.querySelector("#listSortBtn").addEventListener("click",()=>{ const l=list(); l.sortMode=l.sortMode==="manual"?"aisle":"manual"; save(); });
+    node.querySelector("#listBaseBtn").addEventListener("click",()=>{ const n=addMany(list().template||[]); showToast(n?`Lista base: ${n} ${n===1?"articolo aggiunto":"articoli aggiunti"}`:"La lista base è già tutta in lista"); });
+    node.querySelector("#listScanBtn").addEventListener("click",()=>openProductScan(item=>{
+      list().items.push({...newListItem(item.text||""),...item,qty:1,aisle:guessAisle(item.text),forWhom:"both"});
+      save(); showToast("Aggiunto alla lista");
+    }));
+    [input,priceInput].forEach(el=>el.addEventListener("keydown",e=>{ if(e.key==="Enter"){ e.preventDefault(); add(); } }));
+    node.querySelector("#listClearDone").addEventListener("click",()=>{ const l=list(), done=l.items.filter(i=>i.done);
+      if(l.restockOnExit){ recordPurchased(l,done); done.forEach(i=>{ i.done=false; i.counted=""; }); save(); showToast("Rimessi tutti da comprare"); return; }
+      recordPurchased(l,done); markDeleted(done.map(i=>i.id)); l.items=l.items.filter(i=>!i.done); save(); showToast("Tolti gli acquistati dalla lista (restano in 🕘 Acquisti)"); });
+    node.querySelector("#listFavBtn").addEventListener("click",()=>openDrawer("fav"));
+    node.querySelector("#listTrashBtn").addEventListener("click",()=>openListTrash(listId,()=>{ if(node.isConnected) paint(); }));
+    // Lista della spesa fissa: uscendo dalla lista i prodotti presi tornano "da comprare".
+    const restockWatch=setInterval(()=>{
+      if(node.isConnected) return;
+      clearInterval(restockWatch);
+      const l=state.lists.find(x=>x.id===listId);
+      if(!l||!l.restockOnExit) return;
+      const done=l.items.filter(i=>i.done); if(!done.length) return;
+      recordPurchased(l,done); done.forEach(i=>{ i.done=false; i.counted=""; });
+      persist(); renderCoupleLists();
+    },400);
+    node.querySelector("#listEditBtn").addEventListener("click",()=>{ close(); openListForm(listId); });
+    node.querySelector("#listRegisterBtn").addEventListener("click",()=>{
+      const l=list(), done=l.items.filter(i=>i.done);
+      if(!done.length) return;
+      // Gli articoli "solo Marco / solo Giulia" vengono registrati a parte, come spesa di quella persona.
+      const shared=done.filter(i=>i.forWhom!=="a"&&i.forWhom!=="b"), personal=done.filter(i=>i.forWhom==="a"||i.forWhom==="b");
+      const sum=arr=>Math.round(arr.reduce((s,i)=>s+(i.price||0)*(i.qty||1),0)*100)/100;
+      const ids=new Set(done.map(i=>i.id));
+      const label=i=>`${i.qty>1?i.qty+"× ":""}${i.text}`;
+      const finish=(payerAcc,date)=>{
+        const cur=state.lists.find(x=>x.id===listId);
+        const missingPrice=[];
+        ["a","b"].forEach(who=>{
+          const its=personal.filter(i=>i.forWhom===who); if(!its.length) return;
+          const amount=sum(its); if(!(amount>0)){ missingPrice.push(personName(who)); return; }
+          const payer=accOwner(payerAcc);
+          const mode=payer===who?"personal":(payer==="joint"?"personal":"other");
+          state.transactions.push({id:uid(),date:date||todayISO(),amount,type:"expense",name:`${l.name} – solo ${personName(who)}`,categoryId:listCategoryFor(l),
+            accountId:payer==="joint"?payerAcc:payerAcc,toAccountId:null,note:its.map(label).join(", ").slice(0,500),split:{mode,pctA:50},groupId:l.groupId,listId:l.id});
+        });
+        if(cur){ recordPurchased(cur,done); if(cur.restockOnExit) cur.items.forEach(i=>{ if(ids.has(i.id)){ i.done=false; i.counted=""; } }); else { markDeleted([...ids]); cur.items=cur.items.filter(i=>!ids.has(i.id)); } }
+        persist(); renderAll();
+        showToast(missingPrice.length?`Registrata. Gli articoli solo di ${missingPrice.join(" e ")} non avevano prezzo: aggiungili a mano`:"Spesa registrata: articoli tolti dalla lista");
+      };
+      close();
+      if(!shared.length){
+        // Solo articoli personali: si chiede solo chi ha pagato tramite il modulo, con importo personale.
+        const who=personal[0].forWhom, amount=sum(personal);
+        openAddTransaction(null,{split:{mode:"personal",pctA:50},name:`${l.name} – solo ${personName(who)}`,amount,categoryId:listCategoryFor(l),groupId:l.groupId,note:personal.map(label).join(", ").slice(0,500),
+          onSaved:t=>{ t.listId=listId; const cur=state.lists.find(x=>x.id===listId); if(cur){ recordPurchased(cur,done); if(cur.restockOnExit) cur.items.forEach(i=>{ if(ids.has(i.id)){ i.done=false; i.counted=""; } }); else { markDeleted([...ids]); cur.items=cur.items.filter(i=>!ids.has(i.id)); } } }});
+        return;
+      }
+      const amount=sum(shared);
+      openAddTransaction(null,{name:l.name,amount,categoryId:listCategoryFor(l),groupId:l.groupId,note:shared.map(label).join(", ").slice(0,500),
+        onSaved:t=>{ t.listId=listId; finish(t.accountId,t.date); }});
+      if(!(amount>0)) setTimeout(()=>showToast(personal.length?"Inserisci l'importo degli articoli condivisi (senza quelli personali)":"Inserisci l'importo dello scontrino"),400);
+    });
+    listDetailRefresh=paint;
+    paint();
   });
 }
-async function deleteLoanPerson(accId,closeSheet){
-  const a=state.accounts.find(x=>x.id===accId); if(!a) return;
-  const recv=!!a.receivable, bal=round2(accountBalance(a.id)), owed=recv?bal:-bal;
-  const show=v=>balancesHidden?"••••":fmt(v);
-  if(Math.abs(bal)<0.005){
-    if(!await askConfirm(`Eliminare ${a.person}? Siete in pari: i movimenti passati restano nello storico.`,{ok:"Elimina",danger:true})) return;
-    archiveLoanAccount(a); balanceCache.clear(); persist(); renderAll(); closeSheet&&closeSheet();
-    showToast(`${a.person} eliminato`); return;
+/* Noi Due 1.5.2 — Dati del prodotto da un link (nome, foto, prezzo se il sito lo indica).
+   Il browser non può leggere direttamente le pagine di altri siti, quindi passa da Microlink (gratuito, senza chiave). */
+const URL_RE=/https?:\/\/[^\s<>"]+/i;
+function extractUrl(text){ const m=String(text||"").match(URL_RE); return m?m[0].replace(/[),.;!?]+$/,""):""; }
+/* La lettura vera e propria del link sta in suite.js (SuiteLink), condivisa con Style Wishlist:
+   una sola copia da correggere se un giorno cambia il servizio. */
+function cleanProductTitle(title,publisher){ return window.SuiteLink ? SuiteLink.cleanTitle(title,publisher) : String(title||"").slice(0,120); }
+async function fetchLinkPreview(url){ return window.SuiteLink ? SuiteLink.preview(url) : null; }
+/* Arricchisce un articolo già in lista con i dati presi dal link. */
+async function enrichListItem(listId,itemId,url){
+  const p=await fetchLinkPreview(url);
+  const l=state.lists.find(x=>x.id===listId), it=l?.items.find(x=>x.id===itemId);
+  if(!it) return;
+  if(p){
+    if(p.title && (!it.text || it.text===url || it.text.startsWith("Carico"))){ it.text=p.title; if(!it.aisle||it.aisle==="altro") it.aisle=guessAisle(p.title); }
+    if(p.image && !it.photo) it.image=p.image;
+    if(p.price && !it.price) it.price=p.price;
+    it.url=p.url||url;
+    { const ls=itemLinks(it); if(!ls.some(k=>k.url===it.url)) ls.push({id:uid(),url:it.url,title:p.title||"",price:p.price||null,publisher:p.publisher||siteOf(it.url),image:p.image||"",at:new Date().toISOString()}); }
+    showToast(p.price?"Dati del prodotto presi dal sito, prezzo compreso":"Dati del prodotto presi dal sito");
+  } else {
+    if(it.text.startsWith("Carico")) it.text=(()=>{ try{ return new URL(url).hostname.replace(/^www\./,""); }catch(e){ return "Prodotto dal link"; } })();
+    it.url=url;
+    { const ls=itemLinks(it); if(!ls.some(k=>k.url===url)) ls.push({id:uid(),url,title:"",price:null,publisher:siteOf(url),image:"",at:new Date().toISOString()}); }
+    showToast("Non riesco a leggere il sito: ho salvato il link, scrivi tu il nome");
   }
-  const opts=[];
-  if(owed>0) opts.push({value:"settle",icon:"💶",label:recv?`Mi ha restituito ${show(owed)}`:`Gli ho dato ${show(owed)}`,hint:recv?"Registra l'entrata sul conto che scegli, poi elimina":"Registra l'uscita dal conto che scegli, poi elimina"});
-  opts.push({value:"writeoff",icon:"✅",label:recv?(owed>0?`Rinuncio a ${show(owed)}`:`Tengo i ${show(-owed)} in più`):(owed>0?`Me li abbuona (${show(owed)})`:`Rinuncio ai ${show(-owed)} in più`),hint:"Azzera il saldo senza muovere soldi dai conti, poi elimina"});
-  const who=recv?(owed>0?`${a.person} ti deve ${show(owed)}`:`Hai ricevuto ${show(-owed)} in più da ${a.person}`):(owed>0?`Devi ${show(owed)} a ${a.person}`:`${a.person} ti deve restituire ${show(-owed)}`);
-  const choice=await chooseAction(`Eliminare ${a.person}?`,`${who}. Come vuoi chiudere il saldo prima di eliminarlo?`,opts);
-  if(!choice) return;
-  if(choice==="settle"){
-    closeSheet&&closeSheet();
-    setTimeout(()=>openLoanForm(null,{mode:recv?"repayIn":"repayOut",person:a.person,archiveAfter:a.id}),250);
-    return;
+  persist(); renderCoupleLists(); if(listDetailRefresh) listDetailRefresh();
+}
+function parseShoppingLines(text){
+  let parts=String(text||"").replace(/\r/g,"").split("\n");
+  if(parts.filter(p=>p.trim()).length<=1) parts=String(text||"").split(/[,;]/);
+  return parts.map(p=>p.replace(/^\s*(?:[-*•·◦▪▫–—]|\d+[.)]|\[[ xX✓]?\]|☐|☑|✅)\s*/,"").replace(/\s+/g," ").trim()).filter(Boolean).slice(0,200);
+}
+function openListPaste(onAdd){
+  openSheet("tpl-list-paste",(node,close)=>{
+    const area=node.querySelector("#pasteText"), hint=node.querySelector("#pasteHint"), btn=node.querySelector("#pasteAddBtn");
+    const paint=()=>{ const n=parseShoppingLines(area.value).length; btn.textContent=n?`Aggiungi ${n}`:"Aggiungi"; hint.textContent=n?`${n} ${n===1?"articolo":"articoli"} pronti. Ogni riga diventa un articolo.`:"Scrivi o incolla: ogni riga diventa un articolo. Puoi separare anche con la virgola."; };
+    area.addEventListener("input",paint);
+    /* v1.28.0 — "Leggi la frase": "servono latte, due pacchi di pasta e il detersivo"
+       diventa un elenco con quantità e reparto già messi. Il pulsante normale
+       (una riga = un articolo) resta: questo è in più, non al posto suo. */
+    if(window.SuiteAI && SuiteAI.disponibile()){
+      const aiBtn=document.createElement("button");
+      aiBtn.type="button"; aiBtn.className="pill-btn ai-dictate"; aiBtn.textContent="✨ Leggi la frase";
+      aiBtn.addEventListener("click",async()=>{
+        const t=area.value.trim();
+        if(!t){ area.focus(); return; }
+        aiBtn.disabled=true; hint.textContent="Sto leggendo la frase…";
+        const d=await SuiteAI.ask("lista",t,{opzioni:aisleKeys().filter(k=>k!=="altro").map(k=>{const a=aisleInfo(k);return {chiave:a.key,nome:a.name};})});
+        aiBtn.disabled=false;
+        if(!node.isConnected) return;
+        const arr=d&&Array.isArray(d.articoli)?d.articoli.filter(x=>x&&x.nome):[];
+        if(!arr.length){ hint.textContent="Non ho capito: scrivi un articolo per riga e usa “Aggiungi”."; return; }
+        onAdd(arr); close();
+      });
+      hint.after(aiBtn);
+    }
+    // Prova a leggere subito gli appunti (l'iPhone può chiedere conferma con "Incolla").
+    if(navigator.clipboard?.readText){ navigator.clipboard.readText().then(t=>{ if(t && !area.value){ area.value=t; paint(); } }).catch(()=>{}); }
+    setTimeout(()=>area.focus(),300);
+    btn.addEventListener("click",()=>{
+      const lines=parseShoppingLines(area.value);
+      if(!lines.length){ showToast("Scrivi almeno una cosa da comprare"); area.focus(); return; }
+      onAdd(lines); close();
+    });
+    paint();
+  });
+}
+function openListForm(listId=null){
+  const l=listId?state.lists.find(x=>x.id===listId):null;
+  openSheet("tpl-list-form",(node,close)=>{
+    const draft={name:l?.name||"",emoji:l?.emoji||"🛒",groupId:l?.groupId||defaultGroupId()};
+    node.querySelector("#listFormTitle").textContent=l?"Modifica lista":"Nuova lista";
+    const nameInput=node.querySelector("#listNameInput"); nameInput.value=draft.name;
+    buildEmojiField(node.querySelector("#listEmojiRow"),draft.emoji,v=>{draft.emoji=v;});
+    const chips=node.querySelector("#listGroupChips");
+    const paintGroups=()=>{
+      chips.innerHTML=state.groups.map(g=>`<button type="button" class="chip${g.id===draft.groupId?" active":""}" data-group="${escapeHtml(g.id)}"><span class="em">${escapeHtml(g.emoji)}</span>${escapeHtml(g.name)}</button>`).join("");
+      chips.querySelectorAll("[data-group]").forEach(b=>b.addEventListener("click",()=>{draft.groupId=b.dataset.group;paintGroups();}));
+    };
+    paintGroups();
+    draft.restock=l?!!l.restockOnExit:false;
+    { const sw=node.querySelector("#listRestockSwitch"); const p=()=>{ sw.classList.toggle("on",draft.restock); sw.setAttribute("aria-pressed",String(draft.restock)); }; sw.addEventListener("click",()=>{ draft.restock=!draft.restock; p(); }); p(); }
+    if(l){
+      const row=node.querySelector("#listBaseRow"), info=node.querySelector("#listBaseInfo"), clr=node.querySelector("#listBaseClear");
+      row.hidden=false;
+      const paintBase=()=>{ const n=(l.template||[]).length; info.textContent=n?`Contiene ${n} ${n===1?"articolo":"articoli"}: nella lista tocca “⭐ Lista base” per rimettere quelli che mancano.`:"Salva gli articoli che compri sempre (es. la spesa della settimana) per rimetterli in lista con un tocco."; clr.hidden=!n; };
+      node.querySelector("#listBaseSave").addEventListener("click",()=>{ const t=[...new Set(l.items.map(i=>`${i.qty>1?i.qty+" ":""}${i.text}`))]; if(!t.length){ showToast("La lista è vuota: aggiungi prima gli articoli"); return; } l.template=t; persist(); paintBase(); showToast("Lista base salvata"); });
+      clr.addEventListener("click",()=>{ l.template=[]; persist(); paintBase(); });
+      paintBase();
+    }
+    const del=node.querySelector("#deleteListBtn");
+    if(l){
+      del.hidden=false;
+      del.addEventListener("click",async()=>{
+        if(!await askConfirm(`Eliminare la lista "${l.name}"${l.items.length?` con ${l.items.length} articoli`:""}?`,{ok:"Elimina",danger:true})) return;
+        markDeleted(l.id, l.items.map(i=>i.id));
+        state.lists=state.lists.filter(x=>x.id!==l.id);
+        persist(); renderAll(); close(); showToast("Lista eliminata");
+      });
+    }
+    node.querySelector("#saveListBtn").addEventListener("click",()=>{
+      const name=nameInput.value.trim();
+      if(!name){ showToast("Inserisci il nome della lista"); nameInput.focus(); return; }
+      if(l){ Object.assign(l,{name,emoji:draft.emoji,groupId:draft.groupId,restockOnExit:draft.restock}); persist(); renderAll(); close(); showToast("Lista aggiornata"); }
+      else{ const nl={id:uid(),name,emoji:draft.emoji,groupId:draft.groupId,items:[],restockOnExit:draft.restock,sortMode:"aisle",template:[],history:{}}; state.lists.push(nl); persist(); renderAll(); close(); openListDetail(nl.id); }
+    });
+  });
+}
+function renderCoupleGroups(){
+  const box=document.getElementById("coupleGroups");
+  if(!box) return;
+  const month=new Date();
+  box.innerHTML="";
+  state.groups.forEach(g=>{
+    const bal=groupBalance(g.id);
+    const spent=coupleMonthStats(null,null,g.id);
+    const card=document.createElement("button");
+    card.type="button"; card.className="group-card";
+    const debtor=bal>0?"b":"a";
+    const who=Math.abs(bal)<0.005?"In pari":`${personName(debtor)} deve a ${personName(otherPerson(debtor))}`;
+    card.innerHTML=`<span class="mv-ic">${emojiIconHtml(g.emoji)}</span>
+      <span class="group-card-text"><strong>${escapeHtml(g.name)}</strong><span>${escapeHtml(who)}</span><span>${balancesHidden?"••••":fmt(spent.paid.a+spent.paid.b+spent.paid.joint)} spesi in tutto</span></span>
+      <span class="group-card-amt" style="color:${Math.abs(bal)<0.005?"var(--ink-soft)":personColor(otherPerson(debtor))}">${Math.abs(bal)<0.005?fmt(0):(balancesHidden?"••••":fmt(Math.abs(bal)))}</span>
+      <span class="chev" aria-hidden="true">›</span>`;
+    card.addEventListener("click",()=>openGroupDetail(g.id));
+    box.appendChild(card);
+  });
+}
+/* ---------------- Noi Due 1.6.0 — Spese fisse (le ricorrenti di Bilancio, per la coppia) ---------------- */
+const FREQ_PER_MONTH={weekly:52/12,monthly:1,bimonthly:1/2,quarterly:1/3,semiannual:1/6,yearly:1/12};
+function fixedNextDate(r){
+  const today=todayISO();
+  let d=r.nextDate||r.startDate||today;
+  return d;
+}
+function renderFixedExpenses(){
+  const box=document.getElementById("fixedList");
+  if(!box) return;
+  const list=state.recurring.filter(r=>r.type!=="income").slice().sort((a,b)=>(a.active===false)-(b.active===false)||fixedNextDate(a).localeCompare(fixedNextDate(b)));
+  box.innerHTML="";
+  document.getElementById("fixedEmpty").hidden=list.length>0;
+  const monthly=list.filter(r=>r.active!==false).reduce((s,r)=>s+r.amount*(FREQ_PER_MONTH[r.freq]||1),0);
+  const tot=document.getElementById("fixedTotal");
+  tot.textContent=list.length?`Circa ${balancesHidden?"••••":fmt(monthly)} al mese in tutto`:"";
+  tot.hidden=!list.length;
+  const cats=categoriesById(), mesiBrevi=["gen","feb","mar","apr","mag","giu","lug","ago","set","ott","nov","dic"];
+  list.forEach(r=>{
+    const c=cats[r.categoryId]||{emoji:"🔁"};
+    const owner=accOwner(r.accountId);
+    const next=fixedNextDate(r), [y,m,d]=next.split("-").map(Number);
+    const g=groupsById()[r.groupId];
+    const split=splitLabel({...r,type:"expense"});
+    const card=document.createElement("button");
+    card.type="button"; card.className="group-card fixed-card"+(r.active===false?" paused":"");
+    card.innerHTML=`<span class="mv-ic">${emojiIconHtml(c.emoji||"🔁")}</span>
+      <span class="group-card-text"><strong>${escapeHtml(r.name||c.name||"Spesa fissa")}</strong>
+        <span>${r.active===false?"In pausa":`${FREQ_LABEL[r.freq]||"Ogni mese"} · prossima ${d} ${mesiBrevi[m-1]}`}</span>
+        <span>Paga ${escapeHtml(owner==="joint"?"la cassa comune":personName(owner))}${g?` · ${escapeHtml(g.emoji)} ${escapeHtml(split)}`:""}</span></span>
+      <span class="group-card-amt">${balancesHidden?"••••":fmt(r.amount)}</span><span class="chev" aria-hidden="true">›</span>`;
+    card.addEventListener("click",()=>openRecurringForm(r.id));
+    box.appendChild(card);
+  });
+}
+document.getElementById("addFixedBtn")?.addEventListener("click",()=>openRecurringForm());
+var groupDetailRefresh=null;
+function openGroupDetail(gid){
+  openSheet("tpl-group-detail",(node,close)=>{
+    function paint(){
+      if(!node.isConnected){ groupDetailRefresh=null; return; }
+      const g=groupsById()[gid];
+      if(!g){ groupDetailRefresh=null; close(); return; }
+      const bal=groupBalance(gid);
+      node.querySelector("#groupDetailTitle").textContent=`${g.emoji} ${g.name}`;
+      const hero=node.querySelector("#groupDetailHero");
+      hero.style.setProperty("--ca",personColor("a")); hero.style.setProperty("--cb",personColor("b")); hero.style.setProperty("--gc",safeColor(g.color));
+      const amt=node.querySelector("#groupDetailAmount");
+      if(Math.abs(bal)<0.005){ node.querySelector("#groupDetailWho").textContent="Siete in pari"; amt.textContent=balancesHidden?"••••":fmt(0); amt.style.color="var(--ink)"; }
+      else{ const d=bal>0?"b":"a"; node.querySelector("#groupDetailWho").textContent=`${personName(d)} deve a ${personName(otherPerson(d))}`; amt.textContent=balancesHidden?"••••":fmt(Math.abs(bal)); amt.style.color=personColor(otherPerson(d)); }
+      node.querySelector("#groupDetailNameA").textContent=personName("a");
+      node.querySelector("#groupDetailNameB").textContent=personName("b");
+      const spentAll=state.transactions.filter(t=>t.type==="expense"&&!t.isBalanceAdjustment&&groupOf(t)===gid).reduce((s,t)=>s+t.amount,0);
+      const shift=Math.max(-40,Math.min(40,bal/Math.max(spentAll*0.15,50)*40));
+      node.querySelector("#groupDetailKnot").style.left=(50-shift)+"%";
+      const st=coupleMonthStats(null,null,gid), show=v=>balancesHidden?"••••":fmt(v);
+      node.querySelector("#gdPaidALabel").textContent=`Ha pagato ${personName("a")}`;
+      node.querySelector("#gdPaidBLabel").textContent=`Ha pagato ${personName("b")}`;
+      node.querySelector("#gdPaidA").textContent=show(st.paid.a);
+      node.querySelector("#gdPaidB").textContent=show(st.paid.b);
+      node.querySelector("#gdPaidJoint").textContent=show(st.paid.joint);
+      node.querySelector("#gdMonth").textContent="Totale delle spese di questo gruppo";
+      const list=state.transactions.filter(t=>!t.isBalanceAdjustment && (t.type!=="transfer" ? groupOf(t)===gid : (isCoupleSettle(t) && Math.abs(txDebtIn(t,gid))>=0.005)))
+        .sort((a,b)=>b.date.localeCompare(a.date)||String(b.id).localeCompare(String(a.id))).slice(0,40);
+      renderTxRows(node.querySelector("#groupDetailTx"),list);
+      node.querySelector("#groupDetailEmpty").hidden=list.length>0;
+    }
+    groupDetailRefresh=paint;
+    node.querySelector("#groupSettleBtn").addEventListener("click",()=>{close();openSettleForm(gid);});
+    node.querySelector("#groupEditBtn").addEventListener("click",()=>{close();openGroupForm(gid);});
+    paint();
+  });
+}
+function openGroupForm(gid=null){
+  const g=gid?state.groups.find(x=>x.id===gid):null;
+  openSheet("tpl-group-form",(node,close)=>{
+    const draft={name:g?.name||"",emoji:g?.emoji||"👥",color:g?.color||PALETTE[(state.groups.length*3)%PALETTE.length],defaultSplit:g?.defaultSplit||"half"};
+    node.querySelector("#groupFormTitle").textContent=g?"Modifica gruppo":"Nuovo gruppo";
+    const nameInput=node.querySelector("#groupNameInput"); nameInput.value=draft.name;
+    buildEmojiField(node.querySelector("#groupEmojiRow"),draft.emoji,v=>{draft.emoji=v;});
+    const colorRow=node.querySelector("#groupColorRow");
+    const paintColors=()=>{ colorRow.innerHTML=""; PALETTE.forEach(c=>{ const sw=document.createElement("button"); sw.type="button"; sw.className="color-swatch"+(c.toLowerCase()===draft.color.toLowerCase()?" active":""); sw.style.background=c; sw.setAttribute("aria-label","Colore "+c); sw.addEventListener("click",()=>{draft.color=c;paintColors();}); colorRow.appendChild(sw); }); };
+    paintColors();
+    const toggle=node.querySelector("#groupDefaultSplit");
+    const paintSplit=()=>toggle.querySelectorAll(".type-opt").forEach(b=>b.classList.toggle("active",b.dataset.split===draft.defaultSplit));
+    toggle.querySelectorAll(".type-opt").forEach(b=>b.addEventListener("click",()=>{draft.defaultSplit=b.dataset.split;paintSplit();}));
+    paintSplit();
+    const del=node.querySelector("#deleteGroupBtn");
+    if(g && state.groups.length>1){
+      del.hidden=false;
+      del.addEventListener("click",async()=>{
+        const target=state.groups.find(x=>x.id!==g.id);
+        const used=state.transactions.some(t=>groupOf(t)===g.id||t.settleAlloc?.[g.id]!=null)||state.recurring.some(r=>r.groupId===g.id)||state.planned.some(p=>p.groupId===g.id);
+        if(!await askConfirm(used?`Eliminare il gruppo "${g.name}"? I suoi movimenti passano a "${target.name}".`:`Eliminare il gruppo "${g.name}"?`,{ok:"Elimina",danger:true})) return;
+        [...state.transactions,...state.recurring,...state.planned,...state.lists].forEach(t=>{ if(t.groupId===g.id) t.groupId=target.id; });
+        state.transactions.forEach(t=>{ if(t.settleAlloc&&t.settleAlloc[g.id]!=null){ t.settleAlloc[target.id]=Math.round(((t.settleAlloc[target.id]||0)+t.settleAlloc[g.id])*100)/100; delete t.settleAlloc[g.id]; } });
+        markDeleted(g.id);
+        state.groups=state.groups.filter(x=>x.id!==g.id);
+        if(state.couple.lastGroupId===g.id) state.couple.lastGroupId=null;
+        persist(); renderAll(); close(); showToast("Gruppo eliminato");
+      });
+    }
+    node.querySelector("#saveGroupBtn").addEventListener("click",()=>{
+      const name=nameInput.value.trim();
+      if(!name){showToast("Inserisci il nome del gruppo");nameInput.focus();return;}
+      if(g) Object.assign(g,{name,emoji:draft.emoji,color:draft.color,defaultSplit:draft.defaultSplit});
+      else state.groups.push({id:uid(),name,emoji:draft.emoji,color:draft.color,defaultSplit:draft.defaultSplit});
+      persist(); renderAll(); close(); showToast(g?"Gruppo aggiornato":"Gruppo creato");
+    });
+  });
+}
+/* Rimborso: per un solo gruppo oppure per il totale. Il rimborso del totale viene ripartito
+   tra i gruppi (settleAlloc) in modo che, se salda tutto, ogni gruppo torni in pari. */
+function settleScopeBalance(scope){ return scope==="all" ? coupleBalance() : groupBalance(scope); }
+function allocateTotalSettle(effect){
+  const total=coupleBalance(), alloc={};
+  if(Math.abs(total)<0.005) return null;
+  const k=effect/total; // negativo: ogni gruppo si riduce nella stessa proporzione
+  state.groups.forEach(g=>{ const v=Math.round(groupBalance(g.id)*k*100)/100; if(Math.abs(v)>=0.005) alloc[g.id]=v; });
+  const t={settleAlloc:alloc}; const keys=Object.keys(alloc);
+  if(!keys.length) return null;
+  const diff=Math.round((effect-keys.reduce((s,x)=>s+alloc[x],0))*100)/100;
+  if(diff){ const big=keys.reduce((m,x)=>Math.abs(alloc[x])>Math.abs(alloc[m])?x:m,keys[0]); alloc[big]=Math.round((alloc[big]+diff)*100)/100; }
+  return t.settleAlloc;
+}
+function openSettleForm(scope="all"){
+  if(scope!=="all" && !state.groups.some(g=>g.id===scope)) scope="all";
+  let bal=settleScopeBalance(scope);
+  let from=bal<0?"a":"b";
+  let fromAcc=null, toAcc=null;
+  openSheet("tpl-settle",(node,close)=>{
+    const amountInput=node.querySelector("#settleAmountInput"), dateInput=node.querySelector("#settleDateInput"), noteInput=node.querySelector("#settleNoteInput");
+    const dir=node.querySelector("#settleDirToggle"), hint=node.querySelector("#settleHint"), scopeChips=node.querySelector("#settleScopeChips");
+    const fromChips=node.querySelector("#settleFromChips"), toChips=node.querySelector("#settleToChips");
+    dateInput.value=todayISO(); dateInput.max=todayISO();
+    const setAmount=()=>{ amountInput.value=Math.abs(bal)>=0.005?String(Math.abs(bal)).replace(".",","):""; amountInput.dispatchEvent(new Event("input")); };
+    autoGrowAmountInput(amountInput); setAmount();
+    function chipsFor(container,owner,getSel,setSel){
+      container.innerHTML="";
+      const list=state.accounts.filter(a=>a.owner===owner);
+      if(!list.length){ container.innerHTML=`<p class="field-hint">Nessun conto di ${escapeHtml(personName(owner))}: aggiungilo in Conti.</p>`; setSel(null); return; }
+      if(!list.some(a=>a.id===getSel())) setSel(list[0].id);
+      list.forEach(a=>{
+        const chip=document.createElement("button"); chip.type="button";
+        chip.className="chip"+(getSel()===a.id?" active":"");
+        chip.innerHTML=`<span class="em">●</span>${escapeHtml(a.name)}`; chip.querySelector(".em").style.color=safeColor(a.color);
+        chip.addEventListener("click",()=>{setSel(a.id);render();});
+        container.appendChild(chip);
+      });
+    }
+    function scopeLabel(k){
+      const v=settleScopeBalance(k);
+      const name=k==="all"?"Tutti i gruppi":groupLabel(k);
+      return `${escapeHtml(name)}<span class="scope-amt">${Math.abs(v)<0.005?"in pari":fmt(Math.abs(v))}</span>`;
+    }
+    function render(){
+      scopeChips.innerHTML=["all",...state.groups.map(g=>g.id)].map(k=>`<button type="button" class="chip${k===scope?" active":""}" data-scope="${escapeHtml(k)}">${scopeLabel(k)}</button>`).join("");
+      scopeChips.querySelectorAll("[data-scope]").forEach(b=>b.addEventListener("click",()=>{scope=b.dataset.scope;bal=settleScopeBalance(scope);if(Math.abs(bal)>=0.005) from=bal<0?"a":"b";setAmount();render();}));
+      // Per il totale la direzione è quella del debito complessivo.
+      const forced=scope==="all" && Math.abs(bal)>=0.005;
+      dir.hidden=forced;
+      if(forced) from=bal<0?"a":"b";
+      const to=otherPerson(from);
+      dir.querySelectorAll(".type-opt").forEach(b=>{const k=b.dataset.dir;b.textContent=`${personName(k)} → ${personName(otherPerson(k))}`;b.classList.toggle("active",k===from);});
+      node.querySelector("#settleFromLabel").textContent=`Dal conto di ${personName(from)}`;
+      node.querySelector("#settleToLabel").textContent=`Al conto di ${personName(to)}`;
+      chipsFor(fromChips,from,()=>fromAcc,v=>{fromAcc=v;});
+      chipsFor(toChips,to,()=>toAcc,v=>{toAcc=v;});
+      const amt=parseAmount(amountInput.value);
+      if(scope==="all" && Math.abs(bal)<0.005){ hint.textContent="Il totale è in pari: se un gruppo è aperto, saldalo scegliendolo qui sopra."; return; }
+      const after=Math.round((bal+(from==="a"?amt:-amt))*100)/100;
+      const where=scope==="all"?"in totale":`in ${groupLabel(scope)}`;
+      hint.textContent=amt>0?`Dopo il rimborso, ${where}: ${Math.abs(after)<0.005?"siete in pari":debtSentence(after)}.`:`${debtSentence(bal)} ${where}.`;
+    }
+    dir.querySelectorAll(".type-opt").forEach(b=>b.addEventListener("click",()=>{from=b.dataset.dir;fromAcc=null;toAcc=null;render();}));
+    amountInput.addEventListener("input",()=>{ if(scopeChips.childElementCount) render(); });
+    render();
+    node.querySelector("#saveSettleBtn").addEventListener("click",()=>{
+      const amount=parseAmount(amountInput.value);
+      const missing=[]; if(amount<=0) missing.push("importo"); if(!fromAcc) missing.push(`conto di ${personName(from)}`); if(!toAcc) missing.push(`conto di ${personName(otherPerson(from))}`);
+      if(missing.length){showToast("Inserisci: "+missing.join(", "));return;}
+      if(dateInput.value>todayISO()){showToast("Il rimborso non può avere una data futura");return;}
+      const tx={id:uid(),date:dateInput.value||todayISO(),amount,type:"transfer",name:transferName(fromAcc,toAcc),categoryId:null,accountId:fromAcc,toAccountId:toAcc,note:noteInput.value.trim(),settle:true,split:null,groupId:null};
+      if(scope==="all"){
+        const alloc=allocateTotalSettle(txDebt(tx));
+        if(!alloc){showToast("Il totale è in pari: scegli il gruppo da saldare");return;}
+        tx.settleAlloc=alloc;
+      } else tx.groupId=scope;
+      state.transactions.push(tx);
+      persist(); renderAll(); close();
+      showToast("Rimborso registrato");
+    });
+  });
+}
+function openCoupleForm(welcome=false){
+  openSheet("tpl-couple-form",(node,close)=>{
+    if(welcome){
+      node.querySelector(".sheet-head h3").textContent="Benvenuti in Noi Due 👋";
+      const note=document.createElement("p"); note.className="sheet-note nd-welcome";
+      note.textContent="Scrivete i vostri nomi e scegliete un colore: li userò per chi paga, i saldi e il calendario. Potete cambiarli quando volete da Altro › La coppia.";
+      node.querySelector(".sheet-head").after(note);
+    }
+    const draft={a:{...state.couple.a},b:{...state.couple.b},defaultSplit:state.couple.defaultSplit};
+    const nameA=node.querySelector("#coupleNameAInput"), nameB=node.querySelector("#coupleNameBInput");
+    nameA.value=/^Persona 1$/.test(draft.a.name)?"":draft.a.name;
+    nameB.value=/^Persona 2$/.test(draft.b.name)?"":draft.b.name;
+    function colors(rowId,k){
+      const row=node.querySelector(rowId); row.innerHTML="";
+      PALETTE.forEach(color=>{
+        const sw=document.createElement("button"); sw.type="button";
+        sw.className="color-swatch"+(color.toLowerCase()===draft[k].color.toLowerCase()?" active":"");
+        sw.style.background=color; sw.setAttribute("aria-label","Colore "+color);
+        sw.addEventListener("click",()=>{draft[k].color=color;colors(rowId,k);});
+        row.appendChild(sw);
+      });
+    }
+    colors("#coupleColorARow","a"); colors("#coupleColorBRow","b");
+    const toggle=node.querySelector("#coupleDefaultSplit");
+    const paint=()=>toggle.querySelectorAll(".type-opt").forEach(b=>b.classList.toggle("active",b.dataset.split===draft.defaultSplit));
+    toggle.querySelectorAll(".type-opt").forEach(b=>b.addEventListener("click",()=>{draft.defaultSplit=b.dataset.split;paint();}));
+    paint();
+    node.querySelector("#saveCoupleBtn").addEventListener("click",()=>{
+      const oldA=state.couple.a.name, oldB=state.couple.b.name;
+      draft.a.name=nameA.value.trim()||"Persona 1";
+      draft.b.name=nameB.value.trim()||"Persona 2";
+      // Rinomina i conti creati di serie ("Carta Persona 1") con il nuovo nome.
+      state.accounts.forEach(acc=>{
+        if(acc.owner==="a" && acc.name===`Carta ${oldA}`) acc.name=`Carta ${draft.a.name}`;
+        if(acc.owner==="b" && acc.name===`Carta ${oldB}`) acc.name=`Carta ${draft.b.name}`;
+      });
+      state.couple={...state.couple,...draft,onboarded:true};
+      sanitizeCouple(state);
+      persist(); renderAll(); close();
+      showToast("Coppia aggiornata");
+    });
+  });
+}
+document.getElementById("homeCoupleStrip")?.addEventListener("click",()=>switchView("coppia"));
+document.getElementById("settleBtn")?.addEventListener("click",()=>openSettleForm("all"));
+document.getElementById("addGroupBtn")?.addEventListener("click",()=>openGroupForm());
+document.getElementById("addListBtn")?.addEventListener("click",()=>openListForm());
+document.getElementById("listsTrashBtn")?.addEventListener("click",()=>openListTrash(null));
+/* v1.19.0 — Cestino: di una lista (dal dettaglio) o comune a tutte (dalla pagina Liste). Ogni voce ha data e
+   ora di eliminazione; ↩︎ la rimette nella sua lista. */
+function openListTrash(listId,onChange){
+  openSheet("tpl-list-trash",(node,close)=>{
+    const box=node.querySelector("#listTrashBox"), emptyBtn=node.querySelector("#listTrashEmpty");
+    function entries(){
+      const ls=listId?state.lists.filter(l=>l.id===listId):state.lists;
+      return ls.flatMap(l=>(l.trash||[]).map(e=>({e,l}))).sort((a,b)=>b.e.deletedAt.localeCompare(a.e.deletedAt));
+    }
+    function paint(){
+      const l=listId&&state.lists.find(x=>x.id===listId);
+      node.querySelector("#listTrashTitle").textContent=l?`🗑 Cestino · ${l.emoji} ${l.name}`:"🗑 Cestino delle liste";
+      const all=entries();
+      emptyBtn.hidden=!all.length;
+      if(!all.length){ box.innerHTML=`<p class="empty-hint">Il cestino è vuoto.</p>`; return; }
+      let last="", html="";
+      all.forEach(({e,l},i)=>{
+        const h=dayHeading(e.deletedAt); if(h!==last){ html+=`<p class="lt-day">${escapeHtml(h)}</p>`; last=h; }
+        html+=`<div class="lt-row"><span class="lt-em" aria-hidden="true">${emojiIconHtml(aisleInfo(e.aisle||guessAisle(e.text)).emoji)}</span><span class="lt-tx"><b>${e.qty>1?e.qty+"× ":""}${escapeHtml(e.text)}</b><small>🗑 ${escapeHtml(whenLabel(e.deletedAt))}${listId?"":` · ${escapeHtml(l.emoji+" "+l.name)}`}${e.by?` · ${escapeHtml(personName(e.by))}`:""}</small></span><button type="button" class="lt-restore" data-i="${i}" aria-label="Rimetti ${escapeHtml(e.text)} nella lista">↩︎</button></div>`;
+      });
+      box.innerHTML=html;
+      box.querySelectorAll("[data-i]").forEach(b=>b.addEventListener("click",()=>{ const {e,l}=all[Number(b.dataset.i)]; restoreTrashEntry(l,e.id); persist(); renderAll(); paint(); onChange&&onChange(); showToast(`↩︎ “${e.text}” di nuovo in ${l.name}`); }));
+    }
+    emptyBtn.addEventListener("click",()=>{
+      const n=entries().length; if(!n) return;
+      if(!confirm(`Eliminare definitivamente ${n} ${n===1?"prodotto":"prodotti"} dal cestino?`)) return;
+      (listId?state.lists.filter(l=>l.id===listId):state.lists).forEach(l=>{ markDeleted((l.trash||[]).map(e=>e.id)); l.trash=[]; });
+      persist(); renderAll(); paint(); onChange&&onChange();
+    });
+    paint();
+  });
+}
+document.getElementById("openCoupleSettingsBtn")?.addEventListener("click",()=>openCoupleForm());
+// Pulsanti "i": spiegazioni a richiesta invece di testi sempre visibili.
+document.addEventListener("click",e=>{ const b=e.target.closest("[data-nd-info]"); if(!b) return; e.preventDefault(); e.stopPropagation(); openChartInfo(b.dataset.ndInfo); },true);
+document.getElementById("editCoupleBtn")?.addEventListener("click",openCoupleForm);
+document.getElementById("toggleCoupleBalance")?.addEventListener("click",toggleBalances);
+
+/* ---------------- Noi Due 1.3.0 — Prodotti: codice a barre, foto, ricerca online ---------------- */
+function markDeleted(...ids){
+  if(!state.deleted||typeof state.deleted!=="object") state.deleted={};
+  const d=todayISO();
+  ids.flat().forEach(id=>{ if(id) state.deleted[String(id)]=d; });
+}
+const PRODUCT_DBS=[
+  ["world.openfoodfacts.org","Open Food Facts"],
+  ["world.openbeautyfacts.org","Open Beauty Facts"],
+  ["world.openproductsfacts.org","Open Products Facts"],
+  ["world.openpetfoodfacts.org","Open Pet Food Facts"],
+];
+function cleanCode(v){ return String(v||"").replace(/[^0-9A-Za-z-]/g,"").slice(0,32); }
+async function lookupProduct(code){
+  code=cleanCode(code);
+  if(!code) return null;
+  for(const [host,label] of PRODUCT_DBS){
+    try{
+      const r=await fetch(`https://${host}/api/v2/product/${encodeURIComponent(code)}.json?fields=code,product_name,product_name_it,generic_name_it,brands,quantity,image_front_small_url,image_front_url`);
+      if(!r.ok) continue;
+      const j=await r.json();
+      if(j.status===1 && j.product){
+        const p=j.product;
+        const name=String(p.product_name_it||p.product_name||p.generic_name_it||"").trim();
+        const brand=String(p.brands||"").split(",")[0].trim();
+        if(!name && !brand) continue;
+        return {code,name,brand,quantity:String(p.quantity||"").trim(),image:String(p.image_front_small_url||p.image_front_url||""),url:`https://${host}/product/${code}`,source:label};
+      }
+    }catch(e){ /* rete assente o database non raggiungibile: prova il successivo */ }
   }
-  // Abbuono: riga fuori saldo sul conto prestito che porta il saldo a zero.
-  state.transactions.push({id:uid(),date:todayISO(),amount:Math.abs(bal),type:bal>0?"expense":"income",categoryId:null,accountId:a.id,toAccountId:null,note:"Persona eliminata",
-    isBalanceAdjustment:true,loanWriteOff:true,loanKind:recv?"writeOffIn":"writeOffOut",name:recv?`Abbuono a ${a.person}`:`Abbuono da ${a.person}`});
-  archiveLoanAccount(a); balanceCache.clear(); persist(); renderAll(); closeSheet&&closeSheet();
-  showToast(`Saldo chiuso con un abbuono: ${a.person} eliminato`);
+  return null;
 }
-/* v1.26.0 — Pareggiare i conti con una persona, tutto insieme.
-   Una persona può avere sia un credito (Da ricevere) sia un debito (Da pagare).
-   - ⚖️ Compensa: crediti e debiti si annullano tra loro fino alla cifra più piccola; nessun soldo si muove
-     e il totale effettivo non cambia.
-   - 💶 Salda il netto: compensa e apre il movimento per la differenza sul conto che scegli
-     (con una cifra inferiore scegli se il resto resta aperto o è abbuonato).
-   - 🧾 Fuori dai conti: azzera tutto con un abbuono; crediti e debiti escono dal totale effettivo. */
-function personPosition(name){
-  const n=String(name||"").toLowerCase();
-  const recv=receivableAccounts().find(a=>String(a.person).toLowerCase()===n)||null;
-  const pay=payableAccounts().find(a=>String(a.person).toLowerCase()===n)||null;
-  const credit=recv?round2(accountBalance(recv.id)):0, debt=pay?round2(-accountBalance(pay.id)):0;
-  return {recv,pay,credit,debt,net:round2(credit-debt)};
+function productTitle(p){
+  let t=p.name||"";
+  if(p.brand && !t.toLowerCase().includes(p.brand.toLowerCase())) t=t?`${t} – ${p.brand}`:p.brand;
+  if(p.quantity) t+=` (${p.quantity})`;
+  return t.trim().slice(0,120);
 }
-function loanAdjRow(acc,amount,gid,extra){
-  // amount>0 riduce quanto è dovuto su quel conto prestito
-  const recv=!!acc.receivable;
-  const r={id:uid(),date:todayISO(),amount:round2(Math.abs(amount)),type:(recv?amount>0:amount<0)?"expense":"income",categoryId:null,accountId:acc.id,toAccountId:null,note:"",
-    isBalanceAdjustment:true,loanWriteOff:true,settleGroup:gid,loanKind:recv?"writeOffIn":"writeOffOut",name:recv?`Abbuono a ${acc.person}`:`Abbuono da ${acc.person}`,...extra};
-  state.transactions.push(r); return r;
+function productLinksHtml({name="",code="",url=""}){
+  const q=encodeURIComponent((name||code||"").trim());
+  if(!q && !url) return "";
+  const a=(href,label)=>`<a class="pill-btn item-link" href="${escapeHtml(href)}" target="_blank" rel="noopener noreferrer">${label}</a>`;
+  return [url?a(url,"Scheda prodotto ↗"):"", q?a(`https://www.google.com/search?q=${q}`,"Cerca su Google ↗"):"", q?a(`https://www.google.com/search?tbm=shop&q=${q}`,"Confronta prezzi ↗"):"", q?a(`https://www.amazon.it/s?k=${q}`,"Amazon ↗"):""].join("");
 }
-function compensatePerson(pp){
-  const m=round2(Math.min(pp.credit,pp.debt));
-  if(!(m>0.004)||!pp.recv||!pp.pay) return 0;
-  const gid=uid();
-  loanAdjRow(pp.recv,m,gid,{loanOffset:true,loanKind:"offset",name:`Compensazione con ${pp.recv.person}`});
-  loanAdjRow(pp.pay,m,gid,{loanOffset:true,loanKind:"offset",name:`Compensazione con ${pp.pay.person}`});
-  balanceCache.clear();
-  return m;
+function compressPhoto(file,max=480,quality=0.72){
+  return new Promise((resolve,reject)=>{
+    const img=new Image(), url=URL.createObjectURL(file);
+    img.onload=()=>{
+      const s=Math.min(1,max/Math.max(img.naturalWidth,img.naturalHeight));
+      const c=document.createElement("canvas"); c.width=Math.round(img.naturalWidth*s); c.height=Math.round(img.naturalHeight*s);
+      c.getContext("2d").drawImage(img,0,0,c.width,c.height);
+      URL.revokeObjectURL(url); resolve(c.toDataURL("image/jpeg",quality));
+    };
+    img.onerror=()=>{ URL.revokeObjectURL(url); reject(new Error("immagine non leggibile")); };
+    img.src=url;
+  });
 }
-async function settlePerson(name,closeSheet){
-  const pp=personPosition(name); if(!pp.recv&&!pp.pay) return;
-  const sh=v=>balancesHidden?"••••":fmt(v), person=(pp.recv||pp.pay).person;
-  const both=pp.credit>0.004&&pp.debt>0.004, m=round2(Math.min(pp.credit,pp.debt));
-  const netTxt=Math.abs(pp.net)<0.005?"siete in pari":pp.net>0?`${person} ti deve ${sh(pp.net)}`:`devi ${sh(-pp.net)} a ${person}`;
-  const parts=[]; if(Math.abs(pp.credit)>=0.005) parts.push(`ti deve ${sh(pp.credit)}`); if(Math.abs(pp.debt)>=0.005) parts.push(`gli devi ${sh(pp.debt)}`);
-  const opts=[];
-  if(both) opts.push({value:"offset",icon:"⚖️",label:`Compensa ${sh(m)}`,hint:`Crediti e debiti si annullano: poi ${netTxt}. Nessun soldo si muove.`});
-  if(Math.abs(pp.net)>=0.005) opts.push({value:"pay",icon:"💶",label:pp.net>0?`Mi dà la differenza (${sh(pp.net)})`:`Gli do la differenza (${sh(-pp.net)})`,hint:`${both?"Compensa e registra":"Registra"} il movimento sul conto che scegli; se è una cifra inferiore decidi se il resto resta o è abbuonato.`});
-  opts.push({value:"out",icon:"🧾",label:"Chiudi tutto fuori dai conti",hint:"Azzera crediti e debiti con un abbuono, senza muovere soldi: escono dal totale effettivo."});
-  const choice=await chooseAction(`Pareggia con ${person}`,`${person}: ${parts.join(" e ")||"siete in pari"}. Netto: ${netTxt}.`,opts);
-  if(!choice) return;
-  if(choice==="offset"){
-    compensatePerson(pp); persist(); renderAll();
-    const after=personPosition(person);
-    showToast(Math.abs(after.net)<0.005?`Compensato: con ${person} siete in pari`:`Compensato ${fmt(m)}: ${after.net>0?`ti deve ${fmt(after.net)}`:`gli devi ${fmt(-after.net)}`}`);
-    return;
+/* Lettura dei codici: BarcodeDetector se il telefono lo offre, altrimenti la libreria ZXing
+   caricata solo quando serve (richiede internet, come la ricerca del prodotto). */
+const BARCODE_FORMATS=["ean_13","ean_8","upc_a","upc_e","code_128","code_39","itf"];
+let zxingPromise=null;
+function loadZXing(){
+  if(window.ZXing) return Promise.resolve(window.ZXing);
+  if(!zxingPromise) zxingPromise=new Promise((resolve,reject)=>{
+    const s=document.createElement("script");
+    s.src="https://cdn.jsdelivr.net/npm/@zxing/library@0.21.3/umd/index.min.js";
+    s.async=true;
+    s.onload=()=>window.ZXing?resolve(window.ZXing):reject(new Error("zxing"));
+    s.onerror=()=>{ zxingPromise=null; reject(new Error("zxing")); };
+    document.head.appendChild(s);
+  });
+  return zxingPromise;
+}
+async function nativeDetector(){
+  try{
+    if(!("BarcodeDetector" in window)) return null;
+    const supported=await window.BarcodeDetector.getSupportedFormats();
+    const formats=BARCODE_FORMATS.filter(f=>supported.includes(f));
+    return formats.length?new window.BarcodeDetector({formats}):null;
+  }catch(e){ return null; }
+}
+function zxingReader(Z){
+  const hints=new Map();
+  hints.set(Z.DecodeHintType.POSSIBLE_FORMATS,[Z.BarcodeFormat.EAN_13,Z.BarcodeFormat.EAN_8,Z.BarcodeFormat.UPC_A,Z.BarcodeFormat.UPC_E,Z.BarcodeFormat.CODE_128,Z.BarcodeFormat.CODE_39,Z.BarcodeFormat.ITF]);
+  hints.set(Z.DecodeHintType.TRY_HARDER,true);
+  return new Z.BrowserMultiFormatReader(hints);
+}
+async function decodeBarcodeFromFile(file){
+  const det=await nativeDetector();
+  if(det){
+    try{ const bmp=await createImageBitmap(file); const res=await det.detect(bmp); if(res&&res[0]) return res[0].rawValue; }catch(e){}
   }
-  if(choice==="pay"){
-    if(both){ compensatePerson(pp); persist(); renderAll(); }
-    closeSheet&&closeSheet();
-    setTimeout(()=>openLoanForm(null,{mode:pp.net>0?"repayIn":"repayOut",person}),250);
-    return;
+  try{
+    const Z=await loadZXing(), url=URL.createObjectURL(file);
+    try{ const r=await zxingReader(Z).decodeFromImageUrl(url); return r?.getText?.()||null; }
+    catch(e){ return null; }
+    finally{ URL.revokeObjectURL(url); }
+  }catch(e){ throw new Error("lettore non disponibile"); }
+}
+function openProductScan(onAdd){
+  openSheet("tpl-scan",(node,close)=>{
+    const status=node.querySelector("#scanStatus"), result=node.querySelector("#scanResult");
+    const wrap=node.querySelector("#scanVideoWrap"), video=node.querySelector("#scanVideo");
+    const codeInput=node.querySelector("#scanCodeInput"), photoInput=node.querySelector("#scanPhotoInput");
+    let stream=null, reader=null, loop=null, busy=false;
+    function stopCamera(){
+      clearInterval(loop); loop=null;
+      try{ reader?.reset?.(); }catch(e){} reader=null;
+      if(stream){ stream.getTracks().forEach(t=>t.stop()); stream=null; }
+      video.srcObject=null; wrap.hidden=true;
+    }
+    const watch=setInterval(()=>{ if(!node.isConnected){ stopCamera(); clearInterval(watch); } },500);
+    function showProduct(p,{photo="",code=""}={}){
+      const found=!!p;
+      const title=found?productTitle(p):"";
+      const pic=photo||(p&&p.image)||"";
+      result.innerHTML=`<div class="scan-card">
+        ${pic?`<img class="scan-img" src="${escapeHtml(pic)}" alt="" referrerpolicy="no-referrer">`:""}
+        <p class="scan-found">${found?`Trovato su ${escapeHtml(p.source)}`:code?`Codice ${escapeHtml(code)}: non è nei database aperti`:"Foto del prodotto"}</p>
+        <div class="field-row"><label>Nome nella lista</label><input type="text" class="text-input" id="scanNameInput" maxlength="120" value="${escapeHtml(title)}" placeholder="es. Detersivo lavatrice"></div>
+        <div class="field-row"><label>Prezzo stimato (facoltativo)</label><input type="text" class="text-input" id="scanPriceInput" inputmode="decimal" placeholder="€" autocomplete="off"></div>
+        <div class="item-links" id="scanLinks"></div>
+        <button type="button" class="gd-settle" id="scanAddBtn">＋ Aggiungi alla lista</button>
+      </div>`;
+      result.querySelector(".scan-img")?.addEventListener("error",e=>e.target.remove());
+      const nameInput=result.querySelector("#scanNameInput");
+      const links=()=>{ result.querySelector("#scanLinks").innerHTML=productLinksHtml({name:nameInput.value,code,url:p?.url||""}); };
+      nameInput.addEventListener("input",links); links();
+      result.querySelector("#scanAddBtn").addEventListener("click",()=>{
+        const text=nameInput.value.trim()||(code?`Prodotto ${code}`:"");
+        if(!text){ showToast("Scrivi il nome del prodotto"); nameInput.focus(); return; }
+        const price=parseAmount(result.querySelector("#scanPriceInput").value);
+        onAdd({text,price:price>0?Math.round(price*100)/100:null,code:code||p?.code||"",image:p?.image||"",url:p?.url||"",photo});
+        stopCamera(); close();
+      });
+      if(!found) nameInput.focus();
+    }
+    async function handleCode(raw,{photo=""}={}){
+      const code=cleanCode(raw);
+      if(!code||busy) return;
+      busy=true; stopCamera(); codeInput.value=code;
+      status.textContent=`Codice ${code}: cerco il prodotto…`;
+      if(navigator.vibrate) navigator.vibrate(40);
+      const p=await lookupProduct(code);
+      status.textContent=p?"Ho letto il codice a barre e trovato il prodotto. Controlla il nome e aggiungilo.":"Scrivi il nome del prodotto e aggiungilo.";
+      showProduct(p,{code,photo});
+      busy=false;
+    }
+    node.querySelector("#scanCodeBtn").addEventListener("click",()=>handleCode(codeInput.value));
+    codeInput.addEventListener("keydown",e=>{ if(e.key==="Enter"){ e.preventDefault(); handleCode(codeInput.value); } });
+    node.querySelector("#scanLiveBtn").addEventListener("click",async()=>{
+      if(stream||reader){ stopCamera(); status.textContent="Fotocamera chiusa."; return; }
+      result.innerHTML="";
+      if(!navigator.mediaDevices?.getUserMedia){ status.textContent="Questo telefono non permette di inquadrare dal vivo: usa “Scatta una foto”."; return; }
+      status.textContent="Apro la fotocamera…";
+      const det=await nativeDetector();
+      try{
+        if(det){
+          stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:"environment"}},audio:false});
+          video.srcObject=stream; wrap.hidden=false; await video.play();
+          status.textContent="Inquadra il codice a barre nel riquadro.";
+          loop=setInterval(async()=>{ if(busy||video.readyState<2) return; try{ const r=await det.detect(video); if(r&&r[0]) handleCode(r[0].rawValue); }catch(e){} },250);
+        }else{
+          const Z=await loadZXing();
+          wrap.hidden=false;
+          reader=zxingReader(Z);
+          await reader.decodeFromConstraints({video:{facingMode:{ideal:"environment"}}},video,(res)=>{ if(res) handleCode(res.getText()); });
+          status.textContent="Inquadra il codice a barre nel riquadro.";
+        }
+      }catch(e){
+        stopCamera();
+        status.textContent=e?.name==="NotAllowedError"?"Accesso alla fotocamera negato: consentilo nelle impostazioni o usa “Scatta una foto”.":e?.message==="zxing"?"Per leggere i codici serve internet. Puoi scrivere il codice a mano.":"Fotocamera non disponibile: usa “Scatta una foto” o scrivi il codice.";
+      }
+    });
+    node.querySelector("#scanPhotoBtn").addEventListener("click",()=>{ stopCamera(); photoInput.click(); });
+    // Dalla galleria: stessa lettura della foto (codice a barre se c'è, altrimenti foto del prodotto).
+    const galleryInput=node.querySelector("#scanGalleryInput");
+    node.querySelector("#scanGalleryBtn").addEventListener("click",()=>{ stopCamera(); galleryInput.click(); });
+    galleryInput.addEventListener("change",()=>{ const f=galleryInput.files&&galleryInput.files[0]; galleryInput.value=""; if(f) handleImageFile(f); });
+    photoInput.addEventListener("change",()=>{ const f=photoInput.files&&photoInput.files[0]; photoInput.value=""; if(f) handleImageFile(f); });
+    async function handleImageFile(file){
+      if(!file) return;
+      status.textContent="Leggo la foto…"; result.innerHTML="";
+      let photo="";
+      try{ photo=await compressPhoto(file); }catch(e){}
+      let code=null;
+      try{ code=await decodeBarcodeFromFile(file); }catch(e){ /* lettore non caricato */ }
+      if(code){ handleCode(code,{photo:""}); return; }
+      status.textContent="Scrivi il nome del prodotto: la foto resta sull'articolo.";
+      showProduct(null,{photo});
+    }
+  });
+}
+/* ===================== v1.24.0 — Registro dei link di un prodotto =====================
+   Ogni articolo può avere più link. Di ognuno restano negozio, nome del prodotto sul
+   sito e prezzo, così li si confronta senza riaprirli. Il primo link che porta
+   un'immagine la dà alla scheda; il nome dell'articolo non viene mai cambiato. */
+function siteOf(url){
+  try{ return new URL(url).hostname.replace(/^www\./,""); }catch(e){ return ""; }
+}
+/* Legge i link di un articolo e, la prima volta, recupera quello singolo salvato prima. */
+function itemLinks(it){
+  if(!Array.isArray(it.links)){
+    it.links = it.url ? [{id:uid(),url:it.url,title:"",price:it.price||null,publisher:siteOf(it.url),image:it.image||"",at:new Date().toISOString()}] : [];
   }
-  const gid=uid();
-  if(Math.abs(pp.credit)>=0.005) loanAdjRow(pp.recv,pp.credit,gid,{note:"Pareggio fuori dai conti"});
-  if(Math.abs(pp.debt)>=0.005) loanAdjRow(pp.pay,pp.debt,gid,{note:"Pareggio fuori dai conti"});
-  state.loanRates=(state.loanRates||[]).filter(r=>r.accId!==pp.recv?.id&&r.accId!==pp.pay?.id);
-  balanceCache.clear(); persist(); renderAll();
-  showToast(`Chiuso fuori dai conti: con ${person} siete in pari`);
+  return it.links;
 }
-async function undoLoanSettle(t){
-  const what=t.loanOffset?"questa compensazione":"questo abbuono";
-  if(!await askConfirm(`Annullare ${what}? Il credito o il debito torna com'era.`,{ok:"Sì, annulla",cancel:"No",danger:true})) return;
-  const linked=linkedTx(t).filter(x=>x.loanWriteOff);
-  moveToTrash("transaction",t,linked); const trashId=state.trash[0]?.id;
-  const ids=new Set([t.id,...linked.map(x=>x.id)]);
-  const accs=new Set([t.accountId,...linked.map(x=>x.accountId)]);
-  state.transactions=state.transactions.filter(x=>!ids.has(x.id));
-  balanceCache.clear();
-  accs.forEach(id=>{ const a=state.accounts.find(x=>x.id===id); if(a?.archived&&Math.abs(accountBalance(a.id))>=0.005) delete a.archived; });
-  persist(); renderAll(); if(trashId) showUndo("Annullato",trashId);
+function linkRegistryHtml(links,{editable=true}={}){
+  if(!links.length) return `<p class="link-empty">Nessun link salvato.</p>`;
+  return links.map((k,i)=>`<div class="link-row" data-i="${i}">
+      <span class="link-thumb">${k.image?`<img src="${escapeHtml(k.image)}" alt="" loading="lazy" referrerpolicy="no-referrer">`:"🔗"}</span>
+      <span class="link-info">
+        <b>${escapeHtml(k.publisher||siteOf(k.url)||"Link")}</b>
+        <small>${escapeHtml(k.title||"Nome non letto dal sito")}</small>
+      </span>
+      <span class="link-price">${k.price?escapeHtml(fmt(k.price)):"—"}</span>
+      <a class="link-open" href="${escapeHtml(k.url)}" target="_blank" rel="noopener noreferrer" aria-label="Apri su ${escapeHtml(k.publisher||"il sito")}">↗</a>
+      ${editable?`<button type="button" class="link-del" data-del="${i}" aria-label="Togli questo link">✕</button>`:""}
+    </div>`).join("");
 }
-let accountsMode="accounts";
-function setAccountsMode(mode){
-  accountsMode=mode==="loans"?"loans":"accounts";
-  const ap=document.getElementById("accountsPane"), lp=document.getElementById("loansPane");
-  if(ap) ap.hidden=accountsMode!=="accounts";
-  if(lp) lp.hidden=accountsMode!=="loans";
-  document.querySelectorAll("#accountsModeToggle [data-acc-mode]").forEach(b=>b.classList.toggle("active",b.dataset.accMode===accountsMode));
-  renderLoans();
+/* Aggiunge un link all'articolo: legge i dati dal sito, non tocca il nome dell'articolo
+   e usa l'immagine solo se la scheda non ne ha ancora una. */
+async function addLinkToItem(it,rawUrl,{onImage=null}={}){
+  const url=extractUrl(rawUrl);
+  if(!url) return {ok:false,msg:"Incolla un link che inizi con https://"};
+  const links=itemLinks(it);
+  if(links.some(k=>k.url===url)) return {ok:false,msg:"Questo link c'è già."};
+  const p=await fetchLinkPreview(url);
+  const entry={id:uid(),url:(p&&p.url)||url,title:(p&&p.title)||"",price:(p&&p.price)||null,
+    publisher:(p&&p.publisher)||siteOf(url),image:(p&&p.image)||"",at:new Date().toISOString()};
+  links.push(entry);
+  if(entry.image && onImage) onImage(entry.image);
+  return {ok:true,entry,read:!!p,
+    msg:p?`Salvato da ${entry.publisher||"sito"}${entry.price?` · ${fmt(entry.price)}`:" (prezzo non indicato)"}`
+         :"Non riesco a leggere questo sito: il link resta salvato."};
 }
-function renderLoans(){
-  pruneLoanRates();
-  const show=v=>balancesHidden?"••••":fmt(v);
-  const inT=receivableTotal(), outT=payableTotal();
-  const el=id=>document.getElementById(id);
-  if(!el("loanSumIn")) return;
-  el("loanSumIn").textContent=show(inT); el("loanSumOut").textContent=show(outT);
-  const net=inT-outT; el("loanSumNet").textContent=balancesHidden?"••••":`${net>=0?"+":"−"}${fmt(Math.abs(net))}`; el("loanSumNet").style.color=moneyColor(net);
-  const card=a=>{
-    const bal=accountBalance(a.id), owed=a.receivable?bal:-bal;
-    const last=state.transactions.filter(t=>t.accountId===a.id||t.toAccountId===a.id).reduce((m,t)=>t.date>m?t.date:m,"");
-    const next=ratesOf(a.id)[0], nw=next?rateWhen(next.date):null;
-    const b=document.createElement("button"); b.type="button"; b.className="loan-person"+(Math.abs(owed)<0.005?" settled":"");
-    b.innerHTML=`<span class="loan-av" style="background:${a.receivable?"#8E7CC3":"#C9785C"}">${escapeHtml((a.person||"?").trim()[0]||"?").toUpperCase()}</span>
-      <span class="loan-person-text"><strong>${escapeHtml(a.person)}</strong><span>${Math.abs(owed)<0.005?"In pari":a.receivable?"ti deve":"devi"}${next?` · <em class="${nw.late?"late":""}">rata ${nw.late?nw.text:shortDate(next.date)}</em>`:last?` · ultimo ${last.split("-").reverse().slice(0,2).join("/")}`:""}</span></span>
-      <span class="loan-person-amt">${Math.abs(owed)<0.005?fmt(0):show(Math.abs(owed))}</span><span class="chev" aria-hidden="true">›</span>`;
-    b.addEventListener("click",()=>openLoanPerson(a.id));
-    return b;
-  };
-  const sortBy=(arr,sign)=>arr.slice().sort((x,y)=>sign*accountBalance(y.id)-sign*accountBalance(x.id));
-  const rl=el("loanRecvList"), pl=el("loanPayList");
-  rl.innerHTML=""; sortBy(receivableAccounts(),1).forEach(a=>rl.appendChild(card(a)));
-  pl.innerHTML=""; sortBy(payableAccounts(),-1).forEach(a=>pl.appendChild(card(a)));
-  el("loanRecvEmpty").hidden=receivableAccounts().length>0;
-  el("loanPayEmpty").hidden=payableAccounts().length>0;
-  renderLoanUpcoming();
-  renderLateRatesBadge();
-  if(loanPersonRefresh) loanPersonRefresh();
+/* Riepilogo dell'articolo: si apre tenendo premuto sulla riga. Solo lettura. */
+function openItemSummary(listId,itemId){
+  const l=state.lists.find(x=>x.id===listId), it=l?.items.find(x=>x.id===itemId);
+  if(!it) return;
+  openSheet("tpl-item-summary",(node,close)=>{
+    const a=aisleInfo(it.aisle||guessAisle(it.text));
+    node.querySelector("#isumTitle").textContent=it.text;
+    const pic=photoSrc(it.photo)||it.image||itemLinks(it).find(k=>k.image)?.image||"";
+    const box=node.querySelector("#isumPhoto");
+    box.innerHTML=pic?`<img src="${escapeHtml(pic)}" alt="" referrerpolicy="no-referrer">`:"";
+    box.hidden=!pic;
+    box.querySelector("img")?.addEventListener("error",()=>{ box.hidden=true; });
+    const who=it.forWhom==="a"||it.forWhom==="b"?`Solo ${personName(it.forWhom)}`:"Tutti e due";
+    const rows=[
+      ["Reparto",`${a.emoji} ${a.name}`],
+      ["Quantità",String(it.qty||1)],
+      ["Prezzo", it.price?`${fmt(it.price)}${(it.qty||1)>1?` · ${fmt(it.price*(it.qty||1))} in tutto`:""}`:"non indicato"],
+      ["Per chi",who],
+      ["Preferito", isFavorite(it.text)?"★ sì":"no"],
+      ["Stato", it.done?`✓ acquistato${it.boughtAt?` · ${whenLabel(it.boughtAt)}`:""}`:"da comprare"],
+      ["Aggiunto da", it.addedBy?personName(it.addedBy):(it.via||"—")],
+      ["Codice a barre", it.code||"—"],
+    ];
+    node.querySelector("#isumRows").innerHTML=rows.map(([k,v])=>`<div class="isum-row"><dt>${escapeHtml(k)}</dt><dd>${escapeHtml(v)}</dd></div>`).join("");
+    node.querySelector("#isumLinks").innerHTML=linkRegistryHtml(itemLinks(it),{editable:false});
+    node.querySelector("#isumEditBtn").addEventListener("click",()=>{ close(); openListItem(listId,itemId); });
+  });
 }
-function renderLoanStats(){
-  const block=document.getElementById("loanStatsBlock"), box=document.getElementById("loanStats");
-  if(!block||!box) return;
-  const tx=statsTransactions().filter(t=>t.type==="transfer");
-  const sum=mode=>tx.filter(t=>loanModeOf(t)===mode).reduce((s,t)=>s+t.amount,0);
-  const lent=sum("lend"), back=sum("repayIn"), borrowed=sum("borrow"), repaid=sum("repayOut");
-  const woAll=statsTransactions(true).filter(t=>t.loanWriteOff&&!t.loanOffset);
-  const woIn=woAll.filter(t=>t.loanKind==="writeOffIn").reduce((s,t)=>s+t.amount,0), woOut=woAll.filter(t=>t.loanKind==="writeOffOut").reduce((s,t)=>s+t.amount,0);
-  const hasAny=state.accounts.some(isLoanAccount);
-  block.hidden=!hasAny;
-  if(!hasAny) return;
-  const show=v=>balancesHidden?"••••":fmt(v);
-  const people=[...receivableAccounts().map(a=>({a,v:accountBalance(a.id),c:"#8E7CC3"})),...payableAccounts().map(a=>({a,v:-accountBalance(a.id),c:"#C9785C"}))].filter(x=>Math.abs(x.v)>=0.005);
-  const max=Math.max(1,...people.map(x=>Math.abs(x.v)));
-  box.innerHTML=`<div class="stat-card-grid loan-stat-grid">
-      <div class="stat-card"><p class="stat-card-label">Prestato nel periodo</p><p class="stat-card-value" style="color:#8E7CC3">${show(lent)}</p></div>
-      <div class="stat-card"><p class="stat-card-label">Restituito a te</p><p class="stat-card-value pos">${show(back)}</p></div>
-      <div class="stat-card"><p class="stat-card-label">Preso in prestito</p><p class="stat-card-value" style="color:#C9785C">${show(borrowed)}</p></div>
-      <div class="stat-card"><p class="stat-card-label">Rate e restituzioni</p><p class="stat-card-value neg">${show(repaid)}</p></div>
-      ${woIn>0.004?`<div class="stat-card"><p class="stat-card-label">Abbuonato da te</p><p class="stat-card-value">${show(woIn)}</p></div>`:""}
-      ${woOut>0.004?`<div class="stat-card"><p class="stat-card-label">Abbuonato a te</p><p class="stat-card-value pos">${show(woOut)}</p></div>`:""}
-    </div>
-    ${people.length?`<div class="loan-bars"><p class="stat-card-label">Situazione attuale per persona</p>${people.map(x=>`<div class="cs-row"><div class="cs-lbl"><span>${escapeHtml(x.a.person)} · ${x.a.receivable?"ti deve":"devi"}</span><strong>${show(Math.abs(x.v))}</strong></div><div class="cs-bar"><i style="width:${(Math.abs(x.v)/max*100).toFixed(1)}%;background:${x.c}"></i></div></div>`).join("")}</div>`:""}`;
+function openListItem(listId,itemId){
+  const l=state.lists.find(x=>x.id===listId), it=l?.items.find(x=>x.id===itemId);
+  if(!it) return;
+  openSheet("tpl-list-item",(node,close)=>{
+    const draft={photo:it.photo||"",image:it.image||"",url:it.url||""};
+    const nameInput=node.querySelector("#itemNameInput"), priceInput=node.querySelector("#itemPriceInput"), codeInput=node.querySelector("#itemCodeInput");
+    nameInput.value=it.text; priceInput.value=it.price?String(it.price).replace(".",","):""; codeInput.value=it.code||"";
+    draft.qty=it.qty||1; draft.aisle=it.aisle||guessAisle(it.text); draft.forWhom=it.forWhom||"both";
+    const qtyEl=node.querySelector("#itemQty");
+    const paintQty=()=>{ qtyEl.textContent=String(draft.qty); };
+    node.querySelector("#itemQtyMinus").addEventListener("click",()=>{ draft.qty=Math.max(1,draft.qty-1); paintQty(); });
+    node.querySelector("#itemQtyPlus").addEventListener("click",()=>{ draft.qty=Math.min(99,draft.qty+1); paintQty(); });
+    paintQty();
+    const forBox=node.querySelector("#itemForChips"), aisleBox=node.querySelector("#itemAisleChips");
+    const paintFor=()=>{ forBox.innerHTML=[["both","Tutti e due"],["a",`Solo ${personName("a")}`],["b",`Solo ${personName("b")}`]].map(([k,l])=>`<button type="button" class="chip${draft.forWhom===k?" active":""}" data-for="${k}">${escapeHtml(l)}</button>`).join("");
+      forBox.querySelectorAll("[data-for]").forEach(b=>b.addEventListener("click",()=>{ draft.forWhom=b.dataset.for; paintFor(); })); };
+    const paintAisle=()=>{ aisleBox.innerHTML=aisleKeys().map(k=>{ const a=aisleInfo(k); return `<button type="button" class="chip${draft.aisle===k?" active":""}" data-aisle="${k}"><span class="em">${a.emoji}</span>${escapeHtml(a.name)}</button>`; }).join("");
+      aisleBox.querySelectorAll("[data-aisle]").forEach(b=>b.addEventListener("click",()=>{ draft.aisle=b.dataset.aisle; paintAisle(); })); };
+    paintFor(); paintAisle();
+    draft.fav=isFavorite(it.text);
+    const favSw=node.querySelector("#itemFavSwitch");
+    const paintFav=()=>{ favSw.classList.toggle("on",draft.fav); favSw.setAttribute("aria-pressed",String(draft.fav)); };
+    favSw.addEventListener("click",()=>{ draft.fav=!draft.fav; paintFav(); });
+    paintFav();
+    /* v1.24.0 — Registro dei link: se ne salvano quanti si vuole, il nome non cambia mai. */
+    const urlInput=node.querySelector("#itemUrlInput"), urlHint=node.querySelector("#itemUrlHint");
+    const linkList=node.querySelector("#itemLinkList");
+    draft.links=itemLinks(it).map(k=>({...k}));
+    const paintLinks=()=>{
+      linkList.innerHTML=linkRegistryHtml(draft.links,{editable:true});
+      linkList.querySelectorAll("[data-del]").forEach(b=>b.addEventListener("click",e=>{
+        e.preventDefault(); e.stopPropagation();
+        draft.links.splice(Number(b.dataset.del),1);
+        draft.url=draft.links[0]?.url||"";
+        paintLinks(); paint();
+      }));
+    };
+    let adding=false;
+    async function addFromUrl(){
+      if(adding) return;
+      const raw=urlInput.value;
+      if(!extractUrl(raw)){ urlHint.textContent="Incolla un link che inizi con https://"; return; }
+      adding=true; urlHint.textContent="Leggo il sito…";
+      const shadow={links:draft.links};
+      const res=await addLinkToItem(shadow,raw,{onImage:img=>{ if(!draft.photo && !draft.image) draft.image=img; }});
+      adding=false;
+      if(!node.isConnected) return;
+      urlHint.textContent=res.msg;
+      if(!res.ok) return;
+      if(res.entry.price && !parseAmount(priceInput.value)) priceInput.value=String(res.entry.price).replace(".",",");
+      draft.url=draft.links[0]?.url||res.entry.url;
+      urlInput.value="";
+      paintLinks(); paint();
+    }
+    node.querySelector("#itemUrlFetchBtn").addEventListener("click",addFromUrl);
+    urlInput.addEventListener("paste",()=>setTimeout(addFromUrl,60));
+    paintLinks();
+    const photoBox=node.querySelector("#itemPhoto"), links=node.querySelector("#itemLinks"), removeBtn=node.querySelector("#itemPhotoRemove");
+    function paint(){
+      const pic=photoSrc(draft.photo)||draft.image;
+      photoBox.innerHTML=pic?`<img src="${escapeHtml(pic)}" alt="" referrerpolicy="no-referrer">`:"";
+      photoBox.hidden=!pic;
+      photoBox.querySelector("img")?.addEventListener("error",()=>{ photoBox.hidden=true; });
+      removeBtn.hidden=!draft.photo;
+      links.innerHTML=productLinksHtml({name:nameInput.value,code:codeInput.value,url:draft.links[0]?.url||draft.url});
+    }
+    nameInput.addEventListener("input",paint); codeInput.addEventListener("input",()=>{ draft.url=""; paint(); });
+    node.querySelector("#itemLookupBtn").addEventListener("click",async()=>{
+      const code=cleanCode(codeInput.value);
+      if(!code){ showToast("Scrivi il codice a barre"); codeInput.focus(); return; }
+      showToast("Cerco il prodotto…");
+      const p=await lookupProduct(code);
+      if(!p){ showToast("Prodotto non trovato nei database aperti"); return; }
+      nameInput.value=productTitle(p); draft.image=p.image; draft.url=p.url; paint();
+      showToast(`Trovato su ${p.source}`);
+    });
+    const photoInput=node.querySelector("#itemPhotoInput");
+    node.querySelector("#itemPhotoBtn").addEventListener("click",()=>photoInput.click());
+    const galleryInput=node.querySelector("#itemGalleryInput");
+    node.querySelector("#itemGalleryBtn").addEventListener("click",()=>galleryInput.click());
+    const takePhoto=async input=>{
+      const file=input.files&&input.files[0]; input.value="";
+      if(!file) return;
+      try{ draft.photo=await compressPhoto(file); paint(); }catch(e){ showToast("Foto non leggibile"); return; }
+      // Se nella foto c'è un codice a barre e il campo è vuoto, lo legge e cerca il prodotto.
+      if(!codeInput.value.trim()){ try{ const code=await decodeBarcodeFromFile(file); if(code){ codeInput.value=cleanCode(code); node.querySelector("#itemLookupBtn").click(); } }catch(e){} }
+    };
+    photoInput.addEventListener("change",()=>takePhoto(photoInput));
+    galleryInput.addEventListener("change",()=>takePhoto(galleryInput));
+    removeBtn.addEventListener("click",()=>{ draft.photo=""; paint(); });
+    node.querySelector("#deleteItemBtn").addEventListener("click",()=>{
+      const cur=state.lists.find(x=>x.id===listId); if(!cur) return close();
+      markDeleted(it.id); cur.items=cur.items.filter(x=>x.id!==it.id);
+      persist(); renderCoupleLists(); if(listDetailRefresh) listDetailRefresh(); close(); showToast("Articolo eliminato");
+    });
+    node.querySelector("#saveItemBtn").addEventListener("click",()=>{
+      const text=nameInput.value.trim();
+      if(!text){ showToast("Scrivi il nome"); nameInput.focus(); return; }
+      const price=parseAmount(priceInput.value);
+      Object.assign(it,{text:text.slice(0,120),price:price>0?Math.round(price*100)/100:null,code:cleanCode(codeInput.value),photo:draft.photo,image:draft.image,links:draft.links,url:draft.links[0]?.url||draft.url||"",qty:draft.qty,aisle:draft.aisle,forWhom:draft.forWhom});
+      if(draft.fav!==isFavorite(it.text)) setFavorite(it.text,draft.fav,draft.aisle);
+      if(!persist()){ showToast("Spazio pieno: togli qualche foto dalle liste"); return; }
+      renderCoupleLists(); if(listDetailRefresh) listDetailRefresh(); close();
+    });
+    paint();
+  });
 }
-document.querySelectorAll("#accountsModeToggle [data-acc-mode]").forEach(b=>b.addEventListener("click",()=>setAccountsMode(b.dataset.accMode)));
-document.getElementById("addLendBtn")?.addEventListener("click",()=>openLoanForm(null,{mode:"lend"}));
-document.getElementById("addBorrowBtn")?.addEventListener("click",()=>openLoanForm(null,{mode:"borrow"}));
-document.getElementById("homeEffectiveCard")?.addEventListener("click",()=>{ switchView("accounts"); setAccountsMode("loans"); });
+
 /* ---------------- Add Transaction sheet ---------------- */
-/* v1.39.0 — Lettura "di riserva" della frase, senza modello: importo, data e nome.
-   "35 euro spesa alla Coop ieri" → 35 · ieri · "Spesa alla Coop". */
-function fraseMovimentoLocale(frase){
-  const t=String(frase||"").trim(); if(!t) return null;
-  const num="(\\d{1,3}(?:[.\\s]\\d{3})+(?:,\\d{1,2})?|\\d+(?:[.,]\\d{1,2})?)";
-  let m=t.match(new RegExp("(?:€|eur(?:o|i)?)\\s*"+num,"i"))||t.match(new RegExp(num+"\\s*(?:€|eur(?:o|i)?\\b)","i"));
-  if(!m){ const all=[...t.matchAll(new RegExp(num,"g"))]; if(all.length===1) m=all[0]; }
-  if(!m) return null;
-  const importo=SuiteAI.numero(m[1]);
-  if(!(importo>0)) return null;
-  let data=todayISO(), resto=t.replace(m[0]," ");
-  const giorno=n=>{ const d=new Date(); d.setDate(d.getDate()-n); return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`; };
-  if(/\b(l'?altro\s*ieri|altroieri)\b/i.test(resto)){ data=giorno(2); resto=resto.replace(/\b(l'?altro\s*ieri|altroieri)\b/ig," "); }
-  else if(/\bieri\b/i.test(resto)){ data=giorno(1); resto=resto.replace(/\bieri\b/ig," "); }
-  else resto=resto.replace(/\boggi\b/ig," ");
-  resto=resto.replace(/\b(euro|eur)\b|€/ig," ").replace(/\s+/g," ").replace(/^[\s,.;:-]+|[\s,.;:-]+$/g,"");
-  const tipo=/\b(stipendio|entrata|incasso|incassato|ricevut[oi]|rimborso|bonifico in entrata)\b/i.test(t)?"income":"expense";
-  return {importo,data,tipo,descrizione:resto?resto.charAt(0).toUpperCase()+resto.slice(1):"",locale:true};
-}
-function openAddTransaction(txId,preset=null){
+function openAddTransaction(txId,prefill=null){
   const editing=!!txId;
   const existing=editing ? state.transactions.find(t=>t.id===txId) : null;
   if(editing && !existing) return;
-  // v1.10.8: trasferimenti e prelievi hanno il proprio pannello, anche in modifica.
-  // v1.12.0: una spesa divisa / prestito si modifica sempre dal modulo spesa, con il totale.
-  if(existing?.loanOld) return openLoanForm(txId);
-  if(existing?.loanWriteOff){ const rep=linkedTx(existing).find(x=>x.type==="transfer"); return rep?openLoanForm(rep.id):undoLoanSettle(existing); }
-  const group=existing?.splitGroup?groupParts(existing.splitGroup):null;
-  if(!group && existing?.type==="transfer" && (loanAccount(existing.accountId)||loanAccount(existing.toAccountId))) return openLoanForm(txId);
-  if(!group && existing?.type==="transfer") return existing.atm ? openAtmWithdrawal(txId) : openTransferForm(txId);
-  const view=group?{type:"expense",amount:Math.round((Number(group.main?.amount||0)+Number(group.share?.amount||0))*100)/100,name:group.main?.name||group.share?.note||"",categoryId:group.main?.categoryId||group.share?.loanCategoryId||null,accountId:(group.main||group.share).accountId,toAccountId:null,date:(group.main||group.share).date,note:group.main?.note||""}:existing;
-  txType = view?.type || "expense";
-  selectedCategoryId = view?.categoryId || null;
-  selectedAccountId = view?.accountId || null;
-  let destinationAccountId = view?.toAccountId || null;
+  // Trasferimenti e prelievi hanno il proprio pannello, anche in modifica.
+  if(existing?.type==="transfer") return openTransferForm(txId);
+  txType = existing?.type || "expense";
+  selectedCategoryId = existing?.categoryId || prefill?.categoryId || null;
+  selectedAccountId = existing?.accountId || defaultPayerId();
+  let destinationAccountId = existing?.toAccountId || null;
 
   openSheet("tpl-add-transaction", (node, close)=>{
+    // v1.21.0 — spesa registrata da una lista: si vede da quale lista e cosa c'era, con il link alla lista.
+    if(existing?.listId){
+      const ll=state.lists.find(x=>x.id===existing.listId);
+      const box=document.createElement("div"); box.className="tx-list-link";
+      box.innerHTML=`<span class="tx-list-ic" aria-hidden="true">🛒</span><span class="tx-list-tx"><b>Dalla lista ${escapeHtml(ll?`${ll.emoji} ${ll.name}`:"(lista eliminata)")}</b>${existing.note?`<small>${escapeHtml(existing.note)}</small>`:""}</span>${ll?`<button type="button" class="pill-btn mini-btn">Apri ›</button>`:""}`;
+      box.querySelector("button")?.addEventListener("click",()=>{ close(); setTimeout(()=>openListDetail(ll.id),250); });
+      const head=node.querySelector(".sheet-head"); (head||node.firstElementChild).after(box);
+    }
     const amountInput = node.querySelector("#amountInput");
     const nameInput=node.querySelector("#txNameInput");
-    amountInput.value = view ? String(view.amount).replace(".",",") : "";
-    nameInput.value=view?.name || "";
+    amountInput.value = existing ? String(existing.amount).replace(".",",") : (prefill?.amount>0 ? String(Math.round(prefill.amount*100)/100).replace(".",",") : "");
+    nameInput.value=existing?.name || prefill?.name || "";
     autoGrowAmountInput(amountInput);
     const dateInput = node.querySelector("#dateInput");
     const noteInput = node.querySelector("#noteInput");
@@ -3471,123 +3826,17 @@ function openAddTransaction(txId,preset=null){
 
     const today = new Date();
     const inViewedMonth = today.getFullYear()===viewYear && today.getMonth()===viewMonth;
-    dateInput.value = view?.date || (periodModes.home==="day" ? selectedDate() : inViewedMonth ? todayISO() : `${viewYear}-${pad2(viewMonth+1)}-01`);
+    dateInput.value = existing?.date || (periodModes.home==="day" ? selectedDate() : inViewedMonth ? todayISO() : `${viewYear}-${pad2(viewMonth+1)}-01`);
     // I movimenti reali non possono avere una data futura: per quelli si usa Pianificato.
     dateInput.max = todayISO();
-    noteInput.value = view?.note || "";
+    noteInput.value = existing?.note || prefill?.note || "";
 
-    // v1.23.0 — categoria suggerita dal nome finché non la scegli tu.
-    let catManual=!!view?.categoryId;
     function renderCatChips(){
-      renderCategoryPicker(catChipsGrouped, txType, ()=>selectedCategoryId, id=>{ selectedCategoryId=id; const ev=window.event; if(!catAuto&&ev&&ev.isTrusted&&(ev.type==='click'||ev.type==='pointerup')&&ev.target&&catChipsGrouped.contains(ev.target)){ catManual=true; showCatHint(null); } });
+      renderCategoryPicker(catChipsGrouped, txType, ()=>selectedCategoryId, id=>{ selectedCategoryId=id; });
     }
-    let catAuto=false;
-    let catHint=null;
-    function showCatHint(cat){
-      if(!catHint){ catHint=document.createElement("p"); catHint.className="field-hint mt-cat-hint"; nameInput.closest(".field-row")?.appendChild(catHint); }
-      catHint.hidden=!cat; if(cat) catHint.textContent=`💡 Categoria suggerita: ${cat.emoji||""} ${cat.name} (puoi cambiarla sotto)`;
-    }
-    /* v1.36.0 — "Scrivilo a parole": una frase diventa il movimento gia compilato.
-       Compare solo se la sincronizzazione e collegata (serve per parlare con il modello)
-       e solo su un movimento nuovo: in modifica sarebbe solo un modo per sbagliare. */
-    (function(){
-      const row=node.querySelector("#aiPhraseRow"); if(!row) return;
-      if(existing || !(window.SuiteAI && SuiteAI.disponibile())) return;
-      row.hidden=false;
-      const inp=node.querySelector("#aiPhraseInput"), btn=node.querySelector("#aiPhraseBtn"), hint=node.querySelector("#aiPhraseHint");
-      let inCorso=false;
-      async function compila(){
-        const frase=inp.value.trim();
-        if(!frase){ inp.focus(); return; }
-        if(inCorso) return;
-        inCorso=true; btn.disabled=true; hint.textContent="Sto leggendo la frase…";
-        const cats=state.categories.filter(c=>!c.archived).map(c=>({chiave:c.id,nome:categoryLabel(c.id,{sempre:true}),tipo:c.kind||"expense"}));
-        const conti=state.accounts.map(a=>({chiave:a.id,nome:a.name}));
-        let d=await SuiteAI.movimento(frase,{contesto:{oggi:todayISO(),categorie:cats,conti:conti}});
-        inCorso=false; btn.disabled=false;
-        if(!node.isConnected) return;
-        // v1.39.0: se il modello non risponde, importo, data e nome si leggono comunque dalla frase.
-        let locale=false;
-        if(!d){ const l=fraseMovimentoLocale(frase); if(l){ d=l; locale=true; } }
-        if(!d){ hint.textContent=SuiteAI.messaggioErrore("Non trovo l'importo nella frase: scrivilo tu qui sotto."); return; }
-        if((d.tipo==="income"||d.tipo==="expense") && d.tipo!==txType){
-          const opt=typeToggle.querySelector(`.type-opt[data-type="${d.tipo}"]`);
-          if(opt) opt.click();
-        }
-        amountInput.value=String(d.importo).replace(".",",");
-        autoGrowAmountInput(amountInput);
-        const desc=d.descrizione||d.nome||d.negozio||d.descrizione_breve;
-        if(desc) nameInput.value=String(desc).slice(0,80);
-        if(/^\d{4}-\d{2}-\d{2}$/.test(d.data||"") && d.data<=todayISO()) dateInput.value=d.data;
-        if(d.conto && state.accounts.some(a=>a.id===d.conto)){ selectedAccountId=d.conto; renderAccChips(); }
-        if(d.categoria && categoriesById()[d.categoria]){ selectedCategoryId=d.categoria; catManual=true; renderCatChips(); showCatHint(categoriesById()[d.categoria]); }
-        else { const id=suggestCategoryFor(nameInput.value,txType); if(id){ selectedCategoryId=id; renderCatChips(); showCatHint(categoriesById()[id]); } }
-        hint.textContent=locale
-          ? SuiteAI.messaggioErrore("Ho preso importo e data dalla frase: scegli conto e categoria e salva.")
-          : (d.sicurezza!=null&&d.sicurezza<0.6)
-          ? "Ho fatto del mio meglio: controlla importo e data prima di salvare."
-          : "Fatto: controlla e salva.";
-        inp.value="";
-      }
-      btn.addEventListener("click",compila);
-      inp.addEventListener("keydown",e=>{ if(e.key==="Enter"){ e.preventDefault(); compila(); } });
-
-      /* Scontrino dalla foto: negozio, data e totale finiscono nei campi qui sotto. */
-      const foto=SuiteAI.pulsanteFoto({
-        task:"scontrino",
-        etichetta:"\ud83e\uddfe Leggi lo scontrino",
-        attesa:"Sto leggendo lo scontrino\u2026",
-        contesto:()=>({oggi:todayISO()}),
-        opzioni:()=>state.categories.filter(c=>c.kind==="expense"&&!c.archived).map(c=>({chiave:c.id,nome:categoryLabel(c.id,{sempre:true})})),
-        onDati:d=>{
-          if(!d) return null;   // il messaggio con il motivo lo scrive SuiteAI
-          const tot=SuiteAI.importoDa(d,["totale","total","importo","amount","totale_pagato"]);
-          if(!(tot>0)) return "Non trovo il totale sullo scontrino: scrivilo a mano.";
-          d.totale=tot;
-          if(txType!=="expense"){ const o=typeToggle.querySelector('.type-opt[data-type="expense"]'); if(o) o.click(); }
-          amountInput.value=String(d.totale).replace(".",",");
-          autoGrowAmountInput(amountInput);
-          if(d.negozio) nameInput.value=String(d.negozio).slice(0,80);
-          if(/^\d{4}-\d{2}-\d{2}$/.test(d.data||"") && d.data<=todayISO()) dateInput.value=d.data;
-          if(d.categoria && categoriesById()[d.categoria]){ selectedCategoryId=d.categoria; catManual=true; renderCatChips(); showCatHint(categoriesById()[d.categoria]); }
-          const voci=Array.isArray(d.voci)?d.voci.length:0;
-          const nota=voci?`${voci} ${voci===1?"voce letta":"voci lette"}`:"";
-          if(voci && !noteInput.value.trim()){
-            noteInput.value=d.voci.slice(0,25).map(v=>`${v.quantita>1?v.quantita+"\u00d7 ":""}${v.nome}${v.prezzo?` ${fmt(v.prezzo)}`:""}`).join("\n");
-          }
-          return `${d.negozio?d.negozio+" \u00b7 ":""}${fmt(d.totale)}${nota?" \u00b7 "+nota:""}. Controlla e salva.`;
-        }
-      });
-      row.after(foto);
-    })();
-
-    let sugTimer=null;
-    /* v1.36.0 — Se le parole conosciute non bastano, la categoria la sceglie il modello.
-       Si chiede una sola volta per nome e solo quando la regola non ha trovato niente. */
-    const aiCatProvati=new Set();
-    async function aiCategoria(nome){
-      if(!(window.SuiteAI && SuiteAI.disponibile())) return;
-      const chiave=nome.trim().toLowerCase();
-      if(chiave.length<3 || aiCatProvati.has(chiave)) return;
-      aiCatProvati.add(chiave);
-      const cats=state.categories.filter(c=>c.kind===txType&&!c.archived).map(c=>({chiave:c.id,nome:categoryLabel(c.id,{sempre:true})}));
-      if(!cats.length) return;
-      const id=await SuiteAI.scegli("categoria",nome,cats,0.6);
-      if(!id||catManual||!node.isConnected) return;
-      if(nameInput.value.trim().toLowerCase()!==chiave) return;
-      selectedCategoryId=id; catAuto=true; try{ renderCatChips(); } finally { catAuto=false; }
-      showCatHint(categoriesById()[id]);
-    }
-    nameInput.addEventListener("input",()=>{ clearTimeout(sugTimer); sugTimer=setTimeout(()=>{
-      if(catManual||txType==="transfer"||existing) return;
-      const id=suggestCategoryFor(nameInput.value,txType);
-      if(!id) aiCategoria(nameInput.value);
-      if(id){ if(id!==selectedCategoryId){ selectedCategoryId=id; catAuto=true; try{ renderCatChips(); } finally { catAuto=false; } } showCatHint(categoriesById()[id]); }
-      else if(!id){ showCatHint(null); }
-    },250); });
     function renderAccChips(){
       accChips.innerHTML = "";
-      state.accounts.filter(a=>!isLoanAccount(a)||a.id===selectedAccountId).forEach(a=>{
+      state.accounts.forEach(a=>{
         const chip = document.createElement("button");
         chip.className = "chip" + (selectedAccountId===a.id ? " active":"");
         chip.innerHTML = `<span class="em">●</span>${escapeHtml(a.name)}`;
@@ -3628,26 +3877,13 @@ function openAddTransaction(txId,preset=null){
 
     renderAccChips();
     renderTypeFields();
-    const shared=mountSharedExpense(node, accChips.closest(".field-row"), {type:()=>txType, amount:()=>parseAmount(amountInput.value), group});
-    // v1.25.0 — "Pagata da un'altra persona" (esclude "Spesa divisa o prestito")
-    const accRow=accChips.closest(".field-row");
-    if(existing?.otherPaid){ amountInput.value=String(existing.otherPaid.total||existing.amount).replace(".",","); autoGrowAmountInput(amountInput); }
-    const other=mountOtherPaid(node, shared && node.querySelector(".shared-field") || accRow, {type:()=>txType, amount:()=>parseAmount(amountInput.value), existing, preset,
-      onChange:inf=>{
-        accRow.hidden=inf.on;
-        if(inf.on){ shared.setOff(); node.querySelector(".shared-field:not(.other-paid-field)")?.setAttribute("hidden",""); }
-        else { node.querySelector(".shared-field:not(.other-paid-field)")?.removeAttribute("hidden"); shared.refresh(); }
-        // v1.25.1: categoria e macrocategoria restano libere (chi ha pagato è solo contabilità)
-      }});
+    { const tt=node.querySelector("#typeToggle"); if(tt) tt.hidden=txType!=="income"; }
+    const split=mountSplitPicker(node, destinationRow, {account:()=>selectedAccountId, toAccount:()=>destinationAccountId, type:()=>txType, amount:()=>parseAmount(amountInput.value), initial:existing?.split || prefill?.split, initialGroup:existing?.groupId || prefill?.groupId});
 
     node.querySelector("#saveTxBtn").addEventListener("click", ()=>{
       const amount = parseAmount(amountInput.value);
-      const sharedInfo=shared.get();
-      if(sharedInfo.on && !sharedInfo.person){ showToast("Scrivi chi ti deve la sua parte"); return; }
       const transfer=txType==="transfer";
-      const otherInfo=other.get();
-      if(otherInfo.on && !otherInfo.person){ showToast("Scrivi chi ha pagato"); return; }
-      const missing=[]; if(!transfer&&!nameInput.value.trim()) missing.push("nome"); if(amount<=0) missing.push("importo"); if(!transfer&&!selectedCategoryId&&!(sharedInfo.on&&sharedInfo.pct===0)) missing.push("categoria"); if((!selectedAccountId||loanAccount(selectedAccountId))&&!otherInfo.on&&!sharedInfo.on&&!group) missing.push("conto"); if(transfer&&!destinationAccountId) missing.push("conto destinazione"); if(!dateInput.value) missing.push("data");
+      const missing=[]; if(!transfer&&!nameInput.value.trim()) missing.push("nome"); if(amount<=0) missing.push("importo"); if(!transfer&&!selectedCategoryId) missing.push("categoria"); if(!selectedAccountId) missing.push("conto"); if(transfer&&!destinationAccountId) missing.push("conto destinazione"); if(!dateInput.value) missing.push("data");
       if(missing.length){showToast("Inserisci: "+missing.join(", "));if(amount<=0) amountInput.focus();return;}
       if(dateInput.value > todayISO()){
         showToast("Per una data futura usa un movimento Pianificato");
@@ -3655,73 +3891,21 @@ function openAddTransaction(txId,preset=null){
         return;
       }
 
-      if(!transfer && txType==="expense" && otherInfo.on && !group){
-        // Spesa pagata da un altro: la mia parte esce dal suo conto "Da pagare" (debito), non dai miei conti.
-        const la=ensureLoanAccount(otherInfo.person,"pay");
-        const mine=round2(amount*otherInfo.pct/100);
-        const t=existing||{id:uid()};
-        Object.assign(t,{date:dateInput.value,amount:mine,type:"expense",name:nameInput.value.trim(),categoryId:selectedCategoryId,accountId:la.id,toAccountId:null,note:noteInput.value.trim(),otherPaid:{person:la.person,total:amount,pct:otherInfo.pct}});
-        if(!editing) state.transactions.push(t);
-        state.lastOtherPayer=la.person;
-        balanceCache.clear(); persist();
-        const d=new Date(t.date+"T00:00:00"); viewYear=d.getFullYear(); viewMonth=d.getMonth();
-        renderAll(); close();
-        showToast(`Spesa registrata: devi ${balancesHidden?"••••":fmt(mine)} a ${la.person}`);
-        setTimeout(()=>budgetAlertFor(t),1800);
-        return;
-      }
-      if(existing?.otherPaid && !otherInfo.on){ delete existing.otherPaid; }
-      if(!transfer && txType==="expense" && (group || sharedInfo.on)){
-        const saved=saveSharedGroup({group,total:amount,shared:sharedInfo,fields:{date:dateInput.value,name:nameInput.value.trim(),categoryId:selectedCategoryId,accountId:selectedAccountId,note:noteInput.value.trim()}});
-        persist();
-        const sd=new Date(saved.date+"T00:00:00"); viewYear=sd.getFullYear(); viewMonth=sd.getMonth();
-        renderAll(); close(); return;
-      }
       const t = existing || {id:uid()};
       t.date=dateInput.value; t.amount=amount; t.type=txType;
       t.name=transfer?transferName(selectedAccountId,destinationAccountId):nameInput.value.trim(); t.categoryId=transfer?null:selectedCategoryId; t.accountId=selectedAccountId; t.toAccountId=transfer?destinationAccountId:null; t.note=noteInput.value.trim();
+      t.split=transfer?null:split.get();
+      t.groupId=transfer?null:split.getGroup();
       if(!editing) state.transactions.push(t);
+      if(!editing && typeof prefill?.onSaved==="function") prefill.onSaved(t);
+      state.couple.lastPayer=accOwner(t.accountId);
       persist();
       const d = new Date(t.date+"T00:00:00");
       viewYear = d.getFullYear(); viewMonth = d.getMonth();
       renderAll();
       close();
-      if(t.type==="expense") setTimeout(()=>budgetAlertFor(t),350);
     });
   });
-}
-/* v1.23.0 — Categoria suggerita dal nome: prima i tuoi movimenti con lo stesso nome (o la stessa
-   prima parola), poi parole note (Esselunga → Spesa, Enel → Bollette…) abbinate alle tue categorie. */
-const CAT_KEYWORDS=[
-  [/esselunga|coop\b|conad|lidl|carrefour|eurospin|pam\b|aldi|penny|supermerc|iper\b|naturasi|spesa/i,["spesa","alimentari","supermercato"]],
-  [/eni\b|q8|ip\b|tamoil|esso|benzina|carburante|diesel|autostrad|telepass|atm\b|trenitalia|italo|treno|metro|taxi|uber|parcheggio|bollo auto/i,["trasporti","auto","carburante","benzina"]],
-  [/enel|a2a|edison|iren|hera|luce|gas\b|acqua|bolletta|fastweb|tim\b|vodafone|iliad|windtre|internet|fibra/i,["bollette","utenze","casa"]],
-  [/farmacia|medic|dentist|visita|ticket|ospedal|analisi|ottico/i,["salute","farmacia","medico"]],
-  [/netflix|spotify|disney|prime video|dazn|cinema|teatro|concerto|ristorant|pizzeria|bar\b|pub\b|aperitivo|sushi|cena|pranzo/i,["svago","ristoranti","tempo libero","abbonamenti"]],
-  [/affitto|condominio|mutuo|ikea|leroy|brico|arredo/i,["casa","affitto","affitto / mutuo"]],
-  [/stipendio|busta paga|salario/i,["stipendio"]],
-  [/zara|h&m|decathlon|scarpe|abbigliamento|vestit/i,["abbigliamento","shopping"]],
-];
-function suggestCategoryFor(name,kind){
-  const raw=String(name||"").trim().toLowerCase(); if(raw.length<3) return null;
-  const cats=state.categories.filter(c=>c.kind===kind), ok=new Set(cats.map(c=>c.id));
-  const count=filter=>{ const m=new Map(); state.transactions.forEach(t=>{ if(t.type!==kind||!ok.has(t.categoryId)||!filter(String(t.name||"").trim().toLowerCase())) return; m.set(t.categoryId,(m.get(t.categoryId)||0)+1); }); let best=null,n=0; m.forEach((v,k)=>{ if(v>n){n=v;best=k;} }); return best; };
-  const exact=count(n=>n===raw); if(exact) return exact;
-  const first=raw.split(/\s+/)[0];
-  if(first.length>=4){ const byWord=count(n=>n.split(/\s+/)[0]===first); if(byWord) return byWord; }
-  for(const [re,names] of CAT_KEYWORDS){ if(!re.test(raw)) continue; for(const nm of names){ const c=cats.find(c=>c.name.toLowerCase()===nm)||cats.find(c=>c.name.toLowerCase().includes(nm)); if(c) return c.id; } }
-  return null;
-}
-/* v1.23.0 — Avviso budget: dopo una spesa, se la sua categoria arriva all'80% o supera il budget del mese. */
-function budgetAlertFor(t){
-  const c=categoriesById()[t.categoryId]; if(!c||!(Number(c.budget)>0)) return;
-  const ym=String(t.date).slice(0,7);
-  const spent=state.transactions.filter(x=>x.type==="expense"&&x.categoryId===c.id&&String(x.date).startsWith(ym)&&!x.isBalanceAdjustment).reduce((s,x)=>s+x.amount,0);
-  const before=spent-t.amount, b=Number(c.budget), pct=Math.round(spent/b*100);
-  const amt=v=>balancesHidden?"••••":fmt(v);
-  if(spent>b && before<=b) showToast(`⚠️ Budget ${c.emoji||""} ${c.name} superato: ${amt(spent)} su ${amt(b)} (${pct}%)`);
-  else if(spent>b) showToast(`⚠️ ${c.emoji||""} ${c.name}: ${amt(spent)} su ${amt(b)} di budget (${pct}%)`);
-  else if(spent>=b*0.8 && before<b*0.8) showToast(`🟡 ${c.emoji||""} ${c.name} all'${pct}% del budget: restano ${amt(b-spent)}`);
 }
 /* v1.10.7 — Il "+" apre sempre la stessa scelta, in tutte le sezioni tranne Altro. */
 function openAddChoice(){
@@ -3734,98 +3918,30 @@ function openAddChoice(){
       <div class="movement-action-handle" aria-hidden="true"></div>
       <p class="movement-action-title">Cosa vuoi aggiungere?</p>
       <div class="movement-action-buttons add-choice-grid">
-        <button type="button" class="movement-action-btn add-recent" data-add-kind="tx"><span class="movement-action-icon" aria-hidden="true">＋</span><span>Movimento</span></button>
-        <button type="button" class="movement-action-btn edit" data-add-kind="recurring"><span class="movement-action-icon" aria-hidden="true">↻</span><span>Ricorrente</span></button>
-        <button type="button" class="movement-action-btn duplicate" data-add-kind="planned"><span class="movement-action-icon" aria-hidden="true">◷</span><span>Pianificato</span></button>
-        <button type="button" class="movement-action-btn add-transfer" data-add-kind="transfer"><span class="movement-action-icon" aria-hidden="true">↔</span><span>Trasferimento</span></button>
-        <button type="button" class="movement-action-btn add-atm" data-add-kind="atm"><span class="movement-action-icon" aria-hidden="true">🏧</span><span>Prelievo ATM</span></button>
-        <button type="button" class="movement-action-btn add-repay" data-add-kind="repay"><span class="movement-action-icon" aria-hidden="true">🤝</span><span>Prestito o restituzione</span></button>
+        <button type="button" class="movement-action-btn add-recent" data-add-kind="tx"><span class="movement-action-icon" aria-hidden="true">＋</span><span>Spesa</span></button>
+        <button type="button" class="movement-action-btn add-settle-small" data-add-kind="settle"><span class="movement-action-icon" aria-hidden="true">🤝</span><span>Rimborso</span></button>
+        <button type="button" class="movement-action-btn add-fixed" data-add-kind="fixed"><span class="movement-action-icon" aria-hidden="true">🔁</span><span>Spesa fissa</span></button>
+        <button type="button" class="movement-action-btn add-list" data-add-kind="list"><span class="movement-action-icon" aria-hidden="true">🛒</span><span>Da comprare</span></button>
       </div>
       <button type="button" class="movement-action-cancel">Annulla</button>
     </div>`;
   const go=fn=>()=>{overlay.remove();fn();};
   overlay.querySelector('[data-add-kind="tx"]').addEventListener("click",go(()=>openAddTransaction()));
-  overlay.querySelector('[data-add-kind="recurring"]').addEventListener("click",go(()=>openRecurringForm(null)));
-  overlay.querySelector('[data-add-kind="planned"]').addEventListener("click",go(()=>openPlannedForm(null)));
-  overlay.querySelector('[data-add-kind="transfer"]').addEventListener("click",go(()=>openTransferForm()));
-  overlay.querySelector('[data-add-kind="atm"]').addEventListener("click",go(()=>openAtmWithdrawal()));
-  overlay.querySelector('[data-add-kind="repay"]').addEventListener("click",go(()=>openLoanForm(null,{mode:"lend"})));
+  overlay.querySelector('[data-add-kind="settle"]').addEventListener("click",go(()=>openSettleForm("all")));
+  overlay.querySelector('[data-add-kind="fixed"]').addEventListener("click",go(()=>openRecurringForm()));
+  overlay.querySelector('[data-add-kind="list"]').addEventListener("click",go(()=>{ if(state.lists.length===1) openListDetail(state.lists[0].id); else switchView("liste"); }));
   overlay.querySelector(".movement-action-cancel").addEventListener("click",()=>overlay.remove());
   overlay.addEventListener("click",e=>{if(e.target===overlay) overlay.remove();});
   document.body.appendChild(overlay);
   bindOverlaySwipeDismiss(overlay);
   requestAnimationFrame(()=>overlay.classList.add("show"));
 }
-/* v1.10.7 — Prelievo ATM: trasferimento da una carta/conto ai contanti, con commissione facoltativa
-   registrata come uscita sulla carta (categoria "Costi bancari"/"Commissioni", creata se manca). */
-function feeCategoryId(){
-  let c=state.categories.find(c=>c.kind==="expense"&&/costi bancari|commission/i.test(c.name));
-  if(!c){c={id:uid(),name:"Commissioni bancarie",emoji:"🏧",color:"#4FA8C9",kind:"expense",budget:null,macroCategoryId:(state.macroCategories.find(m=>/abbonament|banc/i.test(m.name)&&m.kind!=="income")||{}).id||null};state.categories.push(c);}
-  return c.id;
-}
-/* v1.10.8 — Il prelievo si può anche modificare: si apre con i dati salvati (commissione compresa). */
-function openAtmWithdrawal(txId=null){
-  const existing=txId?state.transactions.find(t=>t.id===txId&&t.type==="transfer"):null;
-  const existingFee=existing?.atmGroup?state.transactions.find(t=>t.atmGroup===existing.atmGroup&&t.type==="expense"):null;
-  const cash=state.accounts.find(a=>/contant|cash/i.test(a.name));
-  let fromId=existing?.accountId||state.accounts.find(a=>a.id===state.mainAccountId&&a.id!==cash?.id)?.id||state.accounts.find(a=>a.id!==cash?.id)?.id||null;
-  let toId=existing?.toAccountId||cash?.id||null;
-  openSheet("tpl-atm-withdrawal",(node,close)=>{
-    const amountInput=node.querySelector("#atmAmountInput"), feeInput=node.querySelector("#atmFeeInput"), dateInput=node.querySelector("#atmDateInput"), noteInput=node.querySelector("#atmNoteInput");
-    const fromChips=node.querySelector("#atmFromChips"), toChips=node.querySelector("#atmToChips"), total=node.querySelector("#atmTotal");
-    dateInput.value=existing?.date||todayISO();
-    dateInput.max=todayISO();
-    if(existing){
-      
-      amountInput.value=String(existing.amount).replace(".",",");
-      feeInput.value=existingFee?String(existingFee.amount).replace(".",","):"";
-      noteInput.value=existing.note&&existing.note!=="Prelievo ATM"?existing.note:"";
-    }
-    if(typeof autoGrowAmountInput==="function") autoGrowAmountInput(amountInput);
-    const chips=(wrap,getSel,setSel,exclude)=>{
-      wrap.innerHTML="";
-      state.accounts.filter(a=>a.id!==exclude&&!isLoanAccount(a)).forEach(a=>{
-        const b=document.createElement("button");b.type="button";b.className="chip"+(getSel()===a.id?" active":"");
-        b.innerHTML=`<span class="em">●</span>${escapeHtml(a.name)}`;b.querySelector(".em").style.color=safeColor(a.color);
-        b.addEventListener("click",()=>{setSel(a.id);paint();});wrap.appendChild(b);
-      });
-    };
-    const paint=()=>{
-      if(toId===fromId) toId=state.accounts.find(a=>a.id!==fromId&&/contant|cash/i.test(a.name))?.id||null;
-      chips(fromChips,()=>fromId,v=>{fromId=v;},null);
-      chips(toChips,()=>toId,v=>{toId=v;},fromId);
-      const amt=parseAmount(amountInput.value), fee=parseAmount(feeInput.value);
-      total.textContent=amt>0?`Dalla carta escono ${fmt(amt+fee)}${fee>0?` (${fmt(amt)} prelievo + ${fmt(fee)} commissione)`:""}`:"";
-    };
-    amountInput.addEventListener("input",paint);feeInput.addEventListener("input",paint);
-    node.querySelector("#saveAtmBtn").addEventListener("click",()=>{
-      const amt=parseAmount(amountInput.value), fee=parseAmount(feeInput.value);
-      if(!(amt>0)){showToast("Inserisci l'importo prelevato");amountInput.focus();return;}
-      if(!fromId||!toId||fromId===toId){showToast("Scegli la carta e il conto contanti");return;}
-      const date=dateInput.value||todayISO();
-      if(date>todayISO()){showToast("Un prelievo non può avere una data futura");dateInput.focus();return;}
-      const group=existing?.atmGroup||uid();
-      const t=existing||{id:uid()};
-      Object.assign(t,{date,amount:amt,type:"transfer",name:transferName(fromId,toId),categoryId:null,accountId:fromId,toAccountId:toId,note:noteInput.value.trim()||"Prelievo ATM",atm:true,atmGroup:group});
-      if(!existing) state.transactions.push(t);
-      if(fee>0){
-        if(existingFee) Object.assign(existingFee,{date,amount:fee,accountId:fromId});
-        else state.transactions.push({id:uid(),date,amount:fee,type:"expense",name:"Commissione prelievo ATM",categoryId:feeCategoryId(),accountId:fromId,toAccountId:null,note:"",atmGroup:group});
-      } else if(existingFee){
-        state.transactions=state.transactions.filter(x=>x.id!==existingFee.id);
-      }
-      persist();renderAll();close();
-      showToast(existing?"Prelievo aggiornato":fee>0?`Prelievo di ${fmt(amt)} + commissione ${fmt(fee)} registrati`:`Prelievo di ${fmt(amt)} registrato`);
-    });
-    paint();
-  });
-}
 /* v1.10.8 — Trasferimento come sezione a sé dal "+": stesso stile del Prelievo ATM.
    Resta un movimento reale di tipo "transfer" (compare nei Movimenti recenti). */
-function openTransferForm(txId=null,preset=null){
+function openTransferForm(txId=null){
   const existing=txId?state.transactions.find(t=>t.id===txId&&t.type==="transfer"):null;
-  let fromId=existing?.accountId||preset?.fromId||state.accounts.find(a=>a.id===state.mainAccountId)?.id||state.accounts[0]?.id||null;
-  let toId=existing?.toAccountId||preset?.toId||null;
+  let fromId=existing?.accountId||state.accounts.find(a=>a.id===state.mainAccountId)?.id||state.accounts[0]?.id||null;
+  let toId=existing?.toAccountId||null;
   openSheet("tpl-transfer",(node,close)=>{
     const amountInput=node.querySelector("#transferAmountInput"), dateInput=node.querySelector("#transferDateInput"), noteInput=node.querySelector("#transferNoteInput");
     const fromChips=node.querySelector("#transferFromChips"), toChips=node.querySelector("#transferToChips"), summary=node.querySelector("#transferSummary");
@@ -3836,14 +3952,11 @@ function openTransferForm(txId=null,preset=null){
       
       amountInput.value=String(existing.amount).replace(".",",");
       noteInput.value=existing.note||"";
-    } else if(preset){
-      if(preset.amount>0) amountInput.value=String(Math.round(preset.amount*100)/100).replace(".",",");
-      if(preset.title){ node.querySelector("#transferFormTitle").textContent=preset.title; noteInput.value=preset.title; dateInput.value=todayISO(); }
     }
     autoGrowAmountInput(amountInput);
     const chips=(wrap,getSel,setSel,exclude)=>{
       wrap.innerHTML="";
-      state.accounts.filter(a=>a.id!==exclude&&!isLoanAccount(a)).forEach(a=>{
+      state.accounts.filter(a=>a.id!==exclude).forEach(a=>{
         const b=document.createElement("button");b.type="button";b.className="chip"+(getSel()===a.id?" active":"");
         b.innerHTML=`<span class="em">●</span>${escapeHtml(a.name)}`;b.querySelector(".em").style.color=safeColor(a.color);
         b.addEventListener("click",()=>{setSel(a.id);paint();});wrap.appendChild(b);
@@ -3857,6 +3970,7 @@ function openTransferForm(txId=null,preset=null){
       summary.textContent=amt>0&&fromId&&toId?`${transferName(fromId,toId)} · ${fmt(amt)}`:"";
     };
     amountInput.addEventListener("input",paint);
+    const split=mountSplitPicker(node, toChips.closest(".field-row"), {account:()=>fromId, toAccount:()=>toId, type:()=>"transfer", amount:()=>parseAmount(amountInput.value), initialGroup:existing?.groupId});
     const del=node.querySelector("#deleteTransferBtn");
     if(existing){
       del.hidden=false;
@@ -3874,6 +3988,10 @@ function openTransferForm(txId=null,preset=null){
       if(dateInput.value>todayISO()){showToast("Un trasferimento non può avere una data futura");dateInput.focus();return;}
       const t=existing||{id:uid()};
       Object.assign(t,{date:dateInput.value,amount,type:"transfer",name:transferName(fromId,toId),categoryId:null,accountId:fromId,toAccountId:toId,note:noteInput.value.trim()});
+      const settle=Math.abs(txDebt(t))>0;
+      t.groupId=settle?split.getGroup():null;
+      if(!settle) delete t.settleAlloc;
+      else if(t.settleAlloc) rescaleAlloc(t);
       if(!existing) state.transactions.push(t);
       persist();
       const d=new Date(t.date+"T00:00:00"); viewYear=d.getFullYear(); viewMonth=d.getMonth();
@@ -3888,67 +4006,49 @@ document.getElementById("fabAdd").addEventListener("click", e=>{
   openAddChoice();
 });
 document.getElementById("toggleHomeBalance").addEventListener("click",toggleBalances);
-document.getElementById("toggleAccountsBalance").addEventListener("click",toggleBalances);
-document.getElementById("toggleRPBalance")?.addEventListener("click",toggleBalances);
-/* v1.29.0 — Un solo occhio, fermo in alto a destra in tutte le schede. Quelli dentro le
-   schede restano nel codice (li usano altre funzioni) ma non si vedono più. */
+/* v1.24.0 — Un solo occhio, fermo in alto a destra in tutte le schede. */
 document.getElementById("toggleBalanceFixed")?.addEventListener("click",toggleBalances);
 
-/* ===================== v1.38.0 — "Com'è andato il mese" =====================
-   Prende i numeri che l'app ha già (entrate, uscite, budget, scadenze, confronto con
-   l'anno scorso) e li fa raccontare a parole. Non calcola niente di nuovo: se un dato
-   non c'è, non viene inventato. */
-function riepilogoContesto(){
-  const tx=periodTx("home").filter(t=>!t.isBalanceAdjustment&&t.type!=="transfer");
-  const somma=k=>tx.filter(t=>t.type===k).reduce((s,t)=>s+t.amount,0);
-  const entrate=somma("income"), uscite=somma("expense");
+/* ===================== v1.28.0 — "Com'è andato il mese" (coppia) =====================
+   Legge i numeri che l'app ha già — chi ha pagato, le quote, il saldo fra voi, le
+   spese fisse, le liste — e li racconta in due righe. Niente cifre inventate. */
+function riepilogoCoppiaContesto(){
+  const st=coupleMonthStats(viewYear,viewMonth);
+  const tot=st.paid.a+st.paid.b+st.paid.joint;
+  const saldo=groupBalance(null);
+  const tx=state.transactions.filter(t=>t.date.startsWith(`${viewYear}-${pad2(viewMonth+1)}`)&&t.type==="expense"&&!t.isBalanceAdjustment);
   const perCat={};
-  tx.filter(t=>t.type==="expense").forEach(t=>{
-    const k=rollUpCategoryId(t.categoryId);
-    perCat[k]=(perCat[k]||0)+t.amount;
-  });
-  const cats=categoriesById();
-  const categorie=Object.entries(perCat).sort((a,b)=>b[1]-a[1]).slice(0,8)
-    .map(([id,v])=>({nome:cats[id]?categoryLabel(id,{sempre:true}):"Senza categoria",speso:Math.round(v*100)/100,
-      budget:cats[id]&&cats[id].budget?cats[id].budget:null}));
-  /* mese precedente, stesso periodo */
-  const pm=new Date(viewYear,viewMonth-1,1);
-  const prefixPrec=`${pm.getFullYear()}-${pad2(pm.getMonth()+1)}`;
-  const uscitePrec=state.transactions.filter(t=>t.date.startsWith(prefixPrec)&&t.type==="expense"&&!t.isBalanceAdjustment).reduce((s,t)=>s+t.amount,0);
-  /* in arrivo entro fine mese */
-  const inArrivo=[
-    ...state.recurring.filter(r=>r.active!==false).map(r=>({r,dates:recurringDatesForMonth(r)}))
-      .filter(x=>x.dates.length>0).flatMap(x=>x.dates.map(()=>x.r)),
-    ...plannedForRPMonth()
-  ].slice(0,10).map(x=>({nome:x.name||"",importo:x.amount,tipo:x.type}));
+  tx.forEach(t=>{ const c=categoriesById()[t.categoryId]; const k=c?c.name:"Senza categoria"; perCat[k]=(perCat[k]||0)+t.amount; });
+  const categorie=Object.entries(perCat).sort((a,b)=>b[1]-a[1]).slice(0,6).map(([nome,v])=>({nome,speso:Math.round(v*100)/100}));
+  const liste=state.lists.map(l=>({nome:l.name,daComprare:l.items.filter(i=>!i.done).length}));
   return {
     mese:`${MESI[viewMonth]} ${viewYear}`,
-    entrate:Math.round(entrate*100)/100,
-    uscite:Math.round(uscite*100)/100,
-    saldoDelPeriodo:Math.round((entrate-uscite)*100)/100,
-    usciteMesePrecedente:Math.round(uscitePrec*100)/100,
-    liquiditaSuiConti:Math.round(liquidBalance()*100)/100,
-    categorie, inArrivo,
+    totaleSpeso:Math.round(tot*100)/100,
+    haPagato:{[personName("a")]:Math.round(st.paid.a*100)/100,[personName("b")]:Math.round(st.paid.b*100)/100,cassaComune:Math.round(st.paid.joint*100)/100},
+    quote:{[personName("a")]:Math.round(st.quota.a*100)/100,[personName("b")]:Math.round(st.quota.b*100)/100},
+    saldoFraVoi:Math.abs(saldo)<0.005?"in pari":`${personName(saldo>0?"b":"a")} deve ${fmt(Math.abs(saldo))} a ${personName(saldo>0?"a":"b")}`,
+    numeroSpeseDivise:st.shared.length,
+    listeDellaSpesa:liste,
     numeroMovimenti:tx.length
   };
 }
-function renderAiMonth(){
-  const box=document.getElementById("aiMonthBlock");
+function renderAiCoppia(){
+  const box=document.getElementById("aiCoupleBlock");
   if(!box) return;
   const on=!!(window.SuiteAI && SuiteAI.disponibile());
   box.hidden=!on;
   if(!on || box._bound) return;
   box._bound=true;
-  const btn=document.getElementById("aiMonthBtn"), out=document.getElementById("aiMonthBox");
+  const btn=document.getElementById("aiCoupleBtn"), out=document.getElementById("aiCoupleBox");
   btn.addEventListener("click",async()=>{
     btn.disabled=true;
-    out.innerHTML=`<p class="ai-note">Sto guardando i numeri di ${MESI[viewMonth].toLowerCase()}…</p>`;
-    const r=await SuiteAI.riepilogo(riepilogoContesto(),`Com'è andato ${MESI[viewMonth].toLowerCase()} ${viewYear}?`);
+    out.innerHTML=`<p class="ai-note">Sto guardando le spese di ${MESI[viewMonth].toLowerCase()}…</p>`;
+    const r=await SuiteAI.riepilogo(riepilogoCoppiaContesto(),`Com'è andato ${MESI[viewMonth].toLowerCase()} per noi due?`);
     btn.disabled=false;
     if(!r){ out.innerHTML=`<p class="ai-note">Non ci sono riuscito adesso. Riprova fra poco.</p>`; return; }
     out.innerHTML=`<p>${escapeHtml(r.testo)}</p>`+
       (r.punti.length?`<ul>${r.punti.map(x=>`<li>${escapeHtml(x)}</li>`).join("")}</ul>`:"")+
-      `<p class="ai-note">Scritto leggendo i tuoi numeri di ${escapeHtml(MESI[viewMonth])} ${viewYear}. Ricontrolla sempre le cifre.</p>`;
+      `<p class="ai-note">Scritto leggendo le vostre spese di ${escapeHtml(MESI[viewMonth])} ${viewYear}. Ricontrolla sempre le cifre.</p>`;
   });
 }
 
@@ -3972,12 +4072,13 @@ function openTxDetail(txId){
   if(!t) return;
   openSheet("tpl-tx-detail", (node, close)=>{
     const transfer=t.type==="transfer";
-    const cat = transfer ? {name:"Trasferimento",emoji:"↔"} : (t.loanOffset ? {name:"Compensazione crediti/debiti",emoji:"⚖️"} : t.loanWriteOff ? {name:"Abbuono (prestito chiuso)",emoji:"✅"} : t.loanOld ? {name:loanAccount(t.accountId)?.receivable?"Prestito vecchio (fuori saldo)":"Debito vecchio (fuori saldo)",emoji:"🤝"} : t.isBalanceAdjustment ? {name:"Rettifica saldo",emoji:"⚖️"} : (categoriesById()[t.categoryId] || { name:"Categoria eliminata", emoji:"❔" }));
+    const cat = transfer ? {name:"Trasferimento",emoji:"↔"} : (t.isBalanceAdjustment ? {name:"Rettifica saldo",emoji:"⚖️"} : (categoriesById()[t.categoryId] || { name:"Categoria eliminata", emoji:"❔" }));
     const acc = accountsById()[t.accountId] || { name:"Conto eliminato" };
     const destination=accountsById()[t.toAccountId] || {name:"Conto eliminato"};
     node.querySelector("#txDetailBody").innerHTML = `
-      <div class="tx-detail-row"><span class="k">Importo</span><span class="v ${t.type}">${transfer?"↔":t.type==="income"?"+":"−"}${fmt(t.amount)}</span></div>
-      ${transfer?`<div class="tx-detail-row"><span class="k">Da conto</span><span class="v">${escapeHtml(acc.name)}</span></div><div class="tx-detail-row"><span class="k">A conto</span><span class="v">${escapeHtml(destination.name)}</span></div>`:`<div class="tx-detail-row"><span class="k">Categoria</span><span class="v">${escapeHtml(cat.emoji)} ${escapeHtml(cat.name)}</span></div><div class="tx-detail-row"><span class="k">Conto</span><span class="v">${escapeHtml(acc.name)}</span></div>`}
+      <div class="tx-detail-row"><span class="k">Importo</span><span class="v ${t.type}">${transfer?"↔":t.type==="income"?"+":""}${fmt(t.amount)}</span></div>
+      ${transfer?`<div class="tx-detail-row"><span class="k">Da conto</span><span class="v">${escapeHtml(acc.name)}</span></div><div class="tx-detail-row"><span class="k">A conto</span><span class="v">${escapeHtml(destination.name)}</span></div>`:`<div class="tx-detail-row"><span class="k">Categoria</span><span class="v">${escapeHtml(cat.emoji)} ${escapeHtml(cat.name)}</span></div>`}
+      ${coupleDetailRows(t)}
       <div class="tx-detail-row"><span class="k">Data</span><span class="v">${t.date.split("-").reverse().join("/")}</span></div>
       ${t.recurringId?`<div class="tx-detail-row"><span class="k">Origine</span><span class="v">Movimento ricorrente</span></div>`:t.plannedId?`<div class="tx-detail-row"><span class="k">Origine</span><span class="v">Movimento pianificato</span></div>`:""}
       ${t.note?`<div class="tx-detail-row"><span class="k">Nota</span><span class="v">${escapeHtml(t.note)}</span></div>`:""}
@@ -4011,7 +4112,6 @@ function openScheduledDetail(kind, id, occurrenceDate){
   });
 }
 
-/* ---------------- Evoluzione saldo conto ---------------- */
 function buildLineSVG(data, color){
   const w=320, h=150, padL=6, padB=22, padT=14;
   const vals = data.map(d=>d.balance);
@@ -4078,301 +4178,20 @@ function openChartFullscreen(title,help,svg,data){
   });
 }
 function openChartInfo(kind){
+  const ndTitle={fisse:"Spese fisse",categoria:"Categoria",gruppo:"Gruppo",dividi:"Come dividere",gruppi:"Gruppi",liste:"Liste"}[kind];
   const text={
+    categoria:"Dice cosa avete comprato (Spesa, Ristoranti, Bollette…). Serve per i grafici e per cercare i movimenti; non cambia chi deve soldi a chi.",
+    gruppo:"Dice in quale conto tra voi finisce la spesa (es. Casa, Spese di coppia, Viaggi). Ogni gruppo ha il suo saldo; in Saldi vedi il totale e il saldo di ciascun gruppo.",
+    dividi:"Quanto della spesa spetta a ciascuno. A metà, con una percentuale, tutta all'altra persona oppure solo a chi ha pagato (spesa personale). Dalla cassa comune non si crea nessun debito.",
+    fisse:"Spese che si ripetono, come affitto, bollette o abbonamenti. Scegli quanto, ogni quanto, chi paga, il gruppo e come dividere: alla data giusta la spesa viene registrata da sola nei movimenti e aggiorna il saldo tra voi. Tocca una spesa fissa per modificarla, metterla in pausa o eliminarla.",
+    gruppi:"Ogni gruppo è un conto separato tra voi, con il suo saldo (es. Casa, Viaggio a Lisbona). Il numero grande in alto è la somma di tutti i gruppi. Tocca un gruppo per vederne i movimenti o saldarlo.",
+    liste:"Tocca una lista per aggiungere articoli: scrivendoli, incollando una lista (ogni riga diventa un articolo) o con una foto. Tocca un prodotto quando lo prendi: finisce in “Acquistato” con data e ora e nella cronologia 🕘 (linguetta a destra). Scorrendo puoi metterlo nei ★ preferiti o eliminarlo: va nel cestino della lista (🗑 in fondo); dalla pagina Liste trovi il cestino di tutte le liste. Gli acquistati si possono registrare come spesa.",
     ripartizione:"Mostra come entrate o uscite del periodo selezionato sono distribuite fra categorie o macrocategorie. Non considera i trasferimenti fra conti.",
     andamento:"Entrate/Uscite mostra i flussi del periodo. Saldo cumulato mostra il saldo reale, partendo dal saldo presente prima dell’inizio del periodo. Tieni premuto un punto per leggere il giorno.",
     conti:"Mostra la variazione netta di ciascun conto nel periodo scelto. I trasferimenti compaiono come uscita nel conto di origine e entrata in quello di destinazione."
   }[kind]||"";
-  openSheet("tpl-chart-fullscreen",node=>{node.querySelector("#chartFullscreenTitle").textContent="Come leggere il grafico";node.querySelector("#chartFullscreenHelp").hidden=true;node.querySelector("#chartFullscreenBody").innerHTML=`<div class="chart-info-card">${escapeHtml(text)}</div>`;});
+  openSheet("tpl-chart-fullscreen",node=>{node.querySelector("#chartFullscreenTitle").textContent=ndTitle||"Come leggere il grafico";if(ndTitle)node.classList.add("nd-info-sheet");node.querySelector("#chartFullscreenHelp").hidden=true;node.querySelector("#chartFullscreenBody").innerHTML=`<div class="chart-info-card">${escapeHtml(text)}</div>`;});
 }
-
-function isoAddDays(iso,n){const d=new Date(iso+"T12:00:00");d.setDate(d.getDate()+n);return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;}
-function isoDiffDays(a,b){return Math.round((new Date(b+"T12:00:00")-new Date(a+"T12:00:00"))/864e5);}
-function evolutionRangeDates(range,custom){
-  // v1.10.2: "ultimi N mesi" finiscono oggi; "Periodo" usa le date scelte nel calendario.
-  const today=todayISO();
-  if(range==="custom"&&custom) return {from:custom.from,to:custom.to};
-  const n={"1m":1,"2m":2,"3m":3,"6":6,"12":12,"24":24}[range]||12;
-  const d=new Date(today+"T12:00:00");d.setMonth(d.getMonth()-n);
-  return {from:isoAddDays(`${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`,1),to:today};
-}
-function evolutionSeries(accountId,from,to){
-  const days=Math.max(0,isoDiffDays(from,to));
-  const step=days<=92?1:days<=430?7:15;
-  const out=[];
-  const point=iso=>{const d=new Date(iso+"T12:00:00");const m=d.getMonth();
-    return {date:iso,label:days>430?`${MESI_BREVI[m]} ${String(d.getFullYear()).slice(2)}`:`${d.getDate()} ${MESI_BREVI[m].toLowerCase()}`,full:`${d.getDate()} ${MESI[m].toLowerCase()} ${d.getFullYear()}`,balance:accountBalanceAtDate(accountId,iso)};};
-  for(let i=0;i<=days;i+=step) out.push(point(isoAddDays(from,i)));
-  if(!out.length||out[out.length-1].date!==to) out.push(point(to));
-  return out;
-}
-function renderAccountEvolution(node, accountId, range, custom){
-  const acc = state.accounts.find(a=>a.id===accountId);
-  if(!acc) return;
-  const {from,to}=evolutionRangeDates(range,custom);
-  const data=evolutionSeries(accountId,from,to);
-  const wrap=node.querySelector("#accountEvolutionChartWrap");
-  // v1.10.1: la variazione parte da quando hai registrato il saldo reale del conto (prima rettifica manuale del saldo),
-  // non dallo zero precedente. Se quella data è prima dell'inizio del periodo, si parte dall'inizio del periodo.
-  const anchorDay = realBalanceDate(accountId);
-  const startDay = data[0].date;
-  let base = data[0].balance, sinceText = null, anchorIndex = -1;
-  if(anchorDay && anchorDay > startDay){
-    base = accountBalanceAtDate(accountId, anchorDay);
-    anchorIndex = data.findIndex(d=>d.date>=anchorDay);
-    const dt=new Date(anchorDay+"T12:00:00");
-    sinceText = `dal ${dt.getDate()} ${MESI_BREVI[dt.getMonth()].toLowerCase()}${dt.getFullYear()!==new Date().getFullYear()?" "+dt.getFullYear():""}, quando hai registrato il saldo reale`;
-  }
-  buildAreaChart(wrap, data, {anchorIndex});
-  const current = data[data.length-1].balance;
-  const diff = current-base;
-  const pct = base>0 ? Math.round((diff/base)*100) : null;
-  const periodText = sinceText || (range==="custom" ? (evolutionRangeLabel({from,to}).includes("–")||from===to ? `dal ${shortDate(from)} al ${shortDate(to,true)}` : `in ${evolutionRangeLabel({from,to}).toLowerCase()}`) : ({"1m":"nell'ultimo mese","2m":"negli ultimi 2 mesi","3m":"negli ultimi 3 mesi","6":"negli ultimi 6 mesi","12":"nell'ultimo anno","24":"negli ultimi 2 anni"}[range]||"nel periodo"));
-  node.querySelector("#accountEvolutionLegend").innerHTML = `
-    <p class="evo-kicker">${to===todayISO()?"Saldo attuale":`Saldo al ${shortDate(to,true)}`}</p>
-    <p class="evo-hero">${balancesHidden?"••••":fmt(current)}</p>
-    <p class="evo-delta ${diff<0?"down":diff>0?"up":"flat"}"><span class="evo-delta-pill">${diff===0?"Nessuna variazione":`${diff>0?"▲":"▼"} ${balancesHidden?(pct!==null?`${pct>0?"+":""}${pct}%`:"••••"):`${fmtSigned(diff)}${pct!==null?` · ${pct>0?"+":""}${pct}%`:""}`}`}</span> ${periodText}</p>`;
-}
-
-/* v1.10.0 — Grafico ad area moderno: linea morbida, sfumatura, griglia leggera,
-   mirino con fumetto al tocco. Un solo colore (il saldo), testi con i colori del tema. */
-function realBalanceDate(accountId){
-  const adj=state.transactions.filter(t=>t.isBalanceAdjustment && t.accountId===accountId && (t.setsRealBalance || /^Saldo aggiornato manualmente/.test(t.note||"")));
-  if(!adj.length) return null;
-  return adj.map(t=>t.date).sort()[0];
-}
-function niceStep(range,count){
-  const raw=range/Math.max(1,count), mag=Math.pow(10,Math.floor(Math.log10(raw||1))), n=raw/mag;
-  return (n<=1?1:n<=2?2:n<=2.5?2.5:n<=5?5:10)*mag;
-}
-function compactEuro(v,step=1000){
-  const a=Math.abs(v), s=v<0?"−":"";
-  // Etichette sempre distinte: in "k" solo se il passo della griglia è di almeno 500 €.
-  if(a>=1000 && step>=500){const dec=step>=1000&&(a>=10000||step%1000===0)?0:1;return `${s}${(a/1000).toFixed(dec).replace(".",",").replace(/,0$/,"")}k\u00a0€`;}
-  return `${s}${Math.round(a).toLocaleString("it-IT")}\u00a0€`;
-}
-function monotonePath(pts){
-  const n=pts.length; if(n<2) return n?`M${pts[0].x},${pts[0].y}`:"";
-  const dx=[],dy=[],m=[],t=[];
-  for(let i=0;i<n-1;i++){dx[i]=pts[i+1].x-pts[i].x;dy[i]=pts[i+1].y-pts[i].y;m[i]=dy[i]/(dx[i]||1);}
-  t[0]=m[0];t[n-1]=m[n-2];
-  for(let i=1;i<n-1;i++) t[i]=(m[i-1]*m[i]<=0)?0:(3*(dx[i-1]+dx[i]))/((2*dx[i]+dx[i-1])/m[i-1]+(dx[i]+2*dx[i-1])/m[i]);
-  let d=`M${pts[0].x.toFixed(1)},${pts[0].y.toFixed(1)}`;
-  for(let i=0;i<n-1;i++){
-    const c1x=pts[i].x+dx[i]/3,c1y=pts[i].y+t[i]*dx[i]/3,c2x=pts[i+1].x-dx[i]/3,c2y=pts[i+1].y-t[i+1]*dx[i]/3;
-    d+=`C${c1x.toFixed(1)},${c1y.toFixed(1)} ${c2x.toFixed(1)},${c2y.toFixed(1)} ${pts[i+1].x.toFixed(1)},${pts[i+1].y.toFixed(1)}`;
-  }
-  return d;
-}
-function buildAreaChart(wrap,data,opts={}){
-  if(!wrap||!data.length) return;
-  const w=Math.max(280,Math.round(wrap.clientWidth||320)), h=200, padL=8, padR=12, padT=22, padB=26;
-  const vals=data.map(d=>d.balance);
-  let lo=Math.min(...vals), hi=Math.max(...vals);
-  if(lo===hi){lo-=Math.max(1,Math.abs(lo)*0.1);hi+=Math.max(1,Math.abs(hi)*0.1);}
-  const step=niceStep(hi-lo,3);
-  lo=Math.floor(lo/step)*step; hi=Math.ceil(hi/step)*step;
-  const X=i=>padL+(data.length>1?i*(w-padL-padR)/(data.length-1):(w-padL-padR)/2);
-  const Y=v=>padT+(h-padT-padB)*(1-(v-lo)/((hi-lo)||1));
-  const pts=data.map((d,i)=>({x:X(i),y:Y(d.balance)}));
-  const line=monotonePath(pts);
-  const base=Y(lo);
-  const area=`${line}L${pts[pts.length-1].x.toFixed(1)},${base.toFixed(1)}L${pts[0].x.toFixed(1)},${base.toFixed(1)}Z`;
-  let grid="";
-  for(let v=lo; v<=hi+step/2; v+=step){
-    const y=Y(v).toFixed(1), zero=Math.abs(v)<step/1000;
-    grid+=`<line x1="${padL}" x2="${w-padR}" y1="${y}" y2="${y}" class="${zero?"evo-zero":"evo-grid"}"/><text x="${padL}" y="${(Y(v)-5).toFixed(1)}" class="evo-ylab">${balancesHidden?"•••":compactEuro(v,step)}</text>`;
-  }
-  const k=Math.min(data.length,5); let xl="";
-  const used=new Set();
-  for(let j=0;j<k;j++){
-    const i=k===1?0:Math.round(j*(data.length-1)/(k-1)); if(used.has(i)) continue; used.add(i);
-    const anchor=j===0?"start":j===k-1?"end":"middle";
-    xl+=`<text x="${pts[i].x.toFixed(1)}" y="${h-7}" text-anchor="${anchor}" class="evo-xlab">${escapeHtml(data[i].label)}</text>`;
-  }
-  const last=pts[pts.length-1], gid="evoGrad"+Math.random().toString(36).slice(2,7);
-  wrap.innerHTML=`<svg class="evo-svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" role="img" aria-label="Andamento del saldo">
-    <defs><linearGradient id="${gid}" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" class="evo-stop-a"/><stop offset="100%" class="evo-stop-b"/></linearGradient></defs>
-    ${grid}
-    <path d="${area}" fill="url(#${gid})"/>
-    <path d="${line}" class="evo-line"/>
-    ${opts.anchorIndex>=0&&pts[opts.anchorIndex]?`<line class="evo-anchor" x1="${pts[opts.anchorIndex].x.toFixed(1)}" x2="${pts[opts.anchorIndex].x.toFixed(1)}" y1="${padT-4}" y2="${h-padB}"/><text class="evo-anchor-lab" x="${(pts[opts.anchorIndex].x+(pts[opts.anchorIndex].x>w*0.7?-4:4)).toFixed(1)}" y="${padT-8}" text-anchor="${pts[opts.anchorIndex].x>w*0.7?"end":"start"}">Saldo reale</text>`:""}
-    <line class="evo-cross" x1="0" x2="0" y1="${padT-6}" y2="${h-padB}" opacity="0"/>
-    <circle class="evo-last" cx="${last.x.toFixed(1)}" cy="${last.y.toFixed(1)}" r="5"/>
-    <circle class="evo-hover" cx="0" cy="0" r="5" opacity="0"/>
-    ${xl}
-    <rect class="evo-hit" x="0" y="0" width="${w}" height="${h}" fill="transparent"/>
-  </svg><div class="evo-tip" hidden></div>`;
-  const svg=wrap.querySelector("svg"), tip=wrap.querySelector(".evo-tip"), cross=svg.querySelector(".evo-cross"), dot=svg.querySelector(".evo-hover");
-  const show=e=>{
-    const r=svg.getBoundingClientRect(), x=(e.clientX-r.left)*(w/r.width);
-    let i=0,best=Infinity; pts.forEach((p,j)=>{const d=Math.abs(p.x-x); if(d<best){best=d;i=j;}});
-    const p=pts[i], d=data[i], prev=data[i-1];
-    cross.setAttribute("x1",p.x);cross.setAttribute("x2",p.x);cross.setAttribute("opacity","1");
-    dot.setAttribute("cx",p.x);dot.setAttribute("cy",p.y);dot.setAttribute("opacity","1");
-    const delta=prev?d.balance-prev.balance:null;
-    tip.innerHTML=`<b>${escapeHtml(d.full||d.label)}</b><span class="evo-tip-val">${balancesHidden?"••••":fmt(d.balance)}</span>${delta!==null&&!balancesHidden?`<span class="evo-tip-delta ${delta<0?"down":delta>0?"up":""}">${delta===0?"Invariato":`${delta>0?"▲":"▼"} ${fmtSigned(delta)}`}</span>`:""}`;
-    tip.hidden=false;
-    const px=p.x*(r.width/w), tw=tip.offsetWidth;
-    tip.style.left=Math.max(0,Math.min(r.width-tw,px-tw/2))+"px";
-  };
-  const hide=()=>{tip.hidden=true;cross.setAttribute("opacity","0");dot.setAttribute("opacity","0");};
-  svg.addEventListener("pointerdown",e=>{show(e);});
-  svg.addEventListener("pointermove",e=>{if(e.pointerType==="mouse"||e.buttons) show(e);});
-  svg.addEventListener("pointerleave",e=>{if(e.pointerType==="mouse") hide();});
-  wrap.addEventListener("pointerup",e=>{if(e.pointerType!=="mouse") setTimeout(hide,1800);});
-}
-
-function evolutionDefaultRange(){
-  // Default: il mese (o il periodo) selezionato in Home / R&P. Il mese in corso arriva fino a oggi.
-  const today=todayISO();
-  if(periodModes.home==="range"&&periodRange.from) return {from:periodRange.from,to:periodRange.to>today?today:periodRange.to};
-  const from=`${viewYear}-${pad2(viewMonth+1)}-01`, last=`${viewYear}-${pad2(viewMonth+1)}-${pad2(new Date(viewYear,viewMonth+1,0).getDate())}`;
-  return {from, to: from<=today&&last>today?today:last};
-}
-function evolutionRangeLabel(r){
-  const a=new Date(r.from+"T12:00:00"), b=new Date(r.to+"T12:00:00");
-  const lastDay=new Date(b.getFullYear(),b.getMonth()+1,0).getDate();
-  if(a.getDate()===1 && a.getFullYear()===b.getFullYear() && a.getMonth()===b.getMonth() && (b.getDate()===lastDay || r.to===todayISO())) return `${MESI[a.getMonth()]} ${a.getFullYear()}`;
-  if(r.from===r.to) return shortDate(r.from,true);
-  return `${shortDate(r.from,a.getFullYear()!==b.getFullYear())} – ${shortDate(r.to,true)}`;
-}
-function openAccountEvolution(accountId){
-  const acc = state.accounts.find(a=>a.id===accountId);
-  if(!acc) return;
-  openSheet("tpl-account-evolution", (node)=>{
-    node.querySelector("#accountEvolutionTitle").textContent = `Evoluzione — ${acc.name}`;
-    let custom = evolutionDefaultRange();
-    const btn=node.querySelector("#evolutionPeriodBtn");
-    const paint=()=>{
-      btn.innerHTML=`<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.9"/><path d="M4 10h16M9 3v4M15 3v4" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg><span>${escapeHtml(evolutionRangeLabel(custom))}</span>`;
-      renderAccountEvolution(node, accountId, "custom", custom);
-    };
-    btn.addEventListener("click",()=>openPeriodPicker(null,{from:custom.from,to:custom.to,onApply:(r)=>{
-      const today=todayISO();
-      custom={from:r.from>today?today:r.from,to:r.to>today?today:r.to};
-      paint();
-    }}));
-    paint();
-  });
-}
-
-function openBalanceReconcileForm(accountId){
-  const acc=state.accounts.find(a=>a.id===accountId); if(!acc) return;
-  openSheet("tpl-balance-reconcile", (node, close)=>{
-    let kind="income";
-    const amountInput=node.querySelector("#reconcileAmountInput");
-    const dateInput=node.querySelector("#reconcileDateInput");
-    const noteInput=node.querySelector("#reconcileNoteInput");
-    dateInput.value=todayISO();
-    node.querySelectorAll("#reconcileTypeToggle .type-opt").forEach(btn=>btn.addEventListener("click",()=>{
-      node.querySelectorAll("#reconcileTypeToggle .type-opt").forEach(b=>b.classList.remove("active"));
-      btn.classList.add("active"); kind=btn.dataset.type;
-    }));
-    node.querySelector("#saveBalanceReconcileBtn").addEventListener("click",()=>{
-      const amount=parseAmount(amountInput.value); if(amount<=0){showToast("Inserisci un importo valido");amountInput.focus();return;}
-      const signed=kind==="income"?amount:-amount;
-      // Sposta la variazione dal saldo-base allo storico senza cambiare il saldo attuale del conto.
-      acc.balance = Math.round((acc.balance - signed)*100)/100;
-      state.transactions.push({
-        id:uid(), date:dateInput.value||todayISO(), amount, type:kind, name:"Rettifica saldo",
-        categoryId:null, accountId:acc.id, toAccountId:null,
-        note:noteInput.value.trim() || "Variazione di saldo registrata successivamente",
-        isBalanceAdjustment:true
-      });
-      persist();renderAll();renderBalanceAdjustmentHistory();close();showToast("Rettifica registrata senza modificare il saldo attuale");
-    });
-  });
-}
-
-/* ---------------- Account form ---------------- */
-function openAccountForm(accountId){
-  const editing = !!accountId;
-  const acc = editing ? state.accounts.find(a=>a.id===accountId) : null;
-
-  openSheet("tpl-account-form", (node, close)=>{
-    node.querySelector("#accountFormTitle").textContent = editing ? "Modifica conto" : "Nuovo conto";
-    const nameInput = node.querySelector("#accountNameInput");
-    const balInput = node.querySelector("#accountBalanceInput");
-    const colorRow = node.querySelector("#accountColorRow");
-    const deleteBtn = node.querySelector("#deleteAccountBtn");
-    let chosenColor = acc?.color || PALETTE[0];
-
-    nameInput.value = acc?.name || "";
-    if(editing){
-      node.querySelector("#accountBalanceLabel").textContent = "Saldo attuale";
-      node.querySelector("#accountBalanceHint").textContent = "Se cambi questo valore, l’app registra automaticamente la differenza come Rettifica saldo.";
-      balInput.value = String(accountBalance(acc.id)).replace(".",",");
-      node.querySelector("#reconcileAccountBtn").hidden = false;
-    } else {
-      balInput.value = "";
-    }
-
-    PALETTE.forEach(color=>{
-      const sw = document.createElement("button");
-      sw.className = "color-swatch" + (color===chosenColor?" active":"");
-      sw.style.background = color;
-      sw.addEventListener("click", ()=>{
-        chosenColor = color;
-        colorRow.querySelectorAll(".color-swatch").forEach(s=>s.classList.remove("active"));
-        sw.classList.add("active");
-      });
-      colorRow.appendChild(sw);
-    });
-
-    if(editing) deleteBtn.hidden = false;
-    deleteBtn.addEventListener("click", async ()=>{
-      const hasTx = state.transactions.some(t=>t.accountId===accountId);
-      const msg = hasTx
-        ? "Questo conto ha movimenti associati. Eliminandolo verranno eliminati anche i suoi movimenti. Continuare?"
-        : "Eliminare questo conto?";
-      if(!await askConfirm(msg)) return;
-      state.accounts = state.accounts.filter(a=>a.id!==accountId);
-      if(state.mainAccountId===accountId) state.mainAccountId=null;
-      state.transactions = state.transactions.filter(t=>t.accountId!==accountId);
-      persist(); renderAll(); close();
-    });
-
-    node.querySelector("#reconcileAccountBtn").addEventListener("click", ()=>{
-      if(!editing) return;
-      close();
-      openBalanceReconcileForm(accountId);
-    });
-
-    node.querySelector("#saveAccountBtn").addEventListener("click", ()=>{
-      const name = nameInput.value.trim();
-      if(!name) { nameInput.focus(); return; }
-      const balance = parseAmount(balInput.value) * (balInput.value.trim().startsWith("-") ? -1 : 1);
-      if(editing){
-        const before = accountBalance(acc.id);
-        const delta = Math.round((balance - before) * 100) / 100;
-        acc.name = name; acc.color = chosenColor;
-        if(Math.abs(delta) >= 0.01){
-          state.transactions.push({
-            id:uid(), date:todayISO(), amount:Math.abs(delta),
-            type:delta>0?"income":"expense", name:"Rettifica saldo",
-            categoryId:null, accountId:acc.id, toAccountId:null,
-            note:`Saldo aggiornato manualmente da ${fmt(before)} a ${fmt(balance)}`,
-            isBalanceAdjustment:true, setsRealBalance:true
-          });
-        }
-      } else {
-        state.accounts.push({ id: uid(), name, balance, color: chosenColor });
-      }
-      persist(); renderAll(); renderBalanceAdjustmentHistory(); close();
-    });
-  });
-}
-/* ---------------- Pannelli di gestione (Altro) ---------------- */
-function openAccountsPanel(){
-  openSheet("tpl-accounts-panel", (node)=>{
-    renderAccountsManageList();
-    renderBalanceAdjustmentHistory();
-    node.querySelector("#addAccountBtn").addEventListener("click", ()=> openAccountForm(null));
-  });
-}
-document.getElementById("openAccountsPanelBtn").addEventListener("click", openAccountsPanel);
-
 /* v1.4.0 — Un'unica sezione per categorie, macrocategorie e struttura. */
 function openCategoriesHub(startMode){
   openSheet("tpl-categories-hub", (node)=>{
@@ -4386,11 +4205,10 @@ function openCategoriesHub(startMode){
       addBtn.hidden=(m==="graph");
       if(labels[m]) addBtn.setAttribute("aria-label",labels[m]);
       if(m==="categories") renderCategories();
-      else if(m==="macro") renderMacroCategories();
       else renderCategoryGraph();
     }
     node.querySelectorAll("[data-hub]").forEach(b=>b.addEventListener("click",()=>setMode(b.dataset.hub)));
-    addBtn.addEventListener("click",()=>{ if(mode==="macro") openMacroForm(null); else openCategoryForm(null); });
+    addBtn.addEventListener("click",()=>openCategoryForm(null));
     setMode(mode);
   });
 }
@@ -4411,62 +4229,13 @@ function openCategoryForm(categoryId){
     const macroChips = node.querySelector("#categoryMacroChips");
     const deleteBtn = node.querySelector("#deleteCategoryBtn");
 
-    const parentChips = node.querySelector("#categoryParentChips");
-    const macroRow = node.querySelector("#categoryMacroRow");
-    const clashHint = node.querySelector("#categoryClashHint");
-
     let chosenEmoji = cat?.emoji || EMOJIS[0];
     let chosenColor = cat?.color || PALETTE[0];
     let chosenKind = cat?.kind || "expense";
     let chosenMacroId = cat?.macroCategoryId || null;
-    let chosenParentId = cat?.parentCategoryId || null;
 
     nameInput.value = cat?.name || "";
     budgetInput.value = cat?.budget ? String(cat.budget).replace(".",",") : "";
-
-    /* v1.37.0 — "Dentro quale categoria": scegliendo una madre questa diventa una
-       sottocategoria. Una categoria che ha già figlie non può diventarlo a sua volta:
-       i livelli restano tre. */
-    const haFiglie = editing && subCategoriesOf(categoryId).length > 0;
-    function renderParentChips(){
-      parentChips.innerHTML = "";
-      const none = document.createElement("button");
-      none.className = "chip" + (!chosenParentId ? " active" : "");
-      none.textContent = "Categoria principale";
-      none.addEventListener("click", ()=>{ chosenParentId=null; renderParentChips(); renderMacroChips(); paintClash(); });
-      parentChips.appendChild(none);
-      if(haFiglie){
-        const nota=document.createElement("p");
-        nota.className="field-hint";
-        nota.textContent="Questa categoria ha già delle sottocategorie, quindi resta principale.";
-        parentChips.appendChild(nota);
-        chosenParentId=null;
-        macroRow.hidden=false;
-        return;
-      }
-      topCategories(chosenKind).filter(c=>c.id!==categoryId).forEach(c=>{
-        const chip=document.createElement("button");
-        chip.className="chip"+(chosenParentId===c.id?" active":"");
-        chip.innerHTML=`<span class="em">${escapeHtml(c.emoji)}</span>${escapeHtml(c.name)}`;
-        chip.addEventListener("click",()=>{ chosenParentId=c.id; chosenMacroId=c.macroCategoryId||null; renderParentChips(); renderMacroChips(); paintClash(); });
-        parentChips.appendChild(chip);
-      });
-      /* La macrocategoria la decide la madre: niente doppia scelta. */
-      macroRow.hidden = !!chosenParentId;
-    }
-    /* Se il nome esiste già altrove, lo diciamo subito e spieghiamo come si distinguerà. */
-    function paintClash(){
-      const n=nameInput.value.trim();
-      const clash=n?categoryNameClash(n,chosenKind,categoryId):null;
-      if(!clash){ clashHint.hidden=true; return; }
-      const madre=chosenParentId?state.categories.find(c=>c.id===chosenParentId):null;
-      const cosa=clash.tipo==="macro"?"una macrocategoria":clash.tipo==="sotto"?"un'altra sottocategoria":"un'altra categoria";
-      clashHint.hidden=false;
-      clashHint.textContent=madre
-        ? `Esiste già ${cosa} “${clash.nome}”: questa comparirà come “${madre.name} › ${n}”.`
-        : `Esiste già ${cosa} “${clash.nome}”: scegli un nome diverso o mettila dentro una categoria madre.`;
-    }
-    nameInput.addEventListener("input", paintClash);
 
     function renderMacroChips(){
       macroChips.innerHTML = "";
@@ -4484,20 +4253,15 @@ function openCategoryForm(categoryId){
       });
     }
     renderMacroChips();
-    renderParentChips();
-    paintClash();
 
     kindToggle.querySelectorAll(".type-opt").forEach(opt=>{
       opt.classList.toggle("active", opt.dataset.kind===chosenKind);
       opt.addEventListener("click", ()=>{
         chosenKind = opt.dataset.kind;
         if(chosenMacroId && state.macroCategories.find(m=>m.id===chosenMacroId)?.kind!==chosenKind) chosenMacroId=null;
-        if(chosenParentId && state.categories.find(c=>c.id===chosenParentId)?.kind!==chosenKind) chosenParentId=null;
         kindToggle.querySelectorAll(".type-opt").forEach(o=>o.classList.remove("active"));
         opt.classList.add("active");
         renderMacroChips();
-        renderParentChips();
-        paintClash();
       });
     });
 
@@ -4517,12 +4281,8 @@ function openCategoryForm(categoryId){
 
     if(editing) deleteBtn.hidden = false;
     deleteBtn.addEventListener("click", async ()=>{
-      const figlie=subCategoriesOf(categoryId);
-      const msg=figlie.length
-        ? `Eliminare questa categoria? Le sue ${figlie.length} sottocategorie diventano categorie principali e i movimenti collegati restano senza categoria.`
-        : "Eliminare questa categoria? I movimenti collegati resteranno ma senza categoria.";
-      if(!await askConfirm(msg)) return;
-      figlie.forEach(sc=>{ sc.parentCategoryId=null; });
+      if(!await askConfirm("Eliminare questa categoria? I movimenti collegati resteranno ma senza categoria.")) return;
+      markDeleted(categoryId);
       state.categories = state.categories.filter(c=>c.id!==categoryId);
       persist(); renderAll(); close();
     });
@@ -4531,86 +4291,10 @@ function openCategoryForm(categoryId){
       const name = nameInput.value.trim();
       if(!name){ nameInput.focus(); return; }
       const budget = budgetInput.value.trim() ? parseAmount(budgetInput.value) : null;
-      /* Una sottocategoria eredita sempre tipo e macrocategoria dalla madre. */
-      const madre = chosenParentId ? state.categories.find(c=>c.id===chosenParentId) : null;
-      const kindFinale = madre ? madre.kind : chosenKind;
-      const macroFinale = madre ? (madre.macroCategoryId||null) : chosenMacroId;
       if(editing){
-        cat.name=name; cat.emoji=chosenEmoji; cat.color=chosenColor; cat.kind=kindFinale; cat.budget=budget;
-        cat.macroCategoryId=macroFinale; cat.parentCategoryId=madre?madre.id:null;
-        /* Se è passata sotto una madre, le sue eventuali figlie salgono di livello. */
-        if(madre) subCategoriesOf(cat.id).forEach(sc=>{ sc.parentCategoryId=null; });
+        cat.name=name; cat.emoji=chosenEmoji; cat.color=chosenColor; cat.kind=chosenKind; cat.budget=budget; cat.macroCategoryId=chosenMacroId;
       } else {
-        state.categories.push({ id: uid(), name, emoji: chosenEmoji, color: chosenColor, kind: kindFinale, budget,
-          macroCategoryId: macroFinale, parentCategoryId: madre?madre.id:null });
-      }
-      persist(); renderAll(); close();
-    });
-  });
-}
-/* ---------------- Macro category form ---------------- */
-function openMacroForm(macroId){
-  const editing = !!macroId;
-  const macro = editing ? state.macroCategories.find(m=>m.id===macroId) : null;
-
-  openSheet("tpl-macro-form", (node, close)=>{
-    node.querySelector("#macroFormTitle").textContent = editing ? "Modifica macrocategoria" : "Nuova macrocategoria";
-    const nameInput = node.querySelector("#macroNameInput");
-    const emojiRow = node.querySelector("#macroEmojiRow");
-    const colorRow = node.querySelector("#macroColorRow");
-    const budgetInput = node.querySelector("#macroBudgetInput");
-    const deleteBtn = node.querySelector("#deleteMacroBtn");
-    const kindToggle = node.querySelector("#macroKindToggle");
-
-    let chosenEmoji = macro?.emoji || EMOJIS[0];
-    let chosenColor = macro?.color || PALETTE[0];
-    let chosenKind = macro?.kind || "expense";
-
-    nameInput.value = macro?.name || "";
-    budgetInput.value = macro?.budget ? String(macro.budget).replace(".",",") : "";
-
-    kindToggle.querySelectorAll(".type-opt").forEach(opt=>{
-      opt.classList.toggle("active",opt.dataset.kind===chosenKind);
-      opt.addEventListener("click",()=>{
-        chosenKind=opt.dataset.kind;
-        kindToggle.querySelectorAll(".type-opt").forEach(o=>o.classList.toggle("active",o===opt));
-      });
-    });
-
-    buildEmojiField(emojiRow, chosenEmoji, v=>{ chosenEmoji=v; });
-
-    PALETTE.forEach(color=>{
-      const sw = document.createElement("button");
-      sw.className = "color-swatch" + (color===chosenColor?" active":"");
-      sw.style.background = color;
-      sw.addEventListener("click", ()=>{
-        chosenColor = color;
-        colorRow.querySelectorAll(".color-swatch").forEach(s=>s.classList.remove("active"));
-        sw.classList.add("active");
-      });
-      colorRow.appendChild(sw);
-    });
-
-    if(editing) deleteBtn.hidden = false;
-    deleteBtn.addEventListener("click", async ()=>{
-      const hasCats = state.categories.some(c=>c.macroCategoryId===macroId);
-      const msg = hasCats
-        ? "Le categorie associate resteranno, ma senza macrocategoria. Continuare?"
-        : "Eliminare questa macrocategoria?";
-      if(!await askConfirm(msg)) return;
-      state.macroCategories = state.macroCategories.filter(m=>m.id!==macroId);
-      state.categories.forEach(c=>{ if(c.macroCategoryId===macroId) c.macroCategoryId=null; });
-      persist(); renderAll(); close();
-    });
-
-    node.querySelector("#saveMacroBtn").addEventListener("click", ()=>{
-      const name = nameInput.value.trim();
-      if(!name){ nameInput.focus(); return; }
-      const budget = budgetInput.value.trim() ? parseAmount(budgetInput.value) : null;
-      if(editing){
-        macro.name=name; macro.emoji=chosenEmoji; macro.color=chosenColor; macro.budget=budget; macro.kind=chosenKind;
-      } else {
-        state.macroCategories.push({ id: uid(), name, emoji: chosenEmoji, color: chosenColor, budget, kind:chosenKind });
+        state.categories.push({ id: uid(), name, emoji: chosenEmoji, color: chosenColor, kind: chosenKind, budget, macroCategoryId: chosenMacroId });
       }
       persist(); renderAll(); close();
     });
@@ -4622,11 +4306,11 @@ function openRecurringForm(recurringId,prefill=null){
   const rec = editing ? state.recurring.find(r=>r.id===recurringId) : (prefill||null);
   let rType = rec?.type || "expense";
   let rCat = rec?.categoryId || null;
-  let rAcc = rec?.accountId || null;
+  let rAcc = rec?.accountId || defaultPayerId();
   let rFreq = rec?.freq || "monthly";
 
   openSheet("tpl-recurring-form", (node, close)=>{
-    node.querySelector("#recurringFormTitle").textContent = editing ? "Modifica ricorrente" : "Nuovo ricorrente";
+    node.querySelector("#recurringFormTitle").textContent = editing ? "Modifica spesa fissa" : "Nuova spesa fissa";
     const nameInput = node.querySelector("#recurringNameInput");
     const amountInput = node.querySelector("#recurringAmountInput");
     const dateInput = node.querySelector("#recurringDateInput");
@@ -4686,43 +4370,7 @@ function openRecurringForm(recurringId,prefill=null){
 
     renderCatChips();
     renderAccChips();
-
-    /* v1.38.0 — "Scrivilo a parole" anche per i ricorrenti:
-       "ogni 5 del mese 12 euro Netflix sulla carta" compila tutto il pannello. */
-    if(!editing && window.SuiteAI && SuiteAI.disponibile()){
-      const riga=SuiteAI.riga({
-        task:"ricorrente",
-        placeholder:"es. ogni 5 del mese 12 euro Netflix",
-        hint:"Scrivi o detta: importo, cadenza, giorno, conto e categoria si riempiono da soli.",
-        contesto:()=>({oggi:todayISO(),
-          categorie:state.categories.filter(c=>!c.archived).map(c=>({chiave:c.id,nome:categoryLabel(c.id,{sempre:true}),tipo:c.kind||"expense"})),
-          conti:state.accounts.map(a=>({chiave:a.id,nome:a.name}))}),
-        onDati:d=>{
-          if(!d) return null;   // il messaggio con il motivo lo scrive SuiteAI
-          const imp=SuiteAI.importoDa(d);
-          if(!(imp>0)) return "Non trovo l'importo nella frase: scrivilo tu qui sotto.";
-          d.importo=imp;
-          if((d.tipo==="income"||d.tipo==="expense") && d.tipo!==rType){
-            const o=typeToggle.querySelector(`.type-opt[data-type="${d.tipo}"]`); if(o) o.click();
-          }
-          amountInput.value=String(d.importo).replace(".",",");
-          autoGrowAmountInput(amountInput);
-          if(d.nome) nameInput.value=String(d.nome).slice(0,80);
-          if(["monthly","weekly","yearly","daily"].includes(d.frequenza)){ rFreq=d.frequenza; freqSelect.value=d.frequenza; }
-          if(/^\d{4}-\d{2}-\d{2}$/.test(d.inizio||"")) dateInput.value=d.inizio;
-          else if(Number(d.giorno)>=1 && Number(d.giorno)<=31){
-            const g=pad2(Math.min(28,Number(d.giorno)));
-            dateInput.value=`${viewYear}-${pad2(viewMonth+1)}-${g}`;
-          }
-          if(d.conto && state.accounts.some(a=>a.id===d.conto)){ rAcc=d.conto; renderAccChips(); }
-          if(d.categoria && categoriesById()[d.categoria]){ rCat=d.categoria; renderCatChips(); }
-          return (d.sicurezza!=null&&d.sicurezza<0.6)
-            ? "Ho fatto del mio meglio: controlla cadenza e data prima di salvare."
-            : "Fatto: controlla e salva.";
-        }
-      });
-      node.querySelector("#recurringTypeToggle").after(riga);
-    }
+    const split=mountSplitPicker(node, accChips.closest(".field-row"), {account:()=>rAcc, type:()=>rType, amount:()=>parseAmount(amountInput.value), initial:rec?.split, initialGroup:rec?.groupId});
 
     if(editing) deleteBtn.hidden = false;
     deleteBtn.addEventListener("click", async ()=>{
@@ -4744,12 +4392,12 @@ function openRecurringForm(recurringId,prefill=null){
       if(endDate && endDate<startDate){showToast("La data di fine deve essere successiva alla prima data");return;}
       if(editing){
         rec.name=name; rec.amount=amount; rec.type=rType; rec.categoryId=rCat; rec.accountId=rAcc;
-        rec.freq=rFreq; rec.startDate=startDate; rec.note=noteInput.value.trim(); rec.active=activeInput.checked; rec.endDate=endDate; rec.maxOccurrences=maxOccurrences;
+        rec.freq=rFreq; rec.startDate=startDate; rec.note=noteInput.value.trim(); rec.active=activeInput.checked; rec.endDate=endDate; rec.maxOccurrences=maxOccurrences; rec.split=split.get(); rec.groupId=split.getGroup();
         refreshRecurringTransactions(rec.id);
       } else {
         state.recurring.push({
           id: uid(), name, amount, type: rType, categoryId: rCat, accountId: rAcc,
-          freq: rFreq, startDate, note: noteInput.value.trim(), nextDate: startDate, active:activeInput.checked, endDate, maxOccurrences,
+          freq: rFreq, startDate, note: noteInput.value.trim(), nextDate: startDate, active:activeInput.checked, endDate, maxOccurrences, split:split.get(), groupId:split.getGroup(),
         });
       }
       if(!editing) generateRecurringTransactions(false);
@@ -4759,115 +4407,19 @@ function openRecurringForm(recurringId,prefill=null){
   });
 }
 
-/* ---------------- Spese pianificate: form una tantum ---------------- */
-let plannedTxType = "expense", plannedSelectedCategoryId = null, plannedSelectedAccountId = null;
-function openPlannedForm(plannedId,prefill=null){
-  const editing = !!plannedId;
-  const p = editing ? state.planned.find(x=>x.id===plannedId) : (prefill||null);
-  plannedTxType = p?.type || "expense";
-  plannedSelectedCategoryId = p?.categoryId || null;
-  plannedSelectedAccountId = p?.accountId || null;
-
-  openSheet("tpl-planned-form", (node, close)=>{
-    node.querySelector("#plannedFormTitle").textContent = editing ? "Modifica pianificata" : "Nuova pianificata";
-    const amountInput = node.querySelector("#plannedAmountInput");
-    const nameInput = node.querySelector("#plannedNameInput");
-    const dateInput = node.querySelector("#plannedDateInput");
-    const noteInput = node.querySelector("#plannedNoteInput");
-    const catChipsGrouped = node.querySelector("#plannedCategoryChipsGrouped");
-    const accChips = node.querySelector("#plannedAccountChips");
-    const typeToggle = node.querySelector("#plannedTypeToggle");
-    const deleteBtn = node.querySelector("#deletePlannedBtn");
-
-    amountInput.value = p ? String(p.amount).replace(".",",") : "";
-    nameInput.value=p?.name || "";
-    autoGrowAmountInput(amountInput);
-    noteInput.value = p?.note || "";
-    if(p?.date){
-      dateInput.value = p.date;
-    } else {
-      dateInput.value = todayISO();
-    }
-
-    typeToggle.querySelectorAll(".type-opt").forEach(opt=>{
-      opt.classList.toggle("active", opt.dataset.type===plannedTxType);
-      opt.addEventListener("click", ()=>{
-        typeToggle.querySelectorAll(".type-opt").forEach(o=>o.classList.remove("active"));
-        opt.classList.add("active");
-        plannedTxType = opt.dataset.type;
-        plannedSelectedCategoryId = null;
-        catChipsGrouped._activeMacro = null;
-        renderCatChips();
-      });
-    });
-
-    function renderCatChips(){
-      renderCategoryPicker(catChipsGrouped, plannedTxType, ()=>plannedSelectedCategoryId, id=>{ plannedSelectedCategoryId=id; });
-    }
-    function renderAccChips(){
-      accChips.innerHTML = "";
-      state.accounts.forEach(a=>{
-        const chip = document.createElement("button");
-        chip.className = "chip" + (plannedSelectedAccountId===a.id ? " active":"");
-        chip.innerHTML = `<span class="em">●</span>${escapeHtml(a.name)}`;
-        chip.querySelector(".em").style.color = safeColor(a.color);
-        chip.addEventListener("click", ()=>{ plannedSelectedAccountId=a.id; renderAccChips(); });
-        accChips.appendChild(chip);
-      });
-      if(!plannedSelectedAccountId) plannedSelectedAccountId = state.accounts[0]?.id || null;
-    }
-    renderCatChips();
-    renderAccChips();
-
-    if(editing) deleteBtn.hidden = false;
-    deleteBtn.addEventListener("click", async ()=>{
-      if(!await askConfirm("Eliminare questa spesa pianificata?")) return;
-      moveToTrash("planned",p); const deleted=state.trash[0]?.id; state.planned = state.planned.filter(x=>x.id!==plannedId);
-      persist(); renderAll(); close(); if(deleted) showUndo("Pianificata eliminata",deleted);
-    });
-
-    node.querySelector("#savePlannedBtn").addEventListener("click", ()=>{
-      const amount = parseAmount(amountInput.value);
-      const missing=[];if(!nameInput.value.trim()) missing.push("nome");if(amount<=0) missing.push("importo");if(!plannedSelectedCategoryId) missing.push("categoria");if(!plannedSelectedAccountId) missing.push("conto");if(!dateInput.value) missing.push("data");
-      if(missing.length){showToast("Inserisci: "+missing.join(", "));if(amount<=0) amountInput.focus();return;}
-      const date = dateInput.value;
-      if(editing){
-        p.name=nameInput.value.trim(); p.amount=amount; p.type=plannedTxType; p.categoryId=plannedSelectedCategoryId;
-        p.accountId=plannedSelectedAccountId; p.date=date; p.note=noteInput.value.trim();
-      } else {
-        state.planned.push({
-          id: uid(), name:nameInput.value.trim(), amount, type: plannedTxType, categoryId: plannedSelectedCategoryId,
-          accountId: plannedSelectedAccountId, date, note: noteInput.value.trim(),
-        });
-      }
-      generatePlannedTransactions();
-      persist(); renderAll(); close();
-    });
-  });
-}
-document.getElementById("addPlannedBtn").addEventListener("click", ()=> openPlannedForm(null));
 
 /* ---------------- Calendario spese ---------------- */
 let calYear, calMonth;
+/* Noi Due: il calendario mostra chi ha pagato ogni giorno (pallini nei colori delle persone)
+   e il totale speso; niente ricorrenti o pianificate. */
 function buildCalendarDayInfo(y,m){
-  const daysInMonth = new Date(y,m+1,0).getDate();
-  const info = {};
-  for(let d=1; d<=daysInMonth; d++){
-    const iso = `${y}-${pad2(m+1)}-${pad2(d)}`;
-    info[iso] = { real:false, planned:false, recurring:false };
-  }
+  const prefix=`${y}-${pad2(m+1)}`, info={};
   state.transactions.forEach(t=>{
-    if(info[t.date]){
-      info[t.date].real = true;
-    }
-  });
-  state.planned.forEach(p=>{
-    if(info[p.date]) info[p.date].planned = true;
-  });
-  state.recurring.forEach(r=>{
-    recurringOccurrencesInMonth(r,y,m).forEach(date=>{
-      if(info[date]) info[date].recurring = true;
-    });
+    if(!t.date.startsWith(prefix) || t.isBalanceAdjustment) return;
+    const d=info[t.date]||(info[t.date]={a:false,b:false,joint:false,settle:false,total:0});
+    if(t.type==="transfer"){ if(isCoupleSettle(t)) d.settle=true; return; }
+    const o=accOwner(t.accountId); d[o==="a"||o==="b"?o:"joint"]=true;
+    if(t.type==="expense") d.total+=t.amount;
   });
   return info;
 }
@@ -4875,31 +4427,37 @@ function renderCalendarGrid(node){
   node.querySelector("#calMonthLabel").textContent = `${MESI[calMonth]} ${calYear}`;
   const grid = node.querySelector("#calendarGrid");
   grid.innerHTML = "";
-  const firstDay = new Date(calYear, calMonth, 1).getDay(); // 0=Dom
-  const leadBlanks = (firstDay+6)%7; // Lun=0
+  const firstDay = new Date(calYear, calMonth, 1).getDay();
+  const leadBlanks = (firstDay+6)%7;
   const daysInMonth = new Date(calYear, calMonth+1, 0).getDate();
   const info = buildCalendarDayInfo(calYear, calMonth);
   const todayStr = todayISO();
-
-  for(let i=0;i<leadBlanks;i++){
-    const blank = document.createElement("div");
-    blank.className = "calendar-cell empty";
-    grid.appendChild(blank);
-  }
+  for(let i=0;i<leadBlanks;i++){ const blank=document.createElement("div"); blank.className="calendar-cell empty"; grid.appendChild(blank); }
+  let monthTotal=0;
   for(let d=1; d<=daysInMonth; d++){
     const iso = `${calYear}-${pad2(calMonth+1)}-${pad2(d)}`;
+    const di = info[iso];
     const cell = document.createElement("button");
-    const dayInfo = info[iso];
-    cell.className = "calendar-cell" + (iso===todayStr ? " today" : "") + (dayInfo.real ? " has-real":"") + (dayInfo.planned ? " has-planned":"") + (dayInfo.recurring ? " has-recurring":"");
-    let dots = "";
-    if(dayInfo.real) dots += `<span class="cal-dot real"></span>`;
-    if(dayInfo.planned) dots += `<span class="cal-dot planned"></span>`;
-    if(dayInfo.recurring) dots += `<span class="cal-dot recurring"></span>`;
-    cell.innerHTML = `<span class="cal-day-num">${d}</span><span class="cal-dots">${dots}</span>`;
+    cell.className = "calendar-cell nd-cal" + (iso===todayStr ? " today" : "") + (di ? " has-real":"");
+    let dots="";
+    if(di){
+      monthTotal+=di.total;
+      if(di.a) dots+=`<span class="cal-dot" style="background:${safeColor(personColor("a"))}"></span>`;
+      if(di.b) dots+=`<span class="cal-dot" style="background:${safeColor(personColor("b"))}"></span>`;
+      if(di.joint) dots+=`<span class="cal-dot" style="background:${safeColor(personColor("joint"))}"></span>`;
+      if(di.settle) dots+=`<span class="cal-dot settle">🤝</span>`;
+    }
+    const amt=di&&di.total>0?`<span class="cal-amt">${balancesHidden?"••":Math.round(di.total)}</span>`:"";
+    cell.innerHTML = `<span class="cal-day-num">${d}</span>${amt}<span class="cal-dots">${dots}</span>`;
+    cell.setAttribute("aria-label",`${d} ${MESI[calMonth]}${di?`: spesi ${fmt(di.total)}`:""}`);
     cell.addEventListener("click", ()=> openDayDetail(iso));
     grid.appendChild(cell);
   }
   padCalendarGrid(grid,leadBlanks,daysInMonth);
+  const leg=node.querySelector("#calLegend");
+  if(leg) leg.innerHTML=["a","b","joint"].map(k=>`<span class="cal-leg-item"><span class="dot" style="background:${safeColor(personColor(k))}"></span>${escapeHtml(personName(k))}</span>`).join("")+`<span class="cal-leg-item">🤝 Rimborso</span>`;
+  const tot=node.querySelector("#calMonthTotal");
+  if(tot) tot.textContent=monthTotal>0?`Spese di ${MESI[calMonth].toLowerCase()}: ${balancesHidden?"••••":fmt(monthTotal)} · tocca un giorno per i dettagli`:"Nessuna spesa in questo mese.";
 }
 function openCalendar(){
   calYear = viewYear; calMonth = viewMonth;
@@ -4934,8 +4492,8 @@ function openCalendar(){
   });
 }
 /* v1.7.0 — Il pulsante calendario sta nella barra del periodo della Home (vista generale di tutti i movimenti). */
-/* v1.22.0 — Un solo calendario: quello che si apre toccando il titolo del periodo (con i pallini e la legenda).
-   Il pulsante 📅 in alto a destra non c'è più. */
+/* v1.19.0 — Un solo calendario: quello che si apre toccando il titolo (colori per persona, cassa comune,
+   rimborsi e spesa del giorno). Il pulsante 📅 in alto a destra non c'è più. */
 (function hideCalendarBtn(){ const b=document.getElementById("openCalendarBtn"); if(b){ b.hidden=true; b.style.setProperty("display","none","important"); } })();
 (function moveCalendarBtn(){
   return;
@@ -4948,9 +4506,7 @@ function openDayDetail(iso){
   const d = new Date(iso+"T00:00:00");
   openSheet("tpl-day-detail", (node)=>{
     node.querySelector("#dayDetailTitle").textContent = `Movimenti — ${d.getDate()} ${MESI[d.getMonth()]} ${d.getFullYear()}`;
-    const real = state.transactions.filter(t=>t.date===iso);
-    const planned = plannedItemsForDate(iso);
-    const all = [...real, ...planned].sort((a,b)=> a.date.localeCompare(b.date));
+    const all = state.transactions.filter(t=>t.date===iso).sort((a,b)=> a.date.localeCompare(b.date));
     renderTxRows(node.querySelector("#dayDetailList"), all);
     node.querySelector("#dayDetailEmptyHint").hidden = all.length>0;
   });
@@ -4982,50 +4538,179 @@ function exportTransactionsCsv(){
   const csv="\ufeff"+rows.map(row=>row.map(csvCell).join(";")).join("\r\n");
   const blob=new Blob([csv],{type:"text/csv;charset=utf-8"});
   const url=URL.createObjectURL(blob),a=document.createElement("a"),d=new Date();
-  a.href=url;a.download=`bilancio-movimenti-${d.getFullYear()}${pad2(d.getMonth()+1)}${pad2(d.getDate())}.csv`;
+  a.href=url;a.download=`noidue-movimenti-${d.getFullYear()}${pad2(d.getMonth()+1)}${pad2(d.getDate())}.csv`;
   document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(url);
   showToast("CSV esportato correttamente");
 }
 document.getElementById("exportCsvBtn")?.addEventListener("click",exportTransactionsCsv);
-document.getElementById("exportBtn").addEventListener("click", ()=>{
-  const blob = new Blob([JSON.stringify(state,null,2)], { type:"application/json" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  const d = new Date();
-  a.href = url;
-  a.download = `bilancio-backup-${d.getFullYear()}${pad2(d.getMonth()+1)}${pad2(d.getDate())}.json`;
-  document.body.appendChild(a); a.click(); a.remove();
-  URL.revokeObjectURL(url);
-  safeSetLocalStorage("bilancio_last_backup",new Date().toISOString(),{notify:false});
-  renderAll(); showToast("Backup esportato correttamente");
-});
+/* Noi Due 1.3.0 — Esporta/condividi e importa con scelta: unisci, usa il backup o tieni questo telefono. */
+const PRE_IMPORT_KEY="noidue_pre_import";
+function backupFileName(){ const d=new Date(); return `noidue-backup-${d.getFullYear()}${pad2(d.getMonth()+1)}${pad2(d.getDate())}-${pad2(d.getHours())}${pad2(d.getMinutes())}.json`; }
+async function exportBackup(){
+  const json=JSON.stringify({...stateWithPhotos(state),exportedAt:new Date().toISOString()},null,2);
+  const name=backupFileName();
+  const done=()=>{ safeSetLocalStorage("noidue_last_backup",new Date().toISOString(),{notify:false}); renderAll(); };
+  try{
+    const file=new File([json],name,{type:"application/json"});
+    if(navigator.canShare && navigator.canShare({files:[file]})){
+      await navigator.share({files:[file],title:"Backup Noi Due"});
+      done(); showToast("Backup condiviso"); return;
+    }
+  }catch(err){ if(err?.name==="AbortError") return; }
+  const url=URL.createObjectURL(new Blob([json],{type:"application/json"}));
+  const a=document.createElement("a"); a.href=url; a.download=name;
+  document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+  done(); showToast("Backup esportato correttamente");
+}
+document.getElementById("exportBtn").addEventListener("click",exportBackup);
 
+const normName=s=>String(s||"").trim().toLowerCase();
+/* Allinea il backup a questo telefono prima di confrontarlo:
+   - se le due persone sono invertite (Marco è "persona 2" nel backup) le scambia;
+   - conti, categorie, gruppi e liste con lo stesso nome diventano lo stesso elemento. */
+function alignBackup(local,inc){
+  const la=normName(local.couple?.a?.name), lb=normName(local.couple?.b?.name);
+  const ia=normName(inc.couple?.a?.name), ib=normName(inc.couple?.b?.name);
+  if(la&&lb&&la!==lb&&ia===lb&&ib===la){
+    inc.couple={...inc.couple,a:inc.couple.b,b:inc.couple.a};
+    inc.accounts.forEach(a=>{ if(a.owner==="a") a.owner="b"; else if(a.owner==="b") a.owner="a"; });
+    (inc.lists||[]).forEach(l=>(l.items||[]).forEach(i=>{ if(i.addedBy==="a") i.addedBy="b"; else if(i.addedBy==="b") i.addedBy="a"; if(i.forWhom==="a") i.forWhom="b"; else if(i.forWhom==="b") i.forWhom="a"; }));
+    [...inc.transactions,...inc.recurring,...inc.planned].forEach(t=>{ if(t.split&&Number.isFinite(Number(t.split.pctA))) t.split.pctA=100-Number(t.split.pctA); if(t.settleAlloc) Object.keys(t.settleAlloc).forEach(k=>{ t.settleAlloc[k]=-t.settleAlloc[k]; }); });
+  }
+  const map={};
+  const match=(locArr,incArr,key)=>{
+    const ids=new Set(locArr.map(x=>x.id));
+    incArr.forEach(x=>{ if(ids.has(x.id)) return; const twin=locArr.find(y=>key(y)===key(x)); if(twin) map[x.id]=twin.id; });
+  };
+  match(local.accounts,inc.accounts,x=>normName(x.name));
+  match(local.macroCategories,inc.macroCategories,x=>x.kind+"|"+normName(x.name));
+  match(local.categories,inc.categories,x=>x.kind+"|"+normName(x.name));
+  match(local.groups||[],inc.groups||[],x=>normName(x.name));
+  match(local.lists||[],inc.lists||[],x=>normName(x.name));
+  const m=id=>id!=null&&map[id]?map[id]:id;
+  ["accounts","macroCategories","categories","groups","lists"].forEach(k=>(inc[k]||[]).forEach(x=>{ x.id=m(x.id); }));
+  inc.categories.forEach(c=>{ c.macroCategoryId=m(c.macroCategoryId); });
+  [...inc.transactions,...inc.recurring,...inc.planned].forEach(t=>{
+    t.accountId=m(t.accountId); t.toAccountId=m(t.toAccountId); t.categoryId=m(t.categoryId); t.groupId=m(t.groupId);
+    if(t.settleAlloc) t.settleAlloc=Object.fromEntries(Object.entries(t.settleAlloc).map(([k,v])=>[m(k),v]));
+  });
+  (inc.lists||[]).forEach(l=>{ l.groupId=m(l.groupId); });
+  if(inc.mainAccountId) inc.mainAccountId=m(inc.mainAccountId);
+  // Dopo l'allineamento possono esserci doppioni con lo stesso id: tiene il primo.
+  ["accounts","macroCategories","categories","groups","lists"].forEach(k=>{ const seen=new Set(); inc[k]=(inc[k]||[]).filter(x=>!seen.has(x.id)&&seen.add(x.id)); });
+  return inc;
+}
+function compareById(a,b){
+  const A=new Map(a.map(x=>[x.id,JSON.stringify(x)])), B=new Map(b.map(x=>[x.id,JSON.stringify(x)]));
+  let onlyA=0,onlyB=0,diff=0;
+  A.forEach((v,k)=>{ if(!B.has(k)) onlyA++; else if(B.get(k)!==v) diff++; });
+  B.forEach((v,k)=>{ if(!A.has(k)) onlyB++; });
+  return {onlyA,onlyB,diff};
+}
+function mergeStates(local,inc,prefer){
+  const tomb={...(local.deleted||{}),...(inc.deleted||{})};
+  const trashIds=new Set([...(local.trash||[]),...(inc.trash||[])].map(e=>e?.data?.id).filter(Boolean));
+  const gone=id=>!!tomb[id]||trashIds.has(id);
+  const [first,second]=prefer==="local"?[inc,local]:[local,inc]; // second vince sui doppioni
+  const mergeArr=(a=[],b=[],{keepGone=false}={})=>{ const mp=new Map(); a.forEach(x=>mp.set(x.id,x)); b.forEach(x=>mp.set(x.id,x)); return [...mp.values()].filter(x=>keepGone||!gone(x.id)); };
+  const out={...first,...second};
+  ["accounts","macroCategories","categories","groups","recurring","planned","transactions"].forEach(k=>{ out[k]=mergeArr(first[k],second[k]); });
+  out.trash=mergeArr(first.trash,second.trash,{keepGone:true}).sort((x,y)=>String(y.deletedAt).localeCompare(String(x.deletedAt)));
+  const lists=new Map();
+  (first.lists||[]).forEach(l=>lists.set(l.id,{...l,items:[...(l.items||[])]}));
+  (second.lists||[]).forEach(l=>{ const prev=lists.get(l.id); lists.set(l.id,{...(prev||{}),...l,items:mergeArr(prev?.items||[],l.items||[]),
+    // v1.19.0 — acquisti e cestino delle liste: si sommano quelli dei due telefoni.
+    purchases:mergeArr(prev?.purchases||[],l.purchases||[]).sort((a,b)=>String(a.at).localeCompare(String(b.at))).slice(-400),
+    trash:mergeArr(prev?.trash||[],l.trash||[]).sort((a,b)=>String(b.deletedAt).localeCompare(String(a.deletedAt))).slice(0,200)}); });
+  // Stessa cosa aggiunta da tutti e due (es. "Latte" ancora da comprare): resta una volta sola.
+  out.lists=[...lists.values()].filter(l=>!gone(l.id)).map(l=>{ const seenText=new Set(); return {...l,items:l.items.filter(i=>!gone(i.id)).filter(i=>{ if(i.done) return true; const k=normName(i.text); if(seenText.has(k)) return false; seenText.add(k); return true; })}; });
+  // Ricorrenti e pianificate generate su entrambi i telefoni: una sola per data.
+  const preferIds=new Set((second.transactions||[]).map(t=>t.id)), seen=new Map();
+  out.transactions.forEach(t=>{ const key=t.recurringId?`r|${t.recurringId}|${t.date}`:t.plannedId?`p|${t.plannedId}|${t.date}`:null; if(!key) return; const prev=seen.get(key); if(!prev||(!preferIds.has(prev.id)&&preferIds.has(t.id))) seen.set(key,t); });
+  out.transactions=out.transactions.filter(t=>{ const key=t.recurringId?`r|${t.recurringId}|${t.date}`:t.plannedId?`p|${t.plannedId}|${t.date}`:null; return !key||seen.get(key)===t; });
+  out.planned=out.planned.filter(p=>!out.transactions.some(t=>t.plannedId===p.id&&t.date===p.date));
+  { const seenF=new Set(); out.favorites=[...(second.favorites||[]),...(first.favorites||[])].filter(f=>{ const k=normName(f.text); if(!k||seenF.has(k)||gone(f.id)) return false; seenF.add(k); return true; }); }
+  out.deleted=tomb;
+  out.couple={...second.couple,lastGroupId:local.couple?.lastGroupId||null};
+  out.mainAccountId=out.accounts.some(a=>a.id===local.mainAccountId)?local.mainAccountId:(out.accounts.some(a=>a.id===second.mainAccountId)?second.mainAccountId:null);
+  delete out.exportedAt;
+  return out;
+}
+function stateSummary(s){
+  const items=(s.lists||[]).reduce((n,l)=>n+(l.items||[]).filter(i=>!i.done).length,0);
+  const last=(s.transactions||[]).reduce((m,t)=>t.date>m?t.date:m,"");
+  return {tx:(s.transactions||[]).length,groups:(s.groups||[]).length,lists:(s.lists||[]).length,items,last,names:`${s.couple?.a?.name||"Persona 1"} e ${s.couple?.b?.name||"Persona 2"}`};
+}
+function fmtStamp(iso){ if(!iso) return "data sconosciuta"; const d=new Date(iso); if(isNaN(d)) return "data sconosciuta"; return `${d.getDate()} ${MESI[d.getMonth()].toLowerCase()} ${d.getFullYear()}, ${pad2(d.getHours())}:${pad2(d.getMinutes())}`; }
+function applyImported(next,label){
+  const previous=state;
+  const snapshot=JSON.stringify(previous);
+  try{ localStorage.setItem(PRE_IMPORT_KEY,snapshot); }catch(e){ /* spazio insufficiente: si procede senza copia */ }
+  state=migrate(next);
+  if(!persist()){ state=previous; showToast("Spazio locale insufficiente: importazione non riuscita"); return; }
+  renderAll(); renderUndoImport();
+  showToast(label);
+}
+function renderUndoImport(){
+  const btn=document.getElementById("undoImportBtn");
+  if(btn) btn.hidden=!localStorage.getItem(PRE_IMPORT_KEY);
+}
+document.getElementById("undoImportBtn")?.addEventListener("click",async()=>{
+  const raw=localStorage.getItem(PRE_IMPORT_KEY);
+  if(!raw){ renderUndoImport(); return; }
+  if(!await askConfirm("Tornare ai dati che c'erano prima dell'ultima importazione? Le modifiche fatte dopo andranno perse.",{ok:"Ripristina"})) return;
+  try{ state=migrate(JSON.parse(raw)); persist(); localStorage.removeItem(PRE_IMPORT_KEY); renderAll(); renderUndoImport(); showToast("Dati ripristinati"); }
+  catch(e){ showToast("Copia non leggibile"); }
+});
+function openImportChoice(parsed,fileName){
+  const local=stateWithPhotos(state);
+  const inc=alignBackup(local,migrate(JSON.parse(JSON.stringify(parsed))));
+  openSheet("tpl-import-choice",(node,close)=>{
+    const L=stateSummary(local), B=stateSummary(inc);
+    node.querySelector("#importFileInfo").textContent=`${fileName||"Backup"} · esportato il ${fmtStamp(parsed.exportedAt||parsed.updatedAt)}`;
+    const card=(title,s,stamp)=>`<strong>${title}</strong><span>${escapeHtml(s.names)}</span><span>${s.tx} ${s.tx===1?"movimento":"movimenti"}</span><span>${s.groups} ${s.groups===1?"gruppo":"gruppi"} · ${s.lists} ${s.lists===1?"lista":"liste"}</span><span>${s.items} ${s.items===1?"cosa":"cose"} da comprare</span><span>Ultimo movimento: ${s.last?s.last.split("-").reverse().join("/"):"—"}</span><small>Modificato: ${fmtStamp(stamp)}</small>`;
+    node.querySelector("#icLocal").innerHTML=card("Questo telefono",L,local.updatedAt);
+    node.querySelector("#icBackup").innerHTML=card("Backup",B,inc.updatedAt||parsed.exportedAt);
+    const c=compareById(local.transactions,inc.transactions);
+    const parts=[];
+    if(c.onlyB) parts.push(`${c.onlyB} ${c.onlyB===1?"movimento":"movimenti"} solo nel backup`);
+    if(c.onlyA) parts.push(`${c.onlyA} solo su questo telefono`);
+    if(c.diff) parts.push(`${c.diff} ${c.diff===1?"diverso":"diversi"} tra i due`);
+    node.querySelector("#importDiff").textContent=parts.length?parts.join(" · ")+".":"I movimenti sono uguali nei due.";
+    let prefer=(inc.updatedAt||parsed.exportedAt||"")>(local.updatedAt||"")?"backup":"local";
+    const toggle=node.querySelector("#importPrefer");
+    const paint=()=>toggle.querySelectorAll(".type-opt").forEach(b=>b.classList.toggle("active",b.dataset.prefer===prefer));
+    toggle.querySelectorAll(".type-opt").forEach(b=>b.addEventListener("click",()=>{prefer=b.dataset.prefer;paint();}));
+    paint();
+    node.querySelectorAll("[data-import]").forEach(btn=>btn.addEventListener("click",async()=>{
+      const how=btn.dataset.import;
+      if(how==="keep"){ close(); showToast("Nessun dato importato"); return; }
+      if(how==="replace"){
+        if(!await askConfirm("Sostituire tutti i dati di questo telefono con il backup?",{ok:"Sostituisci",danger:true})) return;
+        close(); applyImported(parsed,"Backup importato: dati sostituiti"); return;
+      }
+      close(); applyImported(mergeStates(local,inc,prefer),"Backup unito ai dati di questo telefono");
+    }));
+  });
+}
 document.getElementById("importBtn").addEventListener("click", ()=> document.getElementById("importFile").click());
 document.getElementById("importFile").addEventListener("change", (e)=>{
   const file = e.target.files[0];
   if(!file) return;
   const reader = new FileReader();
-  reader.onload = async ()=>{
+  reader.onload = ()=>{
     try{
       const parsed = JSON.parse(reader.result);
       if(!parsed.accounts || !parsed.categories || !parsed.transactions) throw new Error("formato non valido");
-      if(!await askConfirm("Importare questo backup sovrascriverà tutti i dati attuali. Continuare?",{ok:"Importa",danger:true})) return;
-      const previousState=state;
-      state = migrate(parsed);
-      if(!persist()){
-        state=previousState;
-        showToast("Backup valido, ma non è stato possibile salvarlo: spazio locale insufficiente.");
-        return;
-      }
-      renderAll();
-      showToast("Backup importato correttamente.");
+      openImportChoice(parsed,file.name);
     }catch(err){
-      showToast("File non valido. Assicurati di selezionare un backup esportato da Bilancio.");
+      showToast("File non valido. Assicurati di selezionare un backup esportato da Noi Due.");
     }
     e.target.value = "";
   };
   reader.readAsText(file);
 });
+renderUndoImport();
 
 document.getElementById("resetBtn").addEventListener("click", async ()=>{
   if(!await askConfirm("Questa azione elimina definitivamente tutti i conti, categorie, movimenti e ricorrenti. Continuare?",{ok:"Continua"})) return;
@@ -5037,8 +4722,7 @@ document.getElementById("resetBtn").addEventListener("click", async ()=>{
 document.addEventListener("visibilitychange",()=>{
   if(document.visibilityState!=="visible") return;
   balancesHidden=true;
-  safeSetLocalStorage("bilancio_hide_balances","1",{notify:false});
-  generatePlannedTransactions();
+  safeSetLocalStorage("noidue_hide_balances","1",{notify:false});
   generateRecurringTransactions(false);
   renderAll();
 });
@@ -5058,7 +4742,7 @@ function showAppUpdatePrompt(registration){
       <div class="app-update-card">
         <div class="app-update-icon" aria-hidden="true">↻</div>
         <h3 id="appUpdateTitle">Nuova versione disponibile</h3>
-        <p>Vuoi aggiornare Bilancio adesso? I tuoi dati restano salvati sul telefono.</p>
+        <p>Vuoi aggiornare Noi Due adesso? I tuoi dati restano salvati sul telefono.</p>
         <div class="app-update-actions">
           <button type="button" class="app-update-later">Più tardi</button>
           <button type="button" class="app-update-now">Aggiorna</button>
@@ -5124,30 +4808,10 @@ if("serviceWorker" in navigator){
 /* ---------------- Init ---------------- */
 const appLoader=document.createElement("div");
 appLoader.className="app-loader";
-appLoader.innerHTML='<div class="loader-content" role="status" aria-label="Caricamento Money Tracker"><div class="loader-money" aria-hidden="true">€</div><p>Money Tracker</p><i></i></div>';
+appLoader.innerHTML='<div class="loader-content" role="status" aria-label="Caricamento Noi Due"><div class="loader-money" aria-hidden="true">💑</div><p>Noi Due</p><i></i></div>';
 document.body.appendChild(appLoader);
 
-document.getElementById("goSetMainAccountBtn")?.addEventListener("click",()=>switchView("accounts"));
-/* v1.23.0 — Home più ordinata: il dettaglio "Da oggi a fine mese" si apre toccando Saldo previsto o
-   Pagamenti in arrivo (la scelta resta ricordata su questo telefono). */
-(function foldForecast(){
-  const g=document.querySelector("#view-home .forecast-grid"); if(!g) return;
-  let open=false; try{ open=localStorage.getItem("bilancio_fc_open")==="1"; }catch(e){}
-  const tiles=["forecastTile","upcomingTile"].map(id=>document.getElementById(id)).filter(Boolean);
-  const paint=()=>{ g.classList.toggle("fc-collapsed",!open); tiles.forEach(t=>t.setAttribute("aria-expanded",String(open))); };
-  tiles.forEach(t=>{
-    t.setAttribute("role","button"); t.tabIndex=0; t.classList.add("fc-toggle");
-    const go=()=>{ open=!open; try{ localStorage.setItem("bilancio_fc_open",open?"1":"0"); }catch(e){} paint(); };
-    t.addEventListener("click",go);
-    t.addEventListener("keydown",e=>{ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); go(); } });
-  });
-  paint();
-})();
-document.getElementById("homeMainAccountCard")?.addEventListener("click",()=>{
-  if(state.mainAccountId) openAccountEvolution(state.mainAccountId); else switchView("accounts");
-});
 activeView="home";
-generatePlannedTransactions();
 generateRecurringTransactions(false);
 // La Home è già attiva nel markup: forziamo inoltre la sua visibilità sia
 // prima sia dopo il primo frame, evitando una Home bianca al rientro dallo splash.
@@ -5159,6 +4823,19 @@ function ensureInitialHome(){
   renderHeader();
   renderHome();
 }
+// Foto: carica quelle in IndexedDB, sposta lì quelle ancora nei dati, elimina quelle non più usate.
+PhotoStore.loadAll().then(()=>{
+  const before=JSON.stringify(state).length;
+  offloadPhotos();
+  if(JSON.stringify(state).length!==before) safeSetLocalStorage(STORAGE_KEY, JSON.stringify(state));
+  const used=new Set();
+  const collect=s=>allListItems(s).forEach(it=>{ const p=String(it.photo||""); if(p.startsWith("idb:")) used.add(p.slice(4)); });
+  collect(state);
+  try{ const pre=localStorage.getItem(PRE_IMPORT_KEY); if(pre) collect(JSON.parse(pre)); }catch(e){}
+  PhotoStore.prune(used).catch(()=>{});
+  if(typeof listDetailRefresh==="function") listDetailRefresh();
+  renderAll();
+}).catch(()=>{});
 ensureInitialHome();
 requestAnimationFrame(()=>{
   ensureInitialHome();
@@ -5170,151 +4847,9 @@ setTimeout(()=>{
   setTimeout(()=>{appLoader.remove();renderAll();},300);
 },650);
 
-/* =========================================================
-   v1.6.0 — Tieni premuto su un saldo: mini popup con gli ultimi 5 movimenti
-   (Home) o i prossimi 5 in arrivo (R&P e previsioni).
-   ========================================================= */
-function lpCategory(t){return state.categories.find(c=>c.id===t.categoryId)||null;}
-function lpLastMovements(filter){
-  const today=todayISO();
-  return state.transactions
-    .filter(t=>t.date<=today && t.type!=="transfer" && (!filter || filter(t)))
-    .slice()
-    .sort((a,b)=>b.date.localeCompare(a.date)||String(b.id).localeCompare(String(a.id)))
-    .slice(0,5);
-}
-function lpNextScheduled(filter){
-  const today=todayISO();
-  const out=[];
-  const now=new Date();
-  for(let k=0;k<13 && out.length<5;k++){
-    const d=new Date(now.getFullYear(),now.getMonth()+k,1);
-    plannedItemsForMonth(d.getFullYear(),d.getMonth())
-      .filter(t=>t.date>=today && (!filter || filter(t)))
-      .sort((a,b)=>a.date.localeCompare(b.date))
-      .forEach(t=>{ if(out.length<5) out.push(t); });
-  }
-  return out;
-}
-function showLongPressPopup(anchor,title,items,{emptyText="Niente da mostrare.",future=false}={}){
-  closeLongPressPopup();
-  const pop=document.createElement("div");
-  pop.className="lp-popup";pop.id="lpPopup";pop.setAttribute("role","dialog");pop.setAttribute("aria-label",title);
-  const rows=items.map(t=>{
-    const c=lpCategory(t);
-    const name=t.name || c?.name || (t.type==="income"?"Entrata":"Uscita");
-    const d=new Date(t.date+"T00:00:00");
-    const when=`${d.getDate()} ${MESI_BREVI[d.getMonth()]}`;
-    const kind=t.recurringId?"Ricorrente":t.plannedId?"Pianificata":"";
-    const amount=balancesHidden?"••••":(t.type==="income"?"+":"−")+fmt(t.amount);
-    const lpKind=future?(t.recurringId?"recurring":"planned"):"past";
-    return `<div class="lp-row lp-kind-${lpKind}"><span class="lp-ic">${emojiIconHtml(c?.emoji||(t.type==="income"?"↑":"↓"))}</span><span class="lp-main"><b>${escapeHtml(name)}</b><small>${when}${future&&kind?` · ${kind}`:""}</small></span><span class="lp-amt ${t.type}">${amount}</span></div>`;
-  }).join("");
-  pop.innerHTML=`<div class="lp-head">${escapeHtml(title)}</div>${rows||`<p class="lp-empty">${escapeHtml(emptyText)}</p>`}`;
-  document.body.appendChild(pop);
-  const r=anchor.getBoundingClientRect(), vw=window.innerWidth, vh=window.innerHeight;
-  const w=Math.min(330,vw-24); pop.style.width=w+"px";
-  let left=Math.min(Math.max(12,r.left+r.width/2-w/2),vw-w-12);
-  const ph=pop.offsetHeight;
-  let top=r.bottom+8;
-  if(top+ph>vh-90) top=Math.max(12,r.top-ph-8);
-  pop.style.left=left+"px"; pop.style.top=top+"px";
-  requestAnimationFrame(()=>pop.classList.add("show"));
-  setTimeout(()=>{
-    document.addEventListener("pointerdown",lpOutside,true);
-    window.addEventListener("scroll",closeLongPressPopup,{once:true,capture:true});
-  },0);
-}
-/* lpOutside, closeLongPressPopup e bindLongPress ora sono in suite.js (comuni a Bilancio e Noi Due). */
-function setupLongPressTargets(){
-  const byId=id=>document.getElementById(id);
-  // Home — ultimi 5 movimenti
-  bindLongPress(byId("netAmount"),()=>showLongPressPopup(byId("netAmount"),"Ultimi 5 movimenti",lpLastMovements(),{emptyText:"Nessun movimento registrato."}));
-  bindLongPress(document.querySelector("#view-home .hero-split-item.income"),e=>showLongPressPopup(e.currentTarget||document.querySelector("#view-home .hero-split-item.income"),"Ultime 5 entrate",lpLastMovements(t=>t.type==="income"),{emptyText:"Nessuna entrata registrata."}));
-  bindLongPress(document.querySelector("#view-home .hero-split-item.expense"),()=>showLongPressPopup(document.querySelector("#view-home .hero-split-item.expense"),"Ultime 5 uscite",lpLastMovements(t=>t.type==="expense"),{emptyText:"Nessuna uscita registrata."}));
-  bindLongPress(byId("homeMainAccountCard"),()=>{
-    const acc=state.accounts.find(a=>a.id===state.mainAccountId);
-    showLongPressPopup(byId("homeMainAccountCard"),acc?`Ultimi 5 · ${acc.name}`:"Ultimi 5 movimenti",lpLastMovements(acc?(t=>t.accountId===acc.id||t.toAccountId===acc.id):null));
-  });
-  bindLongPress(document.querySelector("#view-home .hero-liquidity-item.all"),()=>showLongPressPopup(document.querySelector("#view-home .hero-liquidity-item.all"),"Ultimi 5 movimenti",lpLastMovements()));
-  const fc=document.querySelectorAll("#view-home .forecast-grid > .fc-tile.solo, #view-home .forecast-card.rates-forecast");
-  if(fc[0]) bindLongPress(fc[0],()=>showLongPressPopup(fc[0],"Ultimi 5 movimenti",lpLastMovements()));
-  if(fc[1]) bindLongPress(fc[1],()=>showLongPressPopup(fc[1],"Prossimi 5 in arrivo",lpNextScheduled(),{future:true,emptyText:"Nessuna voce in arrivo."}));
-  if(fc[2]) bindLongPress(fc[2],()=>showLongPressPopup(fc[2],"Prossimi 5 in arrivo",lpNextScheduled(),{future:true,emptyText:"Nessuna voce in arrivo."}));
-  // R&P — prossimi 5 (mix, solo ricorrenti, solo pianificate)
-  const rp=[["recurringEstimateCard","Prossimi 5 ricorrenti",t=>!!t.recurringId],["plannedEstimateCard","Prossime 5 pianificate",t=>!!t.plannedId],["rpTotalEstimateCard","Prossimi 5 · ricorrenti e pianificate",null]];
-  rp.forEach(([id,title,f])=>{
-    const card=byId(id); if(!card) return;
-    bindLongPress(card,e=>{
-      const chip=e.target.closest?.(".fc-tile");
-      let filter=f, t=title;
-      if(chip){
-        const income=chip.classList.contains("in");
-        filter=x=>(!f||f(x)) && x.type===(income?"income":"expense");
-        t=title+(income?" · entrate":" · uscite");
-      }
-      showLongPressPopup(chip||card,t,lpNextScheduled(filter),{future:true,emptyText:"Nessuna voce in arrivo."});
-    });
-  });
-}
-setupLongPressTargets();
 
-/* v1.6.1 — Il pulsante "nascondi importi" di R&P sta accanto al periodo (mese/giorno). */
-(function moveRPEye(){
-  // v1.6.2: l'occhio di R&P sta a destra della riga Totali / Ricorrenti / Pianificate.
-  const eye=document.getElementById("toggleRPBalance"), toggle=document.getElementById("rpModeToggle");
-  if(!eye || !toggle) return;
-  const row=document.createElement("div"); row.className="rp-mode-row";
-  toggle.parentNode.insertBefore(row,toggle); row.appendChild(toggle); row.appendChild(eye);
-})();
 
-/* v1.7.0 — Campo di ricerca in R&P (vale per Totali, Ricorrenti e Pianificate). */
-(function setupRPSearch(){
-  return; // v1.8.0: la ricerca è nel pannello "Vedi tutti" di R&P.
-  const row=document.querySelector("#view-recurring .rp-mode-row")||document.getElementById("rpModeToggle");
-  if(!row || document.getElementById("rpSearchInput")) return;
-  const wrap=document.createElement("div");wrap.className="rp-search";
-  wrap.innerHTML='<input id="rpSearchInput" class="text-input" type="search" placeholder="Cerca nome, categoria o conto" autocomplete="off">';
-  row.after(wrap);
-  let t=null;
-  wrap.querySelector("input").addEventListener("input",e=>{clearTimeout(t);const v=e.target.value;t=setTimeout(()=>{rpSearchQuery=v;renderAll();},180);});
-})();
 
-/* =========================================================
-   v1.8.0 — Pannello "Vedi tutti" di R&P (come "Vedi tutti" della Home):
-   scelta Totali / Ricorrenti / Pianificate, ricerca con evidenziazione, pulsante periodo.
-   ========================================================= */
-function rpAllMatches(name,categoryId,accountId){
-  const q=rpAllQuery.trim().toLocaleLowerCase("it"); if(!q) return true;
-  const cats=categoriesById(), accs=accountsById();
-  return [name,cats[categoryId]?.name,accs[accountId]?.name].filter(Boolean).join(" ").toLocaleLowerCase("it").includes(q);
-}
-function renderRPAllView(){
-  const up=document.getElementById("rpAllUpcoming"); if(!up) return;
-  document.querySelectorAll("[data-rpall-kind]").forEach(b=>b.classList.toggle("active",b.dataset.rpallKind===rpAllKind));
-  const pbtn=document.getElementById("rpAllPeriodBtn");
-  if(pbtn) pbtn.innerHTML=`<svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="2.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M4 10h16M9 3v4M15 3v4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><span>${periodLabel("rpall")}</span>`;
-  const wantRec=rpAllKind!=="planned", wantPl=rpAllKind!=="recurring";
-  const months=monthsInPeriod("rpall");
-  const recRows=wantRec?state.recurring.map(r=>({r,dates:months.flatMap(([y,m])=>recurringOccurrencesInMonth(r,y,m)).filter(iso=>inPeriod("rpall",iso))}))
-    .filter(x=>x.dates.length && rpAllMatches(x.r.name,x.r.categoryId,x.r.accountId)):[];
-  const plRows=wantPl?state.planned.filter(p=>p.date && inPeriod("rpall",p.date) && rpAllMatches(p.name,p.categoryId,p.accountId)):[];
-  up.innerHTML="";
-  const rows=withHighlight(rpAllQuery,()=>[...recRows.map(({r,dates})=>recurringRowElement(r,{dates})),...plRows.map(p=>plannedRowElement(p))])
-    .sort((a,b)=>(a.dataset.sortDate||"").localeCompare(b.dataset.sortDate||""));
-  rows.forEach(r=>up.appendChild(r));
-  document.getElementById("rpAllUpcomingCount").textContent=rows.length||"";
-  document.getElementById("rpAllUpcomingEmpty").hidden=rows.length>0;
-  const paid=state.transactions.filter(t=>((wantRec&&t.recurringId)||(wantPl&&t.plannedId)) && inPeriod("rpall",t.date) && rpAllMatches(t.name,t.categoryId,t.accountId))
-    .sort((a,b)=>b.date.localeCompare(a.date)||String(b.id).localeCompare(String(a.id)));
-  const paidEl=document.getElementById("rpAllPaid");
-  withHighlight(rpAllQuery,()=>renderTxRows(paidEl,paid,{paidLabel:true}));
-  document.getElementById("rpAllPaidCount").textContent=paid.length||"";
-  document.getElementById("rpAllPaidEmpty").hidden=paid.length>0;
-}
-document.querySelectorAll("[data-rpall-kind]").forEach(b=>b.addEventListener("click",()=>{rpAllKind=b.dataset.rpallKind;renderRPAllView();}));
-document.getElementById("rpAllPeriodBtn")?.addEventListener("click",()=>openPeriodPicker("rpall"));
-(function(){let t=null;document.getElementById("rpAllSearchInput")?.addEventListener("input",e=>{clearTimeout(t);const v=e.target.value;t=setTimeout(()=>{rpAllQuery=v;renderRPAllView();},180);});})();
 
 // v1.9.2 — La copertura della barra di stato appare solo quando si scorre.
 (function(){
@@ -5322,47 +4857,58 @@ document.getElementById("rpAllPeriodBtn")?.addEventListener("click",()=>openPeri
   window.addEventListener("scroll",upd,{passive:true}); upd();
 })();
 
+// Primo avvio: chiede i nomi della coppia una volta sola.
+setTimeout(()=>{ if(!state.couple.onboarded && /^Persona 1$/.test(state.couple.a.name) && /^Persona 2$/.test(state.couple.b.name) && !state.transactions.length){ state.couple.onboarded=true; persist(); openCoupleForm(true); } },900);
+
 /* Promemoria backup comune alle 4 app (30 giorni, al massimo una volta a settimana). */
-setTimeout(()=>{ if(window.SuiteBackup) SuiteBackup.maybe({app:"Bilancio",key:"bilancio",last:localStorage.getItem("bilancio_last_backup"),hasData:state.transactions.length>0,onExport:()=>document.getElementById("exportBtn").click()}); },3000);
+setTimeout(()=>{ if(window.SuiteBackup) SuiteBackup.maybe({app:"Noi Due",key:"noidue",last:localStorage.getItem("noidue_last_backup"),hasData:state.transactions.length>0||allListItems(state).length>0,onExport:exportBackup}); },3000);
 
-/* v1.15.0 — Sincronizzazione online (Supabase), tabella app_data, app "bilancio". */
-var syncBilancio = window.SuiteSync ? SuiteSync.register({
-  app:"bilancio", name:"Bilancio", scope:"personal",
+/* v1.11.0 — Sincronizzazione online (Supabase): una sola copia per la coppia, tabella noidue_data.
+   Le modifiche dei due telefoni vengono unite con la stessa logica dell'importazione con unione. */
+const UPLOADED_KEY="noidue_uploaded_photos";
+function uploadedSet(){ try{ return new Set(JSON.parse(localStorage.getItem(UPLOADED_KEY)||"[]")); }catch(e){ return new Set(); } }
+function markUploaded(key){ const s=uploadedSet(); s.add(key); safeSetLocalStorage(UPLOADED_KEY,JSON.stringify([...s].slice(-2000)),{notify:false}); }
+var syncNoiDue = window.SuiteSync ? SuiteSync.register({
+  app:"noidue", name:"Noi Due", scope:"couple",
+  editorTag:()=>myPerson(),
   getLocal:()=>state,
-  hasLocalData:()=>state.transactions.length>0||state.recurring.length>0||state.planned.length>0,
-  // Unione: conti e categorie con lo stesso nome diventano uno solo (i dati iniziali di un telefono nuovo non si duplicano).
-  merge:(local,remote,remoteNewer)=>{
-    const newer=JSON.parse(JSON.stringify(remoteNewer?remote:local)), older=JSON.parse(JSON.stringify(remoteNewer?local:remote));
-    const norm=v=>String(v||"").trim().toLowerCase(), map={};
-    [["accounts",x=>norm(x.name)],["macroCategories",x=>x.kind+"|"+norm(x.name)],["categories",x=>x.kind+"|"+norm(x.name)]].forEach(([k,key])=>{
-      const ids=new Set((newer[k]||[]).map(x=>x.id));
-      (older[k]||[]).forEach(x=>{ if(ids.has(x.id)) return; const twin=(newer[k]||[]).find(y=>key(y)===key(x)); if(twin) map[x.id]=twin.id; else (newer[k]=newer[k]||[]).push(x); });
-    });
-    const m=id=>id!=null&&map[id]?map[id]:id;
-    (newer.categories||[]).forEach(c=>{ c.macroCategoryId=m(c.macroCategoryId); });
-    ["transactions","recurring","planned","loanRates","trash"].forEach(k=>{
-      const ids=new Set((newer[k]||[]).map(x=>x.id));
-      (older[k]||[]).forEach(x=>{ if(ids.has(x.id)) return; ["accountId","toAccountId","categoryId","accId"].forEach(f=>{ if(x[f]!=null) x[f]=m(x[f]); }); (newer[k]=newer[k]||[]).push(x); });
-    });
-    // un elemento eliminato su un telefono (finito nel cestino) non deve tornare dall'altro
-    const trashed=new Set((newer.trash||[]).map(e=>e?.data?.id).filter(Boolean));
-    ["transactions","recurring","planned"].forEach(k=>{ newer[k]=(newer[k]||[]).filter(x=>!trashed.has(x.id)); });
-    if(!newer.mainAccountId) newer.mainAccountId=m(older.mainAccountId)||null;
-    return newer;
-  },
+  hasLocalData:()=>state.transactions.length>0||allListItems(state).length>0,
   localUpdatedAt:()=>state.updatedAt||null,
+  merge:(local,remote,remoteNewer)=>{
+    const inc=alignBackup(JSON.parse(JSON.stringify(local)),migrate(JSON.parse(JSON.stringify(remote))));
+    return mergeStates(JSON.parse(JSON.stringify(local)),inc,remoteNewer?"backup":"local");
+  },
+  toast:(m)=>showToast(m),
+  noPrune:true,
+  setLocal:(data,info)=>{
+    const inc=info&&info.merged?data:alignBackup(JSON.parse(JSON.stringify(state)),migrate(JSON.parse(JSON.stringify(data))));
+    const beforeItems=new Set(allListItems(state).map(i=>i.id)), beforeTx=new Set(state.transactions.map(t=>t.id));
+    state=migrate(inc); balanceCache.clear(); offloadPhotos();
+    if(!(info&&info.restored)) notifyPartnerChanges(beforeItems,beforeTx);
+    safeSetLocalStorage(STORAGE_KEY, JSON.stringify(state));
+    renderAll(); if(typeof listDetailRefresh==="function") listDetailRefresh();
+  },
+  afterPush:async(S)=>{
+    const done=uploadedSet();
+    for(const it of allListItems(state)){
+      const p=String(it.photo||""); if(!p.startsWith("idb:")) continue;
+      const key=p.slice(4); if(done.has(key)||!PhotoStore.has(key)) continue;
+      const blob=await (await fetch(PhotoStore.data(p))).blob();
+      await S.uploadPhoto(`coppia/${S.coupleId}/${key}.jpg`,blob);
+      markUploaded(key);
+    }
+  },
   onStatus:()=>{ if(typeof pushOnSyncStatus==="function") pushOnSyncStatus(); },
-  setLocal:(data)=>{ state=migrate(JSON.parse(JSON.stringify(data))); balanceCache.clear(); safeSetLocalStorage(STORAGE_KEY, JSON.stringify(state)); renderAll(); },
 }) : null;
-(function(){ const slot=document.getElementById("suiteSyncSlot"); if(slot&&window.SuiteSync) slot.innerHTML=SuiteSync.cardHtml("bilancio",{cls:"section-block suite-sync-block",h:"h2"}); })();
+(function(){ const slot=document.getElementById("suiteSyncSlot"); if(slot&&window.SuiteSync) slot.innerHTML=SuiteSync.cardHtml("noidue",{cls:"section-block suite-sync-block",h:"h2"}); })();
 
-
-/* ---------------- v1.18.0 — Notifiche push "Scadenze di domani" ----------------
-   Il telefono si iscrive (permesso + indirizzo push salvato in Supabase, tabella push_subscriptions).
-   Ogni ora la funzione notify-scadenze su Supabase controlla a chi tocca e, all'ora scelta, invia
-   le ricorrenti e le pianificate del giorno dopo. Guida completa: GUIDA_NOTIFICHE.txt */
-const PUSH_VAPID_PUBLIC="BFlNut-5sgpCsMd-xNtXEczfzjT9AoOyxgyGHJSn6t8QTnT1ygdRc_OT9-GNFnoWJrP1YpuCh8yhbwEa1dBDSsY";
-const PUSH_FN="/functions/v1/notify-scadenze";
+/* ---------------- v1.13.0 — Notifiche push "Il tuo partner ha aggiunto/rimosso qualcosa" ----------------
+   Il telefono si iscrive (permesso + indirizzo push salvato in Supabase, tabella push_subscriptions,
+   con couple_id e la persona "a"/"b" di questo telefono). Ogni volta che un telefono salva, la funzione
+   notify-noidue su Supabase confronta i dati prima/dopo e avvisa SOLO i telefoni dell'altra persona.
+   Guida completa: GUIDA_NOTIFICHE.txt */
+const PUSH_VAPID_PUBLIC="BKczfpgprh7HLU-bzY9QFsHNGZTjh624LyPo3CvI97dn0F_TjlQjKR3tJbzQuEtBLkapU54HFEOpozXVfNIePNk";
+const PUSH_FN="/functions/v1/notify-noidue";
 let pushState={sub:null,row:null,busy:false,msg:"",err:false,loaded:false};
 function pushSupported(){ return "serviceWorker" in navigator && "PushManager" in window && "Notification" in window; }
 function pushIsIOS(){ return /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform==="MacIntel" && navigator.maxTouchPoints>1); }
@@ -5374,8 +4920,8 @@ function b64uToUint8(str){
 function pushErrText(e){
   const t=String(e&&e.message||e||"");
   if(/monthly_summary|last_monthly_sent/.test(t)) return "Su Supabase manca il riepilogo mensile: esegui supabase/riepilogo_mensile.sql (vedi GUIDA_NOTIFICHE).";
-  if(/push_subscriptions/.test(t) && /(does not exist|42P01|PGRST205|schema cache)/.test(t)) return "Su Supabase manca la tabella delle notifiche: esegui il passo 2 della guida.";
-  if(/notify-scadenze|404/.test(t) && /function|not found|NOT_FOUND/i.test(t)) return "Su Supabase manca la funzione notify-scadenze: esegui il passo 4 della guida.";
+  if(/push_subscriptions/.test(t) && /(does not exist|42P01|PGRST205|schema cache)/.test(t)) return "Su Supabase manca la colonna/tabella delle notifiche: esegui il passo 2 della guida.";
+  if(/notify-noidue|404/.test(t) && /function|not found|NOT_FOUND/i.test(t)) return "Su Supabase manca la funzione notify-noidue: esegui il passo 4 della guida.";
   if(e&&e.auth) return "Rifai l'accesso alla sincronizzazione qui sopra.";
   return t.replace(/^Errore \d+:\s*/,"").slice(0,160) || "Qualcosa non ha funzionato.";
 }
@@ -5390,48 +4936,41 @@ async function refreshPushState(){
     pushState.sub=reg?await reg.pushManager.getSubscription():null;
     pushState.row=null;
     if(pushState.sub && window.SuiteSync && SuiteSync.signedIn){
-      // select=* : se la colonna del riepilogo mensile non esiste ancora, semplicemente non arriva
-      const rows=await SuiteSync.api(`/rest/v1/push_subscriptions?select=*&endpoint=eq.${encodeURIComponent(pushState.sub.endpoint)}`);
+      // select=* : se le colonne del riepilogo mensile non esistono ancora, semplicemente non arrivano
+      const rows=await SuiteSync.api(`/rest/v1/push_subscriptions?select=*&app=eq.noidue&endpoint=eq.${encodeURIComponent(pushState.sub.endpoint)}`);
       pushState.row=rows[0]||null;
     }
   }catch(e){ pushState.msg=pushErrText(e); pushState.err=true; }
   pushState.loaded=true;
   renderPushCard();
 }
-function pushHourOptions(sel){
-  let h="";
-  for(let i=6;i<=22;i++) h+=`<option value="${i}"${i===sel?" selected":""}>${pad2(i)}:00</option>`;
-  return h;
-}
 function renderPushCard(){
   const card=document.getElementById("pushCard"); if(!card) return;
-  if(card.contains(document.activeElement) && document.activeElement.tagName==="SELECT") return;
   const on=!!(pushState.sub && pushState.row && pushState.row.enabled!==false);
   let dot="off", status, inner="";
   if(!pushSupported()){
     status=pushIsIOS() && !pushStandalone()
-      ? "Per ricevere le notifiche apri Bilancio dall'icona sulla schermata Home (iPhone con iOS 16.4 o successivo)."
+      ? "Per ricevere le notifiche apri Noi Due dall'icona sulla schermata Home (iPhone con iOS 16.4 o successivo)."
       : "Questo browser non supporta le notifiche push.";
   } else if(!(window.SuiteSync && SuiteSync.signedIn)){
     status="Collega prima la sincronizzazione qui sopra: le notifiche partono dal server.";
+  } else if(!myPerson()){
+    status="Tocca prima \"Chi usa questo telefono\" qui sotto: serve per sapere a chi mandare gli avvisi.";
   } else if(!pushState.loaded){
     status="Controllo…"; dot="busy";
   } else if(on){
     dot="on";
-    const hour=Number(pushState.row.notify_hour??8);
-    status=`Attive su questo telefono: ogni giorno alle ${pad2(hour)}:00 ti avviso delle ricorrenti e pianificate del giorno dopo.`;
-    inner=`<div class="push-settings">
-        <label class="push-line"><span>Ora dell'avviso</span><select id="pushHourSelect" class="text-input" aria-label="Ora dell'avviso">${pushHourOptions(hour)}</select></label>
-        <label class="toggle-line push-line"><input type="checkbox" id="pushAmountsInput"${pushState.row.show_amounts?" checked":""}> Mostra gli importi nella notifica</label>
-        ${"monthly_summary" in pushState.row
-          ? `<label class="toggle-line push-line"><input type="checkbox" id="pushMonthlyInput"${pushState.row.monthly_summary!==false?" checked":""}> Riepilogo mensile (il giorno 1, alla stessa ora)</label>`
-          : `<p class="push-msg">Riepilogo mensile: per attivarlo esegui su Supabase il file supabase/riepilogo_mensile.sql (vedi GUIDA_NOTIFICHE).</p>`}
-      </div>
-      <div class="suite-sync-actions"><button type="button" class="suite-sync-primary primary" id="pushTestBtn"${pushState.busy?" disabled":""}>Invia una prova</button>${"monthly_summary" in pushState.row?`<button type="button" id="pushTestMonthlyBtn"${pushState.busy?" disabled":""}>Prova riepilogo</button>`:""}<button type="button" id="pushOffBtn"${pushState.busy?" disabled":""}>Disattiva</button></div>`;
+    status="Attive su questo telefono: ti avviso quando il tuo partner aggiunge o rimuove un movimento o un articolo da una lista.";
+    const hasMonthly="monthly_summary" in pushState.row;
+    inner=`<div class="push-settings">${hasMonthly
+        ? `<label class="toggle-line push-line"><input type="checkbox" id="pushMonthlyInput"${pushState.row.monthly_summary!==false?" checked":""}> Riepilogo mensile (il giorno 1 alle 9:00)</label>
+           <label class="toggle-line push-line"><input type="checkbox" id="pushAmountsInput"${pushState.row.show_amounts?" checked":""}> Mostra gli importi nel riepilogo</label>`
+        : `<p class="push-msg">Riepilogo mensile: per attivarlo esegui su Supabase i file supabase/riepilogo_mensile.sql e cron_riepilogo.sql (vedi GUIDA_NOTIFICHE).</p>`}</div>
+      <div class="suite-sync-actions"><button type="button" class="suite-sync-primary primary" id="pushTestBtn"${pushState.busy?" disabled":""}>Invia una prova</button>${hasMonthly?`<button type="button" id="pushTestMonthlyBtn"${pushState.busy?" disabled":""}>Prova riepilogo</button>`:""}<button type="button" id="pushOffBtn"${pushState.busy?" disabled":""}>Disattiva</button></div>`;
   } else {
     status=Notification.permission==="denied"
-      ? "Notifiche bloccate per Bilancio: riattivale in Impostazioni › Notifiche › Bilancio, poi torna qui."
-      : "Ricevi la sera prima un avviso con le ricorrenti e le pianificate in scadenza il giorno dopo.";
+      ? "Notifiche bloccate per Noi Due: riattivale in Impostazioni › Notifiche › Noi Due, poi torna qui."
+      : "Ricevi un avviso quando il tuo partner aggiunge o rimuove un movimento o un articolo da una lista.";
     inner=`<button type="button" class="suite-sync-primary primary push-on-btn" id="pushOnBtn"${pushState.busy||Notification.permission==="denied"?" disabled":""}>🔔 Attiva notifiche</button>`;
   }
   const msg=pushState.msg?`<p class="push-msg${pushState.err?" err":""}">${escapeHtml(pushState.msg)}</p>`:"";
@@ -5443,13 +4982,15 @@ function pushOnSyncStatus(){
   if(signed!==pushLastSigned){ pushLastSigned=signed; refreshPushState(); } else renderPushCard();
 }
 function pushSay(text,err=false){ pushState.msg=text; pushState.err=err; renderPushCard(); }
-async function pushSaveRow(extra){
+async function pushSaveRow(){
+  if(syncNoiDue) await syncNoiDue.rowRef(); // assicura che coupleId sia risolto
   const j=pushState.sub.toJSON();
   await SuiteSync.api("/rest/v1/push_subscriptions?on_conflict=endpoint",{method:"POST",
     headers:{Prefer:"resolution=merge-duplicates,return=minimal"},
-    json:Object.assign({user_id:SuiteSync.userId,app:"bilancio",endpoint:j.endpoint,p256dh:j.keys.p256dh,auth:j.keys.auth,
+    json:{user_id:SuiteSync.userId,app:"noidue",couple_id:syncNoiDue?syncNoiDue.coupleId:null,person:myPerson()||null,
+      endpoint:j.endpoint,p256dh:j.keys.p256dh,auth:j.keys.auth,
       tz:(Intl.DateTimeFormat().resolvedOptions().timeZone||"Europe/Rome"),device:navigator.userAgent.slice(0,120),
-      enabled:true,updated_at:new Date().toISOString()},extra||{})});
+      enabled:true,updated_at:new Date().toISOString()}});
 }
 async function pushEnable(){
   if(pushState.busy) return;
@@ -5457,12 +4998,13 @@ async function pushEnable(){
   try{
     // Il permesso va chiesto subito dopo il tocco (regola di iOS).
     const perm=await Notification.requestPermission();
-    if(perm!=="granted"){ pushState.busy=false; pushSay(perm==="denied"?"Permesso negato. Puoi riattivarlo in Impostazioni › Notifiche › Bilancio.":"Permesso non concesso.",true); return; }
+    if(perm!=="granted"){ pushState.busy=false; pushSay(perm==="denied"?"Permesso negato. Puoi riattivarlo in Impostazioni › Notifiche › Noi Due.":"Permesso non concesso.",true); return; }
     const reg=await pushRegistration();
     if(!reg) throw new Error("Service worker non attivo: riapri l'app e riprova.");
     pushState.sub=(await reg.pushManager.getSubscription()) || (await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:b64uToUint8(PUSH_VAPID_PUBLIC)}));
-    await pushSaveRow({notify_hour:pushState.row?.notify_hour??20,show_amounts:pushState.row?.show_amounts??false});
-    pushState.row={notify_hour:pushState.row?.notify_hour??20,show_amounts:pushState.row?.show_amounts??false,enabled:true};
+    await pushSaveRow();
+    pushState.row={enabled:true};
+    setTimeout(refreshPushState,300);
     pushState.busy=false; pushSay("Fatto. Tocca \"Invia una prova\" per controllare che arrivino.");
   }catch(e){ pushState.busy=false; pushSay(pushErrText(e),true); }
 }
@@ -5475,25 +5017,25 @@ async function pushDisable(){
   pushState.sub=null; pushState.row=null; pushState.busy=false;
   pushSay("Notifiche disattivate su questo telefono.");
 }
+async function pushTest(kind){
+  if(pushState.busy) return;
+  const monthly=kind==="monthly";
+  pushState.busy=true; pushSay(monthly?"Invio il riepilogo del mese scorso…":"Invio la prova…");
+  try{
+    if(monthly && syncNoiDue && syncNoiDue.sync) { try{ await syncNoiDue.sync("push-test"); }catch(e){} } // la funzione legge i dati online
+    const r=await SuiteSync.api(PUSH_FN,{method:"POST",json:monthly?{test:"monthly",endpoint:pushState.sub.endpoint}:{test:true}});
+    pushState.busy=false;
+    pushSay(r&&r.sent?(monthly?"Riepilogo inviato a questo telefono: dovrebbe arrivare tra pochi secondi.":"Prova inviata: dovrebbe arrivare tra pochi secondi su tutti i telefoni della coppia."):"La prova non è partita: disattiva e riattiva le notifiche.",!(r&&r.sent));
+  }catch(e){ pushState.busy=false; pushSay(pushErrText(e),true); }
+}
 async function pushUpdate(patch){
-  if(!pushState.sub) return;
+  if(!pushState.sub||!pushState.row) return;
   const prev=Object.assign({},pushState.row);
   Object.assign(pushState.row,patch); pushState.msg=""; renderPushCard();
   try{
     await SuiteSync.api(`/rest/v1/push_subscriptions?endpoint=eq.${encodeURIComponent(pushState.sub.endpoint)}`,{method:"PATCH",
       headers:{Prefer:"return=minimal"},json:Object.assign({updated_at:new Date().toISOString()},patch)});
   }catch(e){ pushState.row=prev; pushSay(pushErrText(e),true); }
-}
-async function pushTest(kind){
-  if(pushState.busy) return;
-  const monthly=kind==="monthly";
-  pushState.busy=true; pushSay(monthly?"Invio il riepilogo del mese scorso…":"Invio la prova…");
-  try{
-    if(syncBilancio) await syncBilancio.sync("push-test"); // la funzione legge i dati online: prima li aggiorno
-    const r=await SuiteSync.api(PUSH_FN,{method:"POST",json:{test:monthly?"monthly":true}});
-    pushState.busy=false;
-    pushSay(r&&r.sent?"Prova inviata: dovrebbe arrivare tra pochi secondi.":"La prova non è partita: disattiva e riattiva le notifiche.",!(r&&r.sent));
-  }catch(e){ pushState.busy=false; pushSay(pushErrText(e),true); }
 }
 document.getElementById("pushCard")?.addEventListener("click",e=>{
   const id=e.target.closest("button")?.id;
@@ -5503,27 +5045,28 @@ document.getElementById("pushCard")?.addEventListener("click",e=>{
   else if(id==="pushTestMonthlyBtn") pushTest("monthly");
 });
 document.getElementById("pushCard")?.addEventListener("change",e=>{
-  if(e.target.id==="pushHourSelect") pushUpdate({notify_hour:Number(e.target.value)});
+  if(e.target.id==="pushMonthlyInput") pushUpdate({monthly_summary:e.target.checked});
   else if(e.target.id==="pushAmountsInput") pushUpdate({show_amounts:e.target.checked});
-  else if(e.target.id==="pushMonthlyInput") pushUpdate({monthly_summary:e.target.checked});
 });
-renderPushCard();
 setTimeout(refreshPushState,1500);
-document.addEventListener("visibilitychange",()=>{ if(document.visibilityState==="visible") refreshPushState(); });
 
-/* Aperta da una notifica: va su R&P (?view=recurring) o sulle Statistiche di un mese
-   (?view=stats&month=2026-09, dal riepilogo mensile), anche via messaggio dal service worker. */
-(function(){
-  const go=(v,month)=>{
-    try{
-      if(v==="recurring") switchView("recurring");
-      else if(v==="stats"){
-        const m=/^(\d{4})-(\d{2})$/.exec(month||"");
-        if(m){ viewYear=Number(m[1]); viewMonth=Number(m[2])-1; statsTrendRange="1m"; }
-        switchView("stats");
-      }
-    }catch(e){}
-  };
-  try{ const q=new URLSearchParams(location.search), v=q.get("view"); if(v){ go(v,q.get("month")); history.replaceState(null,"",location.pathname); } }catch(e){}
-  if("serviceWorker" in navigator) navigator.serviceWorker.addEventListener("message",e=>{ if(e.data&&e.data.type==="open-view") go(e.data.view,e.data.month); });
-})();
+/* v1.12.0 — Avviso quando l'altra persona aggiunge qualcosa (dopo la sincronizzazione). */
+function notifyPartnerChanges(beforeItems,beforeTx){
+  const me=myPerson(); if(!me) return;
+  const other=me==="a"?"b":"a", parts=[];
+  const via=[];
+  state.lists.forEach(l=>{
+    const fresh=(l.items||[]).filter(i=>!beforeItems.has(i.id));
+    const n=fresh.filter(i=>i.addedBy===other).length, v=fresh.filter(i=>i.via).length;
+    if(n) parts.push(`${n} ${n===1?"cosa":"cose"} a ${l.name}`);
+    if(v) via.push(`${v} ${v===1?"prodotto":"prodotti"} a ${l.name}`);
+  });
+  const tx=state.transactions.filter(t=>!beforeTx.has(t.id)).length;
+  if(tx) parts.push(`${tx} ${tx===1?"movimento":"movimenti"}`);
+  if(!parts.length&&!via.length) return;
+  showToast(parts.length?`${personName(other)} ha aggiunto ${parts.join(" e ")}`:`Da RecompApp: ${via.join(", ")}`);
+  if(navigator.vibrate) navigator.vibrate(20);
+}
+setTimeout(()=>{ if(window.SuiteSync&&SuiteSync.signedIn&&!myPerson()&&state.couple.onboarded) askWhoAmI(); },3500);
+document.addEventListener("submit",e=>{ if(e.target.closest&&e.target.closest("[data-suite-sync-login]")) setTimeout(()=>{ if(SuiteSync.signedIn&&!myPerson()) askWhoAmI(); },2500); });
+document.getElementById("noidueMeBtn")?.addEventListener("click",askWhoAmI);

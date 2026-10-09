@@ -1,25 +1,27 @@
-/* Service worker — schema comune a RecompApp, Bilancio e Style Wishlist.
+/* Service worker — schema comune a RecompApp, Bilancio, Style Wishlist e Noi Due.
    - VERSION è la versione dell'app: è la stessa usata in index.html come ?v=VERSION.
    - Pagina: rete con timeout di 3 secondi, poi la copia salvata (veloce anche con segnale scarso).
    - File con ?v= e icone: prima la cache; un nuovo rilascio cambia ?v= e quindi l'indirizzo.
    - Il nuovo worker resta in attesa finché l'app non chiede di attivarlo (avviso "Aggiorna"). */
-const VERSION = '1.40.0';
-const PREFIX = 'bilancio-cache-';
+const VERSION = '1.30.0';
+const PREFIX = 'noidue-cache-';
 const CACHE = PREFIX + VERSION;
 const SHELL = [
   './',
   './index.html',
-  './suite.js?v=1.40.0',
-  './style.css?v=1.40.0',
-  './suite-ui.css?v=1.40.0',
-  './suite-tokens.css?v=1.40.0',
-  './app.js?v=1.40.0',
-  './manifest.json?v=1.40.0',
-  './icons/icon-192.png?v=1.40.0',
-  './icons/icon-512.png?v=1.40.0',
-  './icons/icon-maskable-192.png?v=1.40.0',
-  './icons/icon-maskable-512.png?v=1.40.0',
-  './icons/apple-touch-icon.png?v=1.40.0'
+  './suite.js?v=1.30.0',
+  './style.css?v=1.30.0',
+  './suite-ui.css?v=1.30.0',
+  './suite-tokens.css?v=1.30.0',
+  './app.js?v=1.30.0',
+  './manifest.json?v=1.30.0',
+  './icons/icon-192.png?v=1.30.0',
+  './icons/icon-512.png?v=1.30.0',
+  './icons/icon-maskable-192.png?v=1.30.0',
+  './icons/icon-maskable-512.png?v=1.30.0',
+  './icons/apple-touch-icon.png?v=1.30.0',
+  './apple-touch-icon.png',
+  './apple-touch-icon-precomposed.png'
 ];
 const NETWORK_TIMEOUT_MS = 3000;
 
@@ -75,15 +77,15 @@ self.addEventListener('fetch', (event) => {
   event.respondWith(caches.match(req).then((cached) => cached || fromNetworkAndStore(req)));
 });
 
-/* v1.24.0 — Notifiche push (inviate dalla funzione notify-scadenze su Supabase). */
+/* v1.28.0 — Notifiche push "Il tuo partner ha aggiunto/rimosso qualcosa". */
 self.addEventListener('push', (event) => {
   let d = {};
   try { d = event.data ? event.data.json() : {}; } catch (e) { d = { body: event.data ? event.data.text() : '' }; }
-  const title = d.title || 'Bilancio';
+  const title = d.title || 'Noi Due';
   event.waitUntil(
     self.registration.showNotification(title, {
       body: d.body || '',
-      tag: d.tag || 'bilancio',
+      tag: d.tag || 'noidue',
       icon: './icons/icon-192.png',
       badge: './icons/icon-192.png',
       data: { url: d.url || './' }
@@ -94,15 +96,10 @@ self.addEventListener('push', (event) => {
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
   const target = new URL((event.notification.data && event.notification.data.url) || './', self.registration.scope).href;
-  const view = new URL(target).searchParams.get('view');
-  const month = new URL(target).searchParams.get('month');
   event.waitUntil(
     self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((list) => {
       for (const c of list) {
-        if (c.url.startsWith(self.registration.scope)) {
-          if (view) c.postMessage({ type: 'open-view', view, month });
-          return c.focus();
-        }
+        if (c.url.startsWith(self.registration.scope)) return c.focus();
       }
       return self.clients.openWindow(target);
     })

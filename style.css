@@ -2039,7 +2039,10 @@ html, body, button, input, select, textarea, .sheet, .view, .tab, .chip, .pill-b
 }
 /* Navigazione swipe, stima R&P e controllo saldi */
 #views {
-  touch-action: pan-y;
+  /* v1.23.0 — anche "pan-x": con il solo pan-y il telefono rifiutava di far scorrere
+     di lato le strisce interne (le liste in Home). I gesti di mese e di ritorno
+     indietro continuano a funzionare: li gestisce il codice, non il browser. */
+  touch-action: pan-x pan-y;
 }
 .view.view-swipe-next {
   animation: viewSwipeNext 0.24s cubic-bezier(0.22, 0.72, 0.28, 1) both;
@@ -2567,7 +2570,7 @@ html, body, button, input, select, textarea, .sheet, .view, .tab, .chip, .pill-b
   padding-left: 12px;
   padding-right: 12px;
 }
-@media (max-width: 430px) {
+@media (max-width: 480px) {
   #view-transactions > .sticky-head {
     gap: 14px;
   }
@@ -2613,7 +2616,7 @@ html, body, button, input, select, textarea, .sheet, .view, .tab, .chip, .pill-b
   white-space: nowrap;
 }
 /* v1.3.4 — iPhone layout fixes + R&P add chooser */
-@media (max-width: 430px) {
+@media (max-width: 480px) {
   .recurring-start-controls {
     display: flex;
     gap: 10px;
@@ -2915,7 +2918,7 @@ button.hero-liquidity-item {
   line-height: normal !important;
 }
 /* v1.3.18 — Campo data ricorrente più compatto su iPhone. */
-@media (max-width: 430px) {
+@media (max-width: 480px) {
   #sheetRecurringForm #recurringDateInput {
     width: 210px !important;
     max-width: 72% !important;
@@ -6654,6 +6657,8 @@ html.amounts-hidden :is(.budget-spent,.budget-limit,.budget-earned,.top-category
   display: flex;
   gap: 8px;
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
   padding: 0 12px 2px;
   scroll-snap-type: x proximity;
   scrollbar-width: none;
@@ -7579,4 +7584,74 @@ html body .mv-meta-text > .mv-list-badge {
   border-radius: 999px;
   background: color-mix(in srgb, var(--ink) 6%, transparent);
   font-size: 13px;
+}
+
+/* =========================================================
+   v1.23.0 — Icone (emoji) uguali dappertutto
+   Prima ogni elenco aveva il suo riquadro grigio e, con due emoji, la seconda
+   andava a capo. Ora: niente riquadro, niente sfondo, emoji affiancate e grandi
+   come nei movimenti della Home.
+   ========================================================= */
+.mv-ic,
+.category-row .ic,
+.template-manage-row .ic,
+#view-home .hl-em,
+#view-home .hl-title-ic,
+#view-liste .lv-em,
+.ls-em,
+#overlayRoot #sheetListTrash .lt-em,
+#overlayRoot #sheetListDetail .lc-icon,
+#overlayRoot .tx-list-link .tx-list-ic,
+.top-category-emoji,
+.chip .em {
+  display: inline-flex !important;
+  flex-direction: row !important;
+  flex-wrap: nowrap !important;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  width: auto !important;
+  height: auto !important;
+  min-height: 0 !important;
+  padding: 0 !important;
+  background: none !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+  overflow: visible !important;
+  white-space: nowrap;
+  line-height: 1;
+}
+/* Le emoji delle liste e delle schede tornano della stessa misura dei movimenti. */
+#view-home .hl-em,
+#view-liste .lv-em,
+.ls-em,
+#overlayRoot #sheetListTrash .lt-em,
+#overlayRoot #sheetListDetail .lc-icon,
+.category-row .ic,
+.template-manage-row .ic,
+.top-category-emoji {
+  font-size: 17px !important;
+}
+#view-home .hl-title-ic {
+  font-size: 15px !important;
+}
+/* La colonna dell'icona resta larga uguale in tutte le righe, anche con una sola emoji. */
+.mv-ic,
+#view-home .hl-em,
+#view-liste .lv-em,
+.ls-em,
+#overlayRoot #sheetListTrash .lt-em,
+.category-row .ic,
+.template-manage-row .ic {
+  min-width: 28px;
+}
+#overlayRoot #sheetListDetail .lc-icon {
+  min-width: 34px;
+}
+.mv-ic-item {
+  display: inline-block !important;
+  line-height: 1;
 }

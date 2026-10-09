@@ -1599,7 +1599,8 @@ function moveMonthFromSwipe(delta){
 viewsRoot.addEventListener("touchstart",e=>{
   if(e.touches.length!==1 || !MONTH_SWIPE_VIEWS.includes(activeView)){monthSwipeBlocked=true;return;}
   const target=e.target;
-  monthSwipeBlocked=Boolean(target.closest("input,textarea,select,button,a,[contenteditable='true'],.chart-wrap,.sheet,.movement-action-overlay"));
+  monthSwipeBlocked=Boolean(target.closest("input,textarea,select,button,a,[contenteditable='true'],.chart-wrap,.sheet,.movement-action-overlay"))
+    || insideHScroller(target,viewsRoot);
   if(monthSwipeBlocked) return;
   const t=e.touches[0];monthSwipeStartX=t.clientX;monthSwipeStartY=t.clientY;
 },{passive:true});
@@ -1945,6 +1946,17 @@ function canScrollLeftWithin(el,root){
   }
   return false;
 }
+/* v1.23.0 — Il dito è partito dentro una striscia che scorre di lato (es. le liste in Home)?
+   Allora quel movimento è suo: niente cambio mese e niente ritorno indietro. */
+function insideHScroller(el,root){
+  for(let n=el;n && n!==root && n!==document.body;n=n.parentElement){
+    if(n.scrollWidth>n.clientWidth+2){
+      const ox=getComputedStyle(n).overflowX;
+      if(ox==="auto"||ox==="scroll") return true;
+    }
+  }
+  return false;
+}
 function openSheet(templateId, setup){
   const tpl = document.getElementById(templateId);
   const backdrop = document.createElement("div");
@@ -2252,27 +2264,75 @@ function listCategoryFor(l){
 }
 /* ---------------- Noi Due 1.7.0 — Liste: quantità, reparti, comprati spesso, gesti, per chi, lista base ---------------- */
 const AISLES=[
-  // v1.19.0 — reparti in più per le cose "non da supermercato" (prima finivano in Altro o nel reparto sbagliato).
-  ["elettro","🔌","Elettrodomestici ed elettronica",/\b(aspirapolvere|scopa elettrica|robot (aspira|da cucina|lavapavimenti)|macchin(a|etta) (da|del|per) (caff|pane|cucire)|macchina caff|frullator|mixer|tostapane|tostiera|bollitore|microonde|friggitrice|forno elettrico|piastra|ferro da stiro|asse da stiro|phon|fon\b|asciugacapelli|piastra per capelli|rasoio elettrico|spazzolino elettrico|ventilatore|stufa|condizionatore|deumidificatore|umidificatore|purificatore|lavatrice nuova|frigorifero|congelatore|televisore|\btv\b|monitor|computer|portatile|notebook|tablet|ipad|iphone|smartphone|telefono|cellulare|caricatore|caricabatterie|power ?bank|cavo|cavetto|adattatore|presa multipla|ciabatta elettrica|prolunga|cuffie|auricolari|airpods|cassa bluetooth|altoparlante|stampante|cartuccia|toner|mouse|tastiera|hard disk|chiavetta usb|router|telecomando|lampada|faretto|smart ?watch|bilancia pesapersone|sveglia)/i],
-  ["abbigliamento","👕","Abbigliamento e scarpe",/\b(maglia|maglion|maglietta|t-?shirt|camicia|felpa|pantalon|jeans|gonna|vestito|giacca|giubbotto|cappotto|piumino|calz[ei]|calzini|collant|mutand|slip|reggiseno|pigiama|accappatoio|costume|scarpe|scarpa|sneaker|stivali|ciabatte|infradito|sandali|cintura|cappello|sciarpa|guanti|ombrello|borsa|zaino)/i],
-  ["fai-da-te","🔧","Fai da te e giardino",/\b(vit[ei]\b|tasselli|chiodi|trapano|cacciavite|martello|pinza|chiave inglese|nastro (adesivo|isolante|biadesivo)|colla|silicone|vernice|pennello|rullo|carta vetrata|metro|livella|seghetto|attrezzi|lucchetto|serratura|terriccio|concime|vaso|piant[ae]|semi\b|innaffiatoio|tubo (da|per) giardino|pesticid)/i],
-  ["cartoleria","✏️","Cartoleria e ufficio",/\b(quadern|block ?notes|agenda|penna\b|penne (a sfera|bic|gel)|matit|gomma da cancellare|evidenziator|pennarell|colori a|astuccio|righello|forbici|graffett|spillatrice|puntine|post-?it|carta (a4|da stampa|regalo)|buste (da lettera|imbottite)|francobolli|cartellina|raccoglitore|scotch)/i],
-  ["frutta","🥦","Frutta e verdura",/\b(mel[ae]|banan|aranc|limon|per[ae]\b|frutta|kiwi|uva\b|fragol|insalat|lattug|pomodor|zucchin|carot|patat[ae]\b|cipoll|aglio|peperon|melanzan|verdur|spinac|broccol|cavol|fungh|basilic|prezzemol|avocado|finocch|sedano|rucola|ananas|pesche|albicocc|cocomer|melone|mirtill|lampon)/i],
-  ["pane","🥖","Pane e forno",/\b(pane|panin|focacc|grissin|piadin|cornett|brioche|fette biscottate|tramezzin|pizza bianca)/i],
-  ["latte","🧀","Latticini e uova",/\b(latte|yogurt|burro|formagg|mozzarell|parmigian|grana|ricott|uov[ao]|panna|stracchin|scamorz|mascarpon|gorgonzol|pecorin|kefir|skyr)/i],
-  ["carne","🥩","Carne, pesce e salumi",/\b(pollo|manzo|maiale|carne|macinat|salsicc|prosciutt|salame|bresaol|mortadell|wurstel|tacchin|pesce|salmone|merluzz|gamber|affettat|speck|hamburger|bistecc|vitello|cotolett|polpo|calamar|cozze|vongole)/i],
-  ["dispensa","🥫","Dispensa",/\b(pasta|spaghett|penne|riso|farina|zucchero|sale\b|olio|aceto|caff[eè]|t[eè]\b|biscott|cereali|marmellat|nutella|tonno|passata|pelati|legumi|ceci|fagioli|lenticchi|sugo|pesto|spezie|miele|cioccolat|snack|patatine|crackers|lievito|brodo|maionese|ketchup|senape|olive|capperi|gallette|fette)/i],
-  ["surgelati","🧊","Surgelati",/\b(surgelat|gelat|bastoncin|frozen|ghiaccio)/i],
-  ["bevande","🥤","Bevande",/\b(acqua|birra|vino|succo|coca|aranciata|bibit|spumante|prosecco|t[eè] freddo|energy|sciroppo|amaro|gin|vodka|rum)/i],
-  ["casa","🧽","Casa e pulizia",/\b(detersiv|ammorbident|candeggin|sgrassat|spugn|carta igienica|scottex|carta (da )?cucina|sacchett|sacchi|alluminio|pellicola|lampadin|pile\b|batterie|tovagliol|piatti di carta|bicchieri|scopa|panno|anticalcare|brillantante|lavastoviglie|lavatrice|ammoniaca|alcol|insetticid)/i],
-  ["igiene","🧴","Igiene e cura",/\b(shampoo|balsamo|bagnoschiuma|sapone|dentifric|spazzolin|deodorant|rasoi|schiuma da barba|assorbent|cotton|crema|struccant|salviett|fazzolett|cerott|collutorio|lamette|profumo|filo interdentale|tampon)/i],
-  ["animali","🐾","Animali",/\b(crocchett|lettiera|cane|gatto|scatolett|cibo per)/i],
+  /* v1.23.0 — Reparti: [chiave, emoji, nome, parole]. La scelta non è più "vince il primo
+     reparto dell'elenco" ma "vince la parola più lunga trovata nel testo": così
+     "lavastoviglie" va fra gli elettrodomestici e "detersivo lavastoviglie" fra la pulizia.
+     Il testo viene prima ripulito (minuscole, accenti, quantità), quindi qui si scrive
+     tutto senza accenti. */
+  ["frutta","🥦","Frutta e verdura",String.raw`mel[ae]\b|banan\w*|aranc\w*|mandarin\w*|clementin\w*|limon\w*|per[ae]\b|frutta|frutti di bosco|kiwi|uva\b|fragol\w*|insalat\w*|lattug\w*|songino|valeriana|pomodor\w*|pomodorin\w*|zucchin\w*|zucca|carot\w*|patat[ae]\b|patate\b|cipoll\w*|scalogno|aglio|peperon\w*|melanzan\w*|verdur\w*|ortaggi|spinac\w*|bietol\w*|broccol\w*|cavol\w*|verza|cime di rapa|fungh\w*|champignon|basilic\w*|prezzemol\w*|rosmarino|salvia|avocado|finocch\w*|sedano|rucola|radicchio|ananas|pesche\b|albicocc\w*|susine|prugne|cocomer\w*|anguria|melone|mirtill\w*|lampon\w*|more\b|ciliegi\w*|fichi|cachi|castagne|datteri|mango|papaya|lime\b|pompelmo|germogli|asparagi|piselli freschi|fave|carciof\w*|cetriol\w*|ravanelli|porri|zenzero|peperoncin\w*`],
+  ["pane","🥖","Pane e forno",String.raw`pane\b|pane integrale|pancarre|pan ?carre|panin\w*|michette|rosette|baguette|focacc\w*|grissin\w*|piadin\w*|tortillas|cornett\w*|brioche|croissant|fette biscottate|tramezzin\w*|pizza bianca|pizza margherita|schiacciata|crostini|taralli|pan di spagna|pandoro|panettone|colomba`],
+  ["latte","🧀","Latticini e uova",String.raw`latte\b|latte intero|latte scremato|latte di (soia|avena|mandorla|riso|cocco)|bevanda (di|alla) (soia|avena|mandorla)|yogurt\w*|yoghurt|burro|margarina|formagg\w*|mozzarell\w*|fiordilatte|parmigian\w*|grana\b|padano|ricott\w*|uov[ao]\b|uova\b|panna\b|panna da cucina|stracchin\w*|crescenza|squacquerone|scamorz\w*|provola|caciotta|asiago|fontina|emmental|edamer|cheddar|philadelphia|mascarpon\w*|gorgonzol\w*|pecorin\w*|taleggio|brie|camembert|feta|burrata|kefir|skyr|mozzarelline|sottilette`],
+  ["carne","🥩","Carne, pesce e salumi",String.raw`pollo|petto di pollo|manzo|maiale|carne\w*|macinat\w*|salsicc\w*|prosciutt\w*|crudo\b|cotto\b|salame|bresaol\w*|mortadell\w*|wurstel|tacchin\w*|pesce|salmone|merluzz\w*|platessa|orata|branzino|spigola|tonno fresco|gamber\w*|affettat\w*|speck|hamburger|svizzere|bistecc\w*|fettine|arrosto|spezzatino|vitello|cotolett\w*|polpo|calamar\w*|seppie|cozze|vongole|acciughe|alici|baccala|stocc?afisso|coniglio|agnello|anatra|lardo|pancetta|guanciale|coppa\b|porchetta|nuggets|cordon bleu`],
+  ["dispensa","🥫","Dispensa",String.raw`pasta\b|pasta integrale|spaghett\w*|penne\b|fusilli|rigatoni|farfalle|tagliatelle|lasagne|gnocchi|couscous|riso\b|risotto|orzo|farro|quinoa|farina\w*|semola|zucchero|dolcificante|sale\b|olio\b|olio di oliva|olio di semi|aceto\w*|caff[e]\w*|cialde|capsule|the\b|te\b|tisan\w*|camomilla|biscott\w*|cereali|muesli|fiocchi d'avena|avena|marmellat\w*|confettura|nutella|crema spalmabile|tonno\b|sgombro|passata|pelati|polpa di pomodoro|concentrato di pomodoro|legumi|ceci|fagioli|lenticchi\w*|piselli\b|mais\b|sugo\b|ragu|pesto|spezie|origano|curry|paprika|cannella|noce moscata|curcuma|miele|cioccolat\w*|cacao|snack|patatine|crackers|schiacciatine|lievito|bicarbonato|brodo|dado\b|maionese|ketchup|senape|salsa\w*|olive|capperi|sottaceti|sottoli|gallette|fette\b|pangrattato|pan grattato|noci|mandorle|nocciole|pistacchi|arachidi|anacardi|uvetta|frutta secca|merendine|wafer|caramelle|chewing ?gum|budino|preparato per`],
+  ["surgelati","🧊","Surgelati",String.raw`surgelat\w*|gelat\w*|bastoncin\w*|frozen|ghiaccio|piselli surgelati|minestrone surgelato|pizza surgelata|sofficini|cubetti di ghiaccio`],
+  ["bevande","🥤","Bevande",String.raw`acqua\b|acqua frizzante|acqua naturale|birr\w*|vino\b|vino rosso|vino bianco|succo\w*|coca ?cola|pepsi|fanta|sprite|aranciata|chinotto|gassosa|bibit\w*|spumante|prosecco|champagne|the freddo|te freddo|energy drink|red bull|sciroppo|amaro|liquore|grappa|gin\b|vodka|rum\b|whisky|tequila|aperol|campari|spritz|tonica|ginger`],
+  ["casa","🧽","Casa e pulizia",String.raw`detersiv\w*|detergente|ammorbident\w*|candeggin\w*|sgrassat\w*|sgrassatore|spugn\w*|paglietta|carta igienica|scottex|carta (da )?cucina|sacchett\w*|sacchi (della|per) (spazzatura|immondizia)|alluminio|pellicola|carta forno|lampadin\w*|pile\b|batterie\b|tovagliol\w*|piatti di carta|bicchieri di carta|posate di plastica|scopa\b|paletta|mocio|panno\b|panni\b|panno carta|panni cattura polvere|anticalcare|brillantante|sale per lavastoviglie|pastiglie (per la )?lavastoviglie|detersivo (per i |per la )?(piatti|lavatrice|lavastoviglie)|ammoniaca|alcol\b|acido citrico|aceto bianco|insetticid\w*|deodorante per ambienti|profumatore|ricarica\w* (per )?(scopa|mocio)|guanti (di|in) lattice|sacco aspirapolvere|filtri?`],
+  ["igiene","🧴","Igiene e cura",String.raw`shampoo|balsamo|bagnoschiuma|docciaschiuma|sapone\w*|dentifric\w*|spazzolin\w*|deodorant\w*|rasoi\w*|schiuma da barba|assorbent\w*|salvaslip|cotton\w*|dischetti struccanti|crema\b|crema (viso|mani|corpo|solare)|struccant\w*|salviett\w*|fazzolett\w*|cerott\w*|collutorio|lamette|profumo|filo interdentale|tampon\w*|gel doccia|lacca|schiuma per capelli|tinta per capelli|pinzette|forbicine|tagliaunghie|smalto|acetone|protezione solare|doposole`],
+  ["animali","🐾","Animali",String.raw`crocchett\w*|lettiera|cibo per (cane|cani|gatto|gatti)|scatolett\w*|snack per (cane|cani|gatto|gatti)|guinzaglio|collare antipulci|antipulci|osso per cani|tiragraffi|paletta per (cane|bisogni)`],
+  ["bimbi","🍼","Bambini",String.raw`pannolin\w*|omogeneizzat\w*|latte in polvere|latte di crescita|biberon|ciuccio|tettarella|salviettine|pappa\b|pastina|seggiolone|passeggino|fasciatoio|scalda ?biberon|bavaglin\w*|crema cambio|pasta all'ossido|sterilizzatore`],
+  ["salute","💊","Farmacia e salute",String.raw`integrator\w*|vitamin\w*|multivitaminico|magnesio|potassio|ferro \(integratore\)|omega ?3|probiotic\w*|fermenti lattici|aspirina|tachipirina|paracetamolo|ibuprofene|oki\b|moment\b|brufen|antinfiammatori\w*|antistaminic\w*|antidolorific\w*|sciroppo per la tosse|pastiglie per la gola|spray nasale|collirio|termometro|mascherine|ffp2|siringhe|garze|bende|disinfettante|amuchina|acqua ossigenata|pomata|crema antibiotica|lassativ\w*|gastroprotettore|maalox|enterogermina|sali minerali|cuscinetti|plantari|test di gravidanza|tampone rapido`],
+  ["casalinghi","🍽️","Cucina e tavola",String.raw`pentol\w*|padell\w*|tegame|casseruola|coperchio|posate\b|forchett\w*|coltell\w*|cucchia\w*|piatti\b|piatto fondo|bicchier\w*|tazz\w*|tazzine|caraff\w*|brocca|vassoio|tagliere|mestolo|schiumarola|scolapasta|colino|apribottiglie|cavatappi|apriscatole|contenitor\w*|barattol\w*|tupperware|teglia|stampo|pirofila|grattugia|frusta da cucina|matterello|guanti da forno|presine|tovaglia|tovagliette|strofinacci|canovacci|portasapone|portarotolo|set di piatti|servizio di piatti|insalatiera|zuccheriera|oliera|macinapepe|termos|borraccia|lunch box|ciotol\w*`],
+  ["biancheria","🛏️","Biancheria e arredo",String.raw`lenzuol\w*|federa|federe|copripiumino|piumon\w*|trapunta|coperta|plaid|cuscin\w*|materass\w*|coprimaterasso|topper|asciugaman\w*|accappatoio da bagno|telo mare|tend\w*|tappeto|tappeti|tappetino|zerbino|tovaglia da tavola|runner|copridivano|sedia\b|sgabello|scaffale|mensola|appendiabiti|gruccia|grucce|stendibiancheria|cesto (della|per la) biancheria|specchio|cornice|quadro\b|vaso da fiori|candela|candele|portacandele|vaso\b|vasi\b|lampada da tavolo|abat ?jour|paralume`],
+  ["elettro","🔌","Elettrodomestici ed elettronica",String.raw`aspirapolvere|aspira ?polvere|scopa elettrica|robot (aspira\w*|da cucina|lavapavimenti)|lavapavimenti|idropulitrice|macchin(a|etta) (da|del|per) (caff\w*|pane|cucire)|macchina caff\w*|frullator\w*|minipimer|mixer|planetaria|impastatrice|tostapane|tostiera|bollitore|microonde|friggitrice|air ?fryer|forno elettrico|fornetto|piastra elettrica|ferro da stiro|asse da stiro|ferro a vapore|phon\b|fon\b|asciugacapelli|piastra per capelli|arricciacapelli|rasoio elettrico|tagliacapelli|spazzolino elettrico|idropulsore|ventilator\w*|stufa\w*|condizionator\w*|climatizzatore|deumidificator\w*|umidificator\w*|purificator\w*|lavatrice|asciugatrice|lavastoviglie|frigorifero|frigo\b|congelator\w*|cappa\b|piano cottura|forno a incasso|televisor\w*|tv\b|smart ?tv|monitor|computer|portatile|notebook|pc\b|tablet|ipad|iphone|smartphone|telefono|cellulare|caricator\w*|caricabatterie|power ?bank|cavo\b|cavetto|adattator\w*|presa multipla|ciabatta elettrica|prolunga|cuffie|auricolari|airpods|cassa bluetooth|altoparlante|soundbar|stampante|cartucc\w*|toner|mouse|tastiera|hard disk|ssd\b|chiavetta usb|penna usb|router|modem|ripetitore wifi|telecomando|lampadina smart|faretto|striscia led|smart ?watch|bilancia pesapersone|bilancia da cucina|sveglia|proiettore|console|playstation|xbox|nintendo|fotocamera|action cam|droni?`],
+  ["abbigliamento","👕","Abbigliamento e scarpe",String.raw`maglia\b|maglion\w*|maglietta|magliette|t-?shirt|canottiera|camicia|camicie|felp\w*|pantalon\w*|jeans|leggings|gonna|vestito|abito|giacca|giubbotto|cappotto|piumino da|calz[ei]\b|calzini|calze\b|collant|mutand\w*|slip\b|boxer|reggisen\w*|pigiam\w*|vestaglia|accappatoio|costume da bagno|scarp\w*|sneaker\w*|stivali|anfibi|ciabatte|infradito|sandali|mocassini|cintur\w*|cappell\w*|berretto|sciarp\w*|guant\w*|ombrello|borsa\b|borsetta|zaino|portafogl\w*|occhiali da sole|orologio da polso|bracciale|collana|orecchini`],
+  ["fai-da-te","🔧","Fai da te e giardino",String.raw`vit[ei]\b|tassell\w*|chiod\w*|trapano|avvitatore|cacciavite|martello|pinz[ae]\b|chiave inglese|brugole|nastro (adesivo|isolante|biadesivo)|coll[ae]\b|attack|silicone|stucco|vernice|smalto per legno|pennell\w*|rullo\b|carta vetrata|metro\b|flessometro|livella|seghetto|sega\b|attrezzi|cassetta degli attrezzi|lucchetto|serratura|cerniera|maniglia|terriccio|concime|fertilizzante|vas[io] (da|per) (fiori|piante)|piant[ae]\b|semi\b|sementi|innaffiatoio|annaffiatoio|tubo (da|per) giardino|tosaerba|decespugliatore|cesoie|guanti da giardino|pesticid\w*|antizanzare|rete\b`],
+  ["cartoleria","✏️","Cartoleria e ufficio",String.raw`quadern\w*|block ?notes|agenda|penna\b|penne (a sfera|bic|gel)|matit\w*|gomma da cancellare|temperamatite|evidenziator\w*|pennarell\w*|colori a (matita|cera|tempera)|astuccio|righello|squadra|compasso|forbici|graffett\w*|spillatrice|punti metallici|puntine|post-?it|carta (a4|da stampa|regalo)|cartoncino|buste (da lettera|imbottite)|francobolli|cartellina|raccoglitore|classificatore|etichette|scotch|plastificatrice|calcolatrice`],
+  ["tempo-libero","🎁","Tempo libero e regali",String.raw`libro\b|libri\b|romanzo|rivista|giornale|fumetto|gioc[oh]\w*|giocattol\w*|puzzle|carte da gioco|gioco da tavolo|lego|pallone|palla\b|bicicletta|monopattino|casco\b|tappetino yoga|manubri|pesi\b|corda per saltare|borraccia sportiva|regal\w*|biglietto (di )?auguri|carta regalo|fiocco|candeline|palloncin\w*|addobbi|decorazioni|albero di natale|presepe|fiori\b|bouquet|mazzo di fiori|profumo regalo|buono regalo|gift card`],
 ];
-// Ordine di visualizzazione: prima i reparti del supermercato, poi casa/elettronica/abbigliamento ecc.
-function aisleKeys(){ const late=["elettro","abbigliamento","fai-da-te","cartoleria"]; return [...AISLES.map(a=>a[0]).filter(k=>!late.includes(k)),...late,"altro"]; }
+/* Ordine di visualizzazione: prima i reparti del supermercato, poi la casa, infine il resto. */
+const AISLE_ORDER=["frutta","pane","latte","carne","dispensa","surgelati","bevande","casa","igiene","bimbi","salute","animali","casalinghi","biancheria","elettro","abbigliamento","fai-da-te","cartoleria","tempo-libero"];
+function aisleKeys(){
+  const have=AISLES.map(a=>a[0]);
+  return [...AISLE_ORDER.filter(k=>have.includes(k)),...have.filter(k=>!AISLE_ORDER.includes(k)),"altro"];
+}
 const AISLE_OTHER=["altro","🛍️","Altro"];
 function aisleInfo(key){ const a=AISLES.find(x=>x[0]===key); return a?{key:a[0],emoji:a[1],name:a[2]}:{key:"altro",emoji:AISLE_OTHER[1],name:AISLE_OTHER[2]}; }
-function guessAisle(text){ const t=String(text||""); const a=AISLES.find(x=>x[3].test(t)); return a?a[0]:"altro"; }
+/* Le parole di ogni reparto diventano una sola espressione, con quelle lunghe prima:
+   così in "detersivo lavastoviglie" vince "detersivo lavastoviglie" e non "detersivo". */
+const AISLE_RE=(()=>{
+  const splitTop=s=>{ const out=[]; let buf="",d=0,esc=false;
+    for(const ch of s){
+      if(esc){buf+=ch;esc=false;continue;}
+      if(ch==="\\"){buf+=ch;esc=true;continue;}
+      if(ch==="(")d++; else if(ch===")")d--; else if(ch==="[")d++; else if(ch==="]")d--;
+      if(ch==="|"&&d===0){out.push(buf);buf="";} else buf+=ch;
+    }
+    out.push(buf); return out.filter(Boolean);
+  };
+  return AISLES.map(a=>[a[0], new RegExp("\\b(?:"+splitTop(a[3]).sort((x,y)=>y.length-x.length).join("|")+")\\b","i")]);
+})();
+/* Pulisce il testo prima di cercare: minuscole, via accenti, quantità, unità di misura,
+   marche fra parentesi lasciate (a volte dicono di che prodotto si tratta). */
+function aisleText(text){
+  let t=String(text||"").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"");
+  t=t.replace(/[()\[\]{}]/g," ");
+  t=t.replace(/[^a-z0-9'\s-]/g," ");
+  t=t.replace(/\b\d+(?:[.,]\d+)?\s*(?:x|pz|pezz\w*|gr?|kg|ml|cl|lt?|litr\w*|conf\w*|bott\w*|bust\w*|rotol\w*|vasett\w*|lattin\w*)\b/g," ");
+  t=t.replace(/\b\d+\s*x\b|\bx\s*\d+\b|\b\d+\b/g," ");
+  return t.replace(/\s+/g," ").trim();
+}
+/* Sceglie il reparto: vince la parola più lunga trovata nel testo, non il primo reparto
+   dell'elenco. Se non trova niente resta "altro". */
+function guessAisle(text){
+  const t=aisleText(text);
+  if(!t) return "altro";
+  let best="altro",bestLen=0;
+  for(const [key,re] of AISLE_RE){
+    const m=t.match(re);
+    if(m && m[0].length>bestLen){ bestLen=m[0].length; best=key; }
+  }
+  return best;
+}
 /* "2 latte", "latte x2", "3 pz uova" → quantità separata dal nome (non tocca "500 g pasta"). */
 function parseQty(text){
   let t=String(text||"").trim(), qty=1;

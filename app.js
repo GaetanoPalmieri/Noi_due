@@ -2494,9 +2494,28 @@ function openFavorites(listId,onAdded){
   });
 }
 let openSwipeRow=null;
+/* v1.27.0 — Quando le parole scritte a mano non bastano, il reparto lo decide il modello.
+   Si prova una sola volta per articolo (aiAisleTried) e solo su quelli finiti in "Altro",
+   così non si fanno chiamate inutili. Se l'AI non c'e, non cambia niente. */
+async function aiFixAisles(listId){
+  if(!(window.SuiteAI && SuiteAI.disponibile())) return;
+  const l=state.lists.find(x=>x.id===listId); if(!l) return;
+  const da=l.items.filter(i=>(!i.aisle||i.aisle==="altro") && i.text && !i.aiAisleTried).slice(0,8);
+  if(!da.length) return;
+  const opzioni=aisleKeys().filter(k=>k!=="altro").map(k=>{ const a=aisleInfo(k); return {chiave:a.key,nome:a.name}; });
+  let cambiati=false;
+  for(const it of da){
+    it.aiAisleTried=true;
+    const k=await SuiteAI.scegli("reparto",parseQty(it.text).text,opzioni,0.6);
+    if(k && k!==it.aisle){ it.aisle=k; cambiati=true; }
+  }
+  persist();
+  if(cambiati){ renderCoupleLists(); if(listDetailRefresh) listDetailRefresh(); }
+}
 function openListDetail(listId){
   // v1.19.0 — riclassifica i prodotti finiti in "Altro" con i reparti nuovi (es. aspirapolvere).
   { const l0=state.lists.find(l=>l.id===listId); let ch=false; (l0?.items||[]).forEach(i=>{ if(!i.aisle||i.aisle==="altro"){ const g=guessAisle(i.text); if(g!=="altro"&&g!==i.aisle){ i.aisle=g; ch=true; } } }); if(ch) persist(); }
+  aiFixAisles(listId);
   openSheet("tpl-list-detail",(node,close)=>{
     const input=node.querySelector("#listItemInput"), priceInput=node.querySelector("#listPriceInput");
     const list=()=>state.lists.find(l=>l.id===listId);

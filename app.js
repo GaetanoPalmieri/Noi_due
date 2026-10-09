@@ -829,6 +829,23 @@ function askConfirm(message,{ok="Conferma",cancel="Annulla",danger=null}={}){
   });
 }
 
+/* v1.29.0 — Ogni riga che scorre di lato (anche quelle create dopo) resta ferma in verticale. */
+function fermaScorrimentoVerticale(root){
+  (root||document).querySelectorAll("body *").forEach(n=>{
+    if(n.classList.contains("nd-hscroll")) return;
+    const cs=getComputedStyle(n);
+    // solo righe vere: flex in orizzontale e senza a-capo (i pannelli che scorrono in verticale restano come sono)
+    if((cs.overflowX==="auto"||cs.overflowX==="scroll") && cs.overflowY!=="hidden" && /flex/.test(cs.display) && cs.flexDirection==="row" && cs.flexWrap==="nowrap" && n.scrollHeight<=n.clientHeight+8){
+      n.classList.add("nd-hscroll");
+    }
+  });
+}
+{
+  let t=null;
+  const giro=()=>{ clearTimeout(t); t=setTimeout(()=>{ try{ fermaScorrimentoVerticale(); }catch(e){} },150); };
+  if(document.readyState==="loading") document.addEventListener("DOMContentLoaded",giro); else giro();
+  try{ new MutationObserver(giro).observe(document.body||document.documentElement,{childList:true,subtree:true}); }catch(e){}
+}
 function showToast(message){
   let toast=document.getElementById("appToast");
   if(!toast){toast=document.createElement("div");toast.id="appToast";document.body.appendChild(toast);}
@@ -1977,27 +1994,37 @@ function openSheet(templateId, setup){
     overlayRoot.style.pointerEvents = overlayRoot.querySelector(".sheet") ? "auto" : "none";
     if(!overlayRoot.querySelector(".sheet")) document.documentElement.classList.remove("sheet-open");
   }
-  function close(fromSwipe=false){
+  function close(fromSwipe=false,speed=0){
     if(closing) return;
     closing=true;
     node.classList.remove("dragging");
     node.style.transition="";
     backdrop.style.transition="";
     backdrop.style.opacity="";
-    if(fromSwipe==="x"){
-      // v1.9.0: swipe verso destra, il pannello esce lateralmente.
-      node.style.transform="translateX(105%)";
+    let wait=280;
+    if(fromSwipe){
+      /* v1.29.0 — Chiusura col dito: il pannello continua alla velocità del gesto e finisce
+         in fretta (prima ripartiva con la curva lenta da 0,28 s e sembrava al rallentatore).
+         Durante l'uscita si spegne la sfocatura, che su iPhone appesantisce l'animazione. */
+      const horiz=fromSwipe==="x";
+      const m=/translate[XY]\((-?[\d.]+)px\)/.exec(node.style.transform||"");
+      const done=m?Math.max(0,parseFloat(m[1])):0;
+      const total=horiz?node.offsetWidth:node.offsetHeight;
+      const rest=Math.max(0,total+24-done);
+      const v=Math.max(1.4,Math.abs(speed)||0);                 // px per millisecondo
+      wait=Math.round(Math.min(240,Math.max(120,rest/v)));
+      node.classList.add("sheet-leaving");
+      node.style.transition=`transform ${wait}ms cubic-bezier(.3,.6,.55,1)`;
+      backdrop.style.transition=`opacity ${wait}ms linear`;
+      node.style.transform=horiz?`translateX(${total+24}px)`:`translateY(${total+24}px)`;
       backdrop.classList.remove("show");
-    }else if(fromSwipe){
-      // Mantiene il pannello sotto al dito e completa l'uscita verso il basso.
-      node.style.transform="translateY(105%)";
-      backdrop.classList.remove("show");
+      backdrop.style.opacity="0";
     }else{
       node.style.transform="";
       node.classList.remove("show");
       backdrop.classList.remove("show");
     }
-    setTimeout(finishClose, 280);
+    setTimeout(finishClose, wait+20);
   }
   node._close=()=>close(false);
   backdrop.addEventListener("click", ()=>close(false));
@@ -2076,9 +2103,9 @@ function openSheet(templateId, setup){
     if(!touch) return;
     const t=e.changedTouches[0];
     if(touch.axis==="x"){
-      const dxEnd=t.clientX-touch.x, flickX=touch.velocityX>0.5 && dxEnd>36;
+      const dxEnd=t.clientX-touch.x, flickX=touch.velocityX>0.5 && dxEnd>36, touch0vx=touch.velocityX;
       touch=null;
-      if(dxEnd>100 || flickX){ close("x"); return; }
+      if(dxEnd>100 || flickX){ close("x",touch0vx); return; }
       node.classList.remove("dragging");
       node.style.transform="";
       backdrop.style.opacity="";
@@ -2087,11 +2114,11 @@ function openSheet(templateId, setup){
     const dy=t.clientY-touch.y;
     const fastFlick=touch.velocityY>0.55 && dy>32;
     const shouldClose=touch.active && (dy>92 || fastFlick);
-    const wasActive=touch.active;
+    const wasActive=touch.active, vy=touch.velocityY;
     touch=null;
 
     if(shouldClose){
-      close(true);
+      close(true,vy);
       return;
     }
     if(wasActive){
@@ -2258,8 +2285,81 @@ function renderListsMonth(after){
   el.innerHTML=`<div class="lm-head"><b>🛒 ${MESI[now.getMonth()]}: chi ha preso cosa</b><small>${total} ${total===1?"prodotto preso":"prodotti presi"}</small></div>
     <div class="lm-bar" aria-hidden="true">${bar}</div>
     <div class="lm-people">${["a","b"].map(k=>`<span><i style="background:${safeColor(personColor(k))}"></i>${escapeHtml(personName(k))} <b>${per[k]||0}</b></span>`).join("")}</div>
-    <div class="lm-top">${top.map(t=>`<span class="lm-chip">${escapeHtml(t.text)}${t.n>1?` <b>×${t.n}</b>`:""}</span>`).join("")}</div>`;
+    <div class="lm-top">${top.map(t=>`<button type="button" class="lm-chip" data-lm-key="${escapeHtml(historyKey(t.text))}">${escapeHtml(t.text)}${t.n>1?` <b>×${t.n}</b>`:""}</button>`).join("")}<button type="button" class="lm-chip lm-all" data-lm-all>Tutti ›</button></div>`;
+  // v1.29.0 — tocchi un prodotto: chi l'ha preso, quando e da quale lista, con 🗑 per eliminarlo.
+  el.querySelectorAll("[data-lm-key]").forEach(b=>b.addEventListener("click",()=>openPurchaseProduct(b.dataset.lmKey)));
+  el.querySelector("[data-lm-all]")?.addEventListener("click",()=>openPurchasesMonth());
 }
+/* ---------- v1.29.0 — Dettaglio "chi ha preso cosa" con eliminazione ---------- */
+function monthPurchases(){
+  const now=new Date(), key=`${now.getFullYear()}-${pad2(now.getMonth()+1)}`;
+  return state.lists.flatMap(l=>(l.purchases||[]).filter(p=>String(p.at).startsWith(key)).map(p=>({p,list:l})));
+}
+function deletePurchases(entries){
+  if(!entries.length) return;
+  const backup=entries.map(e=>({listId:e.list.id,p:{...e.p}}));
+  entries.forEach(({p,list})=>{
+    list.purchases=(list.purchases||[]).filter(x=>x.id!==p.id);
+    const h=list.history&&list.history[historyKey(p.text)];
+    if(h){ h.count=(h.count||1)-1; if(h.count<=0) delete list.history[historyKey(p.text)]; }
+  });
+  markDeleted(...entries.map(e=>e.p.id));
+  persist(); renderAll();
+  showActionToast(entries.length===1?`🗑 “${entries[0].p.text}” tolto dagli acquisti`:`🗑 ${entries.length} acquisti eliminati`,"Annulla",()=>{
+    backup.forEach(({listId,p})=>{ const l=state.lists.find(x=>x.id===listId); if(!l) return;
+      if(state.deleted) delete state.deleted[String(p.id)];
+      if(!Array.isArray(l.purchases)) l.purchases=[]; l.purchases.push(p); l.purchases.sort((a,b)=>String(a.at).localeCompare(String(b.at)));
+      if(!l.history) l.history={}; const k=historyKey(p.text); const h=l.history[k]||{text:p.text,count:0,last:"",aisle:p.aisle||"",dates:[],qty:p.qty||1}; h.count+=1; l.history[k]=h; });
+    persist(); renderAll();
+  });
+}
+function purchaseOverlay(title,sub,bodyHtml,onBind){
+  document.getElementById("movementActionOverlay")?.remove();
+  const overlay=document.createElement("div");
+  overlay.id="movementActionOverlay"; overlay.className="movement-action-overlay";
+  overlay.innerHTML=`<div class="movement-action-menu pu-menu" role="dialog" aria-modal="true" aria-label="${escapeHtml(title)}">
+    <div class="movement-action-handle" aria-hidden="true"></div>
+    <p class="movement-action-title">${escapeHtml(title)}</p>${sub?`<p class="pu-sub">${escapeHtml(sub)}</p>`:""}
+    <div class="pu-body">${bodyHtml}</div>
+    <button type="button" class="movement-action-cancel">Chiudi</button></div>`;
+  const close=()=>overlay.remove();
+  overlay.querySelector(".movement-action-cancel").addEventListener("click",close);
+  overlay.addEventListener("click",e=>{ if(e.target===overlay) close(); });
+  document.body.appendChild(overlay);
+  bindOverlaySwipeDismiss(overlay);
+  requestAnimationFrame(()=>overlay.classList.add("show"));
+  if(onBind) onBind(overlay,close);
+  return overlay;
+}
+function openPurchaseProduct(key){
+  const rows=monthPurchases().filter(e=>historyKey(e.p.text)===key).sort((a,b)=>String(b.p.at).localeCompare(String(a.p.at)));
+  if(!rows.length) return;
+  const name=rows[0].p.text, a=aisleInfo(rows[0].p.aisle||guessAisle(name));
+  const now=new Date();
+  const body=rows.map((e,i)=>`<div class="pu-row" style="--ac:${aisleColor(a.key)}">
+      <span class="pu-dot" style="background:${safeColor(e.p.by?personColor(e.p.by):"#8a9490")}"></span>
+      <span class="pu-tx"><b>${escapeHtml(whenLabel(e.p.at))}</b><small>${e.p.by?escapeHtml(personName(e.p.by)):"—"} · ${escapeHtml(e.list.emoji||"🛒")} ${escapeHtml(e.list.name)}${e.p.qty>1?` · ${e.p.qty}×`:""}</small></span>
+      <button type="button" class="pu-del" data-i="${i}" aria-label="Elimina questo acquisto">🗑</button></div>`).join("")
+    +(rows.length>1?`<button type="button" class="pu-del-all">🗑 Elimina tutti (${rows.length})</button>`:"");
+  purchaseOverlay(`${a.emoji} ${name}`,`${rows.length} ${rows.length===1?"volta":"volte"} a ${MESI[now.getMonth()].toLowerCase()}`,body,(ov,close)=>{
+    ov.querySelectorAll(".pu-del").forEach(b=>b.addEventListener("click",()=>{ close(); deletePurchases([rows[Number(b.dataset.i)]]); }));
+    ov.querySelector(".pu-del-all")?.addEventListener("click",async()=>{ close(); if(await askConfirm(`Eliminare tutti i ${rows.length} acquisti di “${name}” di questo mese?`,{ok:"Elimina",danger:true})) deletePurchases(rows); });
+  });
+}
+function openPurchasesMonth(){
+  const map=new Map();
+  monthPurchases().forEach(e=>{ const k=historyKey(e.p.text); const v=map.get(k)||{k,text:e.p.text,aisle:e.p.aisle||guessAisle(e.p.text),n:0,by:{a:0,b:0}}; v.n++; if(e.p.by) v.by[e.p.by]=(v.by[e.p.by]||0)+1; map.set(k,v); });
+  const items=[...map.values()].sort((x,y)=>y.n-x.n||x.text.localeCompare(y.text,"it"));
+  const now=new Date();
+  const body=items.map(v=>{ const a=aisleInfo(v.aisle);
+    return `<button type="button" class="pu-prod" data-k="${escapeHtml(v.k)}" style="--ac:${aisleColor(a.key)}"><span class="pu-em">${a.emoji}</span><span class="pu-tx"><b>${escapeHtml(v.text)}</b><small>${["a","b"].filter(k=>v.by[k]).map(k=>`${escapeHtml(personName(k))} ${v.by[k]}`).join(" · ")||"—"}</small></span><span class="pu-n">×${v.n}</span><span class="chev">›</span></button>`; }).join("")||`<p class="pu-sub">Nessun acquisto questo mese.</p>`;
+  purchaseOverlay(`🛒 ${MESI[now.getMonth()]}: chi ha preso cosa`,"Tocca un prodotto per vedere chi l’ha preso ed eliminarlo",body,(ov,close)=>{
+    ov.querySelectorAll(".pu-prod").forEach(b=>b.addEventListener("click",()=>{ close(); openPurchaseProduct(b.dataset.k); }));
+  });
+}
+/* v1.29.0 — Un colore per reparto: le schede dei prodotti si riconoscono a colpo d'occhio. */
+const AISLE_COLORS={frutta:"#4CAF6A",pane:"#D2A04C",latte:"#E3C04A",carne:"#D9625B",dispensa:"#C9853D",surgelati:"#4FB3D9",bevande:"#3D8FD9",casa:"#8E7CC3",igiene:"#D47AB5",animali:"#A57B5A",bimbi:"#EE97B2",salute:"#3FB38E",casalinghi:"#9A8F80",biancheria:"#7C8FD1",elettro:"#6B88A8",abbigliamento:"#C46FA0",cartoleria:"#E0A030",altro:"#8A9490"};
+function aisleColor(key){ return AISLE_COLORS[key]||AISLE_COLORS.altro; }
 var listDetailRefresh=null;
 function listCategoryFor(l){
   const exp=state.categories.filter(c=>c.kind==="expense");
@@ -2537,6 +2637,7 @@ function openListDetail(listId){
       const row=document.createElement("div");
       wrap.appendChild(row);
       row.className="list-item"+(it.done?" done":"");
+      row.style.setProperty("--ac",aisleColor(it.aisle||guessAisle(it.text)));
       row.setAttribute("role","button"); row.tabIndex=0;
       const pic=photoSrc(it.photo)||it.image||(Array.isArray(it.links)?it.links.find(k=>k.image)?.image:"")||"";
       const who=(it.forWhom==="a"||it.forWhom==="b"?`<small class="list-for" style="color:${safeColor(personColor(it.forWhom))}">solo ${escapeHtml(personName(it.forWhom))}</small>`:"")
@@ -2596,7 +2697,7 @@ function openListDetail(listId){
         order.forEach(key=>{
           const its=todo.filter(i=>(i.aisle||guessAisle(i.text))===key);
           if(!its.length) return;
-          const a=aisleInfo(key), h=document.createElement("p"); h.className="list-aisle"; h.textContent=`${a.emoji} ${a.name}`;
+          const a=aisleInfo(key), h=document.createElement("p"); h.className="list-aisle"; h.textContent=`${a.emoji} ${a.name}`; h.style.setProperty("--ac",aisleColor(a.key));
           todoBox.appendChild(h); its.forEach(it=>todoBox.appendChild(itemRow(it)));
         });
       } else todo.forEach(it=>todoBox.appendChild(itemRow(it)));
@@ -2689,6 +2790,18 @@ function openListDetail(listId){
     const drawer=document.createElement("aside"); drawer.className="ls-drawer"; drawer.setAttribute("aria-label","Aggiunta rapida"); drawer.hidden=true;
     drawer.innerHTML=`<div class="ls-dr-head"><div class="ls-seg" role="tablist"><button type="button" data-dr-tab="acq">🕘 Acquisti</button><button type="button" data-dr-tab="fav">★ Preferiti</button></div><button type="button" class="ls-dr-close" aria-label="Chiudi">✕</button></div><p class="ls-dr-hint">Tocca per rimetterlo in lista, oppure trascinalo ← sulla lista</p><div class="ls-dr-list"></div><div class="ls-dr-foot"></div>`;
     document.body.append(scrim,drawer,side);
+    /* v1.29.0 — Le linguette coprivano le schede dei prodotti: dopo 5 secondi fermi si
+       nascondono fuori dal bordo; appena scorri su o giù (o tocchi la lista) ricompaiono. */
+    let lsAwayTimer=null, lsLastY=null;
+    const lsShow=()=>{
+      side.classList.remove("ls-away");
+      clearTimeout(lsAwayTimer);
+      lsAwayTimer=setTimeout(()=>{ if(drawer.hidden && node.isConnected) side.classList.add("ls-away"); },5000);
+    };
+    lsShow();
+    node.addEventListener("scroll",lsShow,{passive:true});
+    node.addEventListener("touchstart",e=>{ lsLastY=e.touches[0]?.clientY??null; },{passive:true});
+    node.addEventListener("touchmove",e=>{ const y=e.touches[0]?.clientY; if(lsLastY!=null && y!=null && Math.abs(y-lsLastY)>8){ lsLastY=y; lsShow(); } },{passive:true});
     let drTab="acq";
     function paintSide(){
       const l=list(); if(!l) return;
@@ -2759,7 +2872,7 @@ function openListDetail(listId){
       card.addEventListener("keydown",e=>{ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); if(!x.inList) quickAdd(x.text,{aisle:x.aisle,qty:x.qty}); } });
     }
     function openDrawer(tab){ drTab=tab||drTab; drawer.hidden=false; scrim.hidden=false; requestAnimationFrame(()=>{ drawer.classList.add("open"); scrim.classList.add("open"); }); paintDrawer(); }
-    function closeDrawer(){ drawer.classList.remove("open"); scrim.classList.remove("open"); setTimeout(()=>{ if(!drawer.classList.contains("open")){ drawer.hidden=true; scrim.hidden=true; } },220); }
+    function closeDrawer(){ drawer.classList.remove("open"); scrim.classList.remove("open"); setTimeout(()=>{ if(!drawer.classList.contains("open")){ drawer.hidden=true; scrim.hidden=true; } },220); lsShow(); }
     side.querySelectorAll("[data-ls-tab]").forEach(b=>b.addEventListener("click",()=>{ const t=b.dataset.lsTab; if(!drawer.hidden&&drTab===t) closeDrawer(); else openDrawer(t); }));
     drawer.querySelectorAll("[data-dr-tab]").forEach(b=>b.addEventListener("click",()=>{ drTab=b.dataset.drTab; paintDrawer(); }));
     drawer.querySelector(".ls-dr-close").addEventListener("click",closeDrawer);

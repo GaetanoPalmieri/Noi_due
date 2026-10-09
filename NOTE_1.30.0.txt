@@ -1,0 +1,21 @@
+VERSIONE 1.30.0
+
+Liste
+- Linguette 🕘 Acquisti e ★ Preferiti sul bordo destro: dopo 5 secondi fermi escono dallo
+  schermo e non coprono più le schede dei prodotti. Appena scorri la lista su o giù (o la
+  tocchi) ricompaiono, e ripartono i 5 secondi.
+- Ogni prodotto ha il colore del suo reparto (frutta verde, latticini giallo, carne rosso,
+  surgelati azzurro, casa viola...): leggera sfumatura e bordo a sinistra. Anche il titolo
+  del reparto prende lo stesso colore. Gli acquistati restano più tenui.
+
+"Chi ha preso cosa" (pagina Liste)
+- Tocca un prodotto: vedi ogni volta che è stato preso nel mese, da chi, quando e da
+  quale lista, con 🗑 per eliminarlo (singolo) o "Elimina tutti". Si può annullare dal
+  messaggio in basso.
+- "Tutti ›": l'elenco completo dei prodotti del mese, con chi li ha presi; tocchi e apri
+  il dettaglio.
+
+Pannelli
+- Chiusura trascinando verso il basso (o di lato): il pannello continua alla velocità del
+  dito e sparisce in un attimo. Prima ripartiva con una curva lenta e sembrava al
+  rallentatore; in più durante l'uscita si spegne la sfocatura, che su iPhone appesantiva.

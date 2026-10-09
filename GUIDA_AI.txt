@@ -80,8 +80,14 @@ COSA FA OGGI
    - Nuovo articolo o nuovo capo: alla prima foto, se il nome e' vuoto, vengono
      compilati nome, categoria, colore, stagione e tag guardando lo scatto.
 
-  BET TRACKER
-   - Niente. Analisi dei propri dati si potrebbe fare, pronostici no.
+  BET TRACKER  (serve la funzione suite-ai versione 2, quella di ottobre 2026)
+   - Nuova scommessa > campo in alto: "Inter-Milan 1 a 2,10 e Juve-Roma over 2.5
+     a 1,80, 10 euro" compila puntata, partite, esiti e quote.
+   - Nuova scommessa > "Leggi la schedina": foto o screenshot della giocata.
+   - Statistiche > "Com'e' andata" > Spiegamelo: due righe sui tuoi numeri del
+     periodo (profitto, rendimento, singole contro multiple, limite mensile).
+   - Mai pronostici e mai consigli su cosa o quanto giocare: l'AI registra e
+     racconta solo quello che hai gia' giocato.
 
 QUANTO COSTA
    - Ogni richiesta e' poche centinaia di parole: con il modello piu' piccolo si parla

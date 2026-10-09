@@ -7992,3 +7992,126 @@ html body .mv-meta-text > .mv-list-badge {
   margin-left: -2px;
   margin-right: -2px;
 }
+
+/* =====================================================================
+   Noi Due 1.29.0 — Barre a scorrimento orizzontale ferme in verticale
+   Con overflow-x:auto il browser rende scorrevole anche l'asse verticale: su iPhone
+   le righe (liste in Home, filtri, strumenti, chip) si muovevano su e giù.
+   Ora scorrono solo di lato; la pagina continua a scorrere normalmente.
+   ===================================================================== */
+.home-lists,
+#view-home .hl-row,
+#overlayRoot #sheetListDetail .lc-chips,
+#overlayRoot #sheetListDetail .lc-tools,
+.nd-hscroll {
+  overflow-y: hidden !important;
+  overscroll-behavior-x: contain;
+  overscroll-behavior-y: none;
+  touch-action: pan-x pan-y;
+}
+/* Linguette laterali: via dal bordo dopo 5 s fermi, tornano scorrendo la lista */
+.ls-tabs {
+  transition: transform .32s cubic-bezier(.2,.8,.2,1), opacity .25s ease;
+}
+.ls-tabs.ls-away {
+  transform: translateX(calc(100% + 8px));
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* =====================================================================
+   Noi Due 1.29.0 — Liste: colore per reparto, dettaglio "chi ha preso cosa"
+   ===================================================================== */
+#overlayRoot .list-item {
+  background:
+    linear-gradient(90deg, color-mix(in srgb, var(--ac, #8a9490) 24%, transparent), color-mix(in srgb, var(--ac, #8a9490) 9%, transparent)),
+    var(--card) !important;
+  border-color: color-mix(in srgb, var(--ac, #8a9490) 38%, transparent) !important;
+  box-shadow: inset 4px 0 0 var(--ac, #8a9490) !important;
+}
+#overlayRoot .list-item.done {
+  background:
+    linear-gradient(90deg, color-mix(in srgb, var(--ac, #8a9490) 10%, transparent), transparent),
+    var(--card) !important;
+  box-shadow: inset 4px 0 0 color-mix(in srgb, var(--ac, #8a9490) 45%, transparent) !important;
+}
+#overlayRoot .list-aisle {
+  color: color-mix(in srgb, var(--ac, var(--ink-soft)) 75%, var(--ink)) !important;
+}
+
+#view-liste button.lm-chip {
+  border: 0;
+  color: var(--ink);
+  font: inherit;
+  font-size: 11px;
+  cursor: pointer;
+}
+#view-liste button.lm-chip:active { transform: scale(.96); }
+#view-liste .lm-chip.lm-all {
+  background: color-mix(in srgb, #3fb38e 18%, transparent);
+  color: #3fb38e;
+  font-weight: 700;
+}
+.pu-menu .pu-sub {
+  margin: -4px 4px 10px;
+  font-size: 13px;
+  color: var(--ink-soft);
+  text-align: center;
+}
+.pu-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 56vh;
+  overflow-y: auto;
+  margin-bottom: 10px;
+}
+.pu-row, .pu-prod {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 14px;
+  border: 1px solid color-mix(in srgb, var(--ac, #8a9490) 35%, transparent);
+  background:
+    linear-gradient(90deg, color-mix(in srgb, var(--ac, #8a9490) 20%, transparent), color-mix(in srgb, var(--ac, #8a9490) 6%, transparent)),
+    var(--card);
+  box-shadow: inset 4px 0 0 var(--ac, #8a9490);
+  color: var(--ink);
+  font: inherit;
+  text-align: left;
+}
+.pu-dot { flex: none; width: 10px; height: 10px; border-radius: 50%; }
+.pu-em { flex: none; font-size: 20px; }
+.pu-tx { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.pu-tx b { font-size: 15px; font-weight: 700; }
+.pu-tx small { font-size: 13px; color: var(--ink-soft); }
+.pu-n { font-weight: 800; font-size: 15px; }
+.pu-prod .chev { color: var(--ink-soft); font-size: 17px; }
+.pu-del {
+  flex: none;
+  width: 40px;
+  height: 40px;
+  border: 0;
+  border-radius: 12px;
+  background: color-mix(in srgb, #e85d55 16%, transparent);
+  font-size: 17px;
+}
+.pu-del-all {
+  margin-top: 4px;
+  min-height: 44px;
+  border: 0;
+  border-radius: 14px;
+  background: color-mix(in srgb, #e85d55 16%, transparent);
+  color: #e85d55;
+  font: inherit;
+  font-weight: 700;
+}
+/* Uscita del pannello col dito: niente sfocatura mentre scende (più fluido su iPhone) */
+.sheet.sheet-leaving,
+.sheet.sheet-leaving * {
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+.sheet.sheet-leaving { will-change: transform; }

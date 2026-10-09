@@ -4,3 +4,6 @@ VERSIONE 1.29.0
   (prima verde pieno).
 - AI: l'importo dello scontrino viene letto anche se scritto come testo ("12,50");
   se l'AI non risponde compare il motivo invece di un generico "non ho capito".
+- Barre che scorrono di lato (liste in Home, filtri e strumenti della lista, righe di chip):
+  ora restano ferme in verticale. Prima su iPhone, scorrendole, si muovevano anche su e giù.
+  Vale anche per le righe che compaiono dopo (pannelli, liste nuove).

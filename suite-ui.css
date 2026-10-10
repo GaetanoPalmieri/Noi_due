@@ -809,3 +809,37 @@ dialog.ss-wrap.ss-pop::backdrop {
 .sp-pop .sp-tx b { font-size: 14px; font-weight: 600; }
 .sp-pop .sp-tx small { font-size: 10px; }
 .sp-pop .ss-opt svg { width: 15px; height: 15px; }
+/* v3 — riga scelta senza bordi strani; il menu scorre dentro il riquadro */
+.ss-wrap.ss-pop .ss-opt,
+.ss-wrap.ss-pop .ss-opt.active {
+  border: 0 !important;
+  box-shadow: none !important;
+  outline: none !important;
+  margin: 0 0 2px !important;
+}
+.ss-wrap.ss-pop .ss-opt.active {
+  background: color-mix(in srgb, #3fb38e 18%, transparent) !important;
+  color: #3fb38e !important;
+}
+.ss-wrap.ss-pop .ss-list {
+  overscroll-behavior: contain;
+}
+/* v4 — quando il menu scorre: righe intere, sfumatura in fondo e scritta "scorri" */
+.ss-wrap.ss-pop .ss-sheet.sp-scroll .ss-list {
+  -webkit-mask-image: linear-gradient(180deg, #000 calc(100% - 22px), transparent);
+  mask-image: linear-gradient(180deg, #000 calc(100% - 22px), transparent);
+}
+.ss-wrap.ss-pop .ss-sheet.sp-scroll.sp-end .ss-list {
+  -webkit-mask-image: none;
+  mask-image: none;
+}
+.ss-wrap.ss-pop .sp-more {
+  flex: none;
+  height: 20px;
+  line-height: 20px;
+  text-align: center;
+  font-size: 11px;
+  font-weight: 700;
+  color: #3fb38e;
+}
+.ss-wrap.ss-pop .ss-sheet.sp-end .sp-more { visibility: hidden; }

@@ -1,0 +1,7 @@
+VERSIONE 1.31.2
+
+- Menu piccoli (categorie, cadenza, scadenza): non vengono più tagliati, restano fra la barra
+  di stato e quella in basso, mostrano righe intere e, se le voci sono tante, la scritta
+  "▾ scorri per vedere le altre".
+- Spese fisse pagate in anticipo: tieni premuto sul movimento pagato oggi →
+  "Annulla pagamento (torna al 17/10)": il movimento sparisce e la rata torna alla sua data.

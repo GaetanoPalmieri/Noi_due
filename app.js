@@ -680,6 +680,23 @@ function recurringNextDue(r){
   if(!d || d<=todayISO() || !recurringDateWithinLimits(r,d)) return null;
   return d;
 }
+/* v1.31.2 — Annullare un pagamento anticipato: il movimento sparisce e la rata torna alla sua data. */
+async function undoEarlyPayment(txId){
+  const t=state.transactions.find(x=>x.id===txId); if(!t||!t.earlyFor) return;
+  const r=t.recurringId?state.recurring.find(x=>x.id===t.recurringId):null;
+  const dd=t.earlyFor.split("-").reverse().slice(0,2).join("/");
+  if(!await askConfirm(`Annullare il pagamento di oggi? “${t.name||"Spesa"}” torna in programma per il ${dd}.`,{ok:"Annulla pagamento",danger:false})) return;
+  const before={tx:JSON.parse(JSON.stringify(t)),next:r?r.nextDate:null};
+  state.transactions=state.transactions.filter(x=>x.id!==txId); markDeleted(txId);
+  if(r){ if(!r.nextDate || t.earlyFor<r.nextDate) r.nextDate=t.earlyFor; }
+  generateRecurringTransactions();
+  balanceCache.clear(); persist(); renderAll();
+  showActionToast(`Pagamento annullato: di nuovo in programma il ${dd}`,"Annulla",()=>{
+    if(r){ r.nextDate=before.next; state.transactions=state.transactions.filter(x=>!(x.recurringId===r.id&&x.date===before.tx.earlyFor)); }
+    if(state.deleted) delete state.deleted[String(before.tx.id)];
+    state.transactions.push(before.tx); balanceCache.clear(); persist(); renderAll();
+  });
+}
 async function payRecurringNow(id){
   const r=state.recurring.find(x=>x.id===id); if(!r) return;
   const due=recurringNextDue(r);
@@ -1067,6 +1084,8 @@ function renderTxRows(container, list, {paidLabel=false}={}){
     const canDuplicate=!t.planned && !t.isBalanceAdjustment;
     enableLongPressActions(row,{
       title:title,
+      onPayNow:(!t.planned&&t.earlyFor)?()=>undoEarlyPayment(t.id):null,
+      payLabel:t.earlyFor?`Annulla pagamento (torna al ${t.earlyFor.split("-").reverse().slice(0,2).join("/")})`:"",
       onDuplicate:canDuplicate?()=>duplicateTransaction(t):null,
       // v1.10.7: un movimento registrato può diventare ricorrente o essere pianificato di nuovo.
       onRecurring:canDuplicate&&!isTransfer&&!t.recurringId?()=>openRecurringForm(null,futureFromTx(t)):null,

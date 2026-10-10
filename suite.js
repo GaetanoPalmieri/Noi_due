@@ -612,6 +612,52 @@
   }, { passive: true });
 })();
 
+/* ===================== suitePlacePop — dove mettere un menu piccolo =====================
+   Lo usano SuiteSelect (data-ss="pop") e SuitePop. Tiene conto della barra di stato e della
+   barra in basso dell'iPhone, usa tutto lo spazio disponibile (fino al 70% dello schermo) e,
+   quando serve scorrere, taglia l'altezza su righe intere: niente voce tagliata a metà. */
+function suitePlacePop(sheet, anchor, minWidth) {
+  var r = anchor.getBoundingClientRect(), vw = window.innerWidth, vh = window.innerHeight;
+  var probe = document.createElement('div');
+  probe.style.cssText = 'position:fixed;top:0;left:0;width:0;padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom);visibility:hidden';
+  document.body.appendChild(probe);
+  var cs = getComputedStyle(probe), safeTop = (parseFloat(cs.paddingTop) || 0) + 12, safeBot = (parseFloat(cs.paddingBottom) || 0) + 12;
+  probe.remove();
+  var w = Math.min(vw - 16, Math.max(r.width, minWidth || 220));
+  sheet.style.width = w + 'px';
+  sheet.style.left = Math.min(Math.max(8, r.left), vw - w - 8) + 'px';
+  sheet.style.height = 'auto'; sheet.style.maxHeight = 'none';
+  var lst = sheet.querySelector('.ss-list');
+  var chrome = sheet.offsetHeight - (lst ? lst.clientHeight : 0);
+  var full = chrome + (lst ? lst.scrollHeight : 0);
+  var below = vh - safeBot - r.bottom - 6, above = r.top - 6 - safeTop;
+  var cap = Math.min(full, Math.round(vh * 0.7));
+  var room = (below >= cap || below >= above) ? below : above;
+  var h = Math.min(cap, room);
+  if (h < full && lst) {
+    var row = lst.querySelector('.ss-opt');
+    var rh = row ? row.offsetHeight + 2 : 40;
+    var hint = 22;   /* spazio per la scritta "scorri" in fondo */
+    var rows = Math.max(2, Math.floor((h - chrome - hint) / rh));
+    h = chrome + hint + rows * rh;
+    if (h > room) h -= rh;
+    sheet.classList.add('sp-scroll');
+    if (!sheet.querySelector('.sp-more')) {
+      var m = document.createElement('div');
+      m.className = 'sp-more';
+      m.textContent = '\u25BE scorri per vedere le altre';
+      sheet.appendChild(m);
+      lst.addEventListener('scroll', function () {
+        sheet.classList.toggle('sp-end', lst.scrollTop + lst.clientHeight >= lst.scrollHeight - 4);
+      }, { passive: true });
+    }
+  }
+  h = Math.max(90, Math.round(h));
+  sheet.style.height = h + 'px';
+  sheet.style.maxHeight = h + 'px';
+  sheet.style.top = ((below >= cap || below >= above) ? r.bottom + 6 : r.top - 6 - h) + 'px';
+}
+
 /* ===================== SuiteSelect — menu a tendina fatti in casa =====================
    Al posto della rotellina di iOS apre un elenco disegnato come il resto dell'app.
    Vale per ogni <select> a scelta singola, anche creato dopo; per lasciare il menu di
@@ -711,14 +757,7 @@
        del pannello dal basso. Si apre sotto il campo, o sopra se sotto non c'è spazio. */
     if (sel.getAttribute('data-ss') === 'pop') {
       wrap.classList.add('ss-pop');
-      var r = sel.getBoundingClientRect(), vw = window.innerWidth, vh = window.innerHeight;
-      var w = Math.min(vw - 16, Math.max(r.width, 210));
-      var left = Math.min(Math.max(8, r.left), vw - w - 8);
-      sheet.style.width = w + 'px';
-      sheet.style.left = left + 'px';
-      var h = sheet.offsetHeight || 200;
-      if (r.bottom + 6 + h > vh - 8 && r.top - 6 - h > 8) sheet.style.top = (r.top - 6 - h) + 'px';
-      else sheet.style.top = Math.min(r.bottom + 6, vh - h - 8) + 'px';
+      suitePlacePop(sheet, sel, 210);
     }
     requestAnimationFrame(function () {
       wrap.classList.add('show');
@@ -1430,7 +1469,7 @@ function bindLongPress(el,handler){
     (o.items || []).forEach(function (it, i) {
       if (it.head) { html += '<div class="ss-group">' + esc(it.head) + '</div>'; return; }
       html += '<button type="button" class="ss-opt' + (it.active ? ' active' : '') + '" data-i="' + i + '"' + (it.disabled ? ' disabled' : '') + '>' +
-        '<span class="sp-lab">' + (it.emoji ? '<span class="sp-em">' + esc(it.emoji) + '</span>' : '') +
+        '<span class="sp-lab">' + (it.emoji ? '<span class="sp-em"' + (it.color && /^[#a-z0-9(),.\s%-]+$/i.test(it.color) ? ' style="color:' + it.color + '"' : '') + '>' + esc(it.emoji) + '</span>' : '') +
         '<span class="sp-tx"><b>' + esc(it.label) + '</b>' + (it.sub ? '<small>' + esc(it.sub) + '</small>' : '') + '</span></span>' +
         '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12.5l5 5L20 6.5"/></svg></button>';
     });
@@ -1448,27 +1487,7 @@ function bindLongPress(el,handler){
     wrap.addEventListener('cancel', function (e) { e.preventDefault(); close(); });
     cur = wrap;
     try { wrap.showModal(); } catch (_) { wrap.setAttribute('open', ''); }
-    /* v2 — non finisce mai sotto la barra di stato dell'iPhone né sotto la barra in basso,
-       e resta compatto (al massimo ~320 px, poi scorre). */
-    var r = anchor.getBoundingClientRect(), vw = window.innerWidth, vh = window.innerHeight;
-    var probe = document.createElement('div');
-    probe.style.cssText = 'position:fixed;top:0;left:0;width:0;padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom);visibility:hidden';
-    document.body.appendChild(probe);
-    var cs = getComputedStyle(probe), safeTop = (parseFloat(cs.paddingTop) || 0) + 10, safeBot = (parseFloat(cs.paddingBottom) || 0) + 10;
-    probe.remove();
-    var w = Math.min(vw - 16, Math.max(r.width, o.minWidth || 220));
-    var left = Math.min(Math.max(8, r.left), vw - w - 8);
-    sheet.style.width = w + 'px';
-    sheet.style.left = left + 'px';
-    var lst = sheet.querySelector('.ss-list'), tt = sheet.querySelector('.sp-title');
-    var natural = (lst ? lst.scrollHeight : 240) + (tt ? tt.offsetHeight + 8 : 0) + 12;
-    var below = vh - safeBot - r.bottom - 6, above = r.top - 6 - safeTop;
-    var cap = Math.min(320, natural);
-    var h;
-    if (below >= cap || below >= above) { h = Math.min(cap, below); sheet.style.top = (r.bottom + 6) + 'px'; }
-    else { h = Math.min(cap, above); sheet.style.top = (r.top - 6 - h) + 'px'; }
-    sheet.style.maxHeight = Math.max(120, h) + 'px';
-    sheet.style.height = Math.max(120, h) + 'px';
+    suitePlacePop(sheet, anchor, o.minWidth || 220);
     requestAnimationFrame(function () {
       wrap.classList.add('show');
       var a = sheet.querySelector('.ss-opt.active'); if (a && a.scrollIntoView) a.scrollIntoView({ block: 'nearest' });

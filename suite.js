@@ -1448,15 +1448,27 @@ function bindLongPress(el,handler){
     wrap.addEventListener('cancel', function (e) { e.preventDefault(); close(); });
     cur = wrap;
     try { wrap.showModal(); } catch (_) { wrap.setAttribute('open', ''); }
+    /* v2 — non finisce mai sotto la barra di stato dell'iPhone né sotto la barra in basso,
+       e resta compatto (al massimo ~320 px, poi scorre). */
     var r = anchor.getBoundingClientRect(), vw = window.innerWidth, vh = window.innerHeight;
-    var w = Math.min(vw - 16, Math.max(r.width, o.minWidth || 230));
+    var probe = document.createElement('div');
+    probe.style.cssText = 'position:fixed;top:0;left:0;width:0;padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom);visibility:hidden';
+    document.body.appendChild(probe);
+    var cs = getComputedStyle(probe), safeTop = (parseFloat(cs.paddingTop) || 0) + 10, safeBot = (parseFloat(cs.paddingBottom) || 0) + 10;
+    probe.remove();
+    var w = Math.min(vw - 16, Math.max(r.width, o.minWidth || 220));
     var left = Math.min(Math.max(8, r.left), vw - w - 8);
     sheet.style.width = w + 'px';
     sheet.style.left = left + 'px';
-    var h = Math.min(sheet.offsetHeight || 240, vh * 0.6);
-    var below = vh - r.bottom - 14, above = r.top - 14;
-    if (below < h && above > below) { sheet.style.top = Math.max(8, r.top - 6 - h) + 'px'; sheet.style.maxHeight = Math.min(h, above) + 'px'; }
-    else { sheet.style.top = (r.bottom + 6) + 'px'; sheet.style.maxHeight = Math.max(160, below) + 'px'; }
+    var lst = sheet.querySelector('.ss-list'), tt = sheet.querySelector('.sp-title');
+    var natural = (lst ? lst.scrollHeight : 240) + (tt ? tt.offsetHeight + 8 : 0) + 12;
+    var below = vh - safeBot - r.bottom - 6, above = r.top - 6 - safeTop;
+    var cap = Math.min(320, natural);
+    var h;
+    if (below >= cap || below >= above) { h = Math.min(cap, below); sheet.style.top = (r.bottom + 6) + 'px'; }
+    else { h = Math.min(cap, above); sheet.style.top = (r.top - 6 - h) + 'px'; }
+    sheet.style.maxHeight = Math.max(120, h) + 'px';
+    sheet.style.height = Math.max(120, h) + 'px';
     requestAnimationFrame(function () {
       wrap.classList.add('show');
       var a = sheet.querySelector('.ss-opt.active'); if (a && a.scrollIntoView) a.scrollIntoView({ block: 'nearest' });

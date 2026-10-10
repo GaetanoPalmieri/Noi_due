@@ -782,3 +782,30 @@ dialog.ss-wrap.ss-pop::backdrop {
 .pick-row.pick-3 { grid-template-columns: 1fr 1fr; }
 .pick-row.pick-3 > .pick-btn:nth-child(3) { grid-column: 1 / -1; }
 .pick-row.pick-1 { grid-template-columns: 1fr; }
+
+/* ---- v2: pulsanti di scelta e menu piccolo più compatti ---- */
+.pick-btn {
+  min-height: 40px;
+  padding: 4px 9px;
+  gap: 7px;
+  border-radius: 12px;
+}
+.pick-btn .pb-em { width: 18px; font-size: 14px; }
+.pick-btn .pb-tx { gap: 0; }
+.pick-btn .pb-tx small { font-size: 10px; letter-spacing: .3px; line-height: 1.15; }
+.pick-btn .pb-tx b { font-size: 13px; font-weight: 650; line-height: 1.25; }
+.pick-btn .pb-chev { font-size: 11px; }
+.pick-row { gap: 6px; }
+.sp-pop .ss-sheet { padding: 5px !important; border-radius: 14px !important; }
+.sp-pop .sp-title { margin: 3px 7px 4px; font-size: 10px; }
+.sp-pop .ss-opt {
+  min-height: 38px !important;
+  padding: 6px 8px !important;
+  gap: 8px !important;
+  border-radius: 9px !important;
+  font-size: 14px !important;
+}
+.sp-pop .sp-em { width: 20px; font-size: 15px; }
+.sp-pop .sp-tx b { font-size: 14px; font-weight: 600; }
+.sp-pop .sp-tx small { font-size: 10px; }
+.sp-pop .ss-opt svg { width: 15px; height: 15px; }

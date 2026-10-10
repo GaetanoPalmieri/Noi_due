@@ -707,6 +707,19 @@
     openState = { wrap: wrap, sel: sel };
     document.addEventListener('keydown', onKeyDown, true);
     try { wrap.showModal(); } catch (_) { wrap.setAttribute('open', ''); }
+    /* Menu piccolo vicino al campo (attributo data-ss="pop"): per scelte brevi, al posto
+       del pannello dal basso. Si apre sotto il campo, o sopra se sotto non c'è spazio. */
+    if (sel.getAttribute('data-ss') === 'pop') {
+      wrap.classList.add('ss-pop');
+      var r = sel.getBoundingClientRect(), vw = window.innerWidth, vh = window.innerHeight;
+      var w = Math.min(vw - 16, Math.max(r.width, 210));
+      var left = Math.min(Math.max(8, r.left), vw - w - 8);
+      sheet.style.width = w + 'px';
+      sheet.style.left = left + 'px';
+      var h = sheet.offsetHeight || 200;
+      if (r.bottom + 6 + h > vh - 8 && r.top - 6 - h > 8) sheet.style.top = (r.top - 6 - h) + 'px';
+      else sheet.style.top = Math.min(r.bottom + 6, vh - h - 8) + 'px';
+    }
     requestAnimationFrame(function () {
       wrap.classList.add('show');
       if (selectedBtn && selectedBtn.scrollIntoView) selectedBtn.scrollIntoView({ block: 'center' });
@@ -728,11 +741,31 @@
       e.stopPropagation();
     }, { capture: true, passive: false });
   });
+  /* Sul telefono bloccare il touchstart cancella anche il "click" che segue: per questo il
+     menu si apre alla fine del tocco (se il dito non si è mosso), non sul click. */
+  var tStart = null, lastTouchOpen = 0;
+  document.addEventListener('touchstart', function (e) {
+    var sel = target(e);
+    var t = e.touches && e.touches[0];
+    tStart = sel && t ? { sel: sel, x: t.clientX, y: t.clientY } : null;
+  }, { capture: true, passive: true });
+  document.addEventListener('touchend', function (e) {
+    if (!tStart) return;
+    var st = tStart; tStart = null;
+    var t = e.changedTouches && e.changedTouches[0];
+    if (!t || Math.abs(t.clientX - st.x) > 10 || Math.abs(t.clientY - st.y) > 10) return;
+    if (e.cancelable) e.preventDefault();
+    e.stopPropagation();
+    try { st.sel.blur(); } catch (_) {}
+    lastTouchOpen = Date.now();
+    openFor(st.sel);
+  }, { capture: true, passive: false });
   document.addEventListener('click', function (e) {
     var sel = target(e);
     if (!sel) return;
     e.preventDefault();
     e.stopPropagation();
+    if (Date.now() - lastTouchOpen < 700) return;   // già aperto dal tocco
     try { sel.blur(); } catch (_) {}
     openFor(sel);
   }, true);
@@ -1369,4 +1402,66 @@ function bindLongPress(el,handler){
       return wrap;
     }
   };
+})();
+
+/* ===================== SuitePop — menu piccolo vicino a un pulsante =====================
+   Lo usano i pulsanti di scelta (macrocategoria, categoria, sottocategoria, ...):
+   SuitePop.open(pulsante, { title, items:[{key, label, emoji, sub, active, head}], onPick(key) }).
+   Si apre sotto il pulsante (o sopra se manca spazio), largo almeno quanto il pulsante. */
+(function () {
+  var cur = null;
+  function close() {
+    if (!cur) return;
+    var w = cur; cur = null;
+    w.classList.remove('show');
+    setTimeout(function () { try { if (w.open) w.close(); } catch (_) {} w.remove(); }, 160);
+  }
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  function open(anchor, o) {
+    close();
+    o = o || {};
+    var wrap = document.createElement('dialog');
+    wrap.className = 'ss-wrap ss-pop sp-pop';
+    var sheet = document.createElement('div');
+    sheet.className = 'ss-sheet';
+    sheet.setAttribute('role', 'listbox');
+    var html = o.title ? '<div class="sp-title">' + esc(o.title) + '</div>' : '';
+    html += '<div class="ss-list">';
+    (o.items || []).forEach(function (it, i) {
+      if (it.head) { html += '<div class="ss-group">' + esc(it.head) + '</div>'; return; }
+      html += '<button type="button" class="ss-opt' + (it.active ? ' active' : '') + '" data-i="' + i + '"' + (it.disabled ? ' disabled' : '') + '>' +
+        '<span class="sp-lab">' + (it.emoji ? '<span class="sp-em">' + esc(it.emoji) + '</span>' : '') +
+        '<span class="sp-tx"><b>' + esc(it.label) + '</b>' + (it.sub ? '<small>' + esc(it.sub) + '</small>' : '') + '</span></span>' +
+        '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12.5l5 5L20 6.5"/></svg></button>';
+    });
+    html += '</div>';
+    sheet.innerHTML = html;
+    wrap.appendChild(sheet);
+    document.body.appendChild(wrap);
+    sheet.addEventListener('click', function (e) {
+      var b = e.target.closest('.ss-opt'); if (!b || b.disabled) return;
+      var it = o.items[Number(b.dataset.i)];
+      close();
+      if (o.onPick) o.onPick(it.key, it);
+    });
+    wrap.addEventListener('click', function (e) { if (e.target === wrap) close(); });
+    wrap.addEventListener('cancel', function (e) { e.preventDefault(); close(); });
+    cur = wrap;
+    try { wrap.showModal(); } catch (_) { wrap.setAttribute('open', ''); }
+    var r = anchor.getBoundingClientRect(), vw = window.innerWidth, vh = window.innerHeight;
+    var w = Math.min(vw - 16, Math.max(r.width, o.minWidth || 230));
+    var left = Math.min(Math.max(8, r.left), vw - w - 8);
+    sheet.style.width = w + 'px';
+    sheet.style.left = left + 'px';
+    var h = Math.min(sheet.offsetHeight || 240, vh * 0.6);
+    var below = vh - r.bottom - 14, above = r.top - 14;
+    if (below < h && above > below) { sheet.style.top = Math.max(8, r.top - 6 - h) + 'px'; sheet.style.maxHeight = Math.min(h, above) + 'px'; }
+    else { sheet.style.top = (r.bottom + 6) + 'px'; sheet.style.maxHeight = Math.max(160, below) + 'px'; }
+    requestAnimationFrame(function () {
+      wrap.classList.add('show');
+      var a = sheet.querySelector('.ss-opt.active'); if (a && a.scrollIntoView) a.scrollIntoView({ block: 'nearest' });
+    });
+    return close;
+  }
+  window.SuitePop = { open: open, close: close };
 })();

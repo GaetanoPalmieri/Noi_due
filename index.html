@@ -4,11 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
 <title>Noi Due — Spese di coppia</title>
-<meta name="app-version" content="1.30.0">
+<meta name="app-version" content="1.31.0">
 <meta name="description" content="Spese di coppia: chi ha pagato, chi deve a chi, budget e statistiche.">
 
 <!-- PWA / iOS home screen -->
-<link rel="manifest" href="manifest.json?v=1.30.0">
+<link rel="manifest" href="manifest.json?v=1.31.0">
 <meta name="theme-color" content="#12181F">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -16,12 +16,12 @@
 <!-- iPhone: icona nella cartella principale, senza ?v=, con la dimensione dichiarata (la legge anche Safari più vecchio). -->
 <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
 <link rel="apple-touch-icon-precomposed" sizes="180x180" href="apple-touch-icon-precomposed.png">
-<link rel="icon" href="icons/icon-192.png?v=1.30.0">
+<link rel="icon" href="icons/icon-192.png?v=1.31.0">
 
-<link rel="stylesheet" href="style.css?v=1.30.0">
+<link rel="stylesheet" href="style.css?v=1.31.0">
 <!-- Token grafici condivisi dalle 4 app: va caricato per ultimo. -->
-<link rel="stylesheet" href="suite-ui.css?v=1.30.0">
-<link rel="stylesheet" href="suite-tokens.css?v=1.30.0">
+<link rel="stylesheet" href="suite-ui.css?v=1.31.0">
+<link rel="stylesheet" href="suite-tokens.css?v=1.31.0">
 </head>
 <body>
 
@@ -339,21 +339,19 @@
 <template id="tpl-add-transaction">
   <div class="sheet" id="sheetAddTx">
     <div class="sheet-handle"></div>
-    <div class="sheet-head">
-      <h3>Nuova spesa</h3><input type="date" id="dateInput" class="text-input sheet-head-date" aria-label="Data"><button class="primary-btn" id="saveTxBtn" aria-label="Salva movimento">Salva</button>
+    <div class="sheet-head add-head">
+      <h3 class="add-eyebrow" id="txFormTitle">Nuova spesa</h3><div class="type-toggle add-type-mini" id="typeToggle"><button class="type-opt active" data-type="expense">↓ Uscita</button><button class="type-opt" data-type="income">↑ Entrata</button></div><button class="primary-btn" id="saveTxBtn" aria-label="Salva movimento">Salva</button>
     </div>
 
-    <div class="type-toggle" id="typeToggle">
-      <button class="type-opt active" data-type="expense">↓ Uscita</button>
-      <button class="type-opt" data-type="income">↑ Entrata</button>
+    <div class="add-amount-row">
+      <div class="amount-field">
+        <span class="currency-sign">€</span>
+        <input type="text" inputmode="decimal" placeholder="0" id="amountInput" autocomplete="off" aria-label="Importo">
+      </div>
+      <input type="date" id="dateInput" class="text-input add-date-mini" aria-label="Data">
     </div>
 
-    <div class="amount-field">
-      <span class="currency-sign">€</span>
-      <input type="text" inputmode="decimal" placeholder="0" id="amountInput" autocomplete="off">
-    </div>
-
-    <div class="field-row"><label>Nome movimento</label><input type="text" id="txNameInput" class="text-input" placeholder="es. Spesa supermercato, cena, bolletta…"></div>
+    <div class="field-row add-name-row"><input type="text" id="txNameInput" class="text-input add-name-input" placeholder="Nome (es. Spesa supermercato, cena)" aria-label="Nome movimento"></div>
 
     <div class="field-row" id="txCategoryRow">
       <div id="categoryChipsGrouped" class="chip-groups"></div>
@@ -708,51 +706,40 @@
 <template id="tpl-recurring-form">
   <div class="sheet" id="sheetRecurringForm">
     <div class="sheet-handle"></div>
-    <div class="sheet-head">
-      <h3 id="recurringFormTitle">Nuovo ricorrente</h3><button class="primary-btn" id="saveRecurringBtn" aria-label="Salva ricorrente">Salva</button>
+    <div class="sheet-head add-head">
+      <h3 class="add-eyebrow" id="recurringFormTitle">Nuova spesa fissa</h3><div class="type-toggle add-type-mini" id="recurringTypeToggle" hidden><button class="type-opt active" data-type="expense">↓ Uscita</button><button class="type-opt" data-type="income">↑ Entrata</button></div><button class="primary-btn" id="saveRecurringBtn" aria-label="Salva ricorrente">Salva</button>
     </div>
-    <div class="field-row">
-      <label>Nome</label>
-      <input type="text" id="recurringNameInput" class="text-input" placeholder="es. Affitto, Bollette, Netflix…">
-    </div>
-    <div class="type-toggle" id="recurringTypeToggle" hidden>
-      <button class="type-opt active" data-type="expense">Uscita</button>
-      <button class="type-opt" data-type="income">Entrata</button>
-    </div>
-    <div class="field-row">
-      <label>Importo</label>
-      <div class="amount-field compact-amount">
+    <div class="add-amount-row">
+      <div class="amount-field">
         <span class="currency-sign">€</span>
-        <input type="text" inputmode="decimal" id="recurringAmountInput" placeholder="0" autocomplete="off">
+        <input type="text" inputmode="decimal" id="recurringAmountInput" placeholder="0" autocomplete="off" aria-label="Importo">
       </div>
+      <input type="date" id="recurringDateInput" class="text-input add-date-mini" aria-label="Data del primo pagamento">
     </div>
-    <div class="field-row recurring-start-field">
-      <label for="recurringDateInput">Data di partenza</label>
-      <div class="recurring-start-controls">
-        <input type="date" id="recurringDateInput" class="text-input" aria-label="Data di partenza del ricorrente">
-      </div>
-      <small class="field-hint">È la data del primo pagamento. Ogni volta che arriva la data, la spesa viene registrata da sola nei movimenti.</small>
+    <p class="field-hint add-date-hint">La data è il primo pagamento: ogni volta che arriva, la spesa si registra da sola.</p>
+    <div class="field-row add-name-row">
+      <input type="text" id="recurringNameInput" class="text-input add-name-input" placeholder="Nome (es. Affitto, Bollette, Netflix)" aria-label="Nome spesa fissa">
     </div>
-    <div class="field-row">
-      <label>Cadenza</label>
-      <select id="recurringFreqSelect" class="text-input" aria-label="Cadenza del movimento ricorrente">
-        <option value="weekly">Ogni settimana</option>
-        <option value="monthly">Ogni mese</option>
-        <option value="bimonthly">Ogni 2 mesi</option>
-        <option value="quarterly">Ogni 3 mesi</option>
-        <option value="semiannual">Ogni 6 mesi</option>
-        <option value="yearly">Ogni anno</option>
-      </select>
-    </div>
-    <div class="recurring-options">
-      <label class="toggle-line"><input type="checkbox" id="recurringActiveInput" checked> Attiva (togli la spunta per metterla in pausa)</label>
-      <label>Durata
-        <select id="recurringDurationMode" class="text-input recurring-duration-select">
+    <div class="field-row rec-when-row">
+      <label class="rec-half">Cadenza
+        <select id="recurringFreqSelect" class="text-input" data-ss="pop" aria-label="Cadenza">
+          <option value="weekly">Ogni settimana</option>
+          <option value="monthly">Ogni mese</option>
+          <option value="bimonthly">Ogni 2 mesi</option>
+          <option value="quarterly">Ogni 3 mesi</option>
+          <option value="semiannual">Ogni 6 mesi</option>
+          <option value="yearly">Ogni anno</option>
+        </select>
+      </label>
+      <label class="rec-half">Scadenza
+        <select id="recurringDurationMode" class="text-input recurring-duration-select" data-ss="pop" aria-label="Scadenza">
           <option value="unlimited">Senza scadenza</option>
           <option value="count">Numero di rate</option>
           <option value="date">Fino a una data</option>
         </select>
       </label>
+    </div>
+    <div class="recurring-options">
       <label id="recurringOccurrencesWrap" hidden>Numero di rate
         <div class="recurring-installments-input">
           <input type="number" id="recurringOccurrencesInput" class="text-input" min="1" step="1" inputmode="numeric" placeholder="es. 3">
@@ -761,6 +748,8 @@
         <small>La prima data conta come prima rata.</small>
       </label>
       <label id="recurringEndDateWrap" hidden>Fine ricorrenza<input type="date" id="recurringEndDateInput" class="text-input"></label>
+      <button type="button" class="shared-switch rec-active-switch on" id="recurringActiveSwitch" aria-pressed="true"><span class="shared-knob" aria-hidden="true"></span><span class="shared-switch-text"><strong>Spesa fissa attiva</strong><small>Spegnila per metterla in pausa senza eliminarla</small></span></button>
+      <input type="checkbox" id="recurringActiveInput" checked hidden>
     </div>
     <div class="field-row">
       <div id="recurringCategoryChips" class="chip-groups"></div>
@@ -910,7 +899,7 @@
   </div>
 </template>
 
-<script src="suite.js?v=1.30.0"></script>
-<script src="app.js?v=1.30.0"></script>
+<script src="suite.js?v=1.31.0"></script>
+<script src="app.js?v=1.31.0"></script>
 </body>
 </html>

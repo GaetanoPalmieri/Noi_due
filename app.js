@@ -558,9 +558,19 @@ function accountsById(){ return Object.fromEntries(state.accounts.map(a=>[a.id,a
 function categoriesById(){ return Object.fromEntries(state.categories.map(c=>[c.id,c])); }
 function macroCategoriesById(){ return Object.fromEntries(state.macroCategories.map(m=>[m.id,m])); }
 
-/* Picker categoria: la macrocategoria è un filtro, ma all'apertura vengono
-   mostrate tutte le categorie. Così una categoria appena creata è sempre
-   disponibile subito nel nuovo movimento. */
+/* v1.31.0 — Pulsante di scelta: mostra la scelta attuale e apre un menu piccolo (SuitePop). */
+function pickButton({label,emoji="",value="",empty="Scegli",onOpen}){
+  const b=document.createElement("button");
+  b.type="button"; b.className="pick-btn";
+  b.innerHTML=`<span class="pb-em" aria-hidden="true">${escapeHtml(emoji||"")}</span><span class="pb-tx"><small>${escapeHtml(label)}</small><b class="${value?"":"pb-empty"}">${escapeHtml(value||empty)}</b></span><span class="pb-chev" aria-hidden="true">▾</span>`;
+  if(!emoji) b.querySelector(".pb-em").remove();
+  b.setAttribute("aria-label",`${label}: ${value||empty}`);
+  b.addEventListener("click",()=>onOpen&&onOpen(b));
+  return b;
+}
+function openPick(anchor,title,items,onPick){ if(window.SuitePop) return SuitePop.open(anchor,{title,items,onPick}); }
+/* v1.31.0 — Categoria con pulsanti (Macrocategoria · Categoria): ognuno apre un menu piccolo,
+   al posto delle righe di chip sparse nel pannello. */
 function renderCategoryPicker(container, kind, getSelected, onSelect){
   const macros = macroCategoriesById();
   const cats = state.categories.filter(c=>c.kind===kind);
@@ -572,59 +582,35 @@ function renderCategoryPicker(container, kind, getSelected, onSelect){
   });
   const macroOrder = state.macroCategories.filter(m=>groups.has(m.id)).map(m=>m.id);
   if(groups.has("none")) macroOrder.push("none");
-
-  const selId = getSelected();
-  const selCat = cats.find(c=>c.id===selId);
+  const selCat = cats.find(c=>c.id===getSelected());
   let activeMacro = container._activeMacro;
   if(selCat) activeMacro = selCat.macroCategoryId && macros[selCat.macroCategoryId] ? selCat.macroCategoryId : "none";
   if(!activeMacro || (activeMacro!=="all" && !groups.has(activeMacro))) activeMacro = "all";
   container._activeMacro = activeMacro;
-
-  container.innerHTML = "";
-  const showMacroRow = macroOrder.length>1 || (macroOrder.length===1 && macroOrder[0]!=="none");
-
-  if(showMacroRow){
-    const macroWrap = document.createElement("div");
-    macroWrap.className = "chip-group";
-    macroWrap.innerHTML = `<p class="chip-group-title">Macrocategoria</p>`;
-    const macroRow = document.createElement("div");
-    macroRow.className = "chip-row";
-    ["all", ...macroOrder].forEach(key=>{
-      const chip = document.createElement("button");
-      chip.className = "chip" + (activeMacro===key ? " active":"");
-      chip.innerHTML = key==="all" ? `Tutte` : key==="none" ? `<span class="em">🏷️</span>Altre` : `<span class="em">${escapeHtml(macros[key].emoji)}</span>${escapeHtml(macros[key].name)}`;
-      chip.addEventListener("click", ()=>{
-        container._activeMacro = key;
-        const list = key==="all" ? cats : (groups.get(key) || []);
-        if(!list.find(c=>c.id===getSelected())) onSelect(list[0]?.id || null);
-        renderCategoryPicker(container, kind, getSelected, onSelect);
-      });
-      macroRow.appendChild(chip);
-    });
-    macroWrap.appendChild(macroRow);
-    container.appendChild(macroWrap);
-  }
-
-  const catWrap = document.createElement("div");
-  catWrap.className = "chip-group";
-  catWrap.innerHTML = `<p class="chip-group-title">Categoria <button type="button" class="nd-info" data-nd-info="categoria" aria-label="A cosa serve la categoria">i</button></p>`;
-  const catRow = document.createElement("div");
-  catRow.className = "chip-row";
   const currentList = activeMacro==="all" ? cats : (groups.get(activeMacro) || []);
-  currentList.forEach(c=>{
-    const chip = document.createElement("button");
-    chip.className = "chip" + (getSelected()===c.id ? " active":"");
-    chip.innerHTML = `<span class="em">${escapeHtml(c.emoji)}</span>${escapeHtml(c.name)}`;
-    chip.addEventListener("click", ()=>{
-      onSelect(c.id);
-      renderCategoryPicker(container, kind, getSelected, onSelect);
-    });
-    catRow.appendChild(chip);
-  });
-  catWrap.appendChild(catRow);
-  container.appendChild(catWrap);
-
-  if(!currentList.find(c=>c.id===getSelected())) onSelect(currentList[0]?.id || null);
+  const rerender=()=>renderCategoryPicker(container, kind, getSelected, onSelect);
+  const macroInfo=key=>key==="all"?{emoji:"🗂️",name:"Tutte"}:key==="none"?{emoji:"🏷️",name:"Altre"}:{emoji:macros[key].emoji,name:macros[key].name};
+  container.innerHTML = "";
+  container.classList.add("cat-pick");
+  const title=document.createElement("p"); title.className="chip-group-title";
+  title.innerHTML=`Categoria <button type="button" class="nd-info" data-nd-info="categoria" aria-label="A cosa serve la categoria">i</button>`;
+  const row=document.createElement("div"); row.className="pick-row";
+  const showMacro = macroOrder.length>1 || (macroOrder.length===1 && macroOrder[0]!=="none");
+  if(showMacro){
+    const mi=macroInfo(activeMacro);
+    row.appendChild(pickButton({label:"Macrocategoria",emoji:mi.emoji,value:mi.name,onOpen:b=>openPick(b,"Macrocategoria",
+      ["all",...macroOrder].map(k=>{ const x=macroInfo(k), n=k==="all"?cats.length:(groups.get(k)||[]).length; return {key:k,emoji:x.emoji,label:x.name,sub:`${n} ${n===1?"categoria":"categorie"}`,active:k===activeMacro}; }),
+      k=>{ container._activeMacro=k; const list=k==="all"?cats:(groups.get(k)||[]);
+        if(!list.find(c=>c.id===getSelected())) onSelect(list[0]?.id||null,{user:true});
+        rerender(); const nb=container.querySelector(".pick-btn.pb-cat"); if(nb&&k!=="all"&&list.length>1) setTimeout(()=>nb.click(),60); })}));
+  }
+  const catBtn=pickButton({label:"Categoria",emoji:selCat?.emoji||"",value:selCat?.name||"",onOpen:b=>openPick(b,"Categoria",
+    currentList.map(c=>({key:c.id,emoji:c.emoji,label:c.name,active:selCat&&selCat.id===c.id})),
+    id=>{ onSelect(id,{user:true}); rerender(); })});
+  catBtn.classList.add("pb-cat"); row.appendChild(catBtn);
+  row.classList.add(row.children.length===1?"pick-1":"pick-2");
+  container.append(title,row);
+  if(!currentList.find(c=>c.id===getSelected()) && currentList[0]){ onSelect(currentList[0].id); rerender(); }
 }
 function monthTx(y=viewYear, m=viewMonth){
   const prefix = `${y}-${pad2(m+1)}`;
@@ -684,6 +670,28 @@ function recurringDurationLabel(r){
 }
 
 /* ---------------- Movimenti ricorrenti ---------------- */
+/* v1.31.0 — Pagare prima della data: la prossima rata si registra oggi (earlyFor = la sua data)
+   e la spesa fissa riparte dalla rata successiva. */
+function recurringPrepaid(r,date){ return state.transactions.some(t=>t.recurringId===r.id && t.earlyFor===date); }
+function recurringNextDue(r){
+  if(!r || r.active===false) return null;
+  let d=r.nextDate||r.startDate, safety=0;
+  while(d && recurringPrepaid(r,d) && safety<60){ d=stepDateISO(d,r.freq,r.startDate); safety++; }
+  if(!d || d<=todayISO() || !recurringDateWithinLimits(r,d)) return null;
+  return d;
+}
+async function payRecurringNow(id){
+  const r=state.recurring.find(x=>x.id===id); if(!r) return;
+  const due=recurringNextDue(r);
+  if(!due){ showToast("Nessuna rata futura da pagare"); return; }
+  if(!await askConfirm(`Pagare oggi la rata del ${due.split("-").reverse().slice(0,2).join("/")} di “${r.name||"spesa fissa"}” (${fmt(r.amount)})? La spesa fissa resta attiva dalle rate successive.`,{ok:"Paga ora",danger:false})) return;
+  const prevNext=r.nextDate;
+  const tx={id:uid(),date:todayISO(),amount:r.amount,type:r.type,categoryId:r.categoryId,accountId:r.accountId,name:r.name||"",note:r.note||"",recurringId:r.id,split:r.split||null,groupId:r.groupId||null,earlyFor:due};
+  state.transactions.push(tx);
+  if((r.nextDate||"")<=due) r.nextDate=stepDateISO(due,r.freq,r.startDate);
+  balanceCache.clear(); persist(); renderAll();
+  showActionToast(`Rata del ${due.split("-").reverse().slice(0,2).join("/")} pagata oggi`,"Annulla",()=>{ state.transactions=state.transactions.filter(t=>t.id!==tx.id); markDeleted(tx.id); r.nextDate=prevNext; balanceCache.clear(); persist(); renderAll(); });
+}
 function generateRecurringTransactions(askConfirmation=false){
   const todayStr = todayISO();
   const due=state.recurring.filter(r=>{const next=r.nextDate||r.startDate;return r.active!==false && next && next<=todayStr && recurringDateWithinLimits(r,next);});
@@ -693,7 +701,7 @@ function generateRecurringTransactions(askConfirmation=false){
     if(!r.nextDate) r.nextDate = r.startDate;
     let safety = 0;
     while(r.active!==false && r.nextDate <= todayStr && recurringDateWithinLimits(r,r.nextDate) && safety < 1000){
-      if(!state.transactions.some(t=>t.recurringId===r.id && t.date===r.nextDate)){
+      if(!state.transactions.some(t=>t.recurringId===r.id && (t.date===r.nextDate || t.earlyFor===r.nextDate))){
         state.transactions.push({
           id: uid(), date: r.nextDate, amount: r.amount, type: r.type,
           categoryId: r.categoryId, accountId: r.accountId, name:r.name || "", note: r.note || "", recurringId: r.id, split: r.split || null, groupId: r.groupId || null,
@@ -712,7 +720,7 @@ function refreshRecurringTransactions(recurringId){
   const today = todayISO();
   // Lo storico già contabilizzato è immutabile: una modifica alla ricorrenza
   // cambia solo l'occorrenza odierna (se ancora dovuta) e quelle future.
-  state.transactions = state.transactions.filter(t=>t.recurringId!==recurringId || t.date<today);
+  state.transactions = state.transactions.filter(t=>t.recurringId!==recurringId || t.date<today || t.earlyFor);
   rec.nextDate = rec.startDate;
   let safety=0;
   while(rec.nextDate && rec.nextDate<today && safety<2000){
@@ -859,7 +867,7 @@ function showUndo(message, trashId){
   toast.querySelector("button").addEventListener("click",()=>{restoreTrashItem(trashId);toast.classList.remove("show");});
   toast._timer=setTimeout(()=>toast.classList.remove("show"),5000);
 }
-function openMovementActionMenu({title="Movimento",onEdit,onDelete,onDuplicate,onRecurring,onPlanned}){
+function openMovementActionMenu({title="Movimento",onEdit,onDelete,onDuplicate,onRecurring,onPlanned,onPayNow,payLabel}){
   document.getElementById("movementActionOverlay")?.remove();
   const overlay=document.createElement("div");
   overlay.id="movementActionOverlay";
@@ -879,6 +887,7 @@ function openMovementActionMenu({title="Movimento",onEdit,onDelete,onDuplicate,o
       duplicate:`<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 8h11v11H8V8Zm-3 8H3V3h13v2H5v11Z"/></svg>`,
       recurring:`<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17 3l4 4-4 4V8H8a3 3 0 0 0-3 3v1H3v-1a5 5 0 0 1 5-5h9V3Zm-10 18l-4-4 4-4v3h9a3 3 0 0 0 3-3v-1h2v1a5 5 0 0 1-5 5H7v3Z"/></svg>`,
       planned:`<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 1 1 0 20 10 10 0 0 1 0-20Zm0 2a8 8 0 1 0 0 16 8 8 0 0 0 0-16Zm1 3v5.2l3.6 2.1-1 1.7L11 13.3V7h2Z"/></svg>`,
+      paynow:`<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18v12H3V6Zm2 2v8h14V8H5Zm7 1.5a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5ZM6 10h2v4H6v-4Zm10 0h2v4h-2v-4Z"/></svg>`,
       delete:`<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 20a2 2 0 0 1-2-2V7h14v11a2 2 0 0 1-2 2H7Zm1-10v7h2v-7H8Zm6 0v7h2v-7h-2ZM4 6V4h5l1-1h4l1 1h5v2H4Z"/></svg>`
     };
     const btn=document.createElement("button");
@@ -887,6 +896,7 @@ function openMovementActionMenu({title="Movimento",onEdit,onDelete,onDuplicate,o
     btn.addEventListener("click",()=>{overlay.remove();fn();});
     actions.appendChild(btn);
   };
+  addAction(payLabel||"Paga ora","paynow",onPayNow);
   addAction("Modifica","edit",onEdit);
   addAction("Duplica","duplicate",onDuplicate);
   addAction("Rendi ricorrente","recurring",onRecurring);
@@ -898,7 +908,7 @@ function openMovementActionMenu({title="Movimento",onEdit,onDelete,onDuplicate,o
   bindOverlaySwipeDismiss(overlay);
   requestAnimationFrame(()=>overlay.classList.add("show"));
 }
-function enableLongPressActions(row,{title,onEdit,onDelete,onDuplicate,onRecurring,onPlanned}){
+function enableLongPressActions(row,{title,onEdit,onDelete,onDuplicate,onRecurring,onPlanned,onPayNow,payLabel}){
   row.classList.add("longpress-actionable");
   let timer=null,startX=0,startY=0,longPressed=false;
   const cancel=()=>{if(timer){clearTimeout(timer);timer=null;}};
@@ -909,7 +919,7 @@ function enableLongPressActions(row,{title,onEdit,onDelete,onDuplicate,onRecurri
     timer=setTimeout(()=>{
       timer=null;longPressed=true;row._skipClick=true;
       if(navigator.vibrate) navigator.vibrate(18);
-      openMovementActionMenu({title,onEdit,onDelete,onDuplicate,onRecurring,onPlanned});
+      openMovementActionMenu({title,onEdit,onDelete,onDuplicate,onRecurring,onPlanned,onPayNow,payLabel});
       setTimeout(()=>row._skipClick=false,450);
     },520);
   },{passive:true});
@@ -920,7 +930,7 @@ function enableLongPressActions(row,{title,onEdit,onDelete,onDuplicate,onRecurri
   },{passive:true});
   row.addEventListener("touchend",()=>{cancel();if(longPressed){row._skipClick=true;setTimeout(()=>row._skipClick=false,250);}}, {passive:true});
   row.addEventListener("touchcancel",cancel,{passive:true});
-  row.addEventListener("contextmenu",e=>{e.preventDefault();row._skipClick=true;openMovementActionMenu({title,onEdit,onDelete,onDuplicate,onRecurring,onPlanned});setTimeout(()=>row._skipClick=false,250);});
+  row.addEventListener("contextmenu",e=>{e.preventDefault();row._skipClick=true;openMovementActionMenu({title,onEdit,onDelete,onDuplicate,onRecurring,onPlanned,onPayNow,payLabel});setTimeout(()=>row._skipClick=false,250);});
 }
 function futureFromTx(t){
   const d=nextMonthSameDay(t.date);
@@ -3169,7 +3179,13 @@ function renderFixedExpenses(){
         <span>${r.active===false?"In pausa":`${FREQ_LABEL[r.freq]||"Ogni mese"} · prossima ${d} ${mesiBrevi[m-1]}`}</span>
         <span>Paga ${escapeHtml(owner==="joint"?"la cassa comune":personName(owner))}${g?` · ${escapeHtml(g.emoji)} ${escapeHtml(split)}`:""}</span></span>
       <span class="group-card-amt">${balancesHidden?"••••":fmt(r.amount)}</span><span class="chev" aria-hidden="true">›</span>`;
-    card.addEventListener("click",()=>openRecurringForm(r.id));
+    card.addEventListener("click",e=>{ if(card._skipClick) return; openRecurringForm(r.id); });
+    // v1.31.0 — tieni premuto: Paga ora la prossima rata, Modifica, Elimina
+    const due=recurringNextDue(r);
+    enableLongPressActions(card,{title:r.name||c.name||"Spesa fissa",
+      onPayNow:due?()=>payRecurringNow(r.id):null,payLabel:due?`Paga ora la rata del ${due.split("-").reverse().slice(0,2).join("/")}`:"",
+      onEdit:()=>openRecurringForm(r.id),
+      onDelete:async()=>{ if(!await askConfirm(`Eliminare la spesa fissa “${r.name||"spesa fissa"}”?`,{ok:"Elimina",danger:true})) return; moveToTrash("recurring",r); const del=state.trash[0]?.id; removeRecurring(r.id); persist(); renderAll(); if(del) showUndo("Spesa fissa eliminata",del); }});
     box.appendChild(card);
   });
 }
@@ -3878,6 +3894,7 @@ function openAddTransaction(txId,prefill=null){
     renderAccChips();
     renderTypeFields();
     { const tt=node.querySelector("#typeToggle"); if(tt) tt.hidden=txType!=="income"; }
+    { const h=node.querySelector("#txFormTitle"); if(h) h.textContent=existing?(txType==="income"?"Modifica entrata":"Modifica spesa"):(txType==="income"?"Nuova entrata":"Nuova spesa"); }
     const split=mountSplitPicker(node, destinationRow, {account:()=>selectedAccountId, toAccount:()=>destinationAccountId, type:()=>txType, amount:()=>parseAmount(amountInput.value), initial:existing?.split || prefill?.split, initialGroup:existing?.groupId || prefill?.groupId});
 
     node.querySelector("#saveTxBtn").addEventListener("click", ()=>{
@@ -4330,6 +4347,9 @@ function openRecurringForm(recurringId,prefill=null){
     dateInput.value = rec?.startDate || todayISO();
     freqSelect.value = rFreq;
     activeInput.checked=rec?.active!==false;
+    { const sw=node.querySelector("#recurringActiveSwitch");
+      if(sw){ const paint=()=>{ sw.classList.toggle("on",activeInput.checked); sw.setAttribute("aria-pressed",String(activeInput.checked)); sw.querySelector("small").textContent=activeInput.checked?"Spegnila per metterla in pausa senza eliminarla":"In pausa: non viene registrata finché non la riaccendi"; };
+        sw.addEventListener("click",()=>{ activeInput.checked=!activeInput.checked; paint(); }); paint(); } }
     endDateInput.value=rec?.endDate || "";
     occurrencesInput.value=rec?.maxOccurrences ? String(rec.maxOccurrences) : "";
     durationMode.value=rec?.maxOccurrences ? "count" : (rec?.endDate ? "date" : "unlimited");

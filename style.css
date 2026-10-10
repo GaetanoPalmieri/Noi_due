@@ -8108,10 +8108,352 @@ html body .mv-meta-text > .mv-list-badge {
   font: inherit;
   font-weight: 700;
 }
-/* Uscita del pannello col dito: niente sfocatura mentre scende (più fluido su iPhone) */
-.sheet.sheet-leaving,
-.sheet.sheet-leaving * {
+/* Pannello trascinato o in uscita col dito: la sfocatura (ricalcolata a ogni fotogramma)
+   rendeva il movimento lento e a scatti su iPhone. Mentre si muove, il pannello diventa
+   quasi pieno e senza sfocatura; il fondo scuro dietro non si sfoca. */
+#overlayRoot .sheet.dragging,
+#overlayRoot .sheet.sheet-leaving {
+  background: color-mix(in srgb, var(--paper) 96%, transparent) !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+  will-change: transform;
+}
+#overlayRoot .sheet.dragging *,
+#overlayRoot .sheet.sheet-leaving * {
   -webkit-backdrop-filter: none !important;
   backdrop-filter: none !important;
 }
-.sheet.sheet-leaving { will-change: transform; }
+#overlayRoot:has(.sheet.dragging, .sheet.sheet-leaving) .overlay-backdrop {
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+
+
+/* ===== Pannelli di aggiunta come in Bilancio (stessi stili, copiati) ===== */
+/* =====================================================================
+   Noi Due 1.31 (da Bilancio 1.41.0 — Pannello unico Movimento / Ricorrente / Pianificato
+   ===================================================================== */
+#overlayRoot .sheet .kind-switch {
+  margin: 0 0 12px !important;
+}
+#overlayRoot .sheet .kind-switch .type-opt {
+  font-size: 13px !important;
+  padding-left: 4px !important;
+  padding-right: 4px !important;
+}
+#overlayRoot .sheet .kind-switch .type-opt.active {
+  background: var(--suite-select-grad, linear-gradient(135deg,#3fb38e,#1f7a62)) !important;
+  color: #fff !important;
+}
+/* Cadenza e Scadenza sulla stessa riga */
+#overlayRoot .sheet .rec-when-row {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+#overlayRoot .sheet .rec-when-row .rec-half {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink-soft);
+}
+#overlayRoot .sheet .rec-when-row select {
+  width: 100%;
+  min-width: 0;
+  font-size: 15px;
+  text-overflow: ellipsis;
+}
+#overlayRoot .sheet .recurring-options {
+  display: flex !important;
+  flex-direction: column;
+  gap: 10px;
+}
+#overlayRoot .sheet .recurring-options > [hidden] {
+  display: none !important;
+}
+/* "Ricorrenza attiva": interruttore grande come gli altri del pannello */
+#overlayRoot .sheet .rec-active-switch {
+  width: 100%;
+  min-height: 56px;
+}
+.movement-action-btn.add-main span:last-child {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+.movement-action-btn.add-main small {
+  font-size: 11px;
+  font-weight: 600;
+  opacity: .75;
+}
+#overlayRoot .sheet .rec-when-row #recurringFreqSelect,
+#overlayRoot .sheet .rec-when-row #recurringDurationMode {
+  width: 100% !important;
+  max-width: none !important;
+  min-height: 46px !important;
+  font-size: 15px !important;
+  font-weight: 600 !important;
+}
+.add-choice-grid .movement-action-btn.add-main {
+  grid-column: 1 / -1;
+}
+.add-choice-grid .movement-action-btn.add-main small {
+  white-space: nowrap;
+}
+#overlayRoot .sheet .rec-when-row select {
+  box-sizing: border-box !important;
+  height: 46px !important;
+  margin: 0 !important;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+}
+
+/* =====================================================================
+   Noi Due 1.31 (da Bilancio 1.42.0 — Pannelli di aggiunta rifatti (Movimento · Ricorrente · Pianificato)
+   Ordine: titolo piccolo + Salva · tipo (compatto) · IMPORTO · nome · uscita/entrata + data
+   ===================================================================== */
+#overlayRoot .sheet .sheet-head.add-head {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 10px !important;
+  margin: 0 2px 8px !important;
+  min-height: 40px;
+}
+#overlayRoot .sheet .add-head .add-eyebrow {
+  margin: 0 !important;
+  font-size: 11px !important;
+  font-weight: 800 !important;
+  text-transform: uppercase !important;
+  letter-spacing: .6px !important;
+  line-height: 1.2 !important;
+  color: var(--ink-soft) !important;
+  font-family: var(--suite-font-body, inherit) !important;
+}
+#overlayRoot .sheet .add-head .primary-btn {
+  margin: 0 !important;
+  position: static !important;
+}
+/* Tipo di movimento: una riga sottile, non ingombrante */
+#overlayRoot .sheet .add-kind-slot:empty { display: none; }
+#overlayRoot .sheet .add-kind-slot .kind-switch {
+  margin: 0 0 4px !important;
+  padding: 3px !important;
+  min-height: 0 !important;
+  border-radius: 12px !important;
+}
+#overlayRoot .sheet .add-kind-slot .kind-switch .type-opt {
+  min-height: 32px !important;
+  height: 32px !important;
+  padding: 0 6px !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  border-radius: 9px !important;
+}
+/* Importo: la prima cosa */
+#overlayRoot .sheet .add-kind-slot + .amount-field,
+#overlayRoot .sheet .add-head + .add-kind-slot + .amount-field {
+  margin: 6px 0 6px !important;
+  padding-top: 8px !important;
+  padding-bottom: 6px !important;
+}
+/* Nome: subito sotto, centrato */
+#overlayRoot .sheet .add-name-row {
+  margin: 0 0 10px !important;
+}
+#overlayRoot .sheet .add-name-row .add-name-input {
+  width: 100%;
+  min-height: 48px !important;
+  font-size: 17px !important;
+  font-weight: 600 !important;
+  text-align: center !important;
+}
+/* Uscita/Entrata e data affiancate */
+#overlayRoot .sheet .add-meta-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 148px;
+  gap: 8px;
+  align-items: stretch;
+  margin: 0 0 12px;
+}
+#overlayRoot .sheet .add-meta-row .type-toggle {
+  margin: 0 !important;
+  padding: 3px !important;
+  min-height: 0 !important;
+  border-radius: 12px !important;
+}
+#overlayRoot .sheet .add-meta-row .type-toggle .type-opt {
+  min-height: 38px !important;
+  height: 38px !important;
+  padding: 0 6px !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  border-radius: 9px !important;
+}
+#overlayRoot .sheet .add-meta-row .add-date {
+  box-sizing: border-box !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  height: 44px !important;
+  min-height: 44px !important;
+  margin: 0 !important;
+  padding: 0 8px !important;
+  font-size: 15px !important;
+  font-weight: 600 !important;
+  text-align: center !important;
+  border-radius: 12px !important;
+}
+#overlayRoot .sheet .add-date-hint {
+  margin: -6px 2px 12px !important;
+  font-size: 11px !important;
+  color: var(--ink-soft);
+}
+@media (max-width: 360px) {
+  #overlayRoot .sheet .add-meta-row { grid-template-columns: minmax(0, 1fr) 132px; }
+}
+#overlayRoot .sheet .add-meta-row #dateInput,
+#overlayRoot .sheet .add-meta-row #recurringDateInput,
+#overlayRoot .sheet .add-meta-row #plannedDateInput {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  padding: 0 4px !important;
+  font-size: 14px !important;
+  letter-spacing: -.2px;
+}
+/* 1.42.1 — Salva più piccolo e testo d'esempio del nome più piccolo */
+#overlayRoot .sheet .add-head .primary-btn {
+  width: auto !important;
+  min-width: 0 !important;
+  height: 32px !important;
+  min-height: 32px !important;
+  padding: 0 14px !important;
+  border-radius: 10px !important;
+  font-size: 13px !important;
+  font-weight: 800 !important;
+  line-height: 32px !important;
+}
+#overlayRoot .sheet .add-name-row .add-name-input::placeholder {
+  font-size: 13px !important;
+  font-weight: 500 !important;
+}
+
+/* =====================================================================
+   Noi Due 1.31 (da Bilancio 1.43.0 — Pannelli di aggiunta: uscita/entrata accanto a Salva,
+   data piccola accanto all'importo, importo con più spazio, categorie a pulsanti
+   ===================================================================== */
+#overlayRoot .sheet .sheet-head.add-head {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center !important;
+  gap: 8px !important;
+}
+#overlayRoot .sheet .add-head .add-eyebrow {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+#overlayRoot .sheet .add-head .type-toggle.add-type-mini {
+  display: inline-flex !important;
+  width: auto !important;
+  margin: 0 !important;
+  padding: 2px !important;
+  gap: 2px !important;
+  min-height: 0 !important;
+  border-radius: 10px !important;
+}
+#overlayRoot .sheet .add-head .add-type-mini .type-opt {
+  flex: none !important;
+  min-height: 28px !important;
+  height: 28px !important;
+  padding: 0 9px !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  border-radius: 8px !important;
+  white-space: nowrap;
+}
+/* Importo con più spazio, data piccola a destra */
+#overlayRoot .sheet .add-amount-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 10px 0 12px;
+  padding: 14px 0 10px;
+  min-height: 92px;
+}
+#overlayRoot .sheet .add-amount-row .amount-field {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0 !important;
+  padding: 0 0 0 0 !important;
+}
+#overlayRoot .sheet .add-amount-row .amount-field input {
+  font-size: 54px !important;
+  max-width: 100% !important;
+}
+#overlayRoot .sheet .add-amount-row .amount-field .currency-sign {
+  font-size: 28px !important;
+}
+#overlayRoot .sheet .add-amount-row .add-date-mini,
+#overlayRoot .sheet .add-amount-row #dateInput,
+#overlayRoot .sheet .add-amount-row #recurringDateInput,
+#overlayRoot .sheet .add-amount-row #plannedDateInput {
+  flex: 0 0 104px !important;
+  width: 104px !important;
+  min-width: 0 !important;
+  max-width: 104px !important;
+  height: 34px !important;
+  min-height: 34px !important;
+  margin: 0 !important;
+  padding: 0 4px !important;
+  border-radius: 10px !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  line-height: 34px !important;
+  text-align: center !important;
+  align-self: center;
+}
+#overlayRoot .sheet .add-date-hint {
+  margin: -8px 2px 12px !important;
+  text-align: right;
+}
+/* Categorie a pulsanti */
+#overlayRoot .sheet .cat-pick {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+#overlayRoot .sheet .cat-pick .chip-group-title {
+  margin: 0 2px !important;
+}
+#overlayRoot .sheet .pick-holder {
+  display: block;
+  margin-top: 2px;
+}
+
+#overlayRoot #sheetAddTx .sheet-head.add-head,
+#overlayRoot #sheetRecurringForm .sheet-head.add-head,
+#overlayRoot #sheetPlannedForm .sheet-head.add-head {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto auto !important;
+  grid-template-areas: none !important;
+}
+#overlayRoot .sheet .sheet-head.add-head > * {
+  grid-column: auto !important;
+  grid-row: 1 !important;
+}
+#overlayRoot .sheet .add-head .add-eyebrow {
+  white-space: normal !important;
+  overflow: visible !important;
+  line-height: 1.15 !important;
+}
+#overlayRoot .sheet .add-head .add-type-mini .type-opt {
+  padding: 0 8px !important;
+}
+
+#overlayRoot .sheet .add-head .type-toggle.add-type-mini[hidden] { display: none !important; }

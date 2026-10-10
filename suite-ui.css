@@ -641,3 +641,144 @@ html.suite-locked {
 :root[data-theme="dark"] :is(#appToast, .app-toast, body > .toast) button {
   color: #f2b65a !important;
 }
+
+/* ---- Menu a tendina piccolo vicino al campo (select con data-ss="pop") ---- */
+html body dialog.ss-wrap.ss-pop {
+  display: block;
+  background: transparent;
+}
+dialog.ss-wrap.ss-pop::backdrop {
+  background: rgba(0, 0, 0, .12);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+.ss-wrap.ss-pop .ss-sheet {
+  position: fixed;
+  margin: 0;
+  max-width: none;
+  max-height: 60vh;
+  padding: 6px;
+  border-radius: 16px;
+  box-shadow: 0 14px 36px rgba(0, 0, 0, .32);
+  transform: translateY(-4px) scale(.98);
+  transform-origin: top center;
+  transition: transform .14s ease;
+}
+.ss-wrap.ss-pop.show .ss-sheet {
+  transform: none;
+}
+.ss-wrap.ss-pop .ss-head {
+  display: none;
+}
+.ss-wrap.ss-pop .ss-opt {
+  min-height: 44px;
+  padding: 9px 12px;
+}
+
+/* ---- SuitePop e menu piccoli: righe ordinate, emoji allineate, spunta a destra ---- */
+.ss-wrap.ss-pop .ss-sheet {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.ss-wrap.ss-pop .ss-list {
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+.ss-wrap.ss-pop .ss-opt {
+  gap: 10px;
+  min-height: 44px;
+  padding: 8px 10px;
+  border-radius: 11px;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.25;
+}
+.ss-wrap.ss-pop .ss-opt span:first-child { min-width: 0; }
+.ss-wrap.ss-pop .ss-group { margin: 8px 10px 4px; }
+.sp-pop .sp-title {
+  flex: none;
+  margin: 4px 8px 6px;
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  color: var(--ink-soft, inherit);
+}
+.sp-pop .sp-lab {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+.sp-pop .sp-em {
+  flex: none;
+  width: 26px;
+  text-align: center;
+  font-size: 17px;
+  line-height: 1;
+}
+.sp-pop .sp-tx {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.sp-pop .sp-tx b {
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.sp-pop .sp-tx small {
+  font-size: 11px;
+  font-weight: 600;
+  opacity: .65;
+}
+.ss-wrap.ss-pop .ss-opt.active .sp-tx small { opacity: .85; }
+
+/* ---- Pulsante di scelta (apre SuitePop) ---- */
+.pick-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+  min-height: 46px;
+  padding: 6px 10px;
+  border-radius: 13px;
+  border: 1px solid color-mix(in srgb, var(--suite-text, #f1f5f4) 12%, transparent);
+  background: color-mix(in srgb, var(--suite-text, #f1f5f4) 6%, transparent);
+  color: var(--suite-text, inherit);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.pick-btn:active { transform: scale(.98); }
+.pick-btn .pb-em { flex: none; width: 24px; text-align: center; font-size: 17px; line-height: 1; }
+.pick-btn .pb-tx { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.pick-btn .pb-tx small {
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .4px;
+  color: var(--suite-text-soft, inherit);
+}
+.pick-btn .pb-tx b {
+  font-size: 15px;
+  font-weight: 650;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.pick-btn .pb-tx b.pb-empty { opacity: .55; font-weight: 500; }
+.pick-btn .pb-chev { flex: none; color: #3fb38e; font-size: 13px; }
+.pick-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.pick-row.pick-3 { grid-template-columns: 1fr 1fr; }
+.pick-row.pick-3 > .pick-btn:nth-child(3) { grid-column: 1 / -1; }
+.pick-row.pick-1 { grid-template-columns: 1fr; }

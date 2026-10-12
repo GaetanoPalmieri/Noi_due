@@ -2672,7 +2672,7 @@ function openListDetail(listId){
       const who=(it.forWhom==="a"||it.forWhom==="b"?`<small class="list-for" style="color:${safeColor(personColor(it.forWhom))}">solo ${escapeHtml(personName(it.forWhom))}</small>`:"")
         +(it.addedBy&&it.addedBy!==myPerson()?`<small class="list-by" style="color:${safeColor(personColor(it.addedBy))}">da ${escapeHtml(personName(it.addedBy))}</small>`:it.via?`<small class="list-by">da ${escapeHtml(it.via)}</small>`:"");
       row.innerHTML=`<span class="list-swipe-bg" aria-hidden="true"><span>${it.done?"↩︎ Da comprare":"✓ Acquistato"}</span><span></span></span>
-        <span class="list-check" aria-hidden="true">${it.done?"✓":""}</span>
+        <button type="button" class="list-check-btn" aria-label="${it.done?"Rimetti da comprare":"Segna come acquistato"}: ${escapeHtml(it.text)}"><span class="list-check" aria-hidden="true">${it.done?"✓":""}</span></button>
         <span class="list-thumb">${pic?`<img src="${escapeHtml(pic)}" alt="" loading="lazy" referrerpolicy="no-referrer">`:""}</span>
         <span class="list-text">${it.qty>1?`<b class="list-qty">${it.qty}×</b> `:""}${escapeHtml(it.text)}${fav?` <span class="list-fav" aria-label="preferito">★</span>`:""}${who}${it.done&&it.boughtAt?`<small class="list-when">✓ ${escapeHtml(whenLabel(it.boughtAt))}</small>`:""}</span>
         <span class="list-price">${it.price?(balancesHidden?"••••":fmt(it.price*(it.qty||1))):""}</span>
@@ -2682,31 +2682,35 @@ function openListDetail(listId){
       const toggle=()=>{ it.done=!it.done; if(it.done) markBought(list(),it); else unmarkBought(list(),it); save(); };
       // v1.24.0 — Gesti: scorri a destra = carrello; scorri a sinistra = ✎ Modifica, ★ Preferito, Elimina
       // (uno swipe lungo elimina subito); tieni premuto = scheda del prodotto.
-      const OPEN=-200;
+      const OPEN=-252;
       const setOpen=on=>{ wrap.classList.toggle("open",on); if(!on) wrap.classList.remove("swipe-left","swipe-far"); wrap.style.setProperty("--dx",on?`${OPEN}px`:"0px"); if(on){ if(openSwipeRow&&openSwipeRow!==wrap) openSwipeRow._close(); openSwipeRow=wrap; } else if(openSwipeRow===wrap) openSwipeRow=null; };
       wrap._close=()=>setOpen(false);
       let sx=0,sy=0,dx=0,base=0,moved=false,swiping=false,suppress=false,pressTimer=null;
       row.addEventListener("touchstart",e=>{ e.stopPropagation(); if(openSwipeRow&&openSwipeRow!==wrap) openSwipeRow._close();
         const t=e.touches[0]; sx=t.clientX; sy=t.clientY; dx=0; moved=false; swiping=false; base=wrap.classList.contains("open")?OPEN:0;
-        pressTimer=setTimeout(()=>{ if(!moved&&!base){ suppress=true; if(navigator.vibrate) navigator.vibrate(15); openItemSummary(listId,it.id); } },550); },{passive:true});
+        pressTimer=setTimeout(()=>{ if(!moved&&!base){ suppress=true; if(navigator.vibrate) navigator.vibrate(15); openListItem(listId,it.id); } },500); },{passive:true});
       row.addEventListener("touchmove",e=>{ const t=e.touches[0]; dx=t.clientX-sx; if(swiping||Math.abs(dx)>14) e.stopPropagation(); const dy=t.clientY-sy;
         if(Math.abs(dx)>8||Math.abs(dy)>8){ moved=true; clearTimeout(pressTimer); }
         if(!swiping && Math.abs(dx)>14 && Math.abs(dx)>Math.abs(dy)*1.3) swiping=true;
-        if(swiping){ const x=Math.max(-260,Math.min(base?0:140,base+dx));
-          row.classList.add("swiping"); wrap.classList.toggle("swipe-right",x>0); wrap.classList.toggle("swipe-left",x<0); wrap.classList.toggle("swipe-far",x<-210);
+        if(swiping){ const x=Math.max(-340,Math.min(base?0:140,base+dx));
+          row.classList.add("swiping"); wrap.classList.toggle("swipe-right",x>0); wrap.classList.toggle("swipe-left",x<0); wrap.classList.toggle("swipe-far",x<-300);
           wrap.style.setProperty("--dx",`${x}px`); } },{passive:true});
       row.addEventListener("touchend",e=>{ clearTimeout(pressTimer);
         if(swiping){ e.stopPropagation(); suppress=true; row.classList.remove("swiping"); wrap.classList.remove("swipe-right","swipe-far");
           const x=base+dx;
           if(x>80&&!base){ setOpen(false); toggle(); }
-          else if(x<-210){ setOpen(false); removeItem(it,{purchased:it.done}); }
+          else if(x<-300){ setOpen(false); removeItem(it,{purchased:it.done}); }
           else if(x<-50) setOpen(true);
           else { setOpen(false); wrap.classList.remove("swipe-left"); } }
         else if(base&&!moved){ suppress=true; setOpen(false); }
         setTimeout(()=>{ suppress=false; },350); });
       row.addEventListener("touchcancel",()=>{ clearTimeout(pressTimer); row.classList.remove("swiping"); setOpen(wrap.classList.contains("open")); });
-      row.addEventListener("click",e=>{ if(suppress||e.target.closest(".list-del")) return; if(wrap.classList.contains("open")){ setOpen(false); return; } toggle(); });
-      activateRowFromKeyboard(row,toggle);
+      // v1.32.0 — Solo il pallino segna "acquistato"; il resto della riga apre i dettagli.
+      const details=()=>openItemSummary(listId,it.id);
+      row.addEventListener("click",e=>{ if(suppress||e.target.closest(".list-del")) return; if(wrap.classList.contains("open")){ setOpen(false); return; }
+        if(e.target.closest(".list-check-btn")){ e.stopPropagation(); if(navigator.vibrate) navigator.vibrate(8); toggle(); return; }
+        details(); });
+      activateRowFromKeyboard(row,details);
       row.querySelector(".list-del").addEventListener("click",e=>{ e.stopPropagation(); openItemSummary(listId,it.id); });
       wrap.querySelector(".list-act-edit").addEventListener("click",e=>{ e.stopPropagation(); setOpen(false); openListItem(listId,it.id); });
       wrap.querySelector(".list-act-fav").addEventListener("click",e=>{ e.stopPropagation(); const on=!isFavorite(it.text); setFavorite(it.text,on,it.aisle||""); setOpen(false); save(); showToast(on?`★ “${it.text}” nei preferiti`:`“${it.text}” tolto dai preferiti`); });
@@ -2756,47 +2760,69 @@ function openListDetail(listId){
        Il reparto segue quello che scrivi finché non ne scegli uno tu. */
     const lc={qty:1,aisle:"",aisleManual:false,forWhom:"both"};
     const more=node.querySelector("#lcMore"), qtyOut=node.querySelector("#lcQty");
-    const aisleBox=node.querySelector("#lcAisle"), forBox=node.querySelector("#lcFor"), aisleAuto=node.querySelector("#lcAisleAuto");
+    const picks=node.querySelector("#lcPicks"), urlIn=node.querySelector("#lcUrlInput"), composer=node.querySelector("#listComposer");
     function lcText(){ const t=input.value.trim(), url=extractUrl(t); return url?t.replace(url,"").trim():t; }
+    /* v1.32.0 — Un tocco su un menu chiude la tastiera: si aspetta che sia scesa, poi si apre il menu
+       vicino al pulsante (altrimenti finirebbe nel punto sbagliato). */
+    function afterKeyboard(fn){ const ae=document.activeElement; if(ae&&composer.contains(ae)&&ae.matches("input")){ ae.blur(); setTimeout(fn,320); } else fn(); }
     function lcPaint(){
       const typed=input.value.trim();
-      const dirty=!!typed||lc.qty>1||!!priceInput.value.trim()||lc.aisleManual||lc.forWhom!=="both";
+      const dirty=!!typed||lc.qty>1||!!priceInput.value.trim()||!!urlIn.value.trim()||lc.aisleManual||lc.forWhom!=="both";
       more.hidden=!dirty;
-      node.querySelector("#listComposer").classList.toggle("open",dirty);
+      composer.classList.toggle("open",dirty);
       if(!dirty) return;
       const parsed=parseQty(lcText());
       if(!lc.aisleManual) lc.aisle=parsed.text?guessAisle(parsed.text):"altro";
       qtyOut.textContent=String(lc.qty>1?lc.qty:parsed.qty);
-      aisleAuto.hidden=lc.aisleManual||!parsed.text;
-      const keys=aisleKeys();
-      aisleBox.innerHTML=keys.map(k=>{ const a=aisleInfo(k); return `<button type="button" class="lc-chip${lc.aisle===k?" on":""}" data-lc-aisle="${k}" aria-pressed="${lc.aisle===k}"><span aria-hidden="true">${a.emoji}</span>${escapeHtml(a.name)}</button>`; }).join("");
-      aisleBox.querySelectorAll("[data-lc-aisle]").forEach(b=>b.addEventListener("click",()=>{ lc.aisle=b.dataset.lcAisle; lc.aisleManual=true; lcPaint(); }));
-      const on=aisleBox.querySelector(".on"); if(on&&!lc.aisleManual) aisleBox.scrollLeft=Math.max(0,on.offsetLeft-aisleBox.clientWidth/2+on.offsetWidth/2);
-      forBox.innerHTML=[["both","Tutti e due",""],["a",personName("a"),personColor("a")],["b",personName("b"),personColor("b")]].map(([k,label,c])=>`<button type="button" class="lc-seg-btn${lc.forWhom===k?" on":""}" data-lc-for="${k}" aria-pressed="${lc.forWhom===k}">${c?`<i style="background:${safeColor(c)}" aria-hidden="true"></i>${k===lc.forWhom?"Solo ":""}`:""}${escapeHtml(label)}</button>`).join("");
-      forBox.querySelectorAll("[data-lc-for]").forEach(b=>b.addEventListener("click",()=>{ lc.forWhom=b.dataset.lcFor; lcPaint(); }));
+      const a=aisleInfo(lc.aisle);
+      const auto=!lc.aisleManual&&!!parsed.text;
+      const whoLabel=lc.forWhom==="a"||lc.forWhom==="b"?`Solo ${personName(lc.forWhom)}`:"Tutti e due";
+      picks.innerHTML="";
+      const aBtn=pickButton({label:auto?"Reparto · auto":"Reparto",emoji:a.emoji,value:a.name,onOpen:btn=>afterKeyboard(()=>openPick(btn,"Reparto",
+        aisleKeys().map(k=>{ const x=aisleInfo(k); return {key:k,emoji:x.emoji,label:x.name,active:k===lc.aisle}; }),
+        k=>{ lc.aisle=k; lc.aisleManual=true; lcPaint(); }))});
+      const fBtn=pickButton({label:"Per chi",emoji:lc.forWhom==="both"?"👫":"●",value:whoLabel,onOpen:btn=>afterKeyboard(()=>openPick(btn,"Per chi",
+        [["both","Tutti e due","👫",""],["a",`Solo ${personName("a")}`,"●",personColor("a")],["b",`Solo ${personName("b")}`,"●",personColor("b")]].map(([k,l,em,c])=>({key:k,label:l,emoji:em,color:c?safeColor(c):"",active:k===lc.forWhom})),
+        k=>{ lc.forWhom=k; lcPaint(); }))});
+      if(lc.forWhom!=="both") fBtn.querySelector(".pb-em").style.color=safeColor(personColor(lc.forWhom));
+      picks.append(aBtn,fBtn);
       const n=Number(qtyOut.textContent)||1;
-      node.querySelector("#listAddBtn").textContent=typed?`＋ Aggiungi${n>1?` ${n}×`:""} alla lista`:"Scrivi cosa aggiungere";
-      node.querySelector("#listAddBtn").disabled=!typed;
+      const addBtn=node.querySelector("#listAddBtn");
+      addBtn.textContent=typed||urlIn.value.trim()?`Aggiungi${n>1?` ${n}×`:""}`:"Aggiungi";
+      addBtn.disabled=!(typed||extractUrl(urlIn.value));
     }
     function lcStep(d){ const base=lc.qty>1?lc.qty:parseQty(lcText()).qty; lc.qty=Math.min(99,Math.max(1,base+d)); lcPaint(); }
+    // I pulsanti − e + non chiudono la tastiera mentre scrivi.
+    ["#lcQtyMinus","#lcQtyPlus"].forEach(id=>node.querySelector(id).addEventListener("mousedown",e=>e.preventDefault()));
     node.querySelector("#lcQtyMinus").addEventListener("click",()=>lcStep(-1));
     node.querySelector("#lcQtyPlus").addEventListener("click",()=>lcStep(1));
-    input.addEventListener("input",lcPaint); priceInput.addEventListener("input",lcPaint);
+    input.addEventListener("input",lcPaint); priceInput.addEventListener("input",lcPaint); urlIn.addEventListener("input",lcPaint);
+    // Con la tastiera aperta il pannello si porta in cima e resta fermo lì mentre la lista scorre sotto.
+    const lcToTop=()=>{ const head=node.querySelector(".sheet-head"); const top=Math.max(0,composer.offsetTop-(head?head.offsetHeight:0)-6);
+      if(node.scrollTop>top+4) node.scrollTo({top,behavior:"smooth"}); };
+    composer.addEventListener("focusin",()=>{ composer.classList.add("typing"); setTimeout(lcToTop,60); });
+    composer.addEventListener("focusout",()=>setTimeout(()=>{ if(!composer.contains(document.activeElement)) composer.classList.remove("typing"); },0));
+    [input,urlIn].forEach(el=>el.addEventListener("keydown",e=>{ if(e.key==="Enter"){ e.preventDefault(); add(); } }));
+    node.querySelector("#lcPlusBtn").addEventListener("mousedown",e=>e.preventDefault());
+    node.querySelector("#lcPlusBtn").addEventListener("click",()=>{ if(input.value.trim()||extractUrl(urlIn.value)) add(); else input.focus(); });
     function add(){
       const text=input.value.trim();
-      if(!text){ input.focus(); return; }
+      const url=extractUrl(urlIn.value)||extractUrl(text);
+      if(!text&&!url){ input.focus(); return; }
       const price=parseAmount(priceInput.value);
-      const url=extractUrl(text);
-      const label=url?(text.replace(url,"").trim()||"Carico il prodotto dal link…"):text;
+      const name=url?text.replace(url,"").trim():text;
+      const label=name||"Carico il prodotto dal link…";
       const extra={price:price>0?Math.round(price*100)/100:null,url:url||"",forWhom:lc.forWhom};
-      if(lc.aisleManual||(!url&&lc.aisle)) extra.aisle=lc.aisleManual?lc.aisle:guessAisle(parseQty(label).text);
+      if(lc.aisleManual||(name&&lc.aisle)) extra.aisle=lc.aisleManual?lc.aisle:guessAisle(parseQty(label).text);
       const it=newListItem(label,extra);
       if(lc.qty>1) it.qty=lc.qty;
       list().items.push(it);
-      input.value=""; priceInput.value="";
+      lastAddedId=it.id;
+      const keepFocus=composer.contains(document.activeElement);
+      input.value=""; priceInput.value=""; urlIn.value="";
       Object.assign(lc,{qty:1,aisle:"",aisleManual:false,forWhom:"both"});
-      save(); lcPaint(); input.focus();
-      showToast(`Aggiunto: ${it.qty>1?it.qty+"× ":""}${it.text}`);
+      save(); lcPaint(); if(keepFocus) input.focus();
+      showToast(url&&!name?"Aggiunto: leggo il prodotto dal link…":`Aggiunto: ${it.qty>1?it.qty+"× ":""}${it.text}`);
       if(url) enrichListItem(listId,it.id,url);
     }
     lcPaint();
@@ -2981,7 +3007,7 @@ function openListDetail(listId){
       list().items.push({...newListItem(item.text||""),...item,qty:1,aisle:guessAisle(item.text),forWhom:"both"});
       save(); showToast("Aggiunto alla lista");
     }));
-    [input,priceInput].forEach(el=>el.addEventListener("keydown",e=>{ if(e.key==="Enter"){ e.preventDefault(); add(); } }));
+    [priceInput].forEach(el=>el.addEventListener("keydown",e=>{ if(e.key==="Enter"){ e.preventDefault(); add(); } }));
     node.querySelector("#listClearDone").addEventListener("click",()=>{ const l=list(), done=l.items.filter(i=>i.done);
       if(l.restockOnExit){ recordPurchased(l,done); done.forEach(i=>{ i.done=false; i.counted=""; }); save(); showToast("Rimessi tutti da comprare"); return; }
       recordPurchased(l,done); markDeleted(done.map(i=>i.id)); l.items=l.items.filter(i=>!i.done); save(); showToast("Tolti gli acquistati dalla lista (restano in 🕘 Acquisti)"); });
@@ -3730,12 +3756,21 @@ function openListItem(listId,itemId){
     node.querySelector("#itemQtyMinus").addEventListener("click",()=>{ draft.qty=Math.max(1,draft.qty-1); paintQty(); });
     node.querySelector("#itemQtyPlus").addEventListener("click",()=>{ draft.qty=Math.min(99,draft.qty+1); paintQty(); });
     paintQty();
-    const forBox=node.querySelector("#itemForChips"), aisleBox=node.querySelector("#itemAisleChips");
-    const paintFor=()=>{ forBox.innerHTML=[["both","Tutti e due"],["a",`Solo ${personName("a")}`],["b",`Solo ${personName("b")}`]].map(([k,l])=>`<button type="button" class="chip${draft.forWhom===k?" active":""}" data-for="${k}">${escapeHtml(l)}</button>`).join("");
-      forBox.querySelectorAll("[data-for]").forEach(b=>b.addEventListener("click",()=>{ draft.forWhom=b.dataset.for; paintFor(); })); };
-    const paintAisle=()=>{ aisleBox.innerHTML=aisleKeys().map(k=>{ const a=aisleInfo(k); return `<button type="button" class="chip${draft.aisle===k?" active":""}" data-aisle="${k}"><span class="em">${a.emoji}</span>${escapeHtml(a.name)}</button>`; }).join("");
-      aisleBox.querySelectorAll("[data-aisle]").forEach(b=>b.addEventListener("click",()=>{ draft.aisle=b.dataset.aisle; paintAisle(); })); };
-    paintFor(); paintAisle();
+    /* v1.32.0 — Per chi e Reparto: due pulsanti con menu al posto delle righe di chip. */
+    const picksBox=node.querySelector("#itemPicks");
+    const paintPicks=()=>{
+      const a=aisleInfo(draft.aisle), who=draft.forWhom==="a"||draft.forWhom==="b"?`Solo ${personName(draft.forWhom)}`:"Tutti e due";
+      picksBox.innerHTML="";
+      const fBtn=pickButton({label:"Per chi",emoji:draft.forWhom==="both"?"👫":"●",value:who,onOpen:btn=>openPick(btn,"Per chi",
+        [["both","Tutti e due","👫",""],["a",`Solo ${personName("a")}`,"●",personColor("a")],["b",`Solo ${personName("b")}`,"●",personColor("b")]].map(([k,l,em,c])=>({key:k,label:l,emoji:em,color:c?safeColor(c):"",active:k===draft.forWhom})),
+        k=>{ draft.forWhom=k; paintPicks(); })});
+      if(draft.forWhom!=="both") fBtn.querySelector(".pb-em").style.color=safeColor(personColor(draft.forWhom));
+      const aBtn=pickButton({label:"Reparto",emoji:a.emoji,value:a.name,onOpen:btn=>openPick(btn,"Reparto",
+        aisleKeys().map(k=>{ const x=aisleInfo(k); return {key:k,emoji:x.emoji,label:x.name,active:k===draft.aisle}; }),
+        k=>{ draft.aisle=k; paintPicks(); })});
+      picksBox.append(fBtn,aBtn);
+    };
+    paintPicks();
     draft.fav=isFavorite(it.text);
     const favSw=node.querySelector("#itemFavSwitch");
     const paintFav=()=>{ favSw.classList.toggle("on",draft.fav); favSw.setAttribute("aria-pressed",String(draft.fav)); };
@@ -3809,8 +3844,13 @@ function openListItem(listId,itemId){
     removeBtn.addEventListener("click",()=>{ draft.photo=""; paint(); });
     node.querySelector("#deleteItemBtn").addEventListener("click",()=>{
       const cur=state.lists.find(x=>x.id===listId); if(!cur) return close();
+      // v1.32.0 — Va nel cestino della lista, come con lo scorrimento, e si può annullare.
       markDeleted(it.id); cur.items=cur.items.filter(x=>x.id!==it.id);
-      persist(); renderCoupleLists(); if(listDetailRefresh) listDetailRefresh(); close(); showToast("Articolo eliminato");
+      const entry=trashListItem(cur,it);
+      persist(); renderCoupleLists(); if(listDetailRefresh) listDetailRefresh(); close();
+      showActionToast(`🗑 “${it.text}” nel cestino`,"Annulla",()=>{ const l2=state.lists.find(x=>x.id===listId); if(!l2) return;
+        if(entry) restoreTrashEntry(l2,entry.id); else l2.items.push(it);
+        persist(); renderCoupleLists(); if(listDetailRefresh) listDetailRefresh(); });
     });
     node.querySelector("#saveItemBtn").addEventListener("click",()=>{
       const text=nameInput.value.trim();

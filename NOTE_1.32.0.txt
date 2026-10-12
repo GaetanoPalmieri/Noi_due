@@ -1,0 +1,25 @@
+VERSIONE 1.32.0
+
+Liste — Aggiungi un prodotto
+- Pannello compatto: con la tastiera aperta resta in cima e non si scompone più.
+- Il campo nome non fa più ingrandire la pagina su iPhone.
+- Nuovo campo "Link (facoltativo)": incolli il link mentre aggiungi, il prodotto prende
+  foto e prezzo dal sito e il nome scritto da te resta quello.
+- Reparto e Per chi sono due pulsanti con menu (il reparto si sceglie ancora da solo).
+- Il ＋ arancione aggiunge il prodotto.
+
+Liste — Righe
+- Solo il pallino (più grande) segna "acquistato".
+- Tocco sul nome: dettagli del prodotto. Tieni premuto: Modifica.
+- Scorri a sinistra: Modifica, Preferito, Elimina con pulsanti più grandi.
+  Scorri a destra: segna ancora come acquistato.
+
+Liste — Modifica articolo
+- Per chi e Reparto con menu a tendina.
+- Campo link e pulsante ＋ più grandi.
+- Elimina è in alto accanto a Salva (va nel cestino della lista, con Annulla).
+- Salva è solo l'icona ✓.
+
+Titoli
+- In alto a sinistra di lista, scheda e modifica articolo: titolo piccolo in stampatello,
+  come in "Nuova spesa".

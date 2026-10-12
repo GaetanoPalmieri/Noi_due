@@ -1880,8 +1880,8 @@ function openPeriodPicker(view=activeView,opts=null){
     }
     // Tocca il titolo: giorni → mesi → anni (e dagli anni si torna ai mesi).
     title.addEventListener("click",()=>{level=level==="days"?"months":level==="months"?"years":"months";paint();});
-    node.querySelector("#ppPrev").addEventListener("click",()=>{if(showMonths)pYear--;else{pMonth--;if(pMonth<0){pMonth=11;pYear--;}}paint();});
-    node.querySelector("#ppNext").addEventListener("click",()=>{if(showMonths)pYear++;else{pMonth++;if(pMonth>11){pMonth=0;pYear++;}}paint();});
+    node.querySelector("#ppPrev").addEventListener("click",()=>{if(level!=="days")pYear--;else{pMonth--;if(pMonth<0){pMonth=11;pYear--;}}paint();});
+    node.querySelector("#ppNext").addEventListener("click",()=>{if(level!=="days")pYear++;else{pMonth++;if(pMonth>11){pMonth=0;pYear++;}}paint();});
     if(!opts && (target==="home"||target==="transactions")){
       // v1.17.0 — "Tutti i movimenti" sta in alto: in basso restano due pulsanti come in Bilancio.
       const allBtn=document.createElement("button"); allBtn.type="button"; allBtn.className="pp-all-chip"; allBtn.textContent="Tutti i movimenti";

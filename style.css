@@ -8718,3 +8718,49 @@ html body .mv-meta-text > .mv-list-badge {
   font-size: 24px !important;
 }
 #overlayRoot #sheetListItem .item-link-field .field-hint { font-size: 11px; }
+
+/* =====================================================================
+   Noi Due 1.41.0
+   ===================================================================== */
+/* Calendari: titolo a sinistra, frecce ‹ › raggruppate a destra (come in Bet Tracker) */
+#overlayRoot :is(#sheetPeriodPicker .pp-nav, #sheetCalendar .calendar-nav) {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 12px !important;
+}
+#overlayRoot :is(#sheetPeriodPicker, #sheetCalendar) :is(.pp-title, .calendar-month-label) {
+  margin-left: -6px;
+  text-align: left;
+}
+#overlayRoot .cal-nav-group {
+  display: grid;
+  grid-template-columns: 42px 42px;
+  gap: 6px;
+  padding: 4px;
+  border-radius: 15px;
+  border: 1px solid color-mix(in srgb, var(--ink) 9%, transparent);
+  background: color-mix(in srgb, var(--card) 55%, transparent);
+  flex: 0 0 auto;
+}
+#overlayRoot .cal-nav-group .month-nav,
+#overlayRoot .cal-nav-group :is(#ppPrev, #ppNext, #calPrevMonth, #calNextMonth) {
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  width: 42px !important;
+  height: 38px !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 11px !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  color: var(--ink) !important;
+  font-size: 24px !important;
+  line-height: 1 !important;
+}
+#overlayRoot .cal-nav-group .month-nav:active { background: color-mix(in srgb, var(--ink) 9%, transparent) !important; }
+/* Importi nascosti: nessuna cifra accanto ai puntini */
+html.amounts-hidden #views :is(.budget-spent, .budget-limit, .budget-earned, .top-category-meta strong) { font-size: 0 !important; letter-spacing: 0 !important; }

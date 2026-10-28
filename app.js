@@ -808,6 +808,8 @@ function renderNdHome(){
   const left=el("ndBudgetLeft");
   const settles=periodTx("home").filter(t=>isCoupleSettle(t)).reduce((s,t)=>s+t.amount,0);
   left.textContent=show(settles); left.style.color="";
+  // Cassa comune e rimborsi a zero: niente riquadri vuoti nella card.
+  { const liq=document.querySelector("#view-home .hero-liquidity"); if(liq) liq.style.display=(paid.joint>0.004||settles>0.004)?"":"none"; }
   return;
   if(periodModes.home!=="month"){ left.textContent="—"; left.style.color=""; return; }
   let budget=0; const counted=new Set();
@@ -1181,7 +1183,7 @@ function renderStats(){
   const days=Math.max(1,Math.ceil((new Date(viewYear,viewMonth+1,0)-new Date(viewYear,viewMonth,1))/86400000)+1);
   const cats=categoriesById(), byCat={};tx.filter(t=>t.type==="expense").forEach(t=>{byCat[t.categoryId]=(byCat[t.categoryId]||0)+t.amount;});
   const topEntries=Object.entries(byCat).sort((a,b)=>b[1]-a[1]).slice(0,5);
-  document.getElementById("statsInsights").innerHTML=`<div class="stat-card"><p class="stat-card-label">Media spese/giorno</p><p class="stat-card-value neg">${fmt(expense/days)}</p></div><div class="stat-card"><p class="stat-card-label">Spese del periodo</p><p class="stat-card-value neg">${fmt(expense)}</p></div><div class="stat-card wide-stat top-categories-card"><p class="stat-card-label">Top 5 categorie</p>${renderTopCategoriesChart(topEntries,cats)}</div>`;
+  document.getElementById("statsInsights").innerHTML=`<div class="stat-card stat-row"><p class="stat-card-label">Media spese/giorno</p><p class="stat-card-value neg">${fmt(expense/days)}</p></div><div class="stat-card stat-row"><p class="stat-card-label">Spese del periodo</p><p class="stat-card-value neg">${fmt(expense)}</p></div><div class="stat-card wide-stat top-categories-card"><p class="stat-card-label">Top 5 categorie</p>${renderTopCategoriesChart(topEntries,cats)}</div>`;
   renderPie();
   renderTrendSection();
   renderAccountBreakdown();

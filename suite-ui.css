@@ -792,3 +792,17 @@ dialog.ss-wrap.ss-pop::backdrop {
   color: #3fb38e;
 }
 .ss-wrap.ss-pop .ss-sheet.sp-end .sp-more { visibility: hidden; }
+
+/* =====================================================================
+   Componenti condivisi Bilancio / Noi Due (1.60.0 / 1.44.0)
+   Schede Statistiche e Conti/Saldi senza titolo + riquadri "titolo a sinistra, importo a destra"
+   ===================================================================== */
+html:root body #views #view-stats .stats-period-filter,
+html:root body #views #view-accounts .accounts-mode-toggle { margin-right: 52px !important; }
+html:root body #views #view-stats #statsInsights { grid-template-columns: 1fr !important; gap: 8px !important; }
+html:root body #views #view-stats #statsInsights .stat-card.stat-row {
+  display: flex !important; align-items: baseline !important; justify-content: space-between !important;
+  gap: 12px !important; padding: 11px 14px !important; text-align: left !important;
+}
+html:root body #views #view-stats #statsInsights .stat-card.stat-row .stat-card-label { margin: 0 !important; min-width: 0 !important; }
+html:root body #views #view-stats #statsInsights .stat-card.stat-row .stat-card-value { margin: 0 !important; text-align: right !important; white-space: nowrap !important; font-size: 17px !important; }

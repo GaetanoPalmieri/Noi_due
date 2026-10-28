@@ -1,0 +1,7 @@
+NOI DUE 1.44.0
+
+- Statistiche: tolto il titolo; "Media spese/giorno" e "Spese del periodo" hanno titolo a sinistra e importo a destra sulla stessa riga (come nella money).
+- Home: se Cassa comune e Rimborsi tra voi sono a zero, i due riquadri non compaiono.
+- Benvenuto: la scelta del colore sta su una sola riga che scorre.
+
+Per aggiornare: pubblica su GitHub (zip dei file), poi chiudi e riapri l'app.

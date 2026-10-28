@@ -8831,3 +8831,11 @@ html:root body #views { padding-bottom: calc(150px + env(safe-area-inset-bottom)
 :root { --tab-bottom: max(6px, calc(env(safe-area-inset-bottom) - 16px)); }
 html:root body .tabbar { bottom: var(--tab-bottom) !important; }
 html:root body .fab { bottom: calc(var(--tab-bottom) + 84px) !important; }
+
+/* =====================================================================
+   Noi Due 1.44.0
+   ===================================================================== */
+/* Benvenuto: i colori stanno su una riga che scorre, non su due file */
+.color-row { flex-wrap: nowrap !important; overflow-x: auto; padding-bottom: 4px; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+.color-row::-webkit-scrollbar { display: none; }
+.color-row .color-swatch { flex: 0 0 auto; }

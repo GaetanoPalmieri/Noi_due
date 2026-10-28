@@ -1,0 +1,3 @@
+NOI DUE 1.42.1
+
+- La barra di navigazione in basso è più vicina al bordo dello schermo; il "+" si è spostato di conseguenza.

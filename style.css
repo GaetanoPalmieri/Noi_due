@@ -8826,3 +8826,8 @@ html:root body #views { padding-bottom: calc(150px + env(safe-area-inset-bottom)
 #view-more details.more-fold[open] > summary::after { transform: rotate(90deg); }
 #view-more details.more-fold > .more-fold-body { margin-top: 10px; }
 #view-more details.more-fold { margin: 14px 0 12px; }
+
+/* ---- Barra di navigazione più in basso (v. 1.58.1 / 1.42.1) ---- */
+:root { --tab-bottom: max(6px, calc(env(safe-area-inset-bottom) - 16px)); }
+html:root body .tabbar { bottom: var(--tab-bottom) !important; }
+html:root body .fab { bottom: calc(var(--tab-bottom) + 84px) !important; }

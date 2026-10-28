@@ -1,0 +1,8 @@
+BILANCIO 1.62.0
+
+- Stime: nuova sezione "Planning stipendio". Per ogni mese dividi lo stipendio tra le macro categorie di spesa gia' esistenti (e, se vuoi, indichi lo stipendio per vedere quanto resta da assegnare). Se manca una macro categoria si crea da Altro.
+- Dal pannello puoi copiare la suddivisione dell'ultimo mese impostato.
+- Riepilogo planning: compare appena un mese ha una suddivisione. I mesi con la stessa suddivisione sono accorpati (es. "Nov 2026–Gen 2027"); quelle diverse restano sempre in elenco, evidenziate, con la differenza rispetto alla suddivisione piu' usata.
+- Toccando il nome di un mese nel riepilogo si apre quel mese.
+
+Per aggiornare: pubblica su GitHub, poi chiudi e riapri l'app.

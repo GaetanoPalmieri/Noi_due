@@ -1,0 +1,11 @@
+VERSIONE 1.25.1
+
+Spesa pagata da un'altra persona
+- Categoria e macrocategoria sono di nuovo indipendenti dall'interruttore
+  "Pagata da un'altra persona": scegli quelle vere (es. Casa e utenze › Bollette) e la spesa
+  finisce lì nelle statistiche e nei budget, come ogni altra spesa.
+- L'interruttore decide solo la contabilizzazione: non esce dai tuoi conti e la tua parte
+  va in "Da pagare" verso quella persona.
+- Il suggerimento della categoria dal nome funziona anche con l'interruttore attivo.
+- Tolta la categoria automatica "Pagate da altri": se era stata creata e non l'hai mai usata
+  sparisce da sola; se ci sono movimenti, resta e puoi spostarli o eliminarla da Altro › Categorie.

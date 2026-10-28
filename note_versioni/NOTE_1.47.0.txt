@@ -1,0 +1,17 @@
+VERSIONE 1.47.0
+
+Spesa divisa anche per ricorrenti e pianificate
+- Nel pannello Nuovo / Modifica ricorrente e pianificata c'e' "Spesa divisa o prestito",
+  uguale a quello dei movimenti.
+- Quando la ricorrente o la pianificata diventa movimento (alla sua data, con "Paga ora"
+  o con lo spostamento di data) viene registrata come una spesa divisa normale: la tua
+  parte come spesa e la parte degli altri "da ricevere".
+- Nelle liste R&P compare "divisa con ...".
+
+Spesa divisa fra piu' persone (movimenti, ricorrenti, pianificate)
+- Tocca i nomi per aggiungerli o toglierli, oppure scrivi un nome nuovo e premi +.
+- Con due o piu' persone "Meta'" diventa "Parti uguali": il totale si divide fra te e loro
+  (es. 120 EUR fra te e altre 2 persone = 40 a testa). I centesimi avanzati vanno al primo.
+- "Percentuale": fissi la tua quota, il resto si divide in parti uguali fra gli altri.
+- "Tutto loro": prestito, diviso in parti uguali fra le persone scelte.
+- Ogni persona ha la sua riga "Quota di ..." e il suo credito in Prestiti.

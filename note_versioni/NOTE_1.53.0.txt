@@ -1,0 +1,7 @@
+VERSIONE 1.53.0 — Altro allineato a RecompApp, titoli più leggibili
+
+- Titoli delle sezioni (PREVISIONI DEL MESE, MOVIMENTI RECENTI, ASPETTO…) da 11 a 12,5 px.
+- Altro: Sincronizzazione, Apertura protetta e Notifiche hanno lo stesso titolo delle altre
+  sezioni (prima erano più grandi e diversi); righe dei menu più grandi (15,5 px).
+- Apertura protetta: "Attiva Face ID" ha lo stile della suite (prima era un pulsante grezzo).
+- Previsioni del mese: "Pagamenti in arrivo" va a capo invece di essere tagliato.

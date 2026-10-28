@@ -1,0 +1,9 @@
+VERSIONE 1.48.0
+
+Home > Previsioni del mese
+- Riquadri, testi e cifre piu' piccoli e compatti.
+
+Cartella pulita
+- Tolti file non usati: icone duplicate, copie "(n)", vecchie note, file .sql/.ts doppi
+  (quelli buoni restano in supabase/), cartelle _non_usati e note_versioni.
+- D'ora in poi rilascio.py tiene solo la nota della versione corrente.

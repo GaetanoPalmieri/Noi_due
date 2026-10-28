@@ -1,0 +1,8 @@
+Bilancio 1.18.1
+
+- Home: il dettaglio "Da oggi a fine <mese>" ora è a due riquadri, Entrate e Uscite, ognuno con il
+  totale, una barra che mostra quanto pesano ricorrenti (viola) e pianificate (giallo) e le due cifre.
+- "Torna al mese corrente" diventa un pulsante "Oggi" con icona, alla stessa altezza del pulsante
+  calendario a destra.
+- Più trasparenza anche nei sottomenu: scelta del "+", menu azioni del movimento, pulsanti interni,
+  celle del calendario, conferme; sfondo scuro dietro i menu più leggero.

@@ -1,0 +1,40 @@
+Bilancio 1.10.2
+- Evoluzione del conto: tolto "Modifica conto in Altro".
+- Orizzonte temporale: 1, 2, 3, 6 mesi, 1 anno, 2 anni (ultimi N mesi fino a oggi) e "Periodo"
+  con lo stesso calendario delle altre sezioni (un giorno, due giorni per un intervallo, oppure tutto il mese;
+  tocca il mese per vedere mesi e anni). Di default si apre su 3 mesi.
+- Etichette dei valori del grafico sempre distinte anche su periodi brevi.
+
+Bilancio 1.10.1
+- Evoluzione del conto: variazione in euro e percentuale calcolate da quando hai registrato il saldo reale
+  (prima rettifica manuale del saldo del conto), non dallo zero iniziale. Nel grafico una linea tratteggiata
+  "Saldo reale" segna quel giorno. Se il saldo reale è precedente al periodo scelto, si parte dall'inizio del periodo.
+
+Bilancio 1.10.0
+- Pannelli (nuovo movimento, conti, categorie, ecc.): stesso stile moderno delle pagine — campi senza bordo,
+  chip a pillola, selettori con gradiente (Uscita rossa, Entrata verde, Trasferimento blu), "Salva" ambra.
+- Evoluzione del conto rifatta: saldo grande in alto con variazione e percentuale, selettore periodo,
+  grafico ad area con linea morbida, griglia leggera, etichette che non si sovrappongono,
+  tocco sul grafico per vedere data, saldo e variazione.
+- Conti: tolta la barra colorata a sinistra di ogni conto.
+
+Bilancio 1.9.2
+- Statistiche (e Movimenti): filtro "Uscite" rosso, "Entrate" verde brillante (diverso dal verde dei selettori).
+- Home e R&P: nessuno stacco tra la barra di stato dell'iPhone e il riquadro del mese;
+  la copertura della barra di stato compare solo quando si scorre, con bordo sfumato.
+Bilancio 1.9.0
+- "Vedi tutti": badge del numero compatto, spaziatura uguale con 1, 2 o 3 cifre.
+- Sotto-pagine (Vedi tutti di Home e di R&P): si torna alla sezione di origine con
+  swipe verso destra (la pagina segue il dito), con il pulsante ‹ accanto alla ricerca
+  o con il tasto Indietro di Android. Mese/periodo e posizione di scorrimento vengono ripristinati.
+- Pannelli (nuovo movimento, calendario, periodo, dettagli...) e menu azioni: si chiudono
+  anche con swipe verso destra, oltre che verso il basso.
+- Grafica: sfondo con bagliori colorati, card e barra in vetro smerigliato con trasparenze,
+  card principale con gradiente, velatura colorata per tipo di movimento, selettori, badge
+  e pulsante + con gradienti e luce, pannelli in vetro con sfondo sfocato.
+Installazione: sostituire i file nella cartella money_tracker. La PWA si aggiorna da sola.
+
+Bilancio 1.9.1
+- Calendari (periodo e calendario spese): grassetto solo su titolo del pannello e mese/anno;
+  giorni, mesi, anni, legenda e pulsanti senza grassetto.
+- Eliminata la riga vuota in fondo ai giorni e ridotti gli spazi prima dei pulsanti/legenda.

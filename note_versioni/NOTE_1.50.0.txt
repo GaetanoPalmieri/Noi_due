@@ -1,0 +1,22 @@
+VERSIONE 1.50.0 — Importi e conti più grandi, inserimento più veloce
+
+Leggibilità (tutte le cifre erano scese a 11-13 px)
+- Card dei movimenti (Home, Vedi tutti, R&P): nome 15,5 px, importo 16 px, categoria,
+  conto e data 12,5 px, icona più grande, card più alte.
+- Home, Liquidità: "Conto principale" e "Totale attuale" con importo a 19 px.
+- Home, Previsioni del mese: "Saldo previsto" e "Pagamenti in arrivo" a 19 px.
+- Statistiche: riquadri, legende, Top 5, confronto anno scorso e ripartizione per conto
+  più grandi; i tre riquadri Entrate / Uscite / Netto restano su una riga.
+
+Conti
+- Prima l'elenco dei conti, poi (in fondo) "Impostazioni dei conti" con conto principale
+  e conto risparmio.
+- Card dei conti nuove: iniziale colorata del conto, saldo grande (24 px), etichetta d'uso
+  e quanto è cambiato il conto da inizio mese (es. "−108,20 € a ottobre").
+- Sotto il saldo totale: barra colorata con quanto pesa ogni conto (es. Fineco 28%).
+
+Nuovo movimento più veloce
+- "Frequenti e recenti": sotto il nome compaiono i movimenti che registri più spesso
+  (ultimi 4 mesi). Un tocco compila nome, importo, categoria e conto: controlli e salvi.
+- Se scrivi un nome già usato, oltre alla categoria viene scelto anche il conto
+  dell'ultima volta (se non l'hai già scelto tu).

@@ -1,0 +1,6 @@
+VERSIONE 1.57.0 — Il "+" aggiunge anche una Stima, colori delle Stime
+
+- Il pulsante "+" ha ora la scelta "Stima" (apre il modulo Nuova stima sul mese che stai guardando).
+- Stime: niente più bianco ovunque. Totale stimato, titolo e importi dell'elenco in ambra; "Speso nel mese"
+  in azzurro; sforamento in rosso e "restano" in verde come prima. Colori definiti da --est-amber, --est-sky
+  e --est-mint in fondo a style.css (versione chiara e scura).

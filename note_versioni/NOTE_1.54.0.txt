@@ -1,0 +1,5 @@
+VERSIONE 1.54.0 — Categorie più pulite
+
+- Altro › Categorie, macrocategorie e budget: le frecce ↑ ↓ per cambiare l'ordine non sono
+  più su ogni riga. Compaiono toccando "↕ Riordina" in alto (con una riga di spiegazione)
+  e spariscono toccando "Fine". Vale sia per le categorie sia per le macrocategorie.

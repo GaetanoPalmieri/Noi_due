@@ -1,15 +1,27 @@
 VERSIONE 1.25.0
 
-Stesso impianto di Bilancio in tutte le sezioni
-- Ogni sezione sta dentro un riquadro esterno tenue, come in Bilancio:
-  Movimenti recenti, Budget, Gruppi, Spese fisse, Quote del mese,
-  Ultime spese divise, Rimborsi, Cosa comprare, In arrivo questo mese.
-- Il titolo della sezione e' piccolo e in stampatello, alla stessa distanza dal
-  bordo del riquadro e dalla lista.
-- Stando dentro il riquadro, le righe dei movimenti sono piu corte: stesso
-  effetto che ha gia Bilancio.
+Spesa pagata da un'altra persona
+- Nel modulo del movimento (solo Spesa) c'è il nuovo interruttore
+  "Pagata da un'altra persona": scegli una persona già presente oppure ne scrivi una nuova.
+- Puoi indicare quanto è tuo: Tutto mio, Metà o una Percentuale.
+- Categoria e macrocategoria si scelgono come in ogni spesa (vale anche il suggerimento dal nome):
+  "pagata da un'altra persona" riguarda solo come viene contabilizzata, non la categoria.
+- I tuoi conti non cambiano: la spesa conta nelle spese del mese e la cifra finisce in
+  "Da pagare" verso quella persona, quindi pesa solo sul saldo totale con crediti e debiti.
+- "Ho ricevuto un prestito" resta com'era.
+- Scorciatoie: nel menu "+" c'è "🧾 Pagata da un altro"; nella scheda di una persona c'è
+  "🧾 Pagata da <nome>", che apre il modulo con la persona già scelta.
 
-"Vedi tutti" piu piccolo
-- "Vedi tutti" con il pallino del numero, il calendario, "+ Nuova", "Modifica",
-  il cestino: tutti i pulsantini di sezione scendono a 24 px di altezza, con il
-  pallino del numero a 15 px.
+Eliminare una persona
+- Nella scheda della persona c'è "Elimina persona".
+- Se il saldo è a zero: chiede conferma e la elimina.
+- Se il saldo non è a zero ti fa scegliere:
+  - 💶 Registra il saldo: apre il rimborso già compilato con la cifra dovuta; quando lo salvi,
+    la persona viene eliminata.
+  - ✅ Abbuona: azzera il saldo con un movimento di abbuono (i conti non cambiano) e la elimina.
+- I movimenti passati restano nello storico. Se riusi lo stesso nome, la persona ricompare.
+
+Home - riquadro saldo con crediti e debiti
+- "Da ricevere" e "Da pagare" non sono più due etichette affiancate che si sovrapponevano:
+  ora sono due righe una sotto l'altra, con pallino colorato, nome e importo allineato a destra.
+  Anche i "…" sono stati sistemati.

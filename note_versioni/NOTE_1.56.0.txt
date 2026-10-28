@@ -1,0 +1,28 @@
+VERSIONE 1.56.0 — Via l'AI, testi più piccoli, Face ID rifatto, cifre sempre visibili
+
+Intelligenza artificiale rimossa
+- Tolti: "scrivilo a parole" (movimenti e ricorrenti), "Leggi lo scontrino", categoria scelta dal modello,
+  "Com'è andato il mese › Spiegamelo". Via dalla grafica e dal codice (blocco SuiteAI, stili, campi nelle schede).
+- Restano i suggerimenti che non usano l'AI: categoria suggerita dal nome, "Suggerisci" del budget,
+  "Proponi dalla media" nelle stime, movimenti frequenti.
+- La funzione "suite-ai" su Supabase non viene più chiamata da Bilancio (ma la usano ancora le altre app).
+
+Testi e cifre ridotti (stessa scala dei riquadri Totale R&P / Ricorrenti / Pianificate)
+- Titoli 13 px, testi 11 px, cifre 11 px. I due numeri-titolo (Saldo netto e Stima del mese) sono 22 px.
+- Riquadri dei movimenti (Home, Vedi tutti, R&P): riga più compatta, icona 34 px.
+- Home: Saldo netto, Liquidità, Previsioni del mese, Stima del mese.
+- Corretto il testo "Pianificate" che si sovrapponeva alla cifra in Previsioni.
+- Stime: riquadro del mese, elenco, riepilogo dell'anno e modulo "Nuova stima" ridotti.
+- Per rifare la scala basta cambiare le variabili --sz-title, --sz-text, --sz-fig, --sz-hero in fondo a style.css.
+
+Stime e menu
+- Il mese nel modulo "Nuova stima" non va più a capo e non resta tagliato ("novembre 2026" su una riga).
+- Menu a tendina (Categoria e simili): la riga evidenziata non ha più il bordo tagliato.
+
+Face ID
+- Schermata di sblocco ridisegnata: a pagina intera, icona grande, nome dell'app, pulsante "Sblocca con Face ID"
+  alto 60 px, codice a 6 cifre con campo grande.
+
+Importi
+- All'apertura le cifre sono visibili. L'occhio le nasconde finché resti nell'app e non si richiudono più da sole
+  quando torni da un'altra app.

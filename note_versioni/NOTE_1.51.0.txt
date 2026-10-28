@@ -1,0 +1,23 @@
+VERSIONE 1.51.0 — Stime mensili (R&P › Stime)
+
+Nuova scheda "Stime" in R&P, accanto a Totali / Ricorrenti / Pianificate.
+Segue il mese scelto in alto, come il resto di R&P.
+
+Il mese
+- Annoti le spese che pensi di avere: importo, cosa, categoria (facoltativa), nota.
+  Il mese si può cambiare nel modulo, quindi puoi segnare anche i mesi futuri.
+- Riquadro in alto: totale stimato, speso nel mese (uscite registrate), margine o sforamento,
+  barra di avanzamento e, nel mese in corso, "A questo ritmo a fine mese: …".
+- Ogni voce con categoria mostra quanto hai già speso in quella categoria e quanto resta.
+- Scrivendo il nome la categoria viene suggerita (es. "Benzina" → Trasporti).
+- Da una stima puoi "Registra come movimento": si apre il nuovo movimento già compilato.
+
+Scorciatoie
+- "Copia da <mese prima>": riporta le voci del mese precedente che mancano.
+- Mese vuoto: "Proponi dalla media degli ultimi 3 mesi" crea una stima per categoria
+  (media delle uscite, arrotondata a 5 €), poi la modifichi.
+
+Riepilogo per mese
+- Per ogni mese con una stima: stimato, speso e quanto sei sotto/sopra la stima
+  ("da venire" per i mesi futuri). Tocca un mese per aprirlo.
+- In fondo il totale stimato dell'anno e il confronto stimato/speso fino a oggi.

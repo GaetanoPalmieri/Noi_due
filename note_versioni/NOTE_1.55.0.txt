@@ -1,0 +1,12 @@
+VERSIONE 1.55.0 — Riquadri dei movimenti riprogettati, importi nascosti sistemati
+
+Riquadri dei movimenti (Home, Vedi tutti, R&P)
+- Proporzioni riviste: nella 1.50 il testo era diventato troppo grande per il riquadro.
+- Icona in una tessera del colore della categoria.
+- Nome 14,5 px e importo 15 px sulla prima riga; categoria · conto e data (12 px) sulla seconda.
+- Conto e data come testo semplice, senza le pastiglie grigie: il riquadro è più pulito.
+
+Importi nascosti (occhio)
+- Con gli importi nascosti alcune cifre ricomparivano: nei movimenti e, in Statistiche,
+  nei riquadri Entrate / Uscite / Netto e nelle legende. Era causato dalle regole di
+  leggibilità della 1.50. Ora con l'occhio chiuso si vedono solo "••••" in tutte le sezioni.

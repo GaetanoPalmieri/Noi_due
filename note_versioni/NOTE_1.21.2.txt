@@ -1,0 +1,9 @@
+VERSIONE 1.21.2 — Formato importi unico della suite
+
+- Importi scritti come in tutte le app: 1.234,56 € (simbolo dopo, punto delle migliaia,
+  sempre due decimali). Prima: €1.234,56 e €10 senza decimali.
+- Assi dei grafici: 950 €, 1,5k €.
+- Correzione: un importo scritto a mano con il punto delle migliaia ("1.234,56") ora viene
+  letto come 1234,56 e non più come 1,234.
+- Notifiche (scadenze e riepilogo) nello stesso formato: aggiorna la funzione notify-scadenze
+  su Supabase con il nuovo supabase/functions/notify-scadenze/index.ts (facoltativo).

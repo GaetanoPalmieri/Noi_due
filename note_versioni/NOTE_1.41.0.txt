@@ -1,0 +1,15 @@
+VERSIONE 1.41.0
+
+Un solo "Movimento" nel "+"
+- Nel menu "+" Movimento, Ricorrente e Pianificato sono diventati un solo pulsante.
+- In cima al pannello c'è l'interruttore Movimento · Ricorrente · Pianificato: cambiando
+  tipo, quello che hai già scritto (importo, nome, uscita/entrata, categoria, conto, nota,
+  data) passa al nuovo pannello.
+- Dalla Home (e dalle altre sezioni) si apre su Movimento; da R&P si apre su Ricorrente.
+- In modifica l'interruttore non c'è: un movimento già salvato resta del suo tipo.
+
+Pannello del ricorrente
+- Cadenza e Scadenza sono sulla stessa riga. Toccandole si apre un menu piccolo vicino al
+  campo, non più il pannello dal basso.
+- Scadenza: Senza scadenza · Numero di rate · Fino a una data (come prima).
+- "Ricorrenza attiva" è un interruttore grande; spento la mette in pausa senza eliminarla.

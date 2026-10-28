@@ -1,0 +1,26 @@
+VERSIONE 1.49.0
+
+Ricorrenti e pianificate divise: conta solo la tua parte
+- Prima i totali e le previsioni contavano l'importo intero (es. Netflix 18 EUR diviso in 3
+  contava 18). Ora in Home (saldo previsto, pagamenti in arrivo, prossime scadenze) e in R&P
+  (totali, entrate/uscite, per conto) conta solo la tua parte (6 EUR).
+- Nelle liste compare la tua parte con sotto "su 18,00 EUR"; nel dettaglio: totale, la tua
+  parte e con chi e' divisa. Se paghi solo tu, conta l'intero come prima.
+
+Riquadri richiudibili
+- Ogni riquadro di Home e R&P ha la freccetta per chiuderlo e riaprirlo (nel riquadro del
+  saldo si chiude la parte Liquidita'). Lo stato resta salvato.
+
+Budget rifatti
+- Home > Budget e spese: riepilogo con anello (speso su budget), quanto resta, quanto puoi
+  spendere al giorno fino a fine mese e la previsione "a questo ritmo" a fine mese.
+- Una scheda per macrocategoria: speso, budget, % e quanto resta; barra verde / arancione
+  (stai correndo rispetto al giorno del mese) / rossa (sforato) con il segno di dove
+  dovresti essere oggi. Tocca per le categorie; tocca una categoria per i suoi movimenti;
+  tieni premuto sulla macro per tutti i suoi movimenti.
+- Pulsante "Budget": gestione completa. Budget per macrocategoria o per categoria, media
+  degli ultimi 3 mesi, "usa X" per il suggerimento, "Suggerisci tutti", "Azzera tutti",
+  totale aggiornato mentre scrivi. Si puo' annullare.
+
+Statistiche
+- Testi e cifre piu' piccoli in tutta la scheda.

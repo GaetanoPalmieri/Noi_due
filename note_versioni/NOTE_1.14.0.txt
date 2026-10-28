@@ -1,11 +1,17 @@
-VERSIONE 1.14.0 — Restyling unificato della suite
+Bilancio 1.14.0 — rate più chiare, pulizia
 
-- Nuovo file suite-tokens.css, identico nelle quattro app (Bilancio, Noi Due,
-  RecompApp, Style Wishlist): stessi colori, vetro, raggi e tipografia.
-  Una modifica grafica ora si fa una volta sola e si copia nelle altre.
-- Tema chiaro unificato: crema caldo con card bianche in tutte le app.
-- Titoli e numeri in SF Pro Display, con cifre allineate negli importi.
-- Service worker: suite-tokens.css precaricato, cache rinnovata.
-- Corretto id duplicato categoriesList (un contenitore non si popolava).
-- suite.js ora identico nelle 4 app (versione master in _condivisi/).
-- Note di versione vecchie spostate in note_versioni/.
+Prestiti e rate
+- Pallino rosso sulla scheda Conti quando una rata è in ritardo da più di 3 giorni (il numero indica quante).
+- Scheda persona: nuova sezione "Rate già saldate" (es. "Rata 1 di 2 · ricevuta il 06/10 · prevista il 05/10").
+  Anche nei movimenti la restituzione mostra quale rata ha pagato.
+- Home: se ci sono rate attese entro fine mese compare "Previsto con le rate attese" (saldo previsto + rate da ricevere − rate da pagare).
+
+Backup
+- Promemoria comune alle 4 app: dopo 30 giorni senza backup compare un popup con "Esporta" (al massimo una volta a settimana).
+
+Pulizia
+- Tolti dalla cartella i file di RecompApp finiti qui per errore (app.css, shared.css, shared.js, data.js, foods.js,
+  gym-icon-192.png) e manifest.webmanifest non usato. Su GitHub vanno eliminati anche lì.
+- Codice: tolte 12 funzioni e 3 pannelli mai usati; tolte 129 regole di stile per elementi che non esistono più
+  e 174 impostazioni sovrascritte da regole successive. Controllate 12 schermate in tema chiaro e scuro prima e dopo: identiche.
+- Nuovo file: suite.js (parti comuni alle 4 app).

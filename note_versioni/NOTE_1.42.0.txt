@@ -1,28 +1,16 @@
-NOI DUE 1.42.0
+VERSIONE 1.42.0
 
-Tolta l'AI
-- Via dall'app: lettura dello scontrino da foto, "Leggi la frase" nelle liste, riordino automatico dei reparti, "Com'è andato il mese".
-- Tolto anche il codice (suite.js, suite-ui.css, index.html): restano le funzioni normali delle liste.
-- La funzione Supabase suite-ai non serve più a Noi Due.
-
-Cifre e testi
-- Le cifre sono visibili di default, anche dopo essere usciti e rientrati nell'app (si nascondono con l'occhio).
-- Cifre grandi (totale, saldo) alla stessa scala di Bilancio.
-
-Righe dei movimenti
-- Il testo sotto il nome (categoria, chi ha pagato, divisione) va a capo invece di tagliarsi ("Affitto / …").
-- Chi ha pagato è mostrato con il nome attuale della persona (o "Cassa comune"), anche se i nomi della coppia sono cambiati.
-- Anche i dettagli del movimento usano gli stessi nomi.
-
-Pulsante "+"
-- Più piccolo, e si nasconde mentre scorri verso il basso; torna quando risali.
-- Più spazio in fondo alle schede, così l'ultima riga non resta sotto.
-
-Face ID e menu
-- Pagina di blocco rifatta, come in Bilancio.
-- Menu a tendina: l'anello di selezione non viene più tagliato.
-
-Altre schede
-- Liste: se non c'è niente da comprare compare un invito invece di una pagina vuota.
-- Altro: "Sincronizzazione, Face ID e notifiche" in una sezione che si apre e si chiude.
-- Saldi: lo zero nei gruppi si nasconde come le altre cifre quando l'occhio è chiuso.
+Pannelli di aggiunta rifatti (Movimento · Ricorrente · Pianificato), tutti uguali:
+1. In alto il titolo piccolo in stampatello, come nei riquadri della Home
+   (NUOVO MOVIMENTO · NUOVO RICORRENTE · NUOVO PIANIFICATO · MODIFICA …) e Salva a destra.
+2. Sotto, una riga sottile per scegliere il tipo: Movimento · Ricorrente · Pianificato
+   (solo per un movimento nuovo).
+3. Poi l'IMPORTO, grande e centrato: è la prima cosa da scrivere.
+4. Poi il NOME, centrato.
+5. Poi su una riga sola: Uscita/Entrata a sinistra e la data a destra.
+   - Movimento: la data non è più in alto vicino al titolo.
+   - Ricorrente: la data è la prima rata (piccola nota sotto); Cadenza e Scadenza restano
+     affiancate con il menu piccolo.
+   - Pianificato: stessa disposizione del movimento.
+6. Il resto (frase per l'AI, categorie, conto, opzioni, nota) segue come prima.
+- Nel pannello di modifica il titolo ora dice "Modifica movimento" (prima restava "Nuovo").

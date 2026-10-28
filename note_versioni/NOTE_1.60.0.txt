@@ -1,0 +1,15 @@
+BILANCIO 1.60.0
+
+- Stime e' ora una scheda a parte nella barra in basso (tra R&P e Statistiche). Il "+" in questa scheda aggiunge direttamente una stima; il mese si sceglie toccando il titolo del mese.
+- In R&P restano Totali, Ricorrenti e Pianificate.
+- Statistiche e Conti: tolto il titolo della scheda; l'occhio sta alla stessa altezza del primo riquadro.
+- Riquadri con cifre (Media spese/giorno, Saldo periodo, riquadro Stima del mese): titolo a sinistra e importo a destra sulla stessa riga.
+- Nelle stime, le categorie con piu' emoji mostrano solo la prima, cosi' non si impilano.
+- Statistiche: il riquadro del confronto con l'anno scorso non compare finche' non ci sono dati.
+- Home: "Scegli il conto principale" non ha piu' l'ingranaggio e il bordo tratteggiato.
+- Conti: tolta l'etichetta "invariato a ..." quando il saldo non e' cambiato.
+- R&P: nascosta la riga vuota "Nessun importo per conto/carta".
+- Statistiche: le barre del Top 5 prendono il colore della categoria invece di colori a rotazione.
+- Home: gli stati vuoti occupano meno spazio.
+
+Per aggiornare: pubblica su GitHub, poi chiudi e riapri l'app.

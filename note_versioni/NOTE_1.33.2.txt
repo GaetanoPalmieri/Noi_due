@@ -1,0 +1,5 @@
+VERSIONE 1.33.2
+
+Ultimo angolo rimasto bianco
+- Nell'elenco dei Conti, quando gli importi sono nascosti, i "••••" usavano ancora
+  il colore pieno del testo: ora prendono il grigio chiaro come tutto il resto.

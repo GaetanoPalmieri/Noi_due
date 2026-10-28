@@ -1,0 +1,19 @@
+VERSIONE 1.52.0 — Ritocchi grafici e funzionali
+
+Home
+- Liquidità: il conto principale mostra solo il nome (es. "BBVA") con "conto principale"
+  sotto; prima era scritto due volte e andava a capo.
+- Nuovo riquadro "Stima di <mese>" (compare se il mese ha delle stime): speso / stimato,
+  barra e quanto resta. Toccandolo si apre R&P › Stime.
+- Previsioni del mese: la cifra non viene più tagliata con i puntini.
+
+Vedi tutti
+- In cima: numero di movimenti e totali di quello che vedi (entrate, uscite, netto);
+  con la ricerca diventa "quanto ho speso da Esselunga questo mese".
+- Movimenti divisi per giorno ("Oggi", "Ieri", "Sabato 24 ottobre") con il netto del giorno.
+- La barra Tutti / Entrate / Uscite non finisce più sotto il pulsante dell'occhio.
+
+Pulizia della cartella
+- Tolti doppioni "(1)", "(2)"…, file di altre app (Bet Tracker, RecompApp, Noi Due),
+  icone vecchie e file non usati. Le note vecchie sono in note_versioni/;
+  le note di Bet Tracker e Noi Due sono state spostate nelle loro cartelle.

@@ -1,0 +1,7 @@
+VERSIONE 1.34.0
+
+Conti: il saldo torna come in Home
+- Il riquadro del saldo totale non usa piu la testata con il pallino: ha l'etichetta
+  piccola in stampatello sopra e la cifra grande centrata, esattamente come
+  "Saldo netto del mese" nella Home.
+- Crediti, debiti e totale effettivo restano sotto, allineati a sinistra.

@@ -1,3 +1,4 @@
-NOI DUE 1.42.1
+VERSIONE 1.42.1
 
-- La barra di navigazione in basso è più vicina al bordo dello schermo; il "+" si è spostato di conseguenza.
+- Pannelli di aggiunta (Movimento, Ricorrente, Pianificato): pulsante Salva più piccolo
+  e testo d'esempio nel campo del nome più piccolo.

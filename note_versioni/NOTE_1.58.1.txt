@@ -1,0 +1,4 @@
+BILANCIO 1.58.1
+
+- R&P: nei riquadri Ricorrenti e Pianificate il totale (es. +2.140,00 €) ora sta sotto al titolo e non lo copre più, anche con cifre molto grandi.
+- La barra di navigazione in basso è più vicina al bordo dello schermo; il "+" si è spostato di conseguenza.

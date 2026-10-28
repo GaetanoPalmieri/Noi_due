@@ -1,0 +1,7 @@
+VERSIONE 1.49.1
+
+Pulsanti nelle intestazioni dei riquadri allineati a destra
+- "Vedi R&P", "Budget", "Spiegamelo", "Metti da parte" (Home) e "Vedi tutti" (R&P) erano
+  rimasti a meta' riga, piu' a sinistra di "Vedi tutti" in Movimenti recenti.
+- Ora stanno tutti a destra, accanto alla freccetta per chiudere il riquadro, alla stessa
+  distanza di Movimenti recenti, in Home e in R&P.

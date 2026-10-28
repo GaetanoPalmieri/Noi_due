@@ -1,0 +1,7 @@
+VERSIONE 1.43.1
+
+Pulsanti Macrocategoria / Categoria / Sottocategoria (movimenti e R&P)
+- Più piccoli: altezza e testo ridotti.
+- Il menu che si apre è compatto (righe più basse, al massimo ~320 px poi scorre) e non
+  finisce più sotto la barra di stato dell'iPhone: si apre sotto il pulsante, o sopra se sotto
+  non c'è spazio, restando sempre tutto visibile.

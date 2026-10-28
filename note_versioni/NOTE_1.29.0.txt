@@ -1,9 +1,23 @@
 VERSIONE 1.29.0
 
-- Messaggi in basso: riquadro di vetro trasparente con pallino verde, come in tutte le app
-  (prima verde pieno).
-- AI: l'importo dello scontrino viene letto anche se scritto come testo ("12,50");
-  se l'AI non risponde compare il motivo invece di un generico "non ho capito".
-- Barre che scorrono di lato (liste in Home, filtri e strumenti della lista, righe di chip):
-  ora restano ferme in verticale. Prima su iPhone, scorrendole, si muovevano anche su e giù.
-  Vale anche per le righe che compaiono dopo (pannelli, liste nuove).
+Cifre più piccole dove erano troppo grandi
+- I riquadri con un totale (Conto principale, Totale attuale, Totale effettivo,
+  Saldo totale in Conti, Da ricevere / Da pagare / Saldo prestiti) hanno l'importo
+  a 17 px invece di 22, e il pallino con l'icona un po' più piccolo.
+- Stessa cosa per i totali di R&P: Totale R&P a 17 px, Ricorrenti e Pianificate a 15.
+- Restano grandi come prima il saldo netto del mese, gli importi dei movimenti e
+  le previsioni del mese.
+
+Occhio "nascondi importi"
+- Uno solo per tutta l'app, in alto a destra, sempre nello stesso punto in ogni
+  scheda. È fisso: scorrendo la pagina resta lì.
+- Spariti i tre pulsanti dentro Home, Conti e R&P: facevano la stessa cosa in tre
+  posti diversi.
+- Il nome del mese in alto resta centrato: lo spazio per l'occhio è su tutti e due
+  i lati.
+
+Spazi
+- Totale effettivo: la riga che separa l'importo da "Da ricevere / Da pagare" è
+  staccata sopra e sotto, non più appiccicata.
+- Budget e spese per categoria: la barra di riempimento ha aria sopra (dal testo)
+  e sotto (dal bordo del riquadro).

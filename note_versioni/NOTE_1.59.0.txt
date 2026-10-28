@@ -1,0 +1,9 @@
+Bilancio 1.59.0 — Face ID automatico all'apertura
+
+- All'apertura dell'app il Face ID parte da solo: niente piu' tocco su "Sblocca con Face ID".
+- Se iOS non permette l'avvio automatico, basta toccare in un punto qualsiasi dello schermo per sbloccare.
+- Il PIN resta disponibile come alternativa.
+- Dopo piu' di 2 minuti in background l'app si blocca di nuovo e rilancia il Face ID in automatico.
+- Nota: la conferma "Accedi con passkey" e' la schermata di sistema di iOS e non e' eliminabile dall'app.
+
+Per aggiornare: pubblica su GitHub, poi chiudi e riapri l'app.

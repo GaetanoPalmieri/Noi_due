@@ -1,0 +1,15 @@
+VERSIONE 1.35.0
+
+R&P: titoli di sezione tutti uguali
+- "Prossimi" era in grassetto con una sua spaziatura, "Pagati nel mese" era piu
+  piccolo e con molto piu spazio sopra: due stili diversi fra loro e diversi da
+  "Movimenti recenti" in Home.
+- Ora sono la stessa cosa in tutte e tre le schede (Totali, Ricorrenti,
+  Pianificate) e identici alle sezioni della Home: nome piccolo in stampatello,
+  stessa distanza dal bordo del riquadro e dalla lista.
+- Il numero dei pagati diventa un pallino come gli altri contatori, non un titolo.
+
+"Vedi tutti" piu piccolo
+- Il pulsante "Vedi tutti" (con il pallino del numero), "Vedi R&P" in Home e tutti
+  i pulsantini di sezione scendono a 24 px di altezza, con il pallino del numero
+  a 15 px e la freccia piu piccola.

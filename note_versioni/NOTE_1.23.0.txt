@@ -1,31 +1,12 @@
-VERSIONE 1.23.0
+VERSIONE 1.23.0 — Grafica comune, Home più ordinata, categoria suggerita, avviso budget, confronto anno
 
-Liste in Home: ora scorrono di lato
-- La striscia delle liste non si muoveva perché la pagina lasciava passare solo lo
-  scorrimento verticale, e il movimento orizzontale finiva al gesto "cambia mese".
-- Ora il dito che parte dentro una striscia che scorre muove solo quella: niente
-  cambio mese e niente ritorno indietro.
-
-Reparti: li indovina molto meglio
-- Prima vinceva il primo reparto dell'elenco; ora vince la parola più lunga trovata
-  nel testo. Così "lavastoviglie" va fra gli elettrodomestici e
-  "detersivo lavastoviglie" fra i prodotti per la casa.
-- Il testo viene prima ripulito: maiuscole, accenti, quantità e unità di misura
-  ("2x", "500 g", "1 l") non confondono più la ricerca.
-- Molte più parole conosciute e cinque reparti nuovi:
-  🍼 Bambini, 💊 Farmacia e salute, 🍽️ Cucina e tavola, 🛏️ Biancheria e arredo,
-  🎁 Tempo libero e regali.
-- Esempi: aspirapolvere → Elettrodomestici · pentola → Cucina e tavola ·
-  lenzuola → Biancheria · integratore → Farmacia · libro → Tempo libero.
-- Gli articoli già in lista finiti in "Altro" vengono rimessi nel reparto giusto
-  la prima volta che apri la lista.
-
-Icone (emoji)
-- Con due emoji la seconda andava a capo: ora stanno affiancate.
-- Tolto il riquadro grigio e lo sfondo dietro le emoji dappertutto, non solo nei
-  movimenti della Home: liste, reparti, categorie, cestino, spese fisse.
-- Tutte della stessa misura dei movimenti della Home.
-
-Telefoni diversi
-- Una sola soglia per tutti gli iPhone moderni: dal 17 al 17 Pro Max valgono le
-  stesse regole, così cambiando telefono i riquadri non si riposizionano.
+- Home: "Saldo previsto" e "Pagamenti in arrivo" restano visibili; il dettaglio "Da oggi a fine mese"
+  si apre toccandoli (la scelta resta ricordata).
+- Senza conto principale resta un avviso su una riga ("⚙︎ Scegli il conto principale ›").
+- Nuovo movimento: la categoria viene suggerita dal nome (dai tuoi movimenti con lo stesso nome o da
+  parole note: Esselunga → Spesa, ENI → Trasporti, Enel → Bollette…). Toccando una categoria la scegli tu.
+- Dopo una spesa: avviso quando la categoria arriva all'80% del budget o lo supera.
+- Statistiche: "Rispetto all'anno scorso" — stesso mese di un anno fa, differenza e categorie che cambiano di più.
+- Grafica comune alle app (file nuovo suite-ui.css): sfumatura sotto la barra in basso, "+" che si
+  rimpicciolisce scorrendo, menu a tendina nello stile dell'app, pulsanti piccoli più grandi, titolo
+  di pagina in Statistiche/Conti/Altro, nessun testo sotto gli 11 px.

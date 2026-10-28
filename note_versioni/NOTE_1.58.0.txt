@@ -1,0 +1,21 @@
+BILANCIO 1.58.0
+
+Conti
+- Saldo totale, saldi dei conti, nomi e avatar con la stessa scala compatta di Home e R&P.
+- Tolto il paragrafo di spiegazione sopra i conti.
+- I conti a zero mostrano la cifra con il colore normale (non più grigia, come spenta).
+
+R&P
+- Nei due riquadri affiancati il titolo (Ricorrenti, Pianificate) si legge per intero.
+- Le righe a zero nei riquadri affiancati sono più basse e senza barra.
+- Nelle righe in arrivo (R&P e Home) compare il pulsante "Paga": prima si trovava solo con la pressione lunga.
+
+Pulsante "+"
+- Più piccolo, e si nasconde mentre scorri verso il basso; torna quando risali.
+- Più spazio in fondo alle schede, così l'ultima riga non resta sotto.
+
+Statistiche
+- Testi e cifre alla stessa scala del resto dell'app.
+- Selettori più bassi.
+- "Rispetto all'anno scorso" senza dati occupa una sola riga.
+- Riquadri con una leggera tinta, come in Home.

@@ -1,0 +1,12 @@
+VERSIONE 1.26.1
+
+Home - Totale effettivo
+- "Da ricevere" e "Da pagare" non spariscono più quando gli importi sono visibili.
+  Una vecchia regola di stile metteva le due righe nella stessa posizione (una sopra l'altra);
+  ora sono impilate in modo che nessuna regola possa sovrapporle.
+
+Scheda persona (Da ricevere e Da pagare)
+- La riga "Inoltre gli devi / ti deve" ora è un riquadro a parte, con il netto sotto,
+  staccato dal pulsante principale.
+- Pulsanti riorganizzati: sopra il pulsante principale (Registra restituzione / Paga),
+  sotto tre pulsanti uguali sulla stessa riga: "＋ Prestito" (o "＋ Debito"), "📅 Rate", "⚖️ Pareggia".

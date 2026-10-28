@@ -1,0 +1,20 @@
+Bilancio 1.17.0
+
+Home
+- Tolto "Saldo attuale" (c'è già "Totale attuale" in alto).
+- "Saldo previsto" e "Pagamenti in arrivo" affiancati, cifre un'unità più piccole (anche in
+  "Previsto con le rate attese").
+- Nuovo riquadro "Da oggi a fine <mese>": Entrate e Uscite, ognuna divisa in ricorrenti e pianificate.
+- Corretto: il saldo previsto di un mese futuro ora conta tutto quello che arriva da oggi a fine mese
+  visualizzato (entrate e uscite, ricorrenti e pianificate, anche dei mesi in mezzo). Prima contava
+  solo i movimenti del mese visualizzato.
+- Corretto: "Previsto con le 0 rate attese" non compare più quando non ci sono rate.
+- "Torna al mese corrente": bianco, più piccolo, centrato sulla riga del mese.
+
+Statistiche
+- I nomi lunghi delle categorie vanno a capo senza avvicinarsi alle cifre; nella Top 5 si accorciano
+  con i puntini.
+
+Popup e pannelli
+- Menu dei mesi, pannelli dal basso, conferme, menu "tieni premuto", popup aggiornamenti e tooltip
+  più trasparenti; sfondo scuro dietro i pannelli più leggero.

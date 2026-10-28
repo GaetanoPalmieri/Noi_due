@@ -1,0 +1,7 @@
+BILANCIO 1.61.0
+
+- Barra in basso: tolto il tasto Altro. Tenendo premuto su Conti esce un piccolo menu per scegliere tra Conti e Altro; con Altro aperto, la voce Conti resta evidenziata.
+- Altro: tolti il titolo e l'occhio.
+- Vedi tutti (movimenti recenti e R&P): sotto la scelta della data compare un riepilogo con la somma di entrate e uscite dei movimenti mostrati.
+
+Per aggiornare: pubblica su GitHub, poi chiudi e riapri l'app.

@@ -1,0 +1,19 @@
+Bilancio 1.13.0 — rimborsi a rate e rimborso che chiude il prestito
+
+Prestiti
+- Rimborso a rate: in "Ho prestato" (o "Ho ricevuto un prestito") attiva "Rimborso a rate":
+  scegli il numero di rate, ogni settimana / ogni mese / date libere; gli importi si dividono da soli
+  (puoi correggerli: l'ultima rata assorbe la differenza). Esempio: 200 € in 2 rate, domani e fra un mese.
+- Le rate si pianificano anche dopo: Conti › Prestiti › persona › "📅 Rate" (divide quanto resta da ricevere).
+- Le rate non toccano il saldo finché non le confermi: "Ricevuta" (o "Pagata") apre la restituzione già compilata.
+  Se arriva meno, la rata resta con il residuo; se arriva di più, il resto scala le rate successive.
+- Rate in ritardo in rosso; "Rate in arrivo" in Prestiti e le prossime rate (30 giorni) in Home › Prossime scadenze.
+- Rimborso parziale che vale come totale: in "Mi hanno restituito" (o "Ho restituito / rata") con un importo
+  più basso del dovuto compare "Vale come rimborso totale". Esempio: dovevano 200 €, ne arrivano 180 €:
+  il prestito si chiude e i 20 € diventano un "Abbuono". Le rate rimaste spariscono da sole.
+- L'abbuono non tocca i conti e non conta in Entrate/Uscite del mese; si vede nei movimenti della persona
+  e nelle Statistiche › Prestiti ("Abbuonato da te" / "Abbuonato a te"). Modificando la restituzione puoi
+  togliere l'abbuono; eliminandola si elimina anche l'abbuono.
+
+Stile comune alle 4 app
+- Scheda attiva della barra in basso verde, come in Noi Due, RecompApp e Style.

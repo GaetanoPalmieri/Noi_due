@@ -1,0 +1,21 @@
+VERSIONE 1.44.0
+
+Menu piccoli (categorie, macrocategorie, sottocategorie, cadenza, scadenza, conti)
+- Non vengono più tagliati: restano fra la barra di stato e la barra in basso dell'iPhone,
+  usano lo spazio libero (sopra o sotto il pulsante) e mostrano solo righe intere.
+- Se le voci sono troppe per lo spazio, in fondo compare "▾ scorri per vedere le altre"
+  con una leggera sfumatura; arrivati in fondo sparisce.
+- La riga scelta è evidenziata in verde, senza bordi strani.
+
+Conti a menu, in tutti i pannelli
+- Movimento, ricorrente, pianificato, trasferimento (dal / verso), prelievo ATM e prestito:
+  al posto delle chip c'è il pulsante del conto con il pallino del suo colore, che apre il
+  menu piccolo. Di partenza è scelto il conto principale.
+
+Pagamenti in anticipo: si possono annullare
+- Tieni premuto sul movimento pagato oggi in anticipo: "Annulla pagamento (torna al 20/10)".
+  - Ricorrente: il movimento sparisce e la rata torna alla sua data.
+  - Pianificato: torna pianificato con la sua data originale.
+  "Annulla" nel messaggio rimette il pagamento.
+- Le voci in programma (ricorrenti e pianificate) mostrate in Home e nei Movimenti hanno
+  anche loro "Paga ora" tenendo premuto.

@@ -1,0 +1,36 @@
+VERSIONE 1.37.0
+
+Sottocategorie: adesso i livelli sono tre
+- Macrocategoria > Categoria > Sottocategoria.
+  Esempio: Tempo libero > Viaggi > Mangiare fuori, Trasporti, Souvenir.
+- Si creano dal pannello della categoria: il campo nuovo "Dentro quale categoria".
+  Scegliendo una madre, quella categoria diventa una sua sottocategoria ed eredita
+  tipo e macrocategoria (niente doppie scelte da tenere allineate).
+- I livelli restano tre: una categoria che ha gia delle sottocategorie non puo
+  essere messa dentro un'altra.
+
+Nomi uguali: come si distinguono
+- Di norma vedi solo il nome: "Mangiare fuori".
+- Quando quel nome esiste anche altrove (per esempio hai la macro "Trasporti" e una
+  sottocategoria "Trasporti" dentro Viaggi), la sottocategoria compare come
+  "Viaggi > Trasporti". Chi non ha doppioni non vede mai percorsi lunghi.
+- Mentre scrivi il nome nel pannello, se esiste gia un doppione te lo dice subito
+  e ti mostra come comparira.
+
+Dove si vedono
+- Nuovo movimento: dopo aver scelto la categoria compare una terza riga con le sue
+  sottocategorie, piu "Nessuna" per restare sulla categoria. Le categorie che ne
+  hanno mostrano un pallino con il numero.
+- Movimenti, R&P e ricerca: l'etichetta e quella sopra. Cercando "viaggi" trovi
+  anche i movimenti delle sue sottocategorie.
+- Budget: la sottocategoria e una riga rientrata sotto la madre, e il totale della
+  madre comprende le sue sottocategorie. Il budget si puo mettere su tutte e due.
+- Statistiche: le sottocategorie si sommano nella categoria madre.
+- Tieni premuto su una riga del budget: gli ultimi 5 movimenti di quella voce,
+  sottocategorie comprese se sei sulla madre.
+
+Cosa succede ai dati di prima
+- Niente cambia: le categorie esistenti restano principali. Le sottocategorie le
+  crei tu quando vuoi.
+- Eliminando una categoria che ha sottocategorie, queste diventano principali
+  invece di sparire.

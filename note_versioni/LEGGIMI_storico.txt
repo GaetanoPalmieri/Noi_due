@@ -1,0 +1,43 @@
+BILANCIO — NOTE DI VERSIONE
+
+1.4.0
+- Altro: un unico ingresso "Categorie, macrocategorie e budget" con schede Categorie / Macro / Struttura (sostituisce 4 voci separate).
+- Conferme in-app al posto di confirm()/alert() del browser; messaggi di import come toast.
+- Cache v66.
+
+1.3.21
+- Box saldo leggibile in tema chiaro, icona occhio, riquadri previsione allineati, spazio sotto il pulsante +, contrasti in tema chiaro.
+
+1.6.6
+- R&P: nei riquadri le etichette tornano "Entrate" e "Uscite" (senza "mese"); mostrano il totale del mese.
+- Card dei movimenti: importo e data allineati e centrati nella stessa colonna, anche per importi senza decimali.
+- Conto/banca evidenziato in un piccolo riquadro.
+- Bordo colorato per tipo: verde = movimento registrato, viola = ricorrente, giallo = pianificato
+  (Home, Prossime scadenze, R&P e popup "tieni premuto").
+- Icone: le icone maskable e la nuova apple-touch-icon sono ora nella cartella icons/ (dove le cerca l'app).
+  La vecchia apple-touch-icon è stata conservata come icons/apple-touch-icon-vecchia.png.
+
+1.6.7
+- Card dei movimenti: bordo grigio, solo il lato sinistro colorato (verde registrato, viola ricorrente, giallo pianificato).
+- Categoria e banca separate da un punto centrale (·).
+- Testi più piccoli (nome, categoria, banca, importo, data) e card più basse, in Home e R&P.
+
+1.6.8
+- Card dei movimenti: testi ancora un'unità più piccoli (nome 12, importo 11, categoria 9,5, banca e data 9) e card più basse.
+- Home: riquadri rinominati "Saldo previsto" e "Pagamenti in arrivo"; etichetta su una riga, importo subito sotto, riquadri più bassi.
+- R&P: titoli dei riquadri (Ricorrenti / Pianificate / Totale · da registrare) più piccoli, su una sola riga.
+
+1.6.9
+- Card dei movimenti: spazio fisso tra nome e importo e tra categoria/banca e data; i testi lunghi si accorciano con i puntini prima di avvicinarsi.
+
+1.7.0
+- Periodo: niente più frecce né interruttore. Tocca il periodo in alto (Home, R&P) o il pulsante con la data in "Vedi tutti":
+  · tocca il nome del mese nel calendario per vedere i 12 mesi e cambiare mese/anno;
+  · "Tutto <mese>" mostra il mese intero;
+  · tocca un giorno = solo quel giorno; tocca un secondo giorno = periodo tra i due (anche tra mesi diversi); poi "Mostra".
+- Home: il pulsante calendario (vista di tutti i movimenti, passati e in arrivo) è nella barra del periodo, a destra;
+  anche lì toccando il nome del mese si scelgono mese e anno. Pulsanti "Vedi tutti" / "Vedi R&P" più piccoli.
+- Vedi tutti: niente titolo; ricerca e pulsante del periodo sulla stessa riga; card uguali a quelle della Home;
+  il testo cercato viene evidenziato nei risultati (nome, categoria, conto).
+- R&P: campo di ricerca con evidenziazione; liste brevi (prossimi 5 e ultimi 5 pagati) con "Mostra tutti" per vedere il resto.
+- Card movimenti: colonna di destra di larghezza fissa, importo e data allineati in tutte le liste.

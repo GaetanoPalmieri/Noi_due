@@ -1,27 +1,6 @@
 VERSIONE 1.26.0
 
-Menu "+"
-- Tolta la voce "Pagata da un altro": si fa tutto dal Movimento con l'interruttore
-  "Pagata da un'altra persona". Tolto anche il pulsante equivalente nella scheda persona.
-
-Home - Totale effettivo
-- L'etichetta ora è sempre "Totale effettivo" (sotto ci sono già Da ricevere / Da pagare):
-  niente più testo troncato con i "…".
-
-Pagare o ricevere meno del dovuto
-- In "Mi hanno restituito" e "Ho restituito / rata", se metti una cifra più bassa del dovuto
-  compare la scelta su cosa fare con la differenza:
-  - Resta da pagare / Resta da ricevere: il resto rimane aperto;
-  - Me la abbuona / Ci rinuncio: il resto viene abbuonato e il debito o il credito si chiude.
-
-Pareggia i conti con una persona (scheda persona › "⚖️ Pareggia i conti")
-- Considera insieme quello che la persona ti deve e quello che devi tu, senza farlo uno a uno.
-- Se ci sono sia crediti che debiti, la scheda mostra anche l'altra parte e il netto.
-- Tre scelte:
-  - ⚖️ Compensa: crediti e debiti si annullano tra loro, nessun soldo si muove
-    (il totale effettivo non cambia);
-  - 💶 Mi dà / Gli do la differenza: compensa e apre il movimento per il netto sul conto che scegli
-    (con una cifra inferiore scegli se il resto resta o è abbuonato);
-  - 🧾 Chiudi tutto fuori dai conti: azzera crediti e debiti con un abbuono, senza toccare i conti;
-    escono dal totale effettivo.
-- Toccando una riga di compensazione o di abbuono puoi annullarla: il credito o il debito torna com'era.
+Riquadri un filo piu larghi
+- Il margine laterale scende da 16 a 10 px in tutte le schede (Home, Coppia,
+  Liste, Movimenti, Statistiche, Altro): i riquadri guadagnano circa 12 px.
+- E' lo stesso stretch gia fatto in Bilancio.

@@ -1,9 +1,7 @@
-Versione 1.15.0 — sincronizzazione online (Supabase)
+VERSIONE 1.15.0 — Riepilogo mensile di coppia
 
-- Nuova scheda "Sincronizzazione" in Altro: accedi con email e password (una volta per app).
-- I dati restano sul telefono (l'app funziona anche offline) e in più c'è una copia online:
-  si sincronizza all'apertura, quando torni nell'app, quando torna la rete e pochi secondi dopo ogni modifica.
-- Se nel frattempo un altro dispositivo ha cambiato qualcosa, i dati vengono uniti invece di essere sovrascritti.
-- Pallino verde = collegato; arancione = sincronizzo; rosso = errore (il messaggio spiega cosa non va).
-- "Esci" scollega solo questo telefono: i dati restano sia qui sia online.
-- Bilancio: unendo i dati di due dispositivi, conti e categorie con lo stesso nome diventano uno solo.
+- Il giorno 1 di ogni mese dalle 9:00 arriva il riepilogo del mese appena chiuso: spese di coppia,
+  chi ha pagato quanto, 3 categorie principali, confronto col mese prima e chi deve quanto a chi.
+- Altro › Notifiche: interruttori "Riepilogo mensile" e "Mostra gli importi nel riepilogo",
+  pulsante "Prova riepilogo" (arriva solo sul telefono da cui lo tocchi).
+- Da installare su Supabase: vedi GUIDA_NOTIFICHE.txt, sezione "NOVITÀ 1.15.0".

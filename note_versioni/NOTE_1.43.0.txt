@@ -1,20 +1,9 @@
-VERSIONE 1.43.0
+Noi Due 1.43.0 — Face ID automatico all'apertura
 
-Pagare prima della data (R&P)
-- Tieni premuto su un ricorrente o un pianificato: c'è "Paga ora".
-  - Ricorrente: "Paga ora la rata del 20/10" registra oggi la rata in arrivo; il ricorrente
-    resta attivo e riparte dalla rata successiva (quella pagata non viene registrata di nuovo).
-  - Pianificato: "Paga ora ed estingui" lo registra oggi e lo toglie dal programma.
-  - Chiede conferma; "Annulla" nel messaggio rimette tutto com'era.
+- All'apertura dell'app il Face ID parte da solo: niente piu' tocco su "Sblocca con Face ID".
+- Se iOS non permette l'avvio automatico, basta toccare in un punto qualsiasi dello schermo per sbloccare.
+- Il PIN resta disponibile come alternativa.
+- Dopo piu' di 2 minuti in background l'app si blocca di nuovo e rilancia il Face ID in automatico.
+- Nota: la conferma "Accedi con passkey" e' la schermata di sistema di iOS e non e' eliminabile dall'app.
 
-Pannelli di aggiunta (Movimento, Ricorrente, Pianificato)
-- Uscita/Entrata è un piccolo interruttore in alto, accanto a Salva.
-- La data è piccola, accanto all'importo. L'importo ha più spazio ed è più grande.
-- Ricorrente: i menu di Cadenza e Scadenza sono ordinati (righe uguali, spunta a destra).
-
-Categorie a pulsanti (in tutti i pannelli di aggiunta e modifica)
-- Al posto delle tre righe di chip sparse ci sono dei pulsanti:
-  Macrocategoria · Categoria · Sottocategoria (solo se la categoria ne ha).
-  Ognuno apre un menu piccolo; scelta la macrocategoria si apre subito la Categoria,
-  scelta una categoria con sottocategorie si apre subito la Sottocategoria.
-- Anche nella scheda di una categoria: "Dentro la categoria" e "Macrocategoria" sono pulsanti.
+Per aggiornare: pubblica su GitHub, poi chiudi e riapri l'app.

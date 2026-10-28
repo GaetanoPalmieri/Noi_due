@@ -1,18 +1,14 @@
 VERSIONE 1.27.0
 
-Home - Totale effettivo
-- Corretto: se non hai crediti né debiti aperti (tutti in pari) il riquadro "Totale effettivo"
-  ora sparisce. Prima restava visibile con 0,00 € (una regola di stile vinceva sul "nascondi"),
-  e sembrava che il totale fosse zero invece di uguale al Totale attuale.
-- Se ci sono crediti o debiti compare come prima, con il totale corretto
-  (Totale attuale + da ricevere − da pagare).
+Apertura protetta con Face ID
+- Altro > "Apertura protetta" > Attiva. L'app si apre solo dopo il riconoscimento,
+  e lo richiede anche quando torni dopo piu' di 2 minuti in un'altra app.
+- Codice di 6 cifre come riserva. Dettagli in GUIDA_FACEID.txt.
 
-Riquadri con un nome
-- I riquadri che contengono altri riquadri hanno un nome piccolo in stampatello,
-  come nel resto della suite:
-  - Home: LIQUIDITÀ (conto principale, totale attuale, totale effettivo),
-    PREVISIONI DEL MESE, MOVIMENTI RECENTI, PROSSIME SCADENZE, BUDGET E SPESE PER CATEGORIA;
-  - Conti: CONTO PRINCIPALE, I TUOI CONTI; Prestiti: DA RICEVERE, DA PAGARE;
-  - Statistiche e Altro: stessi nomi di prima, nello stesso stile.
-- Le sezioni (es. Movimenti recenti) sono ora un grande riquadro esterno, molto tenue
-  (sfondo e bordo appena visibili), che contiene i riquadri dei singoli movimenti.
+Reparti piu' furbi
+- I prodotti finiti in "Altro" vengono rimessi nel reparto giusto quando apri la
+  lista: quando le parole conosciute non bastano, decide il modello.
+- Si prova una sola volta per prodotto, e solo con la sincronizzazione collegata.
+
+Per accendere l'AI servono due minuti su Supabase: istruzioni in GUIDA_AI.txt.
+Finche' non lo fai, valgono le regole di prima.

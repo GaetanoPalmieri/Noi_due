@@ -1,0 +1,14 @@
+VERSIONE 1.27.0
+
+Apertura protetta con Face ID
+- Altro > "Apertura protetta" > Attiva. L'app si apre solo dopo il riconoscimento,
+  e lo richiede anche quando torni dopo piu' di 2 minuti in un'altra app.
+- Codice di 6 cifre come riserva. Dettagli in GUIDA_FACEID.txt.
+
+Reparti piu' furbi
+- I prodotti finiti in "Altro" vengono rimessi nel reparto giusto quando apri la
+  lista: quando le parole conosciute non bastano, decide il modello.
+- Si prova una sola volta per prodotto, e solo con la sincronizzazione collegata.
+
+Per accendere l'AI servono due minuti su Supabase: istruzioni in GUIDA_AI.txt.
+Finche' non lo fai, valgono le regole di prima.

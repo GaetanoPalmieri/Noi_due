@@ -1,0 +1,33 @@
+VERSIONE 1.24.0
+
+Liste: registro dei link per ogni prodotto
+- Un articolo puo avere quanti link vuoi. Nel pannello dell'articolo c'e il campo
+  "Link del prodotto": incolli e tocchi +, il link si aggiunge all'elenco sotto.
+- Di ogni link restano negozio, nome del prodotto sul sito e prezzo, cosi li
+  confronti senza aprirli. Da ogni riga puoi aprire il sito o togliere il link.
+- Il nome dell'articolo non cambia mai quando aggiungi un link.
+- L'immagine della scheda arriva dal primo link che ne porta una. Se non ce ne
+  sono, la scheda resta senza foto e si riempie appena un link utile la porta.
+- I link salvati prima diventano la prima voce del registro: non si perde niente.
+
+Liste: gesti sui prodotti
+- Tieni premuto: si apre la scheda del prodotto (reparto, quantita, prezzo,
+  per chi, preferito, stato, chi l'ha aggiunto, codice a barre e tutti i link).
+  Da li il pulsante "Modifica" porta al pannello di modifica.
+- Scorri a sinistra: adesso le azioni sono tre, ✎ Modifica · ★ Preferito · 🗑 Elimina.
+- Un tocco solo: come prima, segna acquistato o lo rimette da comprare.
+- La freccia "›" a fine riga apre la scheda del prodotto.
+
+Saldi e cifre come in Bilancio
+- Un solo occhio "nascondi importi", fisso in alto a destra, uguale in ogni scheda:
+  resta li anche scorrendo. Spariti quelli dentro Home e Coppia.
+- Due grigi al posto del bianco: chiaro per le cifre normali, spento per quelle a
+  zero. Verde e rosso restano come prima per entrate e uscite.
+
+Testi piu piccoli ovunque
+- 244 misure riviste: 13 → 11, 15 → 13, 17 → 15, 22 → 17, 34 → 22, mai sotto gli
+  11 px. Le cifre grandi calano di piu (46 → 33, 50 → 36, 44 → 32).
+
+Icone multiple
+- Con due o tre emoji la colonna resta larga uguale e il testo non si sposta:
+  sono le emoji a rimpicciolirsi.

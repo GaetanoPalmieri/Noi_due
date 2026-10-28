@@ -1,0 +1,11 @@
+VERSIONE 1.21.0 — Importi nascosti ovunque, liste collegate alle spese, chi ha preso cosa
+
+- Con l'occhio chiuso ora sono nascosti anche gli importi dei movimenti recenti e delle statistiche.
+- Sotto ogni movimento chi ha pagato è un pallino del suo colore (non più il riquadro).
+- Spesa registrata da una lista: nel movimento compare 🛒 e, aprendolo, "Dalla lista …" con i prodotti
+  e il pulsante per aprire la lista.
+- Liste: nuova scheda "Ottobre: chi ha preso cosa" (quanti prodotti ognuno e i più presi).
+- Notifiche all'altro: dicono quali prodotti sono stati aggiunti ("➕ Spesa: latte, pane, mele") e
+  quali sono stati presi; il riepilogo mensile dice quanti prodotti ha preso ciascuno.
+  → Va aggiornata su Supabase la funzione notify-noidue (Edge Functions › notify-noidue › Code › Deploy).
+- Grafica comune alle app (suite-ui.css), titolo di pagina uniforme, nessun testo sotto gli 11 px.

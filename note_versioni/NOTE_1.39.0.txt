@@ -1,0 +1,29 @@
+VERSIONE 1.39.0
+
+Messaggi in basso (tutte le app)
+- I messaggi tipo "Movimento registrato" non sono più verdi pieni: ora sono un riquadro
+  di vetro trasparente (si vede sfocato quello che c'è sotto), con un pallino verde a sinistra.
+  Uguali in Bilancio, Noi Due, Allenamento e Wishlist, nel tema chiaro e scuro.
+
+AI
+- Prima ogni problema diventava "Non ho capito l'importo/il totale", anche quando l'importo
+  c'era. Ora:
+  - l'importo viene letto comunque sia scritto nella risposta ("35,50", "€ 1.234,56", numero);
+  - le risposte vuote non restano in memoria: riprovare la stessa frase richiama davvero l'AI;
+  - se l'AI non risponde compare il motivo vero, per esempio
+    "L'AI non ha risposto (errore 500 · …)" oppure "(questa email non è abilitata)";
+  - Nuovo movimento: anche senza AI, dalla frase vengono presi importo, data (oggi/ieri/
+    l'altro ieri) e nome, e la categoria viene suggerita come quando scrivi il nome.
+- CAUSA TROVATA: i modelli 5.5 "ragionano" prima di rispondere e il ragionamento consumava
+  tutto lo spazio della risposta, quindi i dati non arrivavano mai. Va pubblicata una volta
+  la nuova funzione suite-ai (versione 2): istruzioni in GUIDA_AI.txt, in fondo.
+- Se dopo vedi ancora "L'AI non ha risposto (…)", il testo tra parentesi dice cosa sistemare.
+
+Nuovo movimento
+- Il pulsante ✨ della frase ora sta sulla stessa riga del campo ed è uguale a quello
+  del ricorrente (prima andava a capo ed era bianco).
+
+Importo
+- In tutti i pannelli di aggiunta (movimento, ricorrente, pianificato, trasferimento,
+  prelievo, prestito) la cifra è più grande e centrata, con il simbolo € attaccato.
+- Nel ricorrente l'importo non è più piccolo e allineato a sinistra: è come negli altri.

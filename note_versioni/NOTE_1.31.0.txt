@@ -1,0 +1,18 @@
+VERSIONE 1.31.0
+
+Spese fisse: pagare prima della data
+- Tieni premuto su una spesa fissa (Coppia > Spese fisse): "Paga ora la rata del 17/10"
+  registra oggi la rata in arrivo; la spesa fissa resta attiva e riparte dalla rata
+  successiva (quella pagata non viene registrata di nuovo). Nello stesso menu: Modifica, Elimina.
+  "Annulla" nel messaggio rimette tutto com'era.
+
+Pannelli di aggiunta (come in Bilancio)
+- Titolo piccolo in stampatello in alto e Salva piccolo a destra
+  (con Entrata/Uscita accanto quando serve).
+- Prima l'IMPORTO, grande, con la data piccola accanto; poi il nome.
+- Spesa fissa: Cadenza e Scadenza sulla stessa riga con un menu piccolo vicino al campo;
+  "Spesa fissa attiva" è un interruttore grande.
+
+Categorie a pulsanti
+- Al posto delle righe di chip: pulsanti "Macrocategoria" (se ce ne sono) e "Categoria"
+  che aprono un menu piccolo.

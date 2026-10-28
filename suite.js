@@ -1034,7 +1034,7 @@ function bindLongPress(el,handler){
           '<path d="M9 10v1M15 10v1M12 10v3l-1 1M9 15.5s1.2 1 3 1 3-1 3-1"/></svg>' +
         '</div>' +
         '<p class="sl-app"></p>' +
-        '<p class="sl-msg">Sbloccala per vedere i tuoi dati.</p>' +
+        '<p class="sl-msg">Sto aprendo con Face ID…</p>' +
         '<button type="button" class="sl-main primary">Sblocca con Face ID</button>' +
         '<form class="sl-pin" hidden autocomplete="off">' +
           '<input class="sl-pin-input" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="6" placeholder="••••••" aria-label="Codice di 6 cifre">' +
@@ -1061,17 +1061,29 @@ function bindLongPress(el,handler){
     if (!c.credId) { main.hidden = true; alt.hidden = true; form.hidden = false; }
     if (!c.pin) alt.hidden = true;
 
-    main.addEventListener('click', async function () {
-      if (busy) return; busy = true; main.disabled = true;
+    /* v1.59 — Sblocco "dinamico": appena l'app si apre parte da solo il riconoscimento.
+       Se iOS non lo permette senza un tocco, basta toccare un punto qualsiasi dello schermo. */
+    var autoTried = false;
+    async function unlock(auto) {
+      if (busy || !overlay || !read().credId) return;
+      busy = true; main.disabled = true;
       msg.textContent = 'Guarda il telefono…';
       try {
         if (await askFaceId()) { hide(); return; }
-        msg.textContent = 'Non riconosciuto. Riprova o usa il codice.';
+        msg.textContent = 'Non riconosciuto. Tocca lo schermo per riprovare.';
       } catch (e) {
-        msg.textContent = c.pin ? 'Riconoscimento non riuscito: usa il codice.' : 'Riconoscimento non riuscito. Riprova.';
-        if (c.pin) { form.hidden = false; alt.hidden = true; setTimeout(function(){ input.focus(); }, 60); }
+        if (auto) msg.textContent = 'Tocca lo schermo per sbloccare.';
+        else if (c.pin) { msg.textContent = 'Riconoscimento non riuscito: usa il codice.'; form.hidden = false; alt.hidden = true; setTimeout(function(){ input.focus(); }, 60); }
+        else msg.textContent = 'Riconoscimento non riuscito. Tocca lo schermo per riprovare.';
       }
-      busy = false; main.disabled = false;
+      busy = false; if (main) main.disabled = false;
+    }
+    main.addEventListener('click', function (ev) { ev.stopPropagation(); unlock(false); });
+    /* un tocco qualsiasi (fuori dal codice e dai pulsanti) fa partire il riconoscimento */
+    overlay.addEventListener('click', function (ev) {
+      if (ev.target.closest && ev.target.closest('.sl-pin, .sl-alt, .sl-main')) return;
+      if (!form.hidden && !c.credId) return;
+      unlock(false);
     });
     alt.addEventListener('click', function () {
       form.hidden = false; alt.hidden = true; main.hidden = true;
@@ -1088,7 +1100,18 @@ function bindLongPress(el,handler){
       msg.textContent = 'Codice sbagliato.';
       box.classList.remove('sl-shake'); void box.offsetWidth; box.classList.add('sl-shake');
     });
-    /* su iPhone il riconoscimento parte solo da un tocco: nessun tentativo automatico */
+    /* tentativo automatico all'apertura (una sola volta per sblocco) */
+    function autoStart() {
+      if (autoTried || !read().credId || !overlay) return;
+      autoTried = true;
+      unlock(true);
+    }
+    setTimeout(function () {
+      if (document.visibilityState === 'visible') autoStart();
+      else document.addEventListener('visibilitychange', function onVis() {
+        if (document.visibilityState === 'visible') { document.removeEventListener('visibilitychange', onVis); setTimeout(autoStart, 200); }
+      });
+    }, 350);
   }
   function hide() {
     locked = false; busy = false;

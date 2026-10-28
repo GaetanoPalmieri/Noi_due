@@ -96,7 +96,7 @@ const TRASH_RETENTION_DAYS = 90;
 const BACKUP_WARNING_DAYS = 30;
 let balanceCache = new Map();
 let state = load();
-let balancesHidden = true; // sempre nascosto all'apertura dell'app
+let balancesHidden = false; // v1.42.0: cifre visibili di default (si nascondono con l'occhio)
 function load(){
   try{
     const raw = localStorage.getItem(STORAGE_KEY);
@@ -555,6 +555,8 @@ let statsGroupMode = "category", statsNature="expense";
 
 /* ---------------- Helpers on state ---------------- */
 function accountsById(){ return Object.fromEntries(state.accounts.map(a=>[a.id,a])); }
+/* v1.42.0 — Il nome del "conto" è sempre quello della persona (o "Cassa comune"): resta giusto anche se i nomi della coppia cambiano. */
+function accLabel(acc){ return acc && ["a","b","joint"].includes(acc.owner) ? personName(acc.owner) : (acc?.name||""); }
 function categoriesById(){ return Object.fromEntries(state.categories.map(c=>[c.id,c])); }
 function macroCategoriesById(){ return Object.fromEntries(state.macroCategories.map(m=>[m.id,m])); }
 
@@ -1065,11 +1067,11 @@ function renderTxRows(container, list, {paidLabel=false}={}){
       : originKind
         ? `<span class="status-badge ${originKind}">${originLabel}</span>${paidLabel?`<span class="status-badge paid">Pagato</span>`:""}`
         : "";
-    const title = settle ? `${personName(accOwner(t.accountId))} → ${personName(accOwner(t.toAccountId))}` : isTransfer ? `${acc.name} → ${destination.name}` : (t.name || t.note || cat.name);
+    const title = settle ? `${personName(accOwner(t.accountId))} → ${personName(accOwner(t.toAccountId))}` : isTransfer ? `${accLabel(acc)} → ${accLabel(destination)}` : (t.name || t.note || cat.name);
     const sLabel = splitLabel(t) ? `${groupsById()[groupOf(t)]?.emoji||""} ${splitLabel(t)}`.trim() : "";
     const metaParts=isTransfer
       ? `<span>${settle?`Rimborso tra voi · ${t.settleAlloc?"tutti i gruppi":escapeHtml(groupLabel(groupOf(t)))}`:t.atm?"Prelievo ATM":"Trasferimento"}</span>`
-      : `<span>${hlText(cat.name)}</span><span class="mv-sep" aria-hidden="true">·</span><span class="mv-acc mv-payer"><i class="mv-dot" style="background:${safeColor(personColor(acc.owner||"joint"))}" aria-hidden="true"></i>${hlText(acc.name)}</span>${sLabel?`<span class="mv-sep" aria-hidden="true">·</span><span class="mv-split">${escapeHtml(sLabel)}</span>`:""}`;
+      : `<span>${hlText(cat.name)}</span><span class="mv-sep" aria-hidden="true">·</span><span class="mv-acc mv-payer"><i class="mv-dot" style="background:${safeColor(personColor(acc.owner||"joint"))}" aria-hidden="true"></i>${hlText(accLabel(acc))}</span>${sLabel?`<span class="mv-sep" aria-hidden="true">·</span><span class="mv-split">${escapeHtml(sLabel)}</span>`:""}`;
     const listBadge = t.listId ? `<span class="mv-list-badge" title="Spesa registrata dalla lista ${escapeHtml(state.lists.find(x=>x.id===t.listId)?.name||"")}" aria-label="Dalla lista">🛒</span>` : "";
     row.innerHTML = movementRowHtml({emoji:cat.emoji,color:cat.color,title,badges:statusBadge,meta:listBadge+metaParts,
       amountHtml:`${isTransfer?"↔":t.type==="income"?"+":""}${fmt(t.amount)}`,type:t.type,date:t.date,relative:!!t.planned,
@@ -2246,7 +2248,6 @@ function renderCouple(){
   renderCoupleGroups();
   renderFixedExpenses();
   renderCoupleLists();
-  renderAiCoppia();
   if(groupDetailRefresh) groupDetailRefresh();
   if(listDetailRefresh) listDetailRefresh();
 }
@@ -2296,6 +2297,11 @@ function renderCoupleLists(){
     card.addEventListener("keydown",e=>{ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); openListDetail(l.id); } });
     box.appendChild(card);
   });
+  if(state.lists.every(l=>!l.items.some(i=>!i.done))){
+    const hint=document.createElement("p"); hint.className="lists-empty-hint";
+    hint.innerHTML="<b>Niente da comprare</b>Apri una lista per aggiungere gli articoli, oppure usa il + in basso.";
+    box.appendChild(hint);
+  }
   renderListsMonth(box);
 }
 /* v1.21.0 — Resoconto del mese: chi ha preso cosa (dagli acquisti segnati nelle liste). */
@@ -2624,28 +2630,9 @@ function openFavorites(listId,onAdded){
   });
 }
 let openSwipeRow=null;
-/* v1.27.0 — Quando le parole scritte a mano non bastano, il reparto lo decide il modello.
-   Si prova una sola volta per articolo (aiAisleTried) e solo su quelli finiti in "Altro",
-   così non si fanno chiamate inutili. Se l'AI non c'e, non cambia niente. */
-async function aiFixAisles(listId){
-  if(!(window.SuiteAI && SuiteAI.disponibile())) return;
-  const l=state.lists.find(x=>x.id===listId); if(!l) return;
-  const da=l.items.filter(i=>(!i.aisle||i.aisle==="altro") && i.text && !i.aiAisleTried).slice(0,8);
-  if(!da.length) return;
-  const opzioni=aisleKeys().filter(k=>k!=="altro").map(k=>{ const a=aisleInfo(k); return {chiave:a.key,nome:a.name}; });
-  let cambiati=false;
-  for(const it of da){
-    it.aiAisleTried=true;
-    const k=await SuiteAI.scegli("reparto",parseQty(it.text).text,opzioni,0.6);
-    if(k && k!==it.aisle){ it.aisle=k; cambiati=true; }
-  }
-  persist();
-  if(cambiati){ renderCoupleLists(); if(listDetailRefresh) listDetailRefresh(); }
-}
 function openListDetail(listId){
   // v1.19.0 — riclassifica i prodotti finiti in "Altro" con i reparti nuovi (es. aspirapolvere).
   { const l0=state.lists.find(l=>l.id===listId); let ch=false; (l0?.items||[]).forEach(i=>{ if(!i.aisle||i.aisle==="altro"){ const g=guessAisle(i.text); if(g!=="altro"&&g!==i.aisle){ i.aisle=g; ch=true; } } }); if(ch) persist(); }
-  aiFixAisles(listId);
   openSheet("tpl-list-detail",(node,close)=>{
     const input=node.querySelector("#listItemInput"), priceInput=node.querySelector("#listPriceInput");
     const list=()=>state.lists.find(l=>l.id===listId);
@@ -2969,38 +2956,6 @@ function openListDetail(listId){
       if(lines.length>1){ e.preventDefault(); const n=addMany(lines); showToast(n?`${n} articoli aggiunti`:"Erano già tutti nella lista"); input.value=""; }
     });
     node.querySelector("#listPasteBtn").addEventListener("click",()=>openListPaste(lines=>{ const n=addMany(lines); showToast(n?`${n} ${n===1?"articolo aggiunto":"articoli aggiunti"}`:"Erano già tutti nella lista"); }));
-    /* v1.28.0 — Scontrino dalla foto: le voci entrano in lista gia spuntate, con il
-       prezzo di riga, e resta pronto il pulsante per registrarle come spesa. */
-    {
-      const rb=node.querySelector("#listReceiptBtn");
-      if(rb && window.SuiteAI && SuiteAI.disponibile()){
-        rb.hidden=false;
-        const cam=document.createElement("input");
-        cam.type="file"; cam.accept="image/*"; cam.capture="environment"; cam.hidden=true;
-        node.appendChild(cam);
-        rb.addEventListener("click",()=>cam.click());
-        cam.addEventListener("change",async()=>{
-          const f=cam.files&&cam.files[0]; cam.value="";
-          if(!f) return;
-          rb.disabled=true; showToast("Sto leggendo lo scontrino…");
-          const d=await SuiteAI.daFoto("scontrino",f,{
-            contesto:{oggi:todayISO()},
-            opzioni:aisleKeys().filter(k=>k!=="altro").map(k=>{const a=aisleInfo(k);return {chiave:a.key,nome:a.name};})
-          });
-          rb.disabled=false;
-          if(!node.isConnected) return;
-          const voci=d&&Array.isArray(d.voci)?d.voci.filter(v=>v&&v.nome):[];
-          if(!voci.length){ showToast("Non sono riuscito a leggere le voci dello scontrino"); return; }
-          const prima=new Set((list()?.items||[]).map(i=>i.id));
-          const n=addMany(voci);
-          /* quello che è appena entrato è già nel carrello: lo scontrino l'hai pagato */
-          const l=list();
-          if(l){ l.items.filter(i=>!prima.has(i.id)).forEach(i=>{ i.done=true; i.boughtAt=new Date().toISOString(); }); save(); }
-          const totN=SuiteAI.numero(d.totale); const tot=totN>0?` · totale ${fmt(totN)}`:"";
-          showToast(n?`${n} ${n===1?"voce letta":"voci lette"}${tot}`:"Erano già tutte in lista");
-        });
-      }
-    }
     node.querySelector("#listSortBtn").addEventListener("click",()=>{ const l=list(); l.sortMode=l.sortMode==="manual"?"aisle":"manual"; save(); });
     node.querySelector("#listBaseBtn").addEventListener("click",()=>{ const n=addMany(list().template||[]); showToast(n?`Lista base: ${n} ${n===1?"articolo aggiunto":"articoli aggiunti"}`:"La lista base è già tutta in lista"); });
     node.querySelector("#listScanBtn").addEventListener("click",()=>openProductScan(item=>{
@@ -3102,25 +3057,6 @@ function openListPaste(onAdd){
     const area=node.querySelector("#pasteText"), hint=node.querySelector("#pasteHint"), btn=node.querySelector("#pasteAddBtn");
     const paint=()=>{ const n=parseShoppingLines(area.value).length; btn.textContent=n?`Aggiungi ${n}`:"Aggiungi"; hint.textContent=n?`${n} ${n===1?"articolo":"articoli"} pronti. Ogni riga diventa un articolo.`:"Scrivi o incolla: ogni riga diventa un articolo. Puoi separare anche con la virgola."; };
     area.addEventListener("input",paint);
-    /* v1.28.0 — "Leggi la frase": "servono latte, due pacchi di pasta e il detersivo"
-       diventa un elenco con quantità e reparto già messi. Il pulsante normale
-       (una riga = un articolo) resta: questo è in più, non al posto suo. */
-    if(window.SuiteAI && SuiteAI.disponibile()){
-      const aiBtn=document.createElement("button");
-      aiBtn.type="button"; aiBtn.className="pill-btn ai-dictate"; aiBtn.textContent="✨ Leggi la frase";
-      aiBtn.addEventListener("click",async()=>{
-        const t=area.value.trim();
-        if(!t){ area.focus(); return; }
-        aiBtn.disabled=true; hint.textContent="Sto leggendo la frase…";
-        const d=await SuiteAI.ask("lista",t,{opzioni:aisleKeys().filter(k=>k!=="altro").map(k=>{const a=aisleInfo(k);return {chiave:a.key,nome:a.name};})});
-        aiBtn.disabled=false;
-        if(!node.isConnected) return;
-        const arr=d&&Array.isArray(d.articoli)?d.articoli.filter(x=>x&&x.nome):[];
-        if(!arr.length){ hint.textContent="Non ho capito: scrivi un articolo per riga e usa “Aggiungi”."; return; }
-        onAdd(arr); close();
-      });
-      hint.after(aiBtn);
-    }
     // Prova a leggere subito gli appunti (l'iPhone può chiedere conferma con "Incolla").
     if(navigator.clipboard?.readText){ navigator.clipboard.readText().then(t=>{ if(t && !area.value){ area.value=t; paint(); } }).catch(()=>{}); }
     setTimeout(()=>area.focus(),300);
@@ -3187,7 +3123,7 @@ function renderCoupleGroups(){
     const who=Math.abs(bal)<0.005?"In pari":`${personName(debtor)} deve a ${personName(otherPerson(debtor))}`;
     card.innerHTML=`<span class="mv-ic">${emojiIconHtml(g.emoji)}</span>
       <span class="group-card-text"><strong>${escapeHtml(g.name)}</strong><span>${escapeHtml(who)}</span><span>${balancesHidden?"••••":fmt(spent.paid.a+spent.paid.b+spent.paid.joint)} spesi in tutto</span></span>
-      <span class="group-card-amt" style="color:${Math.abs(bal)<0.005?"var(--ink-soft)":personColor(otherPerson(debtor))}">${Math.abs(bal)<0.005?fmt(0):(balancesHidden?"••••":fmt(Math.abs(bal)))}</span>
+      <span class="group-card-amt" style="color:${Math.abs(bal)<0.005?"var(--ink-soft)":personColor(otherPerson(debtor))}">${Math.abs(bal)<0.005?(balancesHidden?"••••":fmt(0)):(balancesHidden?"••••":fmt(Math.abs(bal)))}</span>
       <span class="chev" aria-hidden="true">›</span>`;
     card.addEventListener("click",()=>openGroupDetail(g.id));
     box.appendChild(card);
@@ -4077,6 +4013,19 @@ function openTransferForm(txId=null){
     paint();
   });
 }
+/* v1.42.0 — il "+" si nasconde mentre scorri verso il basso e torna quando risali. */
+(function(){
+  const fab=document.getElementById("fabAdd"); if(!fab) return;
+  let last=window.scrollY||0, busy=false;
+  window.addEventListener("scroll",()=>{
+    if(busy) return; busy=true;
+    requestAnimationFrame(()=>{
+      const y=window.scrollY||0, d=y-last;
+      if(Math.abs(d)>6){ fab.classList.toggle("is-tucked", d>0 && y>120); last=y; }
+      busy=false;
+    });
+  },{passive:true});
+})();
 document.getElementById("fabAdd").addEventListener("click", e=>{
   e.preventDefault();e.stopPropagation();
   openAddChoice();
@@ -4084,49 +4033,6 @@ document.getElementById("fabAdd").addEventListener("click", e=>{
 document.getElementById("toggleHomeBalance").addEventListener("click",toggleBalances);
 /* v1.24.0 — Un solo occhio, fermo in alto a destra in tutte le schede. */
 document.getElementById("toggleBalanceFixed")?.addEventListener("click",toggleBalances);
-
-/* ===================== v1.28.0 — "Com'è andato il mese" (coppia) =====================
-   Legge i numeri che l'app ha già — chi ha pagato, le quote, il saldo fra voi, le
-   spese fisse, le liste — e li racconta in due righe. Niente cifre inventate. */
-function riepilogoCoppiaContesto(){
-  const st=coupleMonthStats(viewYear,viewMonth);
-  const tot=st.paid.a+st.paid.b+st.paid.joint;
-  const saldo=groupBalance(null);
-  const tx=state.transactions.filter(t=>t.date.startsWith(`${viewYear}-${pad2(viewMonth+1)}`)&&t.type==="expense"&&!t.isBalanceAdjustment);
-  const perCat={};
-  tx.forEach(t=>{ const c=categoriesById()[t.categoryId]; const k=c?c.name:"Senza categoria"; perCat[k]=(perCat[k]||0)+t.amount; });
-  const categorie=Object.entries(perCat).sort((a,b)=>b[1]-a[1]).slice(0,6).map(([nome,v])=>({nome,speso:Math.round(v*100)/100}));
-  const liste=state.lists.map(l=>({nome:l.name,daComprare:l.items.filter(i=>!i.done).length}));
-  return {
-    mese:`${MESI[viewMonth]} ${viewYear}`,
-    totaleSpeso:Math.round(tot*100)/100,
-    haPagato:{[personName("a")]:Math.round(st.paid.a*100)/100,[personName("b")]:Math.round(st.paid.b*100)/100,cassaComune:Math.round(st.paid.joint*100)/100},
-    quote:{[personName("a")]:Math.round(st.quota.a*100)/100,[personName("b")]:Math.round(st.quota.b*100)/100},
-    saldoFraVoi:Math.abs(saldo)<0.005?"in pari":`${personName(saldo>0?"b":"a")} deve ${fmt(Math.abs(saldo))} a ${personName(saldo>0?"a":"b")}`,
-    numeroSpeseDivise:st.shared.length,
-    listeDellaSpesa:liste,
-    numeroMovimenti:tx.length
-  };
-}
-function renderAiCoppia(){
-  const box=document.getElementById("aiCoupleBlock");
-  if(!box) return;
-  const on=!!(window.SuiteAI && SuiteAI.disponibile());
-  box.hidden=!on;
-  if(!on || box._bound) return;
-  box._bound=true;
-  const btn=document.getElementById("aiCoupleBtn"), out=document.getElementById("aiCoupleBox");
-  btn.addEventListener("click",async()=>{
-    btn.disabled=true;
-    out.innerHTML=`<p class="ai-note">Sto guardando le spese di ${MESI[viewMonth].toLowerCase()}…</p>`;
-    const r=await SuiteAI.riepilogo(riepilogoCoppiaContesto(),`Com'è andato ${MESI[viewMonth].toLowerCase()} per noi due?`);
-    btn.disabled=false;
-    if(!r){ out.innerHTML=`<p class="ai-note">Non ci sono riuscito adesso. Riprova fra poco.</p>`; return; }
-    out.innerHTML=`<p>${escapeHtml(r.testo)}</p>`+
-      (r.punti.length?`<ul>${r.punti.map(x=>`<li>${escapeHtml(x)}</li>`).join("")}</ul>`:"")+
-      `<p class="ai-note">Scritto leggendo le vostre spese di ${escapeHtml(MESI[viewMonth])} ${viewYear}. Ricontrolla sempre le cifre.</p>`;
-  });
-}
 
 function openTrash(){
   openSheet("tpl-trash", (node)=>{
@@ -4153,7 +4059,7 @@ function openTxDetail(txId){
     const destination=accountsById()[t.toAccountId] || {name:"Conto eliminato"};
     node.querySelector("#txDetailBody").innerHTML = `
       <div class="tx-detail-row"><span class="k">Importo</span><span class="v ${t.type}">${transfer?"↔":t.type==="income"?"+":""}${fmt(t.amount)}</span></div>
-      ${transfer?`<div class="tx-detail-row"><span class="k">Da conto</span><span class="v">${escapeHtml(acc.name)}</span></div><div class="tx-detail-row"><span class="k">A conto</span><span class="v">${escapeHtml(destination.name)}</span></div>`:`<div class="tx-detail-row"><span class="k">Categoria</span><span class="v">${escapeHtml(cat.emoji)} ${escapeHtml(cat.name)}</span></div>`}
+      ${transfer?`<div class="tx-detail-row"><span class="k">Da conto</span><span class="v">${escapeHtml(accLabel(acc))}</span></div><div class="tx-detail-row"><span class="k">A conto</span><span class="v">${escapeHtml(accLabel(destination))}</span></div>`:`<div class="tx-detail-row"><span class="k">Categoria</span><span class="v">${escapeHtml(cat.emoji)} ${escapeHtml(cat.name)}</span></div>`}
       ${coupleDetailRows(t)}
       <div class="tx-detail-row"><span class="k">Data</span><span class="v">${t.date.split("-").reverse().join("/")}</span></div>
       ${t.recurringId?`<div class="tx-detail-row"><span class="k">Origine</span><span class="v">Movimento ricorrente</span></div>`:t.plannedId?`<div class="tx-detail-row"><span class="k">Origine</span><span class="v">Movimento pianificato</span></div>`:""}
@@ -4177,7 +4083,7 @@ function openScheduledDetail(kind, id, occurrenceDate){
       <div class="tx-detail-row"><span class="k">Stato</span><span class="v"><span class="status-badge ${kind}">${kind==="recurring"?(item.active===false?"Sospesa":"Ricorrente attiva"):"Pianificata"}</span></span></div>
       <div class="tx-detail-row"><span class="k">Importo</span><span class="v ${item.type}">${item.type==="income"?"+":"−"}${fmt(item.amount)}</span></div>
       <div class="tx-detail-row"><span class="k">Categoria</span><span class="v">${escapeHtml(cat.emoji)} ${escapeHtml(cat.name)}</span></div>
-      <div class="tx-detail-row"><span class="k">Carta destinataria</span><span class="v">${escapeHtml(acc.name)}</span></div>
+      <div class="tx-detail-row"><span class="k">Carta destinataria</span><span class="v">${escapeHtml(accLabel(acc))}</span></div>
       <div class="tx-detail-row"><span class="k">${kind==="recurring"?"Prossima data":"Data"}</span><span class="v">${date ? date.split("-").reverse().join("/") : "—"}</span></div>
       ${kind==="recurring"?`<div class="tx-detail-row"><span class="k">Frequenza</span><span class="v">${FREQ_LABEL[item.freq]||"—"}</span></div><div class="tx-detail-row"><span class="k">Durata</span><span class="v">${recurringDurationLabel(item)}</span></div>`:""}
       ${item.note?`<div class="tx-detail-row"><span class="k">Nota</span><span class="v">${escapeHtml(item.note)}</span></div>`:""}
@@ -4800,8 +4706,7 @@ document.getElementById("resetBtn").addEventListener("click", async ()=>{
 
 document.addEventListener("visibilitychange",()=>{
   if(document.visibilityState!=="visible") return;
-  balancesHidden=true;
-  safeSetLocalStorage("noidue_hide_balances","1",{notify:false});
+  // v1.42.0: le cifre restano visibili di default; non si nascondono più da sole al ritorno sull'app
   generateRecurringTransactions(false);
   renderAll();
 });

@@ -383,6 +383,7 @@ html.suite-locked body > *:not(.suite-lock) {
 html.suite-locked {
   overflow: hidden;
 }
+/* v1.56.0 — Schermata di sblocco ridisegnata: a pagina intera, con icona, titolo e pulsanti grandi. */
 .suite-lock {
   position: fixed;
   inset: 0;
@@ -390,75 +391,90 @@ html.suite-locked {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 24px;
-  background: color-mix(in srgb, var(--suite-bg, #12181f) 86%, transparent);
-  -webkit-backdrop-filter: blur(22px) saturate(1.4);
-  backdrop-filter: blur(22px) saturate(1.4);
+  padding: calc(env(safe-area-inset-top, 0px) + 28px) 28px calc(env(safe-area-inset-bottom, 0px) + 32px);
+  background:
+    radial-gradient(120% 60% at 50% 0%, color-mix(in srgb, var(--suite-accent-select) 24%, transparent), transparent 62%),
+    color-mix(in srgb, var(--suite-bg, #12181f) 90%, transparent);
+  -webkit-backdrop-filter: blur(26px) saturate(1.5);
+  backdrop-filter: blur(26px) saturate(1.5);
 }
 .suite-lock .sl-box {
   width: 100%;
-  max-width: 320px;
+  max-width: 400px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 10px;
+  gap: 14px;
   text-align: center;
   color: var(--suite-text, #f1f5f4);
 }
 .suite-lock .sl-face {
-  width: 64px;
-  height: 64px;
+  position: relative;
+  width: 136px;
+  height: 136px;
   display: grid;
   place-items: center;
-  border-radius: 20px;
+  margin-bottom: 10px;
+  border-radius: 40px;
   color: var(--suite-accent-select);
-  background: color-mix(in srgb, var(--suite-accent-select) 16%, transparent);
+  background: linear-gradient(145deg,
+    color-mix(in srgb, var(--suite-accent-select) 26%, transparent),
+    color-mix(in srgb, var(--suite-accent-select) 9%, transparent));
+  border: 1px solid color-mix(in srgb, var(--suite-accent-select) 38%, transparent);
+  box-shadow: 0 0 64px color-mix(in srgb, var(--suite-accent-select) 28%, transparent),
+              inset 0 1px 0 color-mix(in srgb, #fff 18%, transparent);
+  animation: slGlow 3.2s ease-in-out infinite;
 }
-.suite-lock .sl-face svg { width: 34px; height: 34px; }
+.suite-lock .sl-face svg { width: 80px; height: 80px; stroke-width: 1.4; }
 .suite-lock .sl-app {
-  margin: 4px 0 0;
-  font-size: var(--suite-fs-lg);
+  margin: 0;
+  font-size: 32px;
+  line-height: 1.1;
   font-weight: 800;
-  letter-spacing: -.3px;
+  letter-spacing: -.5px;
 }
 .suite-lock .sl-msg {
-  margin: 0 0 6px;
-  font-size: var(--suite-fs-sm);
+  margin: 0 0 14px;
+  max-width: 290px;
+  font-size: 17px;
+  line-height: 1.4;
   color: var(--suite-text-soft, #9fb0ab);
-  min-height: 2.4em;
+  min-height: 2.8em;
 }
 .suite-lock .sl-main,
 .suite-lock .sl-pin-ok {
   width: 100%;
-  min-height: 46px;
+  min-height: 60px;
   border: 0;
-  border-radius: 14px;
+  border-radius: 20px;
   font: inherit;
-  font-size: var(--suite-fs-md);
-  font-weight: 700;
+  font-size: 19px;
+  font-weight: 750;
   color: #0f1512;
   background: var(--suite-select-grad);
+  box-shadow: 0 10px 28px color-mix(in srgb, var(--suite-accent-select) 30%, transparent);
 }
+.suite-lock .sl-main:disabled { opacity: .6; }
 .suite-lock .sl-main[hidden],
 .suite-lock .sl-alt[hidden],
 .suite-lock .sl-pin[hidden] { display: none; }
 .suite-lock .sl-pin {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 12px;
   width: 100%;
 }
 .suite-lock .sl-pin-input {
   width: 100%;
-  min-height: 46px;
-  padding: 0 14px;
-  border-radius: 14px;
-  border: 1px solid color-mix(in srgb, var(--suite-text, #fff) 16%, transparent);
-  background: color-mix(in srgb, var(--suite-text, #fff) 7%, transparent);
+  min-height: 62px;
+  padding: 0 16px;
+  border-radius: 20px;
+  border: 1px solid color-mix(in srgb, var(--suite-text, #fff) 18%, transparent);
+  background: color-mix(in srgb, var(--suite-text, #fff) 8%, transparent);
   color: inherit;
   font: inherit;
-  font-size: var(--suite-fs-xl);
-  letter-spacing: 8px;
+  font-size: 30px;
+  letter-spacing: 12px;
   text-align: center;
 }
 .suite-lock .sl-alt {
@@ -466,9 +482,9 @@ html.suite-locked {
   background: none;
   color: var(--suite-accent-select);
   font: inherit;
-  font-size: var(--suite-fs-sm);
+  font-size: 17px;
   font-weight: 700;
-  padding: 6px;
+  padding: 12px 16px;
 }
 .suite-lock .sl-shake { animation: slShake .3s ease; }
 @keyframes slShake {
@@ -476,8 +492,17 @@ html.suite-locked {
   25% { transform: translateX(-7px); }
   75% { transform: translateX(7px); }
 }
+@keyframes slGlow {
+  0%, 100% { box-shadow: 0 0 52px color-mix(in srgb, var(--suite-accent-select) 22%, transparent), inset 0 1px 0 color-mix(in srgb, #fff 18%, transparent); }
+  50% { box-shadow: 0 0 84px color-mix(in srgb, var(--suite-accent-select) 40%, transparent), inset 0 1px 0 color-mix(in srgb, #fff 18%, transparent); }
+}
 @media (prefers-reduced-motion: reduce) {
-  .suite-lock .sl-shake { animation: none; }
+  .suite-lock .sl-shake, .suite-lock .sl-face { animation: none; }
+}
+@media (max-height: 640px) {
+  .suite-lock .sl-face { width: 104px; height: 104px; border-radius: 32px; }
+  .suite-lock .sl-face svg { width: 62px; height: 62px; }
+  .suite-lock .sl-app { font-size: 26px; }
 }
 .suite-lock-card .suite-lock-status {
   display: flex;
@@ -503,82 +528,6 @@ html.suite-locked {
   margin: 8px 0 0;
   font-size: var(--suite-fs-xs);
   opacity: .75;
-}
-
-/* ---- Pezzi dell'AI: riga "scrivilo a parole" e pulsanti "dalla foto" ---- */
-.ai-row {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-}
-.ai-row-input {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-}
-.ai-row .ai-input {
-  flex: 1 1 auto;
-  min-width: 0;
-}
-.ai-row .ai-go {
-  flex: 0 0 auto;
-  width: 42px;
-  height: 42px;
-  display: grid;
-  place-items: center;
-  border: 1px solid color-mix(in srgb, var(--suite-accent-select) 45%, transparent);
-  border-radius: 13px;
-  background: color-mix(in srgb, var(--suite-accent-select) 16%, transparent);
-  color: var(--suite-accent-select);
-  font: inherit;
-  font-size: var(--suite-fs-lg);
-  line-height: 1;
-}
-.ai-row .ai-go:disabled {
-  opacity: .5;
-}
-.ai-photo {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 7px;
-}
-.ai-photo .ai-hint,
-.ai-row .ai-hint {
-  flex: 1 1 100%;
-  margin: 0;
-  min-height: 1.3em;
-  font-size: var(--suite-fs-xs);
-  color: var(--suite-text-soft, inherit);
-}
-.ai-photo .pill-btn {
-  flex: 0 0 auto;
-}
-/* Riquadro del riepilogo scritto dall'AI */
-.ai-summary {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-.ai-summary p {
-  margin: 0;
-  font-size: var(--suite-fs-sm);
-  line-height: 1.5;
-}
-.ai-summary ul {
-  margin: 0;
-  padding-left: 17px;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-.ai-summary li {
-  font-size: var(--suite-fs-xs);
-  line-height: 1.45;
-}
-.ai-summary .ai-note {
-  font-size: var(--suite-fs-xs);
-  opacity: .7;
 }
 
 /* ---- Messaggi (toast): vetro trasparente, uguale in tutte le app ----

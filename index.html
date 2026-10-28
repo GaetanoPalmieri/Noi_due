@@ -4,11 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
 <title>Noi Due — Spese di coppia</title>
-<meta name="app-version" content="1.41.0">
+<meta name="app-version" content="1.42.0">
 <meta name="description" content="Spese di coppia: chi ha pagato, chi deve a chi, budget e statistiche.">
 
 <!-- PWA / iOS home screen -->
-<link rel="manifest" href="manifest.json?v=1.41.0">
+<link rel="manifest" href="manifest.json?v=1.42.0">
 <meta name="theme-color" content="#12181F">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -16,12 +16,12 @@
 <!-- iPhone: icona nella cartella principale, senza ?v=, con la dimensione dichiarata (la legge anche Safari più vecchio). -->
 <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
 <link rel="apple-touch-icon-precomposed" sizes="180x180" href="apple-touch-icon-precomposed.png">
-<link rel="icon" href="icons/icon-192.png?v=1.41.0">
+<link rel="icon" href="icons/icon-192.png?v=1.42.0">
 
-<link rel="stylesheet" href="style.css?v=1.41.0">
+<link rel="stylesheet" href="style.css?v=1.42.0">
 <!-- Token grafici condivisi dalle 4 app: va caricato per ultimo. -->
-<link rel="stylesheet" href="suite-ui.css?v=1.41.0">
-<link rel="stylesheet" href="suite-tokens.css?v=1.41.0">
+<link rel="stylesheet" href="suite-ui.css?v=1.42.0">
+<link rel="stylesheet" href="suite-tokens.css?v=1.42.0">
 </head>
 <body>
 
@@ -145,12 +145,6 @@
         <div id="coupleShares" class="couple-shares"></div>
       </div>
 
-      <!-- Riepilogo del mese scritto dall'AI: compare solo se l'AI e' accesa -->
-      <div class="section-block ai-month-block" id="aiCoupleBlock" hidden>
-        <div class="section-head"><h2>Com'e' andato il mese</h2><button type="button" class="pill-btn mini-btn" id="aiCoupleBtn">✨ Spiegamelo</button></div>
-        <div class="ai-summary" id="aiCoupleBox"><p class="ai-note">Tocca "Spiegamelo": leggo le spese del mese e vi dico in due righe come siete messi.</p></div>
-      </div>
-
       <div class="section-block">
         <div class="section-head"><h2>Ultime spese divise</h2></div>
         <div id="coupleSharedTx" class="tx-list"></div>
@@ -270,9 +264,14 @@
         </div>
       </div>
 
+      <details class="more-fold" id="moreSyncFold">
+        <summary>Sincronizzazione, Face ID e notifiche</summary>
+        <div class="more-fold-body">
       <div id="suiteSyncSlot"></div>
       <div class="section-block suite-sync-card" id="pushCard"></div>
       <div class="noidue-me-row"><button type="button" class="pill-btn" id="noidueMeBtn">👤 Chi usa questo telefono</button></div>
+        </div>
+      </details>
 
       <div class="section-block">
         <div class="section-head"><h2>Dati</h2></div>
@@ -468,7 +467,6 @@
     <div class="lc-tools">
       <button type="button" class="lc-tool" id="listFavBtn"><span aria-hidden="true">★</span>Preferiti</button>
       <button type="button" class="lc-tool" id="listPasteBtn"><span aria-hidden="true">📋</span>Incolla lista</button>
-      <button type="button" class="lc-tool" id="listReceiptBtn" hidden><span aria-hidden="true">🧾</span>Scontrino</button>
       <button type="button" class="lc-tool" id="listBaseBtn" hidden><span aria-hidden="true">⭐</span>Lista base</button>
       <button type="button" class="lc-tool" id="listSortBtn">↕︎ In ordine</button>
     </div>
@@ -897,7 +895,7 @@
   </div>
 </template>
 
-<script src="suite.js?v=1.41.0"></script>
-<script src="app.js?v=1.41.0"></script>
+<script src="suite.js?v=1.42.0"></script>
+<script src="app.js?v=1.42.0"></script>
 </body>
 </html>

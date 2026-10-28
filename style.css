@@ -8764,3 +8764,65 @@ html body .mv-meta-text > .mv-list-badge {
 #overlayRoot .cal-nav-group .month-nav:active { background: color-mix(in srgb, var(--ink) 9%, transparent) !important; }
 /* Importi nascosti: nessuna cifra accanto ai puntini */
 html.amounts-hidden #views :is(.budget-spent, .budget-limit, .budget-earned, .top-category-meta strong) { font-size: 0 !important; letter-spacing: 0 !important; }
+
+/* =====================================================================
+   Noi Due 1.42.0 — stessa scala di Bilancio · righe senza testi tagliati
+   · "+" che si nasconde scorrendo · menu a tendina senza anello tagliato
+   ===================================================================== */
+:root { --sz-title: 13px; --sz-text: 11px; --sz-fig: 12px; --sz-hero: 22px; }
+
+/* ---- Cifre grandi alla stessa scala della Home di Bilancio ---- */
+html:root body #views .hero .hero-amount { font-size: var(--sz-hero) !important; line-height: 1.15 !important; letter-spacing: -.01em !important; }
+html:root body #views .hero .hero-label { font-size: var(--sz-text) !important; }
+html:root body #views .hero .hero-split-label { font-size: var(--sz-text) !important; }
+html:root body #views .hero .hero-split-value { font-size: var(--sz-fig) !important; font-weight: 800 !important; }
+html:root body #views .stat-card-value { font-size: 15px !important; }
+html:root body #views .group-card-amt { font-size: 13px !important; font-weight: 800 !important; }
+html:root body #views .group-detail-hero .hero-amount { font-size: var(--sz-hero) !important; }
+
+/* ---- Righe movimento: il testo secondario va a capo invece di tagliarsi ---- */
+html:root body #views .mv-row .mv-meta-text,
+html:root body #overlayRoot .mv-row .mv-meta-text {
+  display: flex !important; flex-wrap: wrap !important; gap: 1px 6px !important; white-space: normal !important; overflow: visible !important; text-overflow: clip !important;
+}
+html:root body #views .mv-row .mv-meta-text > span,
+html:root body #overlayRoot .mv-row .mv-meta-text > span { white-space: nowrap !important; max-width: 100% !important; overflow: hidden; text-overflow: ellipsis; }
+html:root body #views .mv-row .mv-meta,
+html:root body #overlayRoot .mv-row .mv-meta { overflow: visible !important; white-space: normal !important; height: auto !important; max-height: none !important; }
+html:root body #views .mv-row { height: auto !important; min-height: 58px !important; }
+
+/* ---- Pulsante "+": più piccolo e si nasconde mentre scorri verso il basso ---- */
+html:root body .fab {
+  width: 50px !important; height: 50px !important; border-radius: 17px !important; font-size: 26px !important;
+  right: 16px !important;
+  transition: transform .22s ease, opacity .22s ease !important;
+}
+html:root body .fab.is-tucked { transform: translateY(84px) scale(.85) !important; opacity: 0 !important; pointer-events: none !important; }
+html:root body #views { padding-bottom: calc(150px + env(safe-area-inset-bottom)) !important; }
+
+/* ---- Menu a tendina: l'anello della riga evidenziata non viene più tagliato ---- */
+.ss-wrap .ss-list { padding: 3px 4px !important; scroll-padding: 6px; }
+.ss-wrap .ss-opt,
+.ss-wrap .ss-opt:focus,
+.ss-wrap .ss-opt:focus-visible,
+.ss-wrap .ss-opt.active { outline: none !important; box-shadow: none !important; -webkit-tap-highlight-color: transparent; }
+.ss-wrap .ss-opt { flex: none; }
+
+/* ---- Liste: invito quando non c'è niente da comprare ---- */
+.lists-empty-hint { margin: 14px 4px 0; padding: 16px 14px; border-radius: 16px; text-align: center; font-size: 13px; line-height: 1.45; color: var(--ink-soft);
+  border: 1px dashed color-mix(in srgb, var(--ink) 20%, transparent); }
+.lists-empty-hint b { display: block; font-size: 14px; color: var(--ink); margin-bottom: 2px; }
+
+/* ---- Altro: sezioni richiudibili ---- */
+#view-more details.more-fold { margin: 0 0 12px; }
+#view-more details.more-fold > summary {
+  list-style: none; cursor: pointer; display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 14px; border-radius: 16px; font-size: 13px; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; color: var(--ink-soft);
+  background: color-mix(in srgb, var(--card) 70%, transparent); border: 1px solid color-mix(in srgb, var(--ink) 9%, transparent);
+  -webkit-backdrop-filter: blur(16px) saturate(1.4); backdrop-filter: blur(16px) saturate(1.4);
+}
+#view-more details.more-fold > summary::-webkit-details-marker { display: none; }
+#view-more details.more-fold > summary::after { content: "›"; font-size: 18px; transition: transform .18s ease; }
+#view-more details.more-fold[open] > summary::after { transform: rotate(90deg); }
+#view-more details.more-fold > .more-fold-body { margin-top: 10px; }
+#view-more details.more-fold { margin: 14px 0 12px; }

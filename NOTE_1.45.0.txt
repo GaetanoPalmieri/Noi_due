@@ -1,0 +1,5 @@
+NOI_DUE 1.45.0
+
+- Schermata di benvenuto dopo Face ID (o il codice): compare per un paio di secondi con l'icona dell'app e un saluto; un tocco la chiude.
+
+Per aggiornare: pubblica su GitHub, poi chiudi e riapri l'app.

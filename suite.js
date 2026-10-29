@@ -1116,6 +1116,7 @@ function bindLongPress(el,handler){
   function hide() {
     locked = false; busy = false;
     document.documentElement.classList.remove('suite-locked');
+    try { if (window.SuiteSplash) SuiteSplash.show(APP); } catch (e) {}
     if (overlay) { overlay.remove(); overlay = null; }
     hiddenAt = 0;
   }
@@ -1385,4 +1386,77 @@ function bindLongPress(el,handler){
   }
   window.SuiteIcons = { apply: apply, scan: scan, icons: ICONS };
   if (document.body) start(); else document.addEventListener('DOMContentLoaded', start);
+})();
+
+
+/* ===================== SuiteSplash — schermata di benvenuto dopo lo sblocco =====================
+   Compare per un paio di secondi appena Face ID (o il codice) ti riconosce; un tocco la chiude.
+   SuiteSplash.show('Nome app'). Usa l'icona dell'app e un saluto in base all'ora. */
+(function () {
+  var cur = null;
+  function iconUrl() {
+    var l = document.querySelector('link[rel="apple-touch-icon"]') || document.querySelector('link[rel="icon"]');
+    return (l && l.href) || '';
+  }
+  function greet() {
+    var h = new Date().getHours();
+    return h < 5 ? 'Buonanotte' : h < 13 ? 'Buongiorno' : h < 18 ? 'Buon pomeriggio' : 'Buonasera';
+  }
+  function css() {
+    if (document.getElementById('suite-splash-css')) return;
+    var s = document.createElement('style');
+    s.id = 'suite-splash-css';
+    s.textContent =
+      '.suite-splash{position:fixed;inset:0;z-index:100000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;' +
+      'background:radial-gradient(120% 75% at 50% 0%,#1f6a55 0%,#14262a 42%,#0b0f14 100%);color:#f1f5f4;opacity:1;overflow:hidden;' +
+      'font-family:inherit;-webkit-tap-highlight-color:transparent;transition:opacity .5s ease}' +
+      '.suite-splash.out{opacity:0;pointer-events:none}' +
+      '.suite-splash .ss-glow{position:absolute;width:340px;height:340px;border-radius:50%;background:radial-gradient(closest-side,rgba(63,179,142,.45),rgba(63,179,142,0));' +
+      'top:50%;left:50%;margin:-210px 0 0 -170px;animation:ssGlow 2.2s ease-in-out infinite}' +
+      '.suite-splash .ss-orb{position:relative;width:132px;height:132px;display:flex;align-items:center;justify-content:center;animation:ssPop .7s cubic-bezier(.2,.9,.3,1.2) both}' +
+      '.suite-splash .ss-ic{width:92px;height:92px;border-radius:24px;object-fit:cover;box-shadow:0 18px 40px -12px rgba(0,0,0,.6),0 0 0 1px rgba(255,255,255,.12)}' +
+      '.suite-splash .ss-ring{position:absolute;inset:0;width:100%;height:100%;transform:rotate(-90deg)}' +
+      '.suite-splash .ss-ring circle{fill:none;stroke-width:3;stroke-linecap:round}' +
+      '.suite-splash .ss-ring .t{stroke:rgba(255,255,255,.1)}' +
+      '.suite-splash .ss-ring .p{stroke:#3fb38e;stroke-dasharray:377;stroke-dashoffset:377;animation:ssRing 1.5s .15s cubic-bezier(.5,0,.2,1) forwards}' +
+      '.suite-splash .ss-hi{margin:26px 0 4px;font-size:13px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#8fd6bd;animation:ssUp .6s .25s both}' +
+      '.suite-splash .ss-app{margin:0;font-size:30px;font-weight:800;letter-spacing:-.02em;animation:ssUp .6s .35s both}' +
+      '.suite-splash .ss-sub{margin:10px 0 0;font-size:13px;color:rgba(241,245,244,.6);animation:ssUp .6s .5s both}' +
+      '@keyframes ssPop{from{opacity:0;transform:scale(.8)}to{opacity:1;transform:scale(1)}}' +
+      '@keyframes ssRing{to{stroke-dashoffset:0}}' +
+      '@keyframes ssUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}' +
+      '@keyframes ssGlow{0%,100%{opacity:.55;transform:scale(.94)}50%{opacity:1;transform:scale(1.06)}}' +
+      '@media (prefers-reduced-motion:reduce){.suite-splash *{animation-duration:.01s!important;animation-delay:0s!important}}';
+    document.head.appendChild(s);
+  }
+  function close() {
+    if (!cur) return;
+    var el = cur; cur = null;
+    clearTimeout(el._t);
+    el.classList.add('out');
+    setTimeout(function () { el.remove(); }, 520);
+  }
+  function show(app, sub) {
+    try {
+      if (cur) return;
+      css();
+      var el = document.createElement('div');
+      el.className = 'suite-splash';
+      el.setAttribute('role', 'status');
+      var img = iconUrl();
+      el.innerHTML =
+        '<div class="ss-glow"></div>' +
+        '<div class="ss-orb">' + (img ? '<img class="ss-ic" alt="" src="' + img.replace(/"/g, '') + '">' : '') +
+          '<svg class="ss-ring" viewBox="0 0 132 132" aria-hidden="true"><circle class="t" cx="66" cy="66" r="60"/><circle class="p" cx="66" cy="66" r="60"/></svg></div>' +
+        '<p class="ss-hi"></p><p class="ss-app"></p><p class="ss-sub"></p>';
+      el.querySelector('.ss-hi').textContent = greet();
+      el.querySelector('.ss-app').textContent = app || '';
+      el.querySelector('.ss-sub').textContent = sub || 'Accesso eseguito';
+      el.addEventListener('click', close);
+      document.body.appendChild(el);
+      cur = el;
+      el._t = setTimeout(close, 2100);
+    } catch (e) {}
+  }
+  window.SuiteSplash = { show: show, close: close };
 })();

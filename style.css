@@ -8885,3 +8885,71 @@ html:root body .fab { bottom: calc(var(--tab-bottom) + 84px) !important; }
 :root:not([data-theme="dark"]) .bub-li b{color:var(--ink,#1c2420)}
 .stats-cat-sub{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin:0 4px 10px;font-size:13.5px;color:var(--ink-soft,var(--suite-text-soft))}
 .stats-cat-sub b{color:var(--ink,var(--suite-text));font-size:16px;font-variant-numeric:tabular-nums}
+
+/* =====================================================================
+   Noi Due 1.47.0 — CARTA DELLE SPESE COME IN BET TRACKER (Home)
+   Verde petrolio a sfumatura, testo bianco in tutti e due i temi: cifra grande con i centesimi più piccoli, pastiglie,
+   spese cumulate degli ultimi 30 giorni, tre caselle trasparenti (chi ha pagato), "chi deve a chi" dentro la carta.
+   ===================================================================== */
+html:root body #views #view-home > .hero.nh-card {
+  position: relative; overflow: hidden; display: grid; gap: 12px; text-align: left;
+  margin: 6px 0 16px !important; padding: 16px 16px 14px !important; border-radius: 22px !important; color: #fff;
+  border: 1px solid rgba(255,255,255,.14) !important;
+  background:
+    radial-gradient(130% 120% at 100% -10%, rgba(126,231,196,.32), transparent 55%),
+    radial-gradient(90% 90% at -10% 110%, rgba(10,40,36,.55), transparent 60%),
+    linear-gradient(140deg, #24a07c 0%, #17725d 48%, #0f4a3f 100%) !important;
+  background-color: #17725d !important;
+  box-shadow: 0 18px 36px -18px rgba(14,90,70,.85), inset 0 1px 0 rgba(255,255,255,.2) !important;
+  -webkit-backdrop-filter: none !important; backdrop-filter: none !important;
+}
+:root:not([data-theme="dark"]) body #views #view-home > .hero.nh-card { box-shadow: 0 16px 30px -16px rgba(14,90,70,.55), inset 0 1px 0 rgba(255,255,255,.25) !important; }
+html:root body #views #view-home > .hero.nh-card .hero-label {
+  margin: 0 !important; min-height: 20px; font-size: 11.5px !important; font-weight: 800 !important; letter-spacing: .09em !important;
+  text-transform: uppercase !important; color: rgba(255,255,255,.8) !important; text-align: left !important;
+}
+html:root body #views #view-home > .hero.nh-card .nh-big {
+  margin: 0 !important; font-family: var(--font-display, inherit); font-weight: 800; letter-spacing: -.035em; line-height: 1;
+  color: #fff !important; font-variant-numeric: tabular-nums; text-shadow: 0 2px 14px rgba(0,0,0,.18); white-space: nowrap; text-align: left !important;
+}
+html:root body #views #view-home > .hero.nh-card .nh-big .nh-int { font-size: 46px; }
+html:root body #views #view-home > .hero.nh-card .nh-big .nh-dec { font-size: 25px; opacity: .82; margin-left: 1px; }
+html:root body #views #view-home > .hero.nh-card .nh-pills { display: flex; flex-wrap: wrap; gap: 6px; position: relative; z-index: 1; }
+html:root body #views #view-home > .hero.nh-card .nh-pills:empty { display: none; }
+html:root body #views #view-home > .hero.nh-card .nh-pill { display: inline-flex; align-items: baseline; gap: 5px; padding: 5px 10px; border-radius: 999px; background: rgba(0,0,0,.18); border: 1px solid rgba(255,255,255,.12); font-variant-numeric: tabular-nums; }
+html:root body #views #view-home > .hero.nh-card .nh-pill.up { background: rgba(120,20,20,.28); }
+html:root body #views #view-home > .hero.nh-card .nh-pill i { font-style: normal; font-size: 10px; color: rgba(255,255,255,.8); }
+html:root body #views #view-home > .hero.nh-card .nh-pill.up i { color: #ffb4a8; }
+html:root body #views #view-home > .hero.nh-card .nh-pill.down i { color: #8ff5c9; }
+html:root body #views #view-home > .hero.nh-card .nh-pill.set i { color: #ffd28a; }
+html:root body #views #view-home > .hero.nh-card .nh-pill b { font-size: 13.5px; font-weight: 800; color: #fff; }
+html:root body #views #view-home > .hero.nh-card .nh-pill small { font-size: 11.5px; color: rgba(255,255,255,.75); }
+html:root body #views #view-home > .hero.nh-card .nh-spark { margin: -10px -16px -6px; height: 56px; }
+html:root body #views #view-home > .hero.nh-card .nh-spark:empty { display: none; }
+html:root body #views #view-home > .hero.nh-card .nh-spark svg { display: block; width: 100%; height: 56px; opacity: .9; }
+html:root body #views #view-home > .hero.nh-card .nh-tiles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+html:root body #views #view-home > .hero.nh-card .nh-tile { display: grid; gap: 3px; min-width: 0; padding: 8px 9px; border-radius: 13px; background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.1); }
+html:root body #views #view-home > .hero.nh-card .nh-tile small { display: flex; align-items: center; gap: 5px; min-width: 0; font-size: 10.5px; color: rgba(255,255,255,.78); white-space: nowrap; }
+html:root body #views #view-home > .hero.nh-card .nh-tile small span { overflow: hidden; text-overflow: ellipsis; }
+html:root body #views #view-home > .hero.nh-card .nh-dot { flex: none; width: 8px; height: 8px; border-radius: 50%; background: #fff; box-shadow: 0 0 0 2px rgba(255,255,255,.25); }
+html:root body #views #view-home > .hero.nh-card .nh-dot.joint { background: #D4A83A; }
+html:root body #views #view-home > .hero.nh-card .nh-tile b { font-size: 14px; font-weight: 800; color: #fff !important; white-space: nowrap; font-variant-numeric: tabular-nums; letter-spacing: -.01em; }
+html:root body #views #view-home > .hero.nh-card .couple-strip.nh-act {
+  display: flex !important; align-items: center; gap: 10px; width: 100%; margin: 0 !important; min-height: 52px; padding: 8px 12px !important;
+  border-radius: 14px !important; border: 1px solid rgba(255,255,255,.2) !important; background: rgba(255,255,255,.12) !important;
+  box-shadow: none !important; color: #fff !important; -webkit-backdrop-filter: none !important; backdrop-filter: none !important;
+}
+html:root body #views #view-home > .hero.nh-card .couple-strip.nh-act:active { background: rgba(255,255,255,.2) !important; }
+html:root body #views #view-home > .hero.nh-card .couple-strip.nh-act .couple-av { box-shadow: 0 0 0 2px rgba(255,255,255,.35); }
+html:root body #views #view-home > .hero.nh-card .couple-strip-text span { color: rgba(255,255,255,.75) !important; }
+html:root body #views #view-home > .hero.nh-card .couple-strip-text strong { color: #fff !important; font-weight: 800; }
+html:root body #views #view-home > .hero.nh-card .couple-strip .chev { color: rgba(255,255,255,.8) !important; }
+html:root body #views #view-home > .hero.nh-card .nh-legacy { display: none !important; }
+@media (max-width: 370px) {
+  html:root body #views #view-home > .hero.nh-card .nh-big .nh-int { font-size: 40px; }
+  html:root body #views #view-home > .hero.nh-card .nh-big .nh-dec { font-size: 22px; }
+  html:root body #views #view-home > .hero.nh-card .nh-tile { padding: 7px 7px; }
+  html:root body #views #view-home > .hero.nh-card .nh-tile b { font-size: 13px; }
+}
+/* 1.47.0 — cifre delle caselle che si adattano alla larghezza (niente cifre tagliate con importi a 5 cifre) */
+html:root body #views #view-home > .hero.nh-card .nh-tile b { font-size: clamp(12px, 3.7vw, 14px); }

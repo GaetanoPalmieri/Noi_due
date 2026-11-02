@@ -811,6 +811,7 @@ function renderNdHome(){
   left.textContent=show(settles); left.style.color="";
   // Cassa comune e rimborsi a zero: niente riquadri vuoti nella card.
   { const liq=document.querySelector("#view-home .hero-liquidity"); if(liq) liq.style.display=(paid.joint>0.004||settles>0.004)?"":"none"; }
+  try{ renderNdHomeHero(total,settles); }catch(e){ console.error("carta spese",e); } /* v1.47.0 */
   return;
   if(periodModes.home!=="month"){ left.textContent="—"; left.style.color=""; return; }
   let budget=0; const counted=new Set();
@@ -821,6 +822,46 @@ function renderNdHome(){
   const rest=budget-spent;
   left.textContent=balancesHidden?"••••":(rest>=0?fmt(rest):`−${fmt(-rest)}`);
   left.style.color=rest<0?"var(--rust)":"var(--emerald)";
+}
+
+/* v1.47.0 — CARTA DELLE SPESE COME IN BET TRACKER (riquadro in cima alla Home).
+   Cifra grande delle spese del periodo scelto con i centesimi più piccoli; pastiglie: rispetto al mese prima (solo se guardi
+   un mese: ▲ rosso = avete speso di più), ultimi 7 giorni, rimborsi tra voi; sotto le spese cumulate degli ultimi 30 giorni;
+   tre caselle con chi ha pagato (voi due e la cassa comune); dentro la carta "chi deve a chi" che apre Saldi. */
+function ndSpendSeries(days){
+  const by=new Map(), today=todayISO(), out=[];
+  state.transactions.forEach(t=>{ if(t.type==="expense"&&!t.isBalanceAdjustment) by.set(t.date,(by.get(t.date)||0)+(Number(t.amount)||0)); });
+  let cum=0;
+  for(let i=days-1;i>=0;i--){ const d=new Date(today+"T12:00:00"); d.setDate(d.getDate()-i); const iso=`${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`; cum+=by.get(iso)||0; out.push({date:iso,v:cum,day:by.get(iso)||0}); }
+  return out;
+}
+function ndHeroSpark(vals){
+  if(!vals || vals.length<2 || !(Math.max(...vals)>0)) return "";
+  const W=300,H=56,lo=Math.min(...vals),hi=Math.max(...vals),rg=hi-lo||1;
+  const xy=vals.map((v,i)=>[Math.round(i/(vals.length-1)*W*10)/10,Math.round((H-6-(v-lo)/rg*(H-14))*10)/10]);
+  const line=xy.map((q,i)=>(i?"L":"M")+q[0]+" "+q[1]).join(" "), last=xy[xy.length-1];
+  return `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true"><defs><linearGradient id="nhSparkG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".32"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient></defs>`+
+    `<path d="${line} L${W} ${H} L0 ${H} Z" fill="url(#nhSparkG)"/><path d="${line}" fill="none" stroke="#fff" stroke-opacity=".85" stroke-width="2" vector-effect="non-scaling-stroke" stroke-linejoin="round" stroke-linecap="round"/><circle cx="${last[0]}" cy="${last[1]}" r="3.2" fill="#fff"/></svg>`;
+}
+function renderNdHomeHero(total,settles){
+  const el=id=>document.getElementById(id); if(!el("ndMonthSpent")) return;
+  const H=balancesHidden, money=v=>H?"••••":fmt(v);
+  { const t=fmt(total), m=/^(.*?)([,.]\d{2})(\s*€.*)$/.exec(t);
+    el("ndMonthSpent").innerHTML=H?'<span class="nh-int">••••</span>':m?`<span class="nh-int">${escapeHtml(m[1])}</span><span class="nh-dec">${escapeHtml(m[2]+m[3])}</span>`:`<span class="nh-int">${escapeHtml(t)}</span>`; }
+  const ser=ndSpendSeries(30), pills=[];
+  if((periodModes.home||"month")==="month"){
+    /* mese in corso: si confronta con gli stessi giorni del mese prima (il 2 novembre con l'1-2 ottobre, non con tutto ottobre) */
+    const pm=new Date(viewYear,viewMonth-1,1), pre=`${pm.getFullYear()}-${pad2(pm.getMonth()+1)}`, now=new Date();
+    const cur=viewYear===now.getFullYear()&&viewMonth===now.getMonth(), upTo=cur?Math.min(now.getDate(),new Date(viewYear,viewMonth,0).getDate()):31;
+    const prev=state.transactions.filter(t=>t.type==="expense"&&!t.isBalanceAdjustment&&String(t.date).startsWith(pre)&&Number(String(t.date).slice(8,10))<=upTo).reduce((s,t)=>s+(Number(t.amount)||0),0);
+    if(prev>0.004){ const d=total-prev, c=d>0.004?"up":d<-0.004?"down":"zero";
+      pills.push(`<span class="nh-pill ${c}"><i aria-hidden="true">${c==="up"?"▲":c==="down"?"▼":"●"}</i><b>${money(Math.abs(d))}</b><small>${cur?"stessi giorni di ":"rispetto a "}${MESI[pm.getMonth()].toLowerCase()}</small></span>`); }
+  }
+  const w7=ser.slice(-7).reduce((s,x)=>s+x.day,0);
+  if(w7>0.004) pills.push(`<span class="nh-pill"><i aria-hidden="true">●</i><b>${money(w7)}</b><small>ultimi 7 giorni</small></span>`);
+  if(settles>0.004) pills.push(`<span class="nh-pill set"><i aria-hidden="true">⇄</i><b>${money(settles)}</b><small>rimborsi tra voi</small></span>`);
+  el("nhPills").innerHTML=pills.join("");
+  el("nhSpark").innerHTML=ndHeroSpark(ser.map(x=>x.v));
 }
 
 /* ---------------- Rendering: Home ---------------- */

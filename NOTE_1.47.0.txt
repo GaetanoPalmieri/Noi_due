@@ -1,0 +1,9 @@
+NOI DUE 1.47.0
+
+- Home: il riquadro delle spese in cima e' una carta verde come in Bet Tracker. Grande la spesa del periodo scelto
+  (centesimi piu' piccoli); sotto le pastiglie: quanto avete speso in piu' o in meno degli stessi giorni del mese prima
+  (solo se guardi un mese), le spese degli ultimi 7 giorni e i rimborsi tra voi; poi le spese degli ultimi 30 giorni
+  disegnate come andamento. Tre caselle: quanto ha pagato ciascuno di voi e la cassa comune. "Chi deve a chi" ora sta
+  dentro la carta: un tocco apre Saldi, come prima.
+
+Per aggiornare: pubblica su GitHub, poi chiudi e riapri l'app.

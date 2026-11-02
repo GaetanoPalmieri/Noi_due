@@ -4,11 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
 <title>Noi Due — Spese di coppia</title>
-<meta name="app-version" content="1.46.0">
+<meta name="app-version" content="1.47.0">
 <meta name="description" content="Spese di coppia: chi ha pagato, chi deve a chi, budget e statistiche.">
 
 <!-- PWA / iOS home screen -->
-<link rel="manifest" href="manifest.json?v=1.46.0">
+<link rel="manifest" href="manifest.json?v=1.47.0">
 <meta name="theme-color" content="#12181F">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -16,12 +16,12 @@
 <!-- iPhone: icona nella cartella principale, senza ?v=, con la dimensione dichiarata (la legge anche Safari più vecchio). -->
 <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
 <link rel="apple-touch-icon-precomposed" sizes="180x180" href="apple-touch-icon-precomposed.png">
-<link rel="icon" href="icons/icon-192.png?v=1.46.0">
+<link rel="icon" href="icons/icon-192.png?v=1.47.0">
 
-<link rel="stylesheet" href="style.css?v=1.46.0">
+<link rel="stylesheet" href="style.css?v=1.47.0">
 <!-- Token grafici condivisi dalle 4 app: va caricato per ultimo. -->
-<link rel="stylesheet" href="suite-ui.css?v=1.46.0">
-<link rel="stylesheet" href="suite-tokens.css?v=1.46.0">
+<link rel="stylesheet" href="suite-ui.css?v=1.47.0">
+<link rel="stylesheet" href="suite-tokens.css?v=1.47.0">
 </head>
 <body>
 
@@ -55,23 +55,30 @@
     <!-- ===== HOME / DASHBOARD ===== -->
     <section class="view active" id="view-home" data-view="home">
       <h1 class="view-title">Home</h1>
-      <div class="hero nd-home-hero">
+      <!-- v1.47.0 — RIQUADRO DELLE SPESE COME IN BET TRACKER: carta verde con la cifra grande (centesimi più piccoli),
+           pastiglie (rispetto al mese prima, ultimi 7 giorni, rimborsi tra voi), andamento degli ultimi 30 giorni, tre caselle
+           (chi ha pagato: voi due e la cassa comune) e sotto, dentro la carta, "chi deve a chi" (apre Saldi).
+           Gli id di prima restano: renderNdHome e renderCoupleStrip li aggiornano come prima. -->
+      <div class="hero nd-home-hero nh-card" id="ndHeroCard">
         <p class="hero-label">Spese del mese</p>
-        <div class="balance-line"><p class="hero-amount" id="ndMonthSpent">0,00 €</p><button class="balance-hide" id="toggleHomeBalance" type="button" aria-label="Nascondi importi"></button></div>
-        <div class="hero-split nd-paid-split">
-          <div class="hero-split-item"><span class="nd-dot" id="ndDotA"></span><span class="hero-split-label" id="ndPaidALabel">Persona 1</span><span class="hero-split-value" id="ndPaidA">0,00 €</span></div>
-          <div class="hero-split-item"><span class="nd-dot" id="ndDotB"></span><span class="hero-split-label" id="ndPaidBLabel">Persona 2</span><span class="hero-split-value" id="ndPaidB">0,00 €</span></div>
+        <div class="nh-big" id="ndMonthSpent">0,00 €</div>
+        <div class="nh-pills" id="nhPills"></div>
+        <div class="nh-spark" id="nhSpark" aria-hidden="true"></div>
+        <div class="nh-tiles">
+          <div class="nh-tile"><small><i class="nh-dot" id="ndDotA"></i><span id="ndPaidALabel">Persona 1</span></small><b id="ndPaidA">0,00 €</b></div>
+          <div class="nh-tile"><small><i class="nh-dot" id="ndDotB"></i><span id="ndPaidBLabel">Persona 2</span></small><b id="ndPaidB">0,00 €</b></div>
+          <div class="nh-tile joint"><small><i class="nh-dot joint"></i><span>Cassa comune</span></small><b id="ndPaidJoint">0,00 €</b></div>
         </div>
-        <div class="hero-liquidity">
-          <div class="hero-liquidity-item"><span>Cassa comune</span><strong id="ndPaidJoint">0,00 €</strong></div>
-          <div class="hero-liquidity-item"><span>Rimborsi tra voi</span><strong id="ndBudgetLeft">0,00 €</strong></div>
+        <button type="button" class="couple-strip nh-act" id="homeCoupleStrip" aria-label="Apri Saldi">
+          <span class="couple-avs"><span class="couple-av sm" id="stripAvA">1</span><span class="couple-av sm b" id="stripAvB">2</span></span>
+          <span class="couple-strip-text"><span id="stripWho">Siete in pari</span><strong id="stripAmount">0,00 €</strong></span>
+          <span class="chev" aria-hidden="true">›</span>
+        </button>
+        <div class="nh-legacy" hidden aria-hidden="true">
+          <button class="balance-hide" id="toggleHomeBalance" type="button" aria-label="Nascondi importi" tabindex="-1"></button>
+          <div class="hero-liquidity"><strong id="ndBudgetLeft">0,00 €</strong></div>
         </div>
       </div>
-      <button type="button" class="couple-strip" id="homeCoupleStrip" aria-label="Apri Saldi">
-        <span class="couple-avs"><span class="couple-av sm" id="stripAvA">1</span><span class="couple-av sm b" id="stripAvB">2</span></span>
-        <span class="couple-strip-text"><span id="stripWho">Siete in pari</span><strong id="stripAmount">0,00 €</strong></span>
-        <span class="chev" aria-hidden="true">›</span>
-      </button>
       <section class="home-lists hl-card" id="homeLists" aria-label="Liste della spesa"></section>
 
       <!-- Elementi ereditati da Bilancio, non usati in Noi Due: restano nascosti perché il codice comune li aggiorna. -->
@@ -894,7 +901,7 @@
   </div>
 </template>
 
-<script src="suite.js?v=1.46.0"></script>
-<script src="app.js?v=1.46.0"></script>
+<script src="suite.js?v=1.47.0"></script>
+<script src="app.js?v=1.47.0"></script>
 </body>
 </html>

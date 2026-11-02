@@ -1,0 +1,6 @@
+NOI DUE 1.46.0
+
+- Saldi: nuovo riquadro "Chi paga" con le bolle del mese (le vostre due persone e la cassa comune), grandi quanto le spese pagate; sotto la quota di ciascuno. Un tocco apre le spese.
+- Statistiche: riquadro "Analisi" in cima, come nell'app della banca: mesi in alto (set · ott · nov) e bolle per categoria o per gruppo, con l'elenco sotto. Un tocco apre i movimenti.
+
+Per aggiornare: pubblica su GitHub, poi chiudi e riapri l'app.

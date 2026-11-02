@@ -277,6 +277,7 @@ let viewMonth = now.getMonth(); // 0-indexed
 let activeView = "home";
 let txFilter = "all";
 let txSearchQuery="", txDateFrom="", txDateTo="";
+let ndBubM=null, ndStM=null, ndStMode="cat"; /* v1.46.0 — Analisi a bolle */
 const TX_PAGE_SIZE=50;
 let txVisibleLimit=TX_PAGE_SIZE;
 let txSearchTimer=null;
@@ -1179,6 +1180,7 @@ function renderTopCategoriesChart(entries,cats){
   }).join("")}</div>`;
 }
 function renderStats(){
+  renderStatsBubblesNd();
   const tx=statsTransactions(), income=tx.filter(t=>t.type==="income").reduce((s,t)=>s+t.amount,0), expense=tx.filter(t=>t.type==="expense").reduce((s,t)=>s+t.amount,0);
   const days=Math.max(1,Math.ceil((new Date(viewYear,viewMonth+1,0)-new Date(viewYear,viewMonth,1))/86400000)+1);
   const cats=categoriesById(), byCat={};tx.filter(t=>t.type==="expense").forEach(t=>{byCat[t.categoryId]=(byCat[t.categoryId]||0)+t.amount;});
@@ -2202,6 +2204,7 @@ function renderCoupleStrip(){
 }
 function renderCouple(){
   renderCoupleStrip();
+  renderCoupleBubbles();
   const view=document.getElementById("view-coppia");
   if(!view) return;
   const bal=coupleBalance();
@@ -5056,3 +5059,140 @@ function notifyPartnerChanges(beforeItems,beforeTx){
 setTimeout(()=>{ if(window.SuiteSync&&SuiteSync.signedIn&&!myPerson()&&state.couple.onboarded) askWhoAmI(); },3500);
 document.addEventListener("submit",e=>{ if(e.target.closest&&e.target.closest("[data-suite-sync-login]")) setTimeout(()=>{ if(SuiteSync.signedIn&&!myPerson()) askWhoAmI(); },2500); });
 document.getElementById("noidueMeBtn")?.addEventListener("click",askWhoAmI);
+/* ===== BOLLE "ANALISI" (comuni alle app) =====
+   Cerchi con l'area proporzionale al valore, impaccati attorno al centro (stile app della banca): il più grande al
+   centro, gli altri appoggiati vicino. Un valore a zero resta una bolla piccola e spenta. Senza librerie. */
+function bubPack(items, W, H) {
+  var vals = items.map(function (it) { return Math.max(0, Number(it.value) || 0); });
+  var max = Math.max.apply(null, vals.concat([0]));
+  var R = Math.min(W, H) * 0.34, Rmin = R * 0.36, gap = Math.min(W, H) * 0.025;
+  var C = items.map(function (it, i) { return { i: i, r: vals[i] > 0 && max > 0 ? Math.max(Rmin, R * Math.sqrt(vals[i] / max)) : Rmin * 0.92 }; });
+  var order = C.slice().sort(function (a, b) { return b.r - a.r; }), placed = [];
+  order.forEach(function (c, n) {
+    if (!n) { c.x = 0; c.y = 0; placed.push(c); return; }
+    var best = null, A = 0, gx = 0, gy = 0;
+    placed.forEach(function (q) { var w = q.r * q.r; A += w; gx += q.x * w; gy += q.y * w; });
+    gx /= A; gy /= A;
+    placed.forEach(function (p) {
+      for (var k = 0; k < 72; k++) {
+        var a = (k / 72) * Math.PI * 2, d = p.r + c.r + gap, x = p.x + Math.cos(a) * d, y = p.y + Math.sin(a) * d;
+        var ok = placed.every(function (q) { return Math.hypot(q.x - x, q.y - y) >= q.r + c.r + gap - 0.01; });
+        if (!ok) continue;
+        /* vicino al baricentro (gruppo compatto); la seconda va in alto a destra come nella banca */
+        var score = Math.hypot((x - gx) * (H / W), (y - gy)) + (n === 1 ? Math.abs(Math.atan2(y, x) + 0.55) * 4 : 0);
+        if (!best || score < best.s) best = { x: x, y: y, s: score };
+      }
+    });
+    c.x = best ? best.x : 0; c.y = best ? best.y : 0; placed.push(c);
+  });
+  var x0 = Math.min.apply(null, C.map(function (c) { return c.x - c.r; })), x1 = Math.max.apply(null, C.map(function (c) { return c.x + c.r; }));
+  var y0 = Math.min.apply(null, C.map(function (c) { return c.y - c.r; })), y1 = Math.max.apply(null, C.map(function (c) { return c.y + c.r; }));
+  var pad = Math.min(W, H) * 0.04, s = Math.min((W - 2 * pad) / (x1 - x0), (H - 2 * pad) / (y1 - y0), 1.25);
+  var cx = (x0 + x1) / 2, cy = (y0 + y1) / 2;
+  return C.map(function (c) { return { x: W / 2 + (c.x - cx) * s, y: H / 2 + (c.y - cy) * s, r: c.r * s }; });
+}
+/* items: [{key, label, value, text (cifra già scritta), color, ink?}] → bolle; attr(it) = attributo per il tocco */
+function bubChartHtml(items, o) {
+  o = o || {};
+  var W = 340, H = o.h || 260, P = bubPack(items, W, H), esc = o.esc || function (s) { return String(s); };
+  return '<div class="bub-wrap" style="aspect-ratio:' + W + '/' + H + '">' + items.map(function (it, i) {
+    var p = P[i], zero = !(Number(it.value) > 0), d = p.r * 2, fs = Math.max(11, Math.min(26, p.r * 0.3)), ls = Math.max(9, Math.min(14, p.r * 0.15));
+    var small = p.r < 34;
+    return '<button type="button" class="bub' + (zero ? ' zero' : '') + (it.on ? ' on' : '') + '" ' + (o.attr ? o.attr(it) : '') +
+      ' style="left:' + ((p.x - p.r) / W * 100).toFixed(2) + '%;top:' + ((p.y - p.r) / H * 100).toFixed(2) + '%;width:' + (d / W * 100).toFixed(2) + '%;--bc:' + (zero ? 'var(--bub-zero)' : it.color) + ';--bi:' + (it.ink || (zero ? 'var(--bub-zero-ink)' : '#0b0d0c')) + ';animation-delay:' + (i * 60) + 'ms" aria-label="' + esc(it.label + ': ' + it.text) + '">' +
+      '<b style="font-size:' + fs.toFixed(1) + 'px">' + esc(it.text) + '</b>' + (small ? '' : '<small style="font-size:' + ls.toFixed(1) + 'px">' + esc(it.label) + '</small>') + '</button>';
+  }).join('') + '</div>';
+}
+/* legenda come nella banca: pallino, nome, cifra sotto */
+function bubLegendHtml(items, o) {
+  o = o || {};
+  var esc = o.esc || function (s) { return String(s); };
+  return '<div class="bub-leg">' + (o.title ? '<p class="bub-leg-t">' + esc(o.title) + '</p>' : '') + items.map(function (it) {
+    var zero = !(Number(it.value) > 0);
+    return '<' + (o.attr ? 'button type="button" ' + o.attr(it) : 'div') + ' class="bub-li' + (o.attr ? ' tap' : '') + '"><i style="--bc:' + (zero ? 'var(--bub-zero)' : it.color) + '"></i><span><b>' + esc(it.label) + '</b><small>' + esc(it.sub || it.text) + '</small></span>' + (it.side ? '<em>' + esc(it.side) + '</em>' : '') + (o.attr ? '<u aria-hidden="true">›</u>' : '') + '</' + (o.attr ? 'button' : 'div') + '>';
+  }).join('') + '</div>';
+}
+/* mesi in alto (set · ott · nov): months = [{key, label}] */
+function bubMonthsHtml(months, sel, attrName) {
+  return '<div class="bub-months" role="tablist">' + months.map(function (m) {
+    return '<button type="button" role="tab" aria-selected="' + (m.key === sel) + '" class="' + (m.key === sel ? 'on' : '') + '" ' + attrName + '="' + m.key + '">' + m.label + '</button>';
+  }).join('') + '</div>';
+}
+function bubLastMonths(n, endIso) {
+  var MS = ['gen', 'feb', 'mar', 'apr', 'mag', 'giu', 'lug', 'ago', 'set', 'ott', 'nov', 'dic'], d = endIso ? new Date(endIso + '-01T12:00:00') : new Date(), out = [];
+  for (var i = n - 1; i >= 0; i--) { var x = new Date(d.getFullYear(), d.getMonth() - i, 1); out.push({ key: x.getFullYear() + '-' + String(x.getMonth() + 1).padStart(2, '0'), label: MS[x.getMonth()], long: x.toLocaleDateString('it-IT', { month: 'long', year: 'numeric' }) }); }
+  return out;
+}
+
+/* =========================================================
+   v1.46.0 — ANALISI A BOLLE (stile app della banca)
+   Saldi: "Chi paga" del mese (Persona 1, Persona 2, Cassa comune). Statistiche: dove vanno i soldi del mese, per
+   categoria o per gruppo. Mesi in alto, elenco sotto, un tocco apre i movimenti.
+   ========================================================= */
+function ndMoney(v){ return balancesHidden?"••••":new Intl.NumberFormat("it-IT",{maximumFractionDigits:0}).format(Math.round(v))+" €"; }
+function ndMovementsSheet(title,sub,list){
+  const total=list.reduce((s,t)=>s+t.amount,0);
+  openSheet("tpl-day-detail",(node)=>{
+    node.classList.add("stats-cat-sheet");
+    node.querySelector("#dayDetailTitle").textContent=title;
+    const p=document.createElement("p");p.className="stats-cat-sub";
+    p.innerHTML=`<span>${escapeHtml(sub)} · ${list.length} moviment${list.length===1?"o":"i"}</span><b>${maskAmt(fmt(total))}</b>`;
+    node.querySelector(".sheet-head").after(p);
+    renderTxRows(node.querySelector("#dayDetailList"),list.slice().sort((a,b)=>b.date.localeCompare(a.date)));
+    const empty=node.querySelector("#dayDetailEmptyHint"); empty.textContent="Nessun movimento nel mese."; empty.hidden=list.length>0;
+  });
+}
+function ndExpensesOf(ym){ return state.transactions.filter(t=>t.type==="expense"&&!t.isBalanceAdjustment&&String(t.date).startsWith(ym)); }
+/* Saldi › Chi paga */
+function ndPayData(ym){
+  const tx=ndExpensesOf(ym), by={a:[],b:[],joint:[]};
+  tx.forEach(t=>{ const o=accOwner(t.accountId); by[o==="a"||o==="b"?o:"joint"].push(t); });
+  const y=Number(ym.slice(0,4)), m=Number(ym.slice(5,7))-1, st=coupleMonthStats(y,m);
+  return ["a","b","joint"].map(k=>{ const v=by[k].reduce((s,t)=>s+t.amount,0);
+    return {key:k,label:k==="joint"?"Cassa comune":personName(k),value:v,text:ndMoney(v),sub:fmt(v)+(k!=="joint"?` pagati · quota ${maskAmt(fmt(st.quota[k]))}`:" dalla cassa comune"),color:personColor(k),ink:"#fff",list:by[k]}; });
+}
+function renderCoupleBubbles(){
+  const view=document.getElementById("view-coppia"), grid=view?.querySelector('.forecast-grid[aria-label="Chi ha pagato in tutto"]'); if(!grid) return;
+  let box=document.getElementById("coupleBubbles");
+  if(!box){ box=document.createElement("div"); box.id="coupleBubbles"; box.className="section-block bub-card nd-bub"; grid.before(box); }
+  const months=bubLastMonths(3); if(!ndBubM||!months.some(m=>m.key===ndBubM)) ndBubM=months[2].key;
+  const items=ndPayData(ndBubM), mo=months.find(m=>m.key===ndBubM), tot=items.reduce((s,i)=>s+i.value,0);
+  items.forEach(i=>{ i.side=tot>0?Math.round(i.value/tot*100)+"%":""; });
+  const esc=escapeHtml;
+  box.innerHTML=`<div class="bub-head"><div><h2>Chi paga</h2><p>Spese di ${esc(mo.long)}${tot>0?` · ${maskAmt(fmt(tot))} in tutto`:""}</p></div></div>`+bubMonthsHtml(months,ndBubM,"data-ndbm")+
+    (tot>0?bubChartHtml(items,{esc,h:230,attr:it=>`data-ndbk="${it.key}"`})+bubLegendHtml(items,{esc,attr:it=>`data-ndbk="${it.key}"`}):`<p class="bub-empty">Nessuna spesa a ${esc(mo.long)}.</p>`);
+}
+/* Statistiche › Dove vanno i soldi (categorie o gruppi) */
+function ndSpendData(ym,mode){
+  const tx=ndExpensesOf(ym), by=new Map(), cats=categoriesById(), grs=groupsById();
+  tx.forEach(t=>{
+    let k,lab,em,col;
+    if(mode==="grp"){ const g=grs[groupOf(t)]; k=g?g.id:"none"; lab=g?g.name:"Senza gruppo"; em=g?.emoji||""; col=safeColor(g?.color,"#8a9590"); }
+    else { const c=cats[t.categoryId]; k=c?c.id:"none"; lab=c?c.name:"Senza categoria"; em=c?.emoji||""; col=safeColor(c?.color,"#8a9590"); }
+    const x=by.get(k)||{key:k,label:lab,emoji:em,color:col,value:0,list:[]}; x.value+=t.amount; x.list.push(t); by.set(k,x);
+  });
+  let out=[...by.values()].sort((a,b)=>b.value-a.value);
+  if(out.length>6){ const rest=out.slice(5); out=out.slice(0,5).concat([{key:"rest",label:"Altro",emoji:"",color:"#8a9590",value:rest.reduce((s,g)=>s+g.value,0),list:[].concat(...rest.map(g=>g.list))}]); }
+  const tot=out.reduce((s,g)=>s+g.value,0);
+  out.forEach(g=>{ g.text=ndMoney(g.value); g.sub=fmt(g.value)+` · ${g.list.length} moviment${g.list.length===1?"o":"i"}`; g.side=tot>0?Math.round(g.value/tot*100)+"%":""; g.ink="#fff"; });
+  return out;
+}
+function renderStatsBubblesNd(){
+  const view=document.getElementById("view-stats"); if(!view) return;
+  let box=document.getElementById("statsBubbles");
+  if(!box){ box=document.createElement("div"); box.id="statsBubbles"; box.className="stat-card wide-stat bub-card"; view.insertBefore(box,view.firstElementChild); }
+  const months=bubLastMonths(3); if(!ndStM||!months.some(m=>m.key===ndStM)) ndStM=months[2].key;
+  const items=ndSpendData(ndStM,ndStMode), mo=months.find(m=>m.key===ndStM), tot=items.reduce((s,i)=>s+i.value,0), esc=escapeHtml;
+  box.innerHTML=`<div class="bub-head"><div><h2>Analisi</h2><p>Dove vanno i soldi · ${esc(mo.long)}${tot>0?` · ${maskAmt(fmt(tot))}`:""}</p></div></div>`+
+    `<div class="bub-row">${bubMonthsHtml(months,ndStM,"data-ndsm")}<div class="bub-seg" role="tablist"><button type="button" class="${ndStMode==="cat"?"on":""}" data-ndsmode="cat">Categorie</button><button type="button" class="${ndStMode==="grp"?"on":""}" data-ndsmode="grp">Gruppi</button></div></div>`+
+    (tot>0?bubChartHtml(items,{esc,attr:it=>`data-ndsk="${esc(it.key)}"`})+bubLegendHtml(items,{esc,title:ndStMode==="grp"?"Gruppi":"Categorie",attr:it=>`data-ndsk="${esc(it.key)}"`}):`<p class="bub-empty">Nessuna spesa a ${esc(mo.long)}.</p>`);
+}
+document.addEventListener("click",e=>{
+  const t=e.target; if(!t.closest) return;
+  const bm=t.closest("[data-ndbm]"), bk=t.closest("[data-ndbk]"), sm=t.closest("[data-ndsm]"), smo=t.closest("[data-ndsmode]"), sk=t.closest("[data-ndsk]");
+  if(bm){ ndBubM=bm.dataset.ndbm; renderCoupleBubbles(); }
+  else if(bk){ const it=ndPayData(ndBubM).find(x=>x.key===bk.dataset.ndbk), mo=bubLastMonths(3).find(m=>m.key===ndBubM); if(it) ndMovementsSheet(`Pagate da ${it.label}`,mo?mo.long:"",it.list); }
+  else if(sm){ ndStM=sm.dataset.ndsm; renderStatsBubblesNd(); }
+  else if(smo){ ndStMode=smo.dataset.ndsmode; renderStatsBubblesNd(); }
+  else if(sk){ const it=ndSpendData(ndStM,ndStMode).find(x=>x.key===sk.dataset.ndsk), mo=bubLastMonths(3).find(m=>m.key===ndStM); if(it) ndMovementsSheet(`${it.emoji?it.emoji+" ":""}${it.label}`,mo?mo.long:"",it.list); }
+});

@@ -8953,3 +8953,158 @@ html:root body #views #view-home > .hero.nh-card .nh-legacy { display: none !imp
 }
 /* 1.47.0 — cifre delle caselle che si adattano alla larghezza (niente cifre tagliate con importi a 5 cifre) */
 html:root body #views #view-home > .hero.nh-card .nh-tile b { font-size: clamp(12px, 3.7vw, 14px); }
+
+
+/* =====================================================================
+   Noi Due 1.48.0 — Tipi di lista, To-do, Home liste in griglia, pulizia.
+   ===================================================================== */
+.nd-off[hidden], #view-stats .section-block[hidden]{display:none!important}
+.nd-date-ghost{position:fixed;left:50%;top:40%;width:1px;height:1px;opacity:0;pointer-events:none;border:0;padding:0}
+
+/* Scelta del tipo di lista */
+.lk-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.lk-opt{appearance:none;display:grid;justify-items:center;gap:3px;padding:12px 6px 10px;border-radius:16px;border:1.5px solid var(--line);background:color-mix(in srgb,var(--ink) 4%,transparent);color:var(--ink);font:inherit;text-align:center;cursor:pointer;transition:transform .12s,border-color .15s,background .15s}
+.lk-opt:active{transform:scale(.97)}
+.lk-opt .lk-em{font-size:22px;line-height:1}
+.lk-opt b{font-size:14px;font-weight:800}
+.lk-opt small{font-size:11px;color:var(--ink-soft);line-height:1.2}
+.lk-opt.on{border-color:var(--emerald);background:color-mix(in srgb,var(--emerald) 16%,transparent);box-shadow:0 0 0 3px color-mix(in srgb,var(--emerald) 18%,transparent)}
+.lk-hint{display:block;margin-top:8px;line-height:1.35}
+
+/* Etichetta del tipo nella pagina Liste */
+#view-liste .lv-kind{display:inline-block;font-style:normal;font-size:10.5px;font-weight:750;padding:1px 7px;margin-right:6px;border-radius:999px;background:color-mix(in srgb,var(--ink) 9%,transparent);color:var(--ink);vertical-align:1px}
+#view-liste .lv-kind.lk-todo{background:color-mix(in srgb,var(--emerald) 20%,transparent)}
+#view-liste .lv-kind.lk-shopping{background:color-mix(in srgb,#D4A83A 24%,transparent)}
+#view-liste .lv-head small{white-space:normal!important;overflow:visible!important;text-overflow:clip!important;display:block}
+#view-liste .lv-card.late .lv-head small{color:var(--ink)}
+
+/* Home: liste in griglia, tutte visibili */
+#view-home .hl-row.hl-grid{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));overflow:visible!important;scroll-snap-type:none;gap:8px}
+#view-home .hl-row.hl-grid .hl-item{max-width:none;min-width:0;display:grid!important;grid-template-columns:minmax(0,1fr) auto;grid-template-rows:auto auto;align-items:center;row-gap:8px;column-gap:6px}
+#view-home .hl-row.hl-grid .hl-em{grid-row:1;grid-column:1}
+#view-home .hl-row.hl-grid .lr-ring{grid-row:1;grid-column:2}
+#view-home .hl-row.hl-grid .hl-txt{grid-row:2;grid-column:1 / -1;min-width:0}
+#view-home .hl-row.hl-grid .hl-txt b{font-size:14px}
+#view-home .hl-row.hl-grid .hl-txt small{white-space:normal;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+#view-home .hl-item.late .hl-txt small{color:var(--rust)}
+
+/* Dettaglio lista To-do: via i campi da negozio */
+#overlayRoot #sheetListDetail.is-todo #listScanBtn,#overlayRoot #sheetListDetail.is-todo #listFavBtn,#overlayRoot #sheetListDetail.is-todo .lc-row2,
+#overlayRoot #sheetListDetail.is-todo .lc-url,#overlayRoot #sheetListDetail.is-todo #listRegisterBtn,#overlayRoot #sheetListDetail.is-todo #listTotal,
+#overlayRoot #sheetListDetail.is-todo .list-act-fav{display:none!important}
+.is-todo .lc-linkrow{justify-content:flex-end}
+.list-item.td-item .list-text{display:grid;gap:3px}
+.td-meta{display:flex;flex-wrap:wrap;gap:5px;align-items:center}
+.td-meta small{display:inline-flex!important;align-items:center;gap:3px;font-size:11px;font-weight:700;padding:1px 7px;border-radius:999px;line-height:1.5;margin:0!important}
+.td-due{background:color-mix(in srgb,var(--emerald) 16%,transparent);color:var(--ink)}
+.td-due.td-today{background:color-mix(in srgb,#D4A83A 26%,transparent)}
+.td-due.td-late{background:color-mix(in srgb,var(--rust) 22%,transparent);color:var(--rust)}
+.td-due.td-later{background:color-mix(in srgb,var(--ink) 8%,transparent);color:var(--ink-soft)}
+.td-who{background:color-mix(in srgb,var(--pc) 20%,transparent);color:var(--ink)}
+.td-who::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--pc)}
+.td-meta .list-when{background:none;padding:0;font-weight:600;color:var(--ink-soft)}
+.list-item.td-late{box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--rust) 45%,transparent)}
+.list-aisle.td-head{color:var(--ac)}
+
+/* Modifica cosa da fare */
+#overlayRoot #sheetListItem.is-todo .item-qty-row,#overlayRoot #sheetListItem.is-todo #itemFavSwitch,#overlayRoot #sheetListItem.is-todo .item-link-field,
+#overlayRoot #sheetListItem.is-todo .item-links,#overlayRoot #sheetListItem.is-todo .scan-actions,#overlayRoot #sheetListItem.is-todo .item-photo{display:none!important}
+.item-due-row input[type=date]{max-width:220px}
+.item-due-chips{margin-top:8px}
+
+/* Saldi e gruppi */
+.nd-paid-note{margin:-4px 4px 14px;text-align:center}
+#coupleSharedAll{white-space:nowrap}
+.tx-month-head{display:flex;justify-content:space-between;align-items:baseline;margin:14px 4px 6px;font-size:12.5px;font-weight:800;letter-spacing:.02em;text-transform:uppercase;color:var(--ink-soft)}
+.tx-month-head:first-child{margin-top:4px}
+.tx-month-head b{font-size:13px;color:var(--ink);text-transform:none;letter-spacing:0}
+
+/* Mese scelto nelle bolle: sottolineato */
+.bub-months button.on{border-bottom:2px solid currentColor!important;padding-bottom:2px!important}
+
+
+/* =====================================================================
+   Noi Due 1.49.0 — Righe compatte, Saldi a fisarmonica, to-do ricorrenti,
+   negozio, budget, soglia del rimborso.
+   ===================================================================== */
+/* Righe delle liste più basse, colore solo sul bordo */
+#overlayRoot #sheetListDetail .list-swipe-wrap .list-item{min-height:46px!important;padding-top:2px!important;padding-bottom:2px!important;font-size:15px!important;
+  background:linear-gradient(90deg,color-mix(in srgb,var(--ac,#8a9490) 12%,transparent),transparent 65%),var(--card)!important;border-color:color-mix(in srgb,var(--ac,#8a9490) 26%,transparent)!important}
+#overlayRoot #sheetListDetail .list-check-btn{width:40px!important;height:40px!important;margin:-4px -2px -4px 0!important}
+#overlayRoot #sheetListDetail .list-check-btn .list-check{width:27px!important;height:27px!important;font-size:15px!important}
+#overlayRoot #sheetListDetail .list-items{gap:5px!important}
+#overlayRoot #sheetListDetail .list-aisle{margin:12px 2px 5px!important}
+#overlayRoot #sheetListDetail .list-thumb img{width:34px!important;height:34px!important}
+.list-prio{font-size:12px}
+#overlayRoot #sheetListDetail .lc-tool.lc-shop{background:color-mix(in srgb,var(--emerald) 22%,transparent)!important;border-color:color-mix(in srgb,var(--emerald) 50%,transparent)!important}
+
+/* To-do: barrato solo il testo */
+.list-item.td-item.done .list-text{text-decoration:none!important}
+.list-item.td-item.done .td-txt{text-decoration:line-through}
+.td-rep{background:color-mix(in srgb,#6B7FD7 22%,transparent);color:var(--ink)}
+#overlayRoot #sheetListDetail.is-todo #listComposer .lc-linkrow{grid-template-columns:minmax(0,1fr) auto!important}
+.td-rep-host{min-width:0}
+.td-rep-host .pick-btn{width:100%;min-height:40px}
+.item-rep-lbl{display:block;margin-top:12px}
+.item-rep-chips{margin-top:6px}
+
+/* Filtro per persona */
+.td-filter{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;margin:2px 0 6px}
+.td-filter::-webkit-scrollbar{display:none}
+.td-filter[hidden],.shop-bar[hidden]{display:none!important}
+.td-filter button{flex:none;appearance:none;border:1px solid var(--line);background:color-mix(in srgb,var(--ink) 5%,transparent);color:var(--ink);font:inherit;font-size:12.5px;font-weight:700;padding:6px 11px;border-radius:999px;cursor:pointer}
+.td-filter button b{font-weight:800;color:var(--ink-soft);margin-left:2px}
+.td-filter button.on{background:var(--emerald);border-color:var(--emerald);color:#fff}
+.td-filter button.on b{color:#fff;opacity:.85}
+
+/* Modalità negozio */
+.shop-bar{position:sticky;top:0;z-index:6;display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 0 8px;padding:10px 12px;border-radius:14px;background:color-mix(in srgb,var(--emerald) 22%,var(--card));border:1px solid color-mix(in srgb,var(--emerald) 45%,transparent);font-size:15px}
+.shop-bar b{font-size:17px}
+#overlayRoot #sheetListDetail.shop-mode #listComposer,#overlayRoot #sheetListDetail.shop-mode .lc-tools,#overlayRoot #sheetListDetail.shop-mode #listGestureHint,
+#overlayRoot #sheetListDetail.shop-mode #listDoneWrap,#overlayRoot #sheetListDetail.shop-mode #listTotal,#overlayRoot #sheetListDetail.shop-mode #listRegisterBtn,
+#overlayRoot #sheetListDetail.shop-mode #listTrashBtn,#overlayRoot #sheetListDetail.shop-mode .list-del,body.nd-shop .ls-tabs{display:none!important}
+#overlayRoot #sheetListDetail.shop-mode .list-swipe-wrap .list-item{min-height:62px!important;font-size:18px!important;font-weight:650}
+#overlayRoot #sheetListDetail.shop-mode .list-check-btn .list-check{width:34px!important;height:34px!important}
+#overlayRoot #sheetListDetail.shop-mode .list-aisle{font-size:14px!important}
+
+/* Saldi a fisarmonica */
+.section-block[data-acc] > .section-head{cursor:pointer}
+.acc-chev{appearance:none;border:0;background:color-mix(in srgb,var(--ink) 7%,transparent);color:var(--ink-soft);width:30px;height:30px;border-radius:50%;display:grid;place-items:center;flex:none;margin-left:6px;padding:0;cursor:pointer}
+.acc-chev svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round;transition:transform .2s}
+.section-block.acc-closed .acc-chev svg{transform:rotate(-90deg)}
+.section-block.acc-closed > :not(.section-head):not(.acc-keep):not(.acc-sum){display:none!important}
+.acc-sum{display:none;margin:2px 4px 0;font-size:13px;color:var(--ink-soft)}
+.section-block.acc-closed > .acc-sum{display:block}
+.section-block.acc-closed{padding-bottom:12px!important}
+.nd-sempre .forecast-grid{margin:8px 0 6px!important}
+.nd-sempre .nd-paid-note{margin:0 4px 12px;text-align:left}
+.nd-sub-h{margin:4px 4px 8px;font-size:12px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-soft)}
+.settle-alert{margin:8px 0 0;padding:8px 12px;border-radius:12px;background:color-mix(in srgb,var(--rust) 18%,transparent);color:var(--ink);font-size:13px;font-weight:650;text-align:center}
+.settle-alert[hidden]{display:none!important}
+.settle-alert-btn{appearance:none;display:block;margin:10px auto 0;border:0;background:none;color:var(--ink-soft);font:inherit;font-size:12.5px;font-weight:650;padding:4px 8px;cursor:pointer}
+.group-card.empty{opacity:.55}
+.group-card.empty .group-card-text span:last-child{display:none}
+
+#overlayRoot #sheetListItem.is-todo #itemPrioSwitch{display:none!important}
+.stats-period-filter[hidden]{display:none!important}
+/* Categorie: frecce solo in "Riordina" */
+#sheetCategoriesHub:not(.reordering) .reorder-actions{display:none!important}
+.hub-reorder{margin-right:6px}
+
+/* Budget del mese (Home) */
+#view-home .nd-budget{padding-bottom:12px}
+.hb-rows{display:grid;gap:10px;padding:2px 12px 0}
+.hb-row{display:grid;grid-template-columns:30px minmax(0,1fr) auto;grid-template-rows:auto auto;column-gap:9px;row-gap:6px;align-items:center}
+.hb-em{grid-row:1;width:30px;height:30px;border-radius:10px;display:grid;place-items:center;background:color-mix(in srgb,var(--ink) 7%,transparent);font-size:14px}
+.hb-txt{display:grid;min-width:0}
+.hb-txt b{font-size:13.5px;font-weight:750;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hb-txt small{font-size:11.5px;color:var(--ink-soft)}
+.hb-row.over .hb-txt small{color:var(--rust);font-weight:700}
+.hb-amt{text-align:right;font-weight:800;font-size:13.5px;display:grid}
+.hb-amt small{font-size:11px;font-weight:600;color:var(--ink-soft)}
+.hb-bar{grid-column:1 / -1;position:relative;height:7px;border-radius:99px;background:color-mix(in srgb,var(--ink) 9%,transparent);overflow:visible}
+.hb-bar i{display:block;height:100%;border-radius:99px;background:var(--emerald)}
+.hb-row.warn .hb-bar i{background:#D4A83A}
+.hb-row.over .hb-bar i{background:var(--rust)}
+.hb-bar em{position:absolute;top:-3px;width:2px;height:13px;border-radius:2px;background:var(--ink);opacity:.45;transform:translateX(-1px)}
+.amounts-hidden .hb-bar i{width:0!important}

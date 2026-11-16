@@ -9,6 +9,15 @@ const MESI = ["Gennaio","Febbraio","Marzo","Aprile","Maggio","Giugno","Luglio","
 const MESI_BREVI = ["Gen","Feb","Mar","Apr","Mag","Giu","Lug","Ago","Set","Ott","Nov","Dic"];
 const FREQ_LABEL = { weekly: "Ogni settimana", monthly: "Ogni mese", bimonthly:"Ogni 2 mesi", quarterly:"Ogni 3 mesi", semiannual:"Ogni 6 mesi", yearly: "Ogni anno" };
 
+/* v1.48.0 — Tre tipi di lista. "kind" sostituisce l'interruttore "lista della spesa fissa"
+   (restockOnExit resta allineato, così i telefoni non ancora aggiornati continuano a funzionare). */
+const LIST_KINDS = {
+  shopping:{emoji:"🛒",label:"Spesa",title:"Lista della spesa",desc:"Al supermercato spunti i prodotti; uscendo dalla lista tornano tutti da comprare. Si eliminano solo a mano."},
+  list:{emoji:"🛍️",label:"Classica",title:"Cose da comprare",desc:"Cose da comprare una volta: quando le prendete finiscono in “Acquistato”, poi le togli (restano negli acquisti)."},
+  todo:{emoji:"✅",label:"To-do",title:"Cose da fare",desc:"Cose da fare: chi se ne occupa, entro quando e la spunta quando è fatta. Niente prezzi né reparti."},
+};
+/* v1.49.0 — Cose da fare che si ripetono. */
+const REPEATS = { daily:"Ogni giorno", weekly:"Ogni settimana", biweekly:"Ogni 2 settimane", monthly:"Ogni mese" };
 const PALETTE = ["#1F5D4C","#3AA684","#D4A83A","#A8322D","#6B7FD7","#C25B9E","#4FA8C9","#8A6A16","#5B7553","#946638","#E67E5F","#7A5CFA","#D84C7F","#159C9C","#B06428","#546E7A"];
 const EMOJIS = ["🛒","🚗","💡","🏠","💊","🎬","👕","✈️","📚","🐾","☕","🍽️","🎁","💰","➕","📱","🏋️","🧾","🎓","🐶","🍔","🍕","🚌","🚆","⛽","🧾","💻","🎮","🎵","🎓","🏥","🧑‍💼","🏦","💳","🎯","🪙","📦","🔧","🌱","🎁","👶","🐱"];
 
@@ -328,6 +337,7 @@ function sanitizeCouple(data){
   data.couple={a:person(c.a,COUPLE_DEFAULT.a),b:person(c.b,COUPLE_DEFAULT.b),defaultSplit:c.defaultSplit==="personal"?"personal":"half",lastGroupId:c.lastGroupId?String(c.lastGroupId):null,onboarded:!!c.onboarded};
   (data.accounts||[]).forEach(a=>{ if(!["a","b","joint"].includes(a.owner)) a.owner="joint"; });
   if(["a","b","joint"].includes(c.lastPayer)) data.couple.lastPayer=c.lastPayer;
+  { const sa=Math.round(Number(c.settleAlert)||0); if(sa>0) data.couple.settleAlert=Math.min(100000,sa); } // v1.49.0 — soglia del rimborso
   // Noi Due 1.4.0: niente conti. Ci sono solo tre "pagatori": persona 1, persona 2 e cassa comune.
   // I conti in più di una stessa persona vengono uniti; i giroconti tra di loro spariscono.
   if(!Array.isArray(data.accounts)) data.accounts=[];
@@ -352,21 +362,23 @@ function sanitizeCouple(data){
   // Noi Due 1.5.0: solo categorie di spesa, senza macrocategorie né budget.
   const usedCat=new Set([...(data.transactions||[]),...(data.recurring||[]),...(data.planned||[])].map(t=>t.categoryId));
   data.macroCategories=[];
-  data.categories=(data.categories||[]).filter(c=>c.kind!=="income"||usedCat.has(c.id)).map(c=>({...c,macroCategoryId:null,budget:null}));
+  data.categories=(data.categories||[]).filter(c=>c.kind!=="income"||usedCat.has(c.id)).map(c=>({...c,macroCategoryId:null,budget:Number(c.budget)>0?Math.min(1000000,Math.round(Number(c.budget)*100)/100):null}));
   // Liste della spesa / cose da comprare.
   if(!Array.isArray(data.lists)) data.lists=defaultLists(data.groups);
   data.lists=data.lists.filter(l=>l&&l.id).map(l=>({id:String(l.id).slice(0,120),name:String(l.name||"Lista").slice(0,40),emoji:cleanEmoji(String(l.emoji||"🛒"))||"🛒",groupId:ids.has(l.groupId)?l.groupId:fallback,
     items:(Array.isArray(l.items)?l.items:[]).filter(i=>i&&i.id).map(i=>({id:String(i.id).slice(0,120),text:String(i.text||"").slice(0,120),price:Number.isFinite(Number(i.price))&&Number(i.price)>0?Math.round(Number(i.price)*100)/100:null,done:!!i.done,
       code:String(i.code||"").replace(/[^0-9A-Za-z-]/g,"").slice(0,32),image:/^https:\/\//.test(String(i.image||""))?String(i.image).slice(0,500):"",url:/^https:\/\//.test(String(i.url||""))?String(i.url).slice(0,500):"",
       photo:/^data:image\/(jpeg|png|webp);base64,/.test(String(i.photo||""))&&String(i.photo).length<300000?String(i.photo):/^idb:[\w-]{1,120}$/.test(String(i.photo||""))?String(i.photo):"",
-      qty:Math.min(99,Math.max(1,Math.round(Number(i.qty)||1))),aisle:typeof i.aisle==="string"?i.aisle.slice(0,20):"",forWhom:["a","b"].includes(i.forWhom)?i.forWhom:"both",addedBy:["a","b"].includes(i.addedBy)?i.addedBy:"",via:typeof i.via==="string"?i.via.slice(0,20):"",counted:/^\d{4}-\d{2}-\d{2}$/.test(String(i.counted||""))?String(i.counted):"",boughtAt:/^\d{4}-\d{2}-\d{2}T[\d:.]+Z?$/.test(String(i.boughtAt||""))?String(i.boughtAt):""})),
+      qty:Math.min(99,Math.max(1,Math.round(Number(i.qty)||1))),aisle:typeof i.aisle==="string"?i.aisle.slice(0,20):"",forWhom:["a","b"].includes(i.forWhom)?i.forWhom:"both",addedBy:["a","b"].includes(i.addedBy)?i.addedBy:"",via:typeof i.via==="string"?i.via.slice(0,20):"",counted:/^\d{4}-\d{2}-\d{2}$/.test(String(i.counted||""))?String(i.counted):"",boughtAt:/^\d{4}-\d{2}-\d{2}T[\d:.]+Z?$/.test(String(i.boughtAt||""))?String(i.boughtAt):"",due:/^\d{4}-\d{2}-\d{2}$/.test(String(i.due||""))?String(i.due):"",doneBy:["a","b"].includes(i.doneBy)?i.doneBy:"",repeat:["daily","weekly","biweekly","monthly"].includes(i.repeat)?i.repeat:"",lastDone:/^\d{4}-\d{2}-\d{2}T/.test(String(i.lastDone||""))?String(i.lastDone).slice(0,30):"",lastDoneBy:["a","b"].includes(i.lastDoneBy)?i.lastDoneBy:"",prio:i.prio==="high"?"high":""})),
     sortMode:l.sortMode==="manual"?"manual":"aisle",
-    restockOnExit:typeof l.restockOnExit==="boolean"?l.restockOnExit:/spesa|supermercat/i.test(String(l.name||"")),
+    kind:["shopping","list","todo"].includes(l.kind)?l.kind:((typeof l.restockOnExit==="boolean"?l.restockOnExit:/spesa|supermercat/i.test(String(l.name||"")))?"shopping":"list"),
+    doneLog:(Array.isArray(l.doneLog)?l.doneLog:[]).filter(x=>x&&x.id&&x.text&&/^\d{4}-\d{2}-\d{2}T/.test(String(x.at||""))).map(x=>({id:String(x.id).slice(0,120),itemId:String(x.itemId||"").slice(0,120),text:String(x.text).slice(0,120),at:String(x.at).slice(0,30),by:["a","b"].includes(x.by)?x.by:""})).sort((a,b)=>a.at.localeCompare(b.at)).slice(-400),
     template:(Array.isArray(l.template)?l.template:[]).map(t=>String(t||"").slice(0,120)).filter(Boolean).slice(0,200),
     // v1.19.0 — Acquisti nel tempo (con data e ora automatiche) e cestino della lista.
     purchases:(Array.isArray(l.purchases)?l.purchases:[]).filter(x=>x&&x.id&&x.text&&/^\d{4}-\d{2}-\d{2}T/.test(String(x.at||""))).map(x=>({id:String(x.id).slice(0,120),itemId:String(x.itemId||"").slice(0,120),text:String(x.text).slice(0,120),qty:Math.min(99,Math.max(1,Math.round(Number(x.qty)||1))),aisle:typeof x.aisle==="string"?x.aisle.slice(0,20):"",at:String(x.at).slice(0,30),by:["a","b"].includes(x.by)?x.by:""})).sort((a,b)=>a.at.localeCompare(b.at)).slice(-400),
     trash:(Array.isArray(l.trash)?l.trash:[]).filter(x=>x&&x.id&&x.text&&/^\d{4}-\d{2}-\d{2}T/.test(String(x.deletedAt||""))).map(x=>({id:String(x.id).slice(0,120),text:String(x.text).slice(0,120),qty:Math.min(99,Math.max(1,Math.round(Number(x.qty)||1))),price:Number(x.price)>0?Math.round(Number(x.price)*100)/100:null,aisle:typeof x.aisle==="string"?x.aisle.slice(0,20):"",forWhom:["a","b"].includes(x.forWhom)?x.forWhom:"both",url:/^https:\/\//.test(String(x.url||""))?String(x.url).slice(0,500):"",image:/^https:\/\//.test(String(x.image||""))?String(x.image).slice(0,500):"",deletedAt:String(x.deletedAt).slice(0,30),by:["a","b"].includes(x.by)?x.by:""})).sort((a,b)=>b.deletedAt.localeCompare(a.deletedAt)).slice(0,200),
     history:Object.fromEntries(Object.entries(l.history&&typeof l.history==="object"?l.history:{}).filter(([k,v])=>k&&v&&v.text).slice(-300).map(([k,v])=>[k.slice(0,120),{text:String(v.text).slice(0,120),count:Math.max(1,Number(v.count)||1),last:String(v.last||"").slice(0,10),aisle:typeof v.aisle==="string"?v.aisle.slice(0,20):"",dates:(Array.isArray(v.dates)?v.dates:[]).map(d=>String(d||"").slice(0,10)).filter(d=>/^\d{4}-\d{2}-\d{2}$/.test(d)).slice(-12),qty:Math.min(99,Math.max(1,Math.round(Number(v.qty)||1)))}]))}));
+  data.lists.forEach(l=>{ l.restockOnExit=l.kind==="shopping"; });
   // Preferiti: prodotti da rimettere in lista con un tocco (comuni a tutte le liste).
   data.favorites=(Array.isArray(data.favorites)?data.favorites:[]).filter(f=>f&&f.text).map(f=>({id:String(f.id||uid()).slice(0,120),text:String(f.text).slice(0,120),aisle:typeof f.aisle==="string"?f.aisle.slice(0,20):""})).slice(0,300);
   // Elementi eliminati (liste, articoli, gruppi, conti, categorie): servono a unire i backup senza farli ricomparire.
@@ -377,8 +389,8 @@ function sanitizeCouple(data){
 function defaultLists(groups){
   const casa=(groups.find(g=>/casa/i.test(g.name))||groups[0])?.id, coppia=(groups.find(g=>/coppia/i.test(g.name))||groups[0])?.id;
   return [
-    {id:uid(),name:"Spesa",emoji:"🛒",groupId:coppia,items:[],restockOnExit:true,sortMode:"aisle",template:[],history:{}},
-    {id:uid(),name:"Per la casa",emoji:"🏠",groupId:casa,items:[],restockOnExit:false,sortMode:"aisle",template:[],history:{}},
+    {id:uid(),name:"Spesa",emoji:"🛒",groupId:coppia,items:[],kind:"shopping",restockOnExit:true,sortMode:"aisle",template:[],history:{}},
+    {id:uid(),name:"Per la casa",emoji:"🏠",groupId:casa,items:[],kind:"list",restockOnExit:false,sortMode:"aisle",template:[],history:{}},
   ];
 }
 function defaultGroups(){
@@ -574,6 +586,31 @@ function pickButton({label,emoji="",value="",empty="Scegli",onOpen}){
 function openPick(anchor,title,items,onPick){ if(window.SuitePop) return SuitePop.open(anchor,{title,items,onPick}); }
 /* v1.31.0 — Categoria con pulsanti (Macrocategoria · Categoria): ognuno apre un menu piccolo,
    al posto delle righe di chip sparse nel pannello. */
+/* v1.48.0 — Categoria suggerita dal nome: prima quella usata l'ultima volta con lo stesso nome,
+   poi parole chiave. Prima la spesa finiva nella prima categoria della lista (Affitto / mutuo). */
+const CAT_HINTS=[
+  [/\b(aere|volo|voli|hotel|albergo|b&b|airbnb|booking|valigi|vacanz|viagg|ryanair|easyjet|wizz)/,/viagg/],
+  [/\b(treno|trenitalia|italo|bus|metro|taxi|uber|benzin|carbur|autostrad|parchegg|pedaggi|bollo)/,/trasport/],
+  [/\b(pizz|ristor|trattor|osteria|sushi|cena|pranzo|aperitiv|kebab|burger|mcdonald|deliveroo|glovo|just ?eat|gelat)/,/ristor/],
+  [/\b(supermerc|spesa|esselunga|coop|conad|carrefour|lidl|eurospin|aldi|penny|despar|pam|bennet|iper)/,/^spesa/],
+  [/\b(farmac|medic|ticket|visita|dentist|parafarm)/,/farmac/],
+  [/\b(luce|gas|bollett|internet|wifi|fibra|telefon|enel|a2a|iren|hera|tim|vodafone|iliad|fastweb)/,/bollett/],
+  [/\b(affitto|mutuo|condomin)/,/affitto|mutuo/],
+  [/\b(ikea|kasanova|action|leroy|brico|mobil|arred|mocio|detersiv|tigot|shein|casa|pulizi|tende|lenzuol)/,/^casa/],
+  [/\b(regal|compleann|anniversar)/,/regal/],
+  [/\b(cinema|teatro|concert|netflix|spotify|disney|prime video|museo|biglietto|svago|gate|discotec)/,/svago/],
+  [/\b(zara|h&m|vestit|scarpe|giubbott|maglion|mascara|trucco|profum|shopping|amazon)/,/shopping|abbigl/],
+];
+function guessCategoryFor(name,kind="expense"){
+  const k=normName(name); if(!k||k.length<3) return null;
+  const cats=state.categories.filter(c=>c.kind===kind);
+  const past=state.transactions.filter(t=>t.type===kind&&t.categoryId&&normName(t.name)===k).sort((a,b)=>b.date.localeCompare(a.date))[0];
+  if(past&&cats.some(c=>c.id===past.categoryId)) return past.categoryId;
+  if(kind!=="expense") return null;
+  const low=" "+String(name).toLowerCase();
+  for(const [re,target] of CAT_HINTS){ if(re.test(low)){ const c=cats.find(x=>target.test(x.name.toLowerCase())); if(c) return c.id; } }
+  return null;
+}
 function renderCategoryPicker(container, kind, getSelected, onSelect){
   const macros = macroCategoriesById();
   const cats = state.categories.filter(c=>c.kind===kind);
@@ -1090,6 +1127,33 @@ function transferName(fromId,toId){
   const accs=accountsById();
   return `${accs[fromId]?.name||"Conto"} → ${accs[toId]?.name||"Conto"}`;
 }
+/* v1.48.0 — Movimenti divisi per mese, con il totale delle spese di ogni mese. */
+/* v1.49.0 — Budget di coppia per categoria: speso nel mese (tutti e due) e quanto resta.
+   La tacca sulla barra indica a che punto del mese siete. */
+function renderHomeBudget(){
+  const box=document.getElementById("homeBudget"); if(!box) return;
+  const cats=state.categories.filter(c=>c.kind==="expense"&&Number(c.budget)>0);
+  if(!cats.length){ box.hidden=true; box.innerHTML=""; return; }
+  const now=new Date(), key=`${now.getFullYear()}-${pad2(now.getMonth()+1)}`, dim=new Date(now.getFullYear(),now.getMonth()+1,0).getDate(), pace=now.getDate()/dim;
+  const spentBy={}; state.transactions.filter(t=>t.type==="expense"&&!t.isBalanceAdjustment&&String(t.date).startsWith(key)).forEach(t=>{ spentBy[t.categoryId]=(spentBy[t.categoryId]||0)+t.amount; });
+  const tb=cats.reduce((s,c)=>s+Number(c.budget),0), ts=cats.reduce((s,c)=>s+(spentBy[c.id]||0),0);
+  const show=v=>balancesHidden?"••••":fmt(v);
+  box.hidden=false;
+  box.innerHTML=`<div class="hl-head"><span class="hl-title"><span class="hl-title-ic" aria-hidden="true">🎯</span>Budget di ${MESI[now.getMonth()].toLowerCase()}</span><span class="hl-sum">${show(ts)} su ${show(tb)}</span><button type="button" class="hl-all" data-bud-edit>Modifica ›</button></div>
+    <div class="hb-rows">${cats.map(c=>{ const s=spentBy[c.id]||0, b=Number(c.budget), r=s/b, cls=r>1?"over":r>pace+0.1?"warn":"ok";
+      return `<div class="hb-row ${cls}"><span class="hb-em" aria-hidden="true">${emojiIconHtml(c.emoji)}</span><span class="hb-txt"><b>${escapeHtml(c.name)}</b><small>${r>1?`${show(s-b)} oltre il budget`:`restano ${show(b-s)}`}</small></span><span class="hb-amt">${show(s)}<small>di ${show(b)}</small></span><span class="hb-bar" aria-hidden="true"><i style="width:${Math.min(100,r*100).toFixed(1)}%"></i><em style="left:${(pace*100).toFixed(1)}%"></em></span></div>`; }).join("")}</div>`;
+  box.querySelector("[data-bud-edit]").addEventListener("click",()=>openCategoriesHub("categories"));
+}
+function renderTxRowsByMonth(container,list){
+  container.innerHTML="";
+  const byM=new Map(); list.forEach(t=>{ const k=String(t.date).slice(0,7); if(!byM.has(k)) byM.set(k,[]); byM.get(k).push(t); });
+  byM.forEach((arr,k)=>{
+    const [y,m]=k.split("-").map(Number), tot=arr.filter(t=>t.type==="expense").reduce((s,t)=>s+t.amount,0);
+    const h=document.createElement("p"); h.className="tx-month-head"; h.innerHTML=`<span>${MESI[m-1]||k} ${y}</span>${tot>0?`<b>${maskAmt(fmt(tot))}</b>`:""}`;
+    const box=document.createElement("div"); renderTxRows(box,arr);
+    container.append(h,...[...box.children]);
+  });
+}
 function renderTxRows(container, list, {paidLabel=false}={}){
   const cats = categoriesById(), accs = accountsById(), macros = macroCategoriesById();
   container.innerHTML = "";
@@ -1222,11 +1286,18 @@ function renderTopCategoriesChart(entries,cats){
 }
 function renderStats(){
   renderStatsBubblesNd();
+  // v1.49.0 — un solo periodo: il mese scelto in alto vale anche per l'andamento e le cifre.
+  const y0=viewYear, m0=viewMonth;
+  if(typeof ndStM==="string"&&/^\d{4}-\d{2}$/.test(ndStM)){ viewYear=Number(ndStM.slice(0,4)); viewMonth=Number(ndStM.slice(5,7))-1; }
+  statsTrendRange="1m";
+  try{ renderStatsInner(); } finally{ viewYear=y0; viewMonth=m0; }
+}
+function renderStatsInner(){
   const tx=statsTransactions(), income=tx.filter(t=>t.type==="income").reduce((s,t)=>s+t.amount,0), expense=tx.filter(t=>t.type==="expense").reduce((s,t)=>s+t.amount,0);
-  const days=Math.max(1,Math.ceil((new Date(viewYear,viewMonth+1,0)-new Date(viewYear,viewMonth,1))/86400000)+1);
+  const now0=new Date(), days=(viewYear===now0.getFullYear()&&viewMonth===now0.getMonth())?now0.getDate():new Date(viewYear,viewMonth+1,0).getDate(); // media sui giorni passati
   const cats=categoriesById(), byCat={};tx.filter(t=>t.type==="expense").forEach(t=>{byCat[t.categoryId]=(byCat[t.categoryId]||0)+t.amount;});
   const topEntries=Object.entries(byCat).sort((a,b)=>b[1]-a[1]).slice(0,5);
-  document.getElementById("statsInsights").innerHTML=`<div class="stat-card stat-row"><p class="stat-card-label">Media spese/giorno</p><p class="stat-card-value neg">${fmt(expense/days)}</p></div><div class="stat-card stat-row"><p class="stat-card-label">Spese del periodo</p><p class="stat-card-value neg">${fmt(expense)}</p></div><div class="stat-card wide-stat top-categories-card"><p class="stat-card-label">Top 5 categorie</p>${renderTopCategoriesChart(topEntries,cats)}</div>`;
+  document.getElementById("statsInsights").innerHTML=`<div class="stat-card stat-row"><p class="stat-card-label">Media spese/giorno</p><p class="stat-card-value neg">${fmt(expense/days)}</p></div><div class="stat-card stat-row"><p class="stat-card-label">Spese del periodo</p><p class="stat-card-value neg">${fmt(expense)}</p></div>`;
   renderPie();
   renderTrendSection();
   renderAccountBreakdown();
@@ -1297,7 +1368,9 @@ function renderPie(){
 function buildBarsSVG(data){
   const w=360, h=190, left=42, right=8, top=16, bottom=30;
   const plotW=w-left-right, plotH=h-top-bottom, baseline=h-bottom;
-  const max=Math.max(1, ...data.map(d=>Math.max(d.income,d.expense)));
+  // v1.48.0 — asse con valori tondi (0 · 250 · 500 · 750) invece di 216,7 e 433,3.
+  const rawMax=Math.max(1, ...data.map(d=>Math.max(d.income,d.expense)));
+  const max=(()=>{ const x=rawMax/3, p=Math.pow(10,Math.floor(Math.log10(x))); const m=[1,2,2.5,5,10].find(k=>k*p>=x)||10; return m*p*3; })();
   const slot=plotW/Math.max(1,data.length), barW=slot*0.36;
   const labelStep=Math.max(1,Math.ceil(data.length/7));
   let chart="";
@@ -1388,22 +1461,8 @@ function renderTrendSection(){
   const totalIncome = data.reduce((s,d)=>s+d.income,0);
   const totalExpense = data.reduce((s,d)=>s+d.expense,0);
   const net = totalIncome - totalExpense;
-  document.getElementById("trendLegend").innerHTML = `
-    <div class="stat-cards-row">
-      <div class="stat-card">
-        <p class="stat-card-label"><span class="sw" style="background:var(--emerald-soft)"></span>Entrate</p>
-        <p class="stat-card-value" style="color:var(--emerald)">${fmt(totalIncome)}</p>
-      </div>
-      <div class="stat-card">
-        <p class="stat-card-label"><span class="sw" style="background:var(--rust)"></span>Uscite</p>
-        <p class="stat-card-value" style="color:var(--rust)">${fmt(totalExpense)}</p>
-      </div>
-      <div class="stat-card">
-        <p class="stat-card-label"><span class="sw" style="background:${net<0?"var(--rust)":"var(--emerald)"}"></span>Netto</p>
-        <p class="stat-card-value ${net<0?"neg":net>0?"pos":"zero"}">${fmtSigned(net)}</p>
-      </div>
-    </div>
-  `;
+  // v1.48.0 — Entrate e netto non servono in un'app di spese di coppia: restano le cifre sotto il grafico.
+  document.getElementById("trendLegend").innerHTML = "";
 }
 document.getElementById("statsRangeSelect").addEventListener("change", event=>{
   statsTrendRange=event.target.value;
@@ -1460,7 +1519,7 @@ function renderCategories(){
       <span class="ic">${emojiIconHtml(c.emoji)}</span>
       <span class="info">
         <p class="nm">${escapeHtml(c.name)}</p>
-        <p class="sub">${(n=>`${n} ${n===1?"movimento":"movimenti"}`)(state.transactions.filter(t=>t.categoryId===c.id).length)}</p>
+        <p class="sub">${(n=>`${n} ${n===1?"movimento":"movimenti"}`)(state.transactions.filter(t=>t.categoryId===c.id).length)}${Number(c.budget)>0?` · 🎯 ${fmt(Number(c.budget))} al mese`:""}</p>
       </span>
       <span class="chev">›</span>`;
     row.addEventListener("click", ()=> openCategoryForm(c.id));
@@ -1541,6 +1600,7 @@ function renderAll(){
   generateRecurringTransactions(false);
   renderHeader();
   renderHome();
+  renderHomeBudget();
   renderCouple();
   renderTransactionsView();
   renderStats();
@@ -1791,6 +1851,31 @@ document.getElementById("txDateTo").addEventListener("change",e=>{txDateTo=e.tar
 document.getElementById("clearCustomRange").addEventListener("click",()=>{txDateFrom="";txDateTo="";txVisibleLimit=TX_PAGE_SIZE;document.getElementById("txDateFrom").value="";document.getElementById("txDateTo").value="";renderTransactionsView();});
 document.getElementById("backToHomeTx").addEventListener("click",()=>switchView("home"));
 document.getElementById("seeAllTx").addEventListener("click", ()=> {periodModes.transactions=periodModes.home;openSubView("transactions");});
+document.getElementById("coupleSharedAll")?.addEventListener("click", ()=> openSubView("transactions"));
+/* v1.49.0 — Sezioni che si aprono e chiudono (Saldi). Lo stato resta sul telefono. */
+function setupAccordions(){
+  let st={}; try{ st=JSON.parse(localStorage.getItem("noidue_acc")||"{}")||{}; }catch(e){}
+  document.querySelectorAll(".section-block[data-acc]").forEach(sec=>{
+    const key=sec.dataset.acc, head=sec.querySelector(".section-head"); if(!head||sec._acc) return; sec._acc=true;
+    const closed=key in st?!!st[key]:sec.dataset.accDefault==="closed";
+    sec.classList.toggle("acc-closed",closed);
+    const btn=document.createElement("button"); btn.type="button"; btn.className="acc-chev"; btn.setAttribute("aria-label","Apri o chiudi la sezione"); btn.setAttribute("aria-expanded",String(!closed));
+    btn.innerHTML=`<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>`;
+    head.appendChild(btn);
+    const toggle=()=>{ const c=!sec.classList.contains("acc-closed"); sec.classList.toggle("acc-closed",c); btn.setAttribute("aria-expanded",String(!c));
+      let s={}; try{ s=JSON.parse(localStorage.getItem("noidue_acc")||"{}")||{}; }catch(e){} s[key]=c; try{ localStorage.setItem("noidue_acc",JSON.stringify(s)); }catch(e){} };
+    btn.addEventListener("click",e=>{ e.stopPropagation(); toggle(); });
+    head.addEventListener("click",e=>{ if(e.target.closest("button,a,input,select,label")) return; toggle(); });
+  });
+}
+setupAccordions();
+document.getElementById("settleAlertBtn")?.addEventListener("click",e=>{
+  const T=Number(state.couple.settleAlert)||0;
+  openPick(e.currentTarget,"Avvisami quando il debito supera",[0,20,50,100,200,500].map(v=>({key:String(v),label:v?`${v} €`:"Mai",emoji:v?"🔔":"🔕",active:v===T})),k=>{
+    const v=Number(k)||0; if(v>0) state.couple.settleAlert=v; else delete state.couple.settleAlert;
+    persist(); renderCouple(); showToast(v?`Ti avviso quando chi deve supera ${v} €`:"Avviso del rimborso spento");
+  });
+});
 document.getElementById("txPeriodBtn")?.addEventListener("click",()=>openPeriodPicker("transactions"));
 document.getElementById("openRPFromHome").addEventListener("click",()=>switchView("recurring"));
 
@@ -2269,11 +2354,16 @@ function renderCouple(){
   const scale=Math.max(spent*0.15,50);
   const shift=Math.max(-40,Math.min(40,bal/scale*40));
   document.getElementById("coupleKnot").style.left=(50-shift)+"%";
+  // v1.49.0 — avviso quando il debito supera la soglia scelta
+  { const T=Number(state.couple.settleAlert)||0, msg=document.getElementById("settleAlertMsg"), btn=document.getElementById("settleAlertBtn");
+    const eur=v=>fmt(v).replace(/,00(?=\s?€)/,"");
+    if(btn) btn.textContent=T?`🔔 Avviso oltre ${eur(T)}`:"🔕 Avviso rimborso spento";
+    if(msg){ const over=T>0&&Math.abs(bal)>=T; msg.hidden=!over; if(over) msg.textContent=`⚠️ Superata la soglia di ${eur(T)}: è ora di un rimborso`; } }
 
   const st=coupleMonthStats(null,null);
   const show=v=>balancesHidden?"••••":fmt(v);
-  document.getElementById("couplePaidALabel").textContent=`Ha pagato ${personName("a")}`;
-  document.getElementById("couplePaidBLabel").textContent=`Ha pagato ${personName("b")}`;
+  document.getElementById("couplePaidALabel").textContent=personName("a");
+  document.getElementById("couplePaidBLabel").textContent=personName("b");
   document.getElementById("couplePaidA").textContent=show(st.paid.a);
   document.getElementById("couplePaidB").textContent=show(st.paid.b);
   document.getElementById("couplePaidJoint").textContent=show(st.paid.joint);
@@ -2285,10 +2375,14 @@ function renderCouple(){
       +bar(`Quota di ${personName("b")}`,st.quota.b,personColor("b"))+bar(`Pagato da ${personName("b")}`,st.paid.b,personColor("b"),true)
       +`<p class="field-hint cs-note">La quota è la parte di spese personali che spetta a ciascuno; le spese dalla cassa comune non sono incluse.</p>`
     : `<p class="empty-hint">Nessuna spesa pagata da uno dei due.</p>`;
-  const shared=st.shared.slice().sort((a,b)=>b.date.localeCompare(a.date)||String(b.id).localeCompare(String(a.id))).slice(0,8);
+  const shared=st.shared.slice().sort((a,b)=>b.date.localeCompare(a.date)||String(b.id).localeCompare(String(a.id))).slice(0,5);
   renderTxRows(document.getElementById("coupleSharedTx"),shared);
   document.getElementById("coupleSharedEmpty").hidden=shared.length>0;
   const settles=state.transactions.filter(isCoupleSettle).sort((a,b)=>b.date.localeCompare(a.date)).slice(0,10);
+  { const s=(id,t)=>{ const e=document.getElementById(id); if(e) e.textContent=t; }, ns=state.transactions.filter(isCoupleSettle).length;
+    s("accGruppiSum",`${state.groups.length} ${state.groups.length===1?"gruppo":"gruppi"}`);
+    s("accSempreSum",`${personName("a")} ${show(st.paid.a)} · ${personName("b")} ${show(st.paid.b)} · Comune ${show(st.paid.joint)}`);
+    s("accRimborsiSum",ns?`${ns} ${ns===1?"rimborso":"rimborsi"} · ultimo il ${settles[0].date.split("-").reverse().join("/")}`:"Nessun rimborso"); }
   renderTxRows(document.getElementById("coupleSettleTx"),settles);
   document.getElementById("coupleSettleEmpty").hidden=settles.length>0;
   renderCoupleGroups();
@@ -2303,23 +2397,86 @@ function listRingHtml(todo,total){
   const pct=total?Math.round((total-todo)/total*100):0, r=15, c=2*Math.PI*r, off=c*(1-pct/100);
   return `<span class="lr-ring${todo?"":" zero"}" aria-hidden="true"><svg viewBox="0 0 36 36"><circle class="lr-bg" cx="18" cy="18" r="${r}"/><circle class="lr-fg" cx="18" cy="18" r="${r}" stroke-dasharray="${c.toFixed(1)}" stroke-dashoffset="${off.toFixed(1)}"/></svg><b>${todo?todo:"✓"}</b></span>`;
 }
-/* v1.17.0 — Home: le liste in una scheda con titolo, così si capisce cosa sono. Ogni lista mostra quanto
-   resta da comprare, una barra di avanzamento e i prodotti "da ricomprare". */
+/* v1.48.0 — Home: tutte le liste in griglia (niente più scorrimento di lato), con il tipo:
+   "da comprare" per spesa e classiche, "da fare" e "in ritardo" per le to-do. */
+function listKind(l){ return l&&LIST_KINDS[l.kind]?l.kind:(l&&l.restockOnExit?"shopping":"list"); }
+function isTodoList(l){ return listKind(l)==="todo"; }
+function listOpenWord(l,n){ return isTodoList(l)?`${n} da fare`:`${n} da comprare`; }
+function isoPlusDays(iso,n){ const d=new Date(iso+"T12:00:00"); d.setDate(d.getDate()+n); return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`; }
+/* Scadenza di una cosa da fare: etichetta breve, colore e gruppo (in ritardo, oggi, domani…). */
+function dueInfo(iso){
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(String(iso||""))) return null;
+  const n=daysBetweenISO(todayISO(),iso), d=new Date(iso+"T12:00:00");
+  const day=`${d.getDate()} ${MESI_BREVI[d.getMonth()].toLowerCase()}`;
+  const wd=["domenica","lunedì","martedì","mercoledì","giovedì","venerdì","sabato"][d.getDay()];
+  if(n<0) return {bucket:"late",cls:"late",icon:"⚠️",label:n===-1?"da ieri":`da ${-n} giorni`,full:`Scaduta il ${day}`};
+  if(n===0) return {bucket:"today",cls:"today",icon:"📌",label:"oggi",full:"Oggi"};
+  if(n===1) return {bucket:"tomorrow",cls:"soon",icon:"📅",label:"domani",full:"Domani"};
+  if(n<=6) return {bucket:"week",cls:"soon",icon:"📅",label:wd,full:`${wd.charAt(0).toUpperCase()+wd.slice(1)} ${day}`};
+  return {bucket:"later",cls:"later",icon:"📅",label:day,full:`${wd.charAt(0).toUpperCase()+wd.slice(1)} ${day}`};
+}
+function whoOptions(cur){
+  return [["both","Tutti e due","👫",""],["a",personName("a"),"●",personColor("a")],["b",personName("b"),"●",personColor("b")]].map(([k,l,em,c])=>({key:k,label:l,emoji:em,color:c?safeColor(c):"",active:k===cur}));
+}
+/* Menu "Scadenza": scorciatoie + calendario del telefono. */
+function openDuePick(anchor,cur,onPick){
+  const t=todayISO(), dow=new Date(t+"T12:00:00").getDay();
+  const toSat=((6-dow)+7)%7||7, toMon=((1-dow)+7)%7||7;
+  const opts=[["none","Nessuna scadenza","—",""],[t,"Oggi","📌",""],[isoPlusDays(t,1),"Domani","📅",""],[isoPlusDays(t,toSat),"Sabato","📅",dueInfo(isoPlusDays(t,toSat)).full],[isoPlusDays(t,toMon),"Lunedì","📅",dueInfo(isoPlusDays(t,toMon)).full],[isoPlusDays(t,7),"Tra una settimana","📅",dueInfo(isoPlusDays(t,7)).full],["pick","Scegli una data…","🗓️",""]];
+  openPick(anchor,"Scadenza",opts.map(([k,l,em,sub])=>({key:k,label:l,emoji:em,sub,active:(k==="none"&&!cur)||k===cur})),k=>{
+    if(k==="none") onPick("");
+    else if(k==="pick") pickDateNative(cur,onPick);
+    else onPick(k);
+  });
+}
+function pickDateNative(cur,onPick){
+  const inp=document.createElement("input"); inp.type="date"; inp.value=cur||todayISO(); inp.className="nd-date-ghost"; inp.setAttribute("aria-label","Scegli la data");
+  document.body.appendChild(inp);
+  let done=false; const finish=()=>{ if(done) return; done=true; if(/^\d{4}-\d{2}-\d{2}$/.test(inp.value)) onPick(inp.value); setTimeout(()=>inp.remove(),50); };
+  inp.addEventListener("change",finish); inp.addEventListener("blur",()=>setTimeout(()=>{ if(!done){ done=true; inp.remove(); } },400));
+  try{ if(inp.showPicker) inp.showPicker(); else { inp.focus(); inp.click(); } }catch(e){ inp.focus(); inp.click(); }
+}
+function logTodoDone(list,it,at){
+  if(!Array.isArray(list.doneLog)) list.doneLog=[];
+  const e={id:uid(),itemId:it.id,text:String(it.text||"").slice(0,120),at,by:myPerson()||""};
+  list.doneLog.push(e); if(list.doneLog.length>400) list.doneLog.splice(0,list.doneLog.length-400);
+  return e;
+}
+function stepRepeat(iso,rep){ return rep==="monthly"?stepDateISO(iso,"monthly"):isoPlusDays(iso,rep==="daily"?1:rep==="biweekly"?14:7); }
+/* Prossima scadenza di una cosa che si ripete: dalla scadenza attuale in avanti, sempre dopo oggi. */
+function nextRepeatDue(it){ const t=todayISO(); let n=stepRepeat(it.due||t,it.repeat), g=0; while(n<=t&&g++<500) n=stepRepeat(n,it.repeat); return n; }
+function repeatOptions(cur){ return [["none","Mai","—"],...Object.entries(REPEATS).map(([k,l])=>[k,l,"🔁"])].map(([k,l,em])=>({key:k,label:l,emoji:em,active:(k==="none"&&!cur)||k===cur})); }
+function listCounts(l){
+  const open=l.items.filter(i=>!i.done), td=isTodoList(l), t=todayISO();
+  return {open:open.length,done:l.items.length-open.length,total:l.items.length,
+    late:td?open.filter(i=>i.due&&i.due<t).length:0,today:td?open.filter(i=>i.due===t).length:0,
+    due:td?0:smartSuggestions(l).filter(x=>x.isDue).length};
+}
+function listSubline(l,c,{long=false}={}){
+  const td=isTodoList(l), parts=[c.open?listOpenWord(l,c.open):(td?"Tutto fatto":"Tutto preso")];
+  if(c.late) parts.push(`⚠️ ${c.late} in ritardo`); else if(c.today) parts.push(`📌 ${c.today} per oggi`);
+  if(c.due) parts.push(`⏰ ${c.due}`);
+  if(long&&c.done) parts.push(td?`${c.done} ${c.done===1?"fatta":"fatte"}`:`${c.done} ${c.done===1?"acquistato":"acquistati"}`);
+  return parts.join(" · ");
+}
 function renderHomeLists(){
   const box=document.getElementById("homeLists");
   if(!box) return;
   box.hidden=!state.lists.length;
   if(!state.lists.length){ box.innerHTML=""; return; }
-  const totalTodo=state.lists.reduce((n,l)=>n+l.items.filter(i=>!i.done).length,0);
-  box.innerHTML=`<div class="hl-head"><span class="hl-title"><span class="hl-title-ic" aria-hidden="true">🛒</span>Liste della spesa</span><span class="hl-sum">${totalTodo?`${totalTodo} da comprare`:"tutto preso"}</span><button type="button" class="hl-all" aria-label="Apri tutte le liste">Tutte ›</button></div><div class="hl-row"></div>`;
+  const open=pred=>state.lists.filter(pred).reduce((n,l)=>n+l.items.filter(i=>!i.done).length,0);
+  const buy=open(l=>!isTodoList(l)), todo=open(isTodoList);
+  const sum=[buy?`${buy} da comprare`:"",todo?`${todo} da fare`:""].filter(Boolean).join(" · ")||"tutto a posto";
+  box.innerHTML=`<div class="hl-head"><span class="hl-title"><span class="hl-title-ic" aria-hidden="true">📋</span>Liste</span><span class="hl-sum">${escapeHtml(sum)}</span><button type="button" class="hl-all" aria-label="Apri tutte le liste">Tutte ›</button></div><div class="hl-row hl-grid"></div>`;
   const row=box.querySelector(".hl-row");
   state.lists.forEach(l=>{
-    const todo=l.items.filter(i=>!i.done).length, done=l.items.length-todo, due=smartSuggestions(l).filter(x=>x.isDue).length;
-    const pct=l.items.length?Math.round(done/l.items.length*100):0;
-    const b=document.createElement("div"); b.setAttribute("role","button"); b.tabIndex=0; b.className="hl-item"+(todo?"":" empty");
-    b.innerHTML=`<span class="hl-em" aria-hidden="true">${emojiIconHtml(l.emoji)}</span><span class="hl-txt"><b>${escapeHtml(l.name)}</b><small>${todo?`${todo} da comprare`:"Tutto preso"}${due?` · ⏰ ${due}`:""}</small></span>${listRingHtml(todo,l.items.length)}`;
-    b.setAttribute("aria-label",`Lista ${l.name}: ${todo} da comprare${due?`, ${due} da ricomprare`:""}`);
+    const c=listCounts(l), sub=listSubline(l,c);
+    const b=document.createElement("div"); b.setAttribute("role","button"); b.tabIndex=0;
+    b.className="hl-item"+(c.open?"":" empty")+(c.late?" late":"")+(isTodoList(l)?" is-todo":"");
+    b.innerHTML=`<span class="hl-em" aria-hidden="true">${emojiIconHtml(l.emoji)}</span><span class="hl-txt"><b>${escapeHtml(l.name)}</b><small>${escapeHtml(sub)}</small></span>${listRingHtml(c.open,c.total)}`;
+    b.setAttribute("aria-label",`Lista ${l.name}: ${sub}`);
     b.addEventListener("click",()=>openListDetail(l.id));
+    b.addEventListener("keydown",e=>{ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); openListDetail(l.id); } });
     row.appendChild(b);
   });
   box.querySelector(".hl-all").addEventListener("click",()=>switchView("liste",{animate:true}));
@@ -2329,33 +2486,48 @@ function renderCoupleLists(){
   const box=document.getElementById("coupleLists");
   if(!box) return;
   box.innerHTML="";
-  if(!state.lists.length){ box.innerHTML=`<p class="empty-hint">Nessuna lista. Tocca "+ Nuova" per crearne una.</p>`; return; }
-  // v1.19.0 — Schede compatte (una riga): emoji, nome, cosa resta, barra di avanzamento, numero.
+  if(!state.lists.length){ box.innerHTML=`<p class="empty-hint">Nessuna lista. Tocca "+ Nuova lista": spesa, cose da comprare o cose da fare.</p>`; return; }
   state.lists.forEach(l=>{
-    const todo=l.items.filter(i=>!i.done).length, done=l.items.length-todo;
-    const g=groupsById()[l.groupId], due=smartSuggestions(l).filter(x=>x.isDue).length;
-    const pct=l.items.length?Math.round(done/l.items.length*100):0;
+    const c=listCounts(l), k=listKind(l), info=LIST_KINDS[k], g=groupsById()[l.groupId];
     const card=document.createElement("div");
-    card.className="lv-card"+(todo?"":" empty"); card.setAttribute("role","button"); card.tabIndex=0;
-    card.innerHTML=`<span class="lv-em" aria-hidden="true">${emojiIconHtml(l.emoji)}</span><span class="lv-head"><b>${escapeHtml(l.name)}</b><small>${todo?`${todo} da comprare`:"Niente da comprare"}${done?` · ${done} acquistati`:""}${due?` · ⏰ ${due}`:""}${g?` · ${escapeHtml(g.emoji+" "+g.name)}`:""}</small></span>${listRingHtml(todo,l.items.length)}<span class="lv-chev" aria-hidden="true">›</span>`;
-    card.setAttribute("aria-label",`${l.name}: ${todo} da comprare`);
+    card.className="lv-card"+(c.open?"":" empty")+(c.late?" late":""); card.setAttribute("role","button"); card.tabIndex=0;
+    card.innerHTML=`<span class="lv-em" aria-hidden="true">${emojiIconHtml(l.emoji)}</span><span class="lv-head"><b>${escapeHtml(l.name)}</b><small><i class="lv-kind lk-${k}">${info.emoji} ${escapeHtml(info.label)}</i>${escapeHtml(listSubline(l,c,{long:true}))}${g&&k!=="todo"?` · ${escapeHtml(g.emoji+" "+g.name)}`:""}</small></span>${listRingHtml(c.open,c.total)}<span class="lv-chev" aria-hidden="true">›</span>`;
+    card.setAttribute("aria-label",`${l.name} (${info.label}): ${listSubline(l,c)}`);
     card.addEventListener("click",()=>openListDetail(l.id));
     card.addEventListener("keydown",e=>{ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); openListDetail(l.id); } });
     box.appendChild(card);
   });
   if(state.lists.every(l=>!l.items.some(i=>!i.done))){
     const hint=document.createElement("p"); hint.className="lists-empty-hint";
-    hint.innerHTML="<b>Niente da comprare</b>Apri una lista per aggiungere gli articoli, oppure usa il + in basso.";
+    hint.innerHTML="<b>Tutto a posto</b>Apri una lista per aggiungere qualcosa, oppure usa il + in basso.";
     box.appendChild(hint);
   }
   renderListsMonth(box);
+  renderTodoWeek();
+}
+/* v1.49.0 — Ultimi 7 giorni: chi ha fatto cosa nelle liste To-do. */
+function renderTodoWeek(){
+  const after=document.getElementById("listsMonth")||document.getElementById("coupleLists"); if(!after) return;
+  let el=document.getElementById("todoWeek");
+  if(!el){ el=document.createElement("section"); el.id="todoWeek"; el.className="lm-card tw-card"; after.after(el); }
+  const since=new Date(Date.now()-7*86400000).toISOString();
+  const all=state.lists.filter(isTodoList).flatMap(l=>(l.doneLog||[]).filter(e=>String(e.at)>=since));
+  if(!all.length){ el.hidden=true; el.innerHTML=""; return; }
+  el.hidden=false;
+  const per={a:0,b:0}; all.forEach(e=>{ if(e.by==="a"||e.by==="b") per[e.by]++; });
+  const tot=all.length, bar=["a","b"].filter(k=>per[k]>0).map(k=>`<i style="width:${Math.round(per[k]/tot*100)}%;background:${safeColor(personColor(k))}"></i>`).join("");
+  const last=all.slice().sort((x,y)=>String(y.at).localeCompare(String(x.at))).slice(0,6);
+  el.innerHTML=`<div class="lm-head"><b>✅ Ultimi 7 giorni: cose fatte</b><small>${tot} ${tot===1?"fatta":"fatte"}</small></div>
+    <div class="lm-bar" aria-hidden="true">${bar}</div>
+    <div class="lm-people">${["a","b"].map(k=>`<span><i style="background:${safeColor(personColor(k))}"></i>${escapeHtml(personName(k))} <b>${per[k]||0}</b></span>`).join("")}</div>
+    <div class="lm-top">${last.map(e=>`<span class="lm-chip">${escapeHtml(e.text)}</span>`).join("")}</div>`;
 }
 /* v1.21.0 — Resoconto del mese: chi ha preso cosa (dagli acquisti segnati nelle liste). */
 function renderListsMonth(after){
   let el=document.getElementById("listsMonth");
   if(!el){ el=document.createElement("section"); el.id="listsMonth"; el.className="lm-card"; after.after(el); }
   const now=new Date(), key=`${now.getFullYear()}-${pad2(now.getMonth()+1)}`;
-  const all=state.lists.flatMap(l=>(l.purchases||[]).filter(p=>String(p.at).startsWith(key)).map(p=>({...p,list:l})));
+  const all=state.lists.filter(l=>!isTodoList(l)).flatMap(l=>(l.purchases||[]).filter(p=>String(p.at).startsWith(key)).map(p=>({...p,list:l})));
   if(!all.length){ el.hidden=true; return; }
   el.hidden=false;
   const per={a:0,b:0,"":0}; all.forEach(p=>{ per[p.by||""]=(per[p.by||""]||0)+1; });
@@ -2374,7 +2546,7 @@ function renderListsMonth(after){
 /* ---------- v1.29.0 — Dettaglio "chi ha preso cosa" con eliminazione ---------- */
 function monthPurchases(){
   const now=new Date(), key=`${now.getFullYear()}-${pad2(now.getMonth()+1)}`;
-  return state.lists.flatMap(l=>(l.purchases||[]).filter(p=>String(p.at).startsWith(key)).map(p=>({p,list:l})));
+  return state.lists.filter(l=>!isTodoList(l)).flatMap(l=>(l.purchases||[]).filter(p=>String(p.at).startsWith(key)).map(p=>({p,list:l})));
 }
 function deletePurchases(entries){
   if(!entries.length) return;
@@ -2538,6 +2710,7 @@ function newListItem(rawText,extra={}){
 function historyKey(text){ return normName(parseQty(text).text); }
 function markBought(list,it){
   if(!list||!it||it.counted) return;
+  if(isTodoList(list)){ it.counted=todayISO(); it.boughtAt=new Date().toISOString(); it.doneBy=myPerson()||""; logTodoDone(list,it,it.boughtAt); return; }
   if(!list.history||typeof list.history!=="object") list.history={};
   const k=historyKey(it.text); if(!k||k.startsWith("carico")) return;
   const today=todayISO();
@@ -2554,6 +2727,7 @@ function markBought(list,it){
 }
 function unmarkBought(list,it){
   if(!list||!it||!it.counted) return;
+  if(isTodoList(list)){ const drop=(list.doneLog||[]).filter(e=>e.itemId===it.id&&e.at===it.boughtAt); if(drop.length){ markDeleted(drop.map(e=>e.id)); list.doneLog=list.doneLog.filter(e=>!drop.includes(e)); } it.counted=""; it.boughtAt=""; it.doneBy=""; return; }
   const k=historyKey(it.text), h=list.history&&list.history[k];
   if(h){
     h.count-=1;
@@ -2608,6 +2782,7 @@ function purchaseStats(h){
 /* Suggerimenti "smart": frequenza (quante volte), regolarità (ogni quanti giorni) e tempo dall'ultimo
    acquisto. Prima i prodotti "da ricomprare", poi i più comprati; esclusi quelli già in lista o nel carrello. */
 function smartSuggestions(list,max=40){
+  if(isTodoList(list)) return [];
   const inList=new Set((list.items||[]).map(i=>historyKey(i.text)));
   return Object.entries(list.history||{}).filter(([k,h])=>h&&h.text&&!inList.has(k)).map(([k,h])=>{
     const st=purchaseStats(h);
@@ -2683,12 +2858,32 @@ function openListDetail(listId){
     const input=node.querySelector("#listItemInput"), priceInput=node.querySelector("#listPriceInput");
     const list=()=>state.lists.find(l=>l.id===listId);
     let lastAddedId=null;
+    // v1.48.0 — Lista To-do: niente prezzi, reparti, foto e acquisti; contano chi lo fa e la scadenza.
+    const TD=isTodoList(list()); node.classList.toggle("is-todo",TD);
+    // v1.49.0 — filtro per persona (to-do), modalità negozio, suggerimento dei gesti solo le prime volte.
+    let shopOn=false, shopLock=null;
+    let tdWho=(()=>{ try{ return localStorage.getItem("noidue_todo_who")||"all"; }catch(e){ return "all"; } })();
+    const passWho=i=>!TD||tdWho==="all"||(tdWho==="both"?(i.forWhom!=="a"&&i.forWhom!=="b"):i.forWhom===tdWho);
+    const hintN=(()=>{ let n=0; try{ n=(Number(localStorage.getItem("noidue_hint_n"))||0)+1; localStorage.setItem("noidue_hint_n",String(n)); }catch(e){} return n; })();
+    if(TD){ input.placeholder="Cosa c'è da fare?"; input.setAttribute("aria-label","Cosa c'è da fare"); }
     function save(){ persist(); renderCoupleLists(); paint(); }
     function removeItem(it,{purchased=false}={}){
       const l=list(), idx=l.items.findIndex(x=>x.id===it.id); if(idx<0) return;
       l.items.splice(idx,1); if(purchased) recordPurchased(l,[it]); markDeleted(it.id);
       const entry=trashListItem(l,it); save();
       showActionToast(`🗑 “${it.text}” nel cestino`,"Annulla",()=>{ const cur=list(); if(!cur) return; if(entry){ restoreTrashEntry(cur,entry.id); } else { const back=newListItem(it.text,{aisle:it.aisle,price:it.price,forWhom:it.forWhom}); back.qty=it.qty||1; cur.items.push(back); } save(); });
+    }
+    /* Cosa che si ripete: segnarla come fatta la sposta alla prossima scadenza (si può annullare). */
+    function doneRepeating(it){
+      const l=list(); if(!l) return;
+      const prev={due:it.due,lastDone:it.lastDone||"",lastDoneBy:it.lastDoneBy||""}, at=new Date().toISOString();
+      const entry=logTodoDone(l,it,at);
+      it.due=nextRepeatDue(it); it.lastDone=at; it.lastDoneBy=myPerson()||"";
+      if(navigator.vibrate) navigator.vibrate(12);
+      save();
+      const di=dueInfo(it.due);
+      showActionToast(`✓ Fatto · torna ${di?di.full.toLowerCase():""}`,"Annulla",()=>{ const cur=list(), x=cur?.items.find(i=>i.id===it.id); if(!x) return;
+        Object.assign(x,prev); cur.doneLog=(cur.doneLog||[]).filter(e=>e.id!==entry.id); markDeleted(entry.id); save(); });
     }
     function itemRow(it){
       const wrap=document.createElement("div");
@@ -2707,12 +2902,27 @@ function openListDetail(listId){
       row.innerHTML=`<span class="list-swipe-bg" aria-hidden="true"><span>${it.done?"↩︎ Da comprare":"✓ Acquistato"}</span><span></span></span>
         <button type="button" class="list-check-btn" aria-label="${it.done?"Rimetti da comprare":"Segna come acquistato"}: ${escapeHtml(it.text)}"><span class="list-check" aria-hidden="true">${it.done?"✓":""}</span></button>
         <span class="list-thumb">${pic?`<img src="${escapeHtml(pic)}" alt="" loading="lazy" referrerpolicy="no-referrer">`:""}</span>
-        <span class="list-text">${it.qty>1?`<b class="list-qty">${it.qty}×</b> `:""}${escapeHtml(it.text)}${fav?` <span class="list-fav" aria-label="preferito">★</span>`:""}${who}${it.done&&it.boughtAt?`<small class="list-when">✓ ${escapeHtml(whenLabel(it.boughtAt))}</small>`:""}</span>
+        <span class="list-text">${it.qty>1?`<b class="list-qty">${it.qty}×</b> `:""}${escapeHtml(it.text)}${fav?` <span class="list-fav" aria-label="preferito">★</span>`:""}${it.prio==="high"&&!it.done?` <span class="list-prio" aria-label="urgente">🔥</span>`:""}${who}${it.done&&it.boughtAt?`<small class="list-when">✓ ${escapeHtml(whenLabel(it.boughtAt))}</small>`:""}</span>
         <span class="list-price">${it.price?(balancesHidden?"••••":fmt(it.price*(it.qty||1))):""}</span>
         <button type="button" class="list-del" aria-label="Dettagli di ${escapeHtml(it.text)}">›</button>`;
+      if(TD){
+        const di=dueInfo(it.due), mine=it.forWhom==="a"||it.forWhom==="b";
+        const meta=(di&&!it.done?`<small class="td-due td-${di.cls}">${di.icon} ${escapeHtml(di.label)}</small>`:"")
+          +(it.repeat?`<small class="td-rep">🔁 ${escapeHtml(REPEATS[it.repeat].toLowerCase())}</small>`:"")
+          +(mine?`<small class="td-who" style="--pc:${safeColor(personColor(it.forWhom))}">${escapeHtml(personName(it.forWhom))}</small>`:"")
+          +(it.done&&it.boughtAt?`<small class="list-when">✓ ${escapeHtml(whenLabel(it.boughtAt))}${it.doneBy?` · ${escapeHtml(personName(it.doneBy))}`:""}</small>`:"");
+        row.classList.add("td-item"); if(di&&di.cls==="late"&&!it.done) row.classList.add("td-late");
+        row.style.setProperty("--ac",it.done?"var(--line)":di?(di.cls==="late"?"var(--rust)":di.cls==="today"?"#D4A83A":"var(--emerald)"):(mine?safeColor(personColor(it.forWhom)):"color-mix(in srgb,var(--ink) 22%,transparent)"));
+        row.innerHTML=`<span class="list-swipe-bg" aria-hidden="true"><span>${it.done?"↩︎ Da fare":"✓ Fatto"}</span><span></span></span>
+        <button type="button" class="list-check-btn" aria-label="${it.done?"Rimetti da fare":"Segna come fatto"}: ${escapeHtml(it.text)}"><span class="list-check" aria-hidden="true">${it.done?"✓":""}</span></button>
+        <span class="list-thumb"></span>
+        <span class="list-text"><span class="td-txt">${escapeHtml(it.text)}</span>${meta?`<span class="td-meta">${meta}</span>`:""}</span>
+        <span class="list-price"></span>
+        <button type="button" class="list-del" aria-label="Dettagli di ${escapeHtml(it.text)}">›</button>`;
+      }
       row.querySelector("img")?.addEventListener("error",e=>{ e.target.remove(); });
       row.setAttribute("aria-pressed",String(it.done));
-      const toggle=()=>{ it.done=!it.done; if(it.done) markBought(list(),it); else unmarkBought(list(),it); save(); };
+      const toggle=()=>{ if(TD&&it.repeat&&!it.done){ doneRepeating(it); return; } it.done=!it.done; if(it.done) markBought(list(),it); else unmarkBought(list(),it); save(); };
       // v1.24.0 — Gesti: scorri a destra = carrello; scorri a sinistra = ✎ Modifica, ★ Preferito, Elimina
       // (uno swipe lungo elimina subito); tieni premuto = scheda del prodotto.
       const OPEN=-252;
@@ -2755,26 +2965,49 @@ function openListDetail(listId){
       const l=list();
       if(!l){ listDetailRefresh=null; close(); return; }
       node.querySelector("#listDetailTitle").textContent=`${l.emoji} ${l.name}`;
-      const todo=l.items.filter(i=>!i.done), done=l.items.filter(i=>i.done);
+      const todo=l.items.filter(i=>!i.done&&passWho(i)), done=l.items.filter(i=>i.done&&passWho(i));
       const todoBox=node.querySelector("#listTodo"), doneBox=node.querySelector("#listDone");
       todoBox.innerHTML="";
-      if(l.sortMode!=="manual"){
+      if(TD&&l.sortMode!=="manual"){
+        // Per scadenza: in ritardo, oggi, domani, settimana, più avanti, senza data (titoli solo se c'è almeno una data).
+        const heads=[["late","⚠️ In ritardo","var(--rust)"],["today","📌 Oggi","#D4A83A"],["tomorrow","Domani","var(--emerald)"],["week","Questa settimana","var(--emerald)"],["later","Più avanti","var(--ink-soft)"],["none","Senza scadenza","var(--ink-soft)"]];
+        const bucket=i=>dueInfo(i.due)?.bucket||"none", anyDue=todo.some(i=>i.due);
+        const sorted=todo.slice().sort((a,b)=>(a.due||"9999").localeCompare(b.due||"9999"));
+        heads.forEach(([key,label,color])=>{ const its=sorted.filter(i=>bucket(i)===key); if(!its.length) return;
+          if(anyDue){ const h=document.createElement("p"); h.className="list-aisle td-head"; h.textContent=`${label} · ${its.length}`; h.style.setProperty("--ac",color); todoBox.appendChild(h); }
+          its.forEach(it=>todoBox.appendChild(itemRow(it))); });
+      } else if(!TD&&l.sortMode!=="manual"){
+        // v1.49.0 — gli urgenti in cima, poi i reparti.
+        const urg=todo.filter(i=>i.prio==="high");
+        if(urg.length){ const h=document.createElement("p"); h.className="list-aisle"; h.textContent=`🔥 Urgenti · ${urg.length}`; h.style.setProperty("--ac","var(--rust)"); todoBox.appendChild(h); urg.forEach(it=>todoBox.appendChild(itemRow(it))); }
         const order=aisleKeys();
         order.forEach(key=>{
-          const its=todo.filter(i=>(i.aisle||guessAisle(i.text))===key);
+          const its=todo.filter(i=>i.prio!=="high"&&(i.aisle||guessAisle(i.text))===key);
           if(!its.length) return;
           const a=aisleInfo(key), h=document.createElement("p"); h.className="list-aisle"; h.textContent=`${a.emoji} ${a.name}`; h.style.setProperty("--ac",aisleColor(a.key));
           todoBox.appendChild(h); its.forEach(it=>todoBox.appendChild(itemRow(it)));
         });
-      } else todo.forEach(it=>todoBox.appendChild(itemRow(it)));
+      } else todo.slice().sort((a,b)=>(b.prio==="high")-(a.prio==="high")).forEach(it=>todoBox.appendChild(itemRow(it)));
       doneBox.innerHTML=""; done.forEach(it=>doneBox.appendChild(itemRow(it)));
       node.querySelector("#listEmpty").hidden=l.items.length>0;
-      node.querySelector("#listGestureHint").hidden=!l.items.length;
+      node.querySelector("#listGestureHint").hidden=!l.items.length||hintN>3;
       node.querySelector("#listDoneWrap").hidden=!done.length;
       const sum=arr=>arr.reduce((s,i)=>s+(i.price||0)*(i.qty||1),0);
       const est=sum(todo), cart=sum(done);
       const parts=[]; if(est>0) parts.push(`Stima da comprare ${balancesHidden?"••••":fmt(est)}`); if(cart>0) parts.push(`acquistato ${balancesHidden?"••••":fmt(cart)}`);
+      if(!TD&&est>0){ const np=todo.filter(i=>!i.price).length; if(np) parts.push(`${np} senza prezzo`); }
       node.querySelector("#listTotal").textContent=parts.join(" · ");
+      // Filtro per persona (to-do), modalità negozio, prezzi dai link
+      { const f=node.querySelector("#tdFilter"); f.hidden=!TD;
+        if(TD){ const cnt=k=>l.items.filter(i=>!i.done&&(k==="all"||(k==="both"?(i.forWhom!=="a"&&i.forWhom!=="b"):i.forWhom===k))).length;
+          f.innerHTML=[["all","Tutte"],["both","👫 Insieme"],["a",personName("a")],["b",personName("b")]].map(([k,lbl])=>`<button type="button" class="${k===tdWho?"on":""}" data-who="${k}" aria-pressed="${k===tdWho}">${escapeHtml(lbl)} <b>${cnt(k)}</b></button>`).join("");
+          f.querySelectorAll("[data-who]").forEach(b=>b.addEventListener("click",()=>{ tdWho=b.dataset.who; try{ localStorage.setItem("noidue_todo_who",tdWho); }catch(e){} paint(); })); } }
+      { const all=l.items.filter(i=>!i.done).length, got=l.items.length-all;
+        node.querySelector("#listShopBtn").hidden=TD||!l.items.length;
+        node.querySelector("#shopBar").hidden=!shopOn;
+        node.querySelector("#shopBarTxt").innerHTML=all?`<b>${all}</b> da prendere · ${got} ${got===1?"preso":"presi"}`:"<b>Tutto preso!</b>";
+        const np=TD?0:l.items.filter(i=>!i.done&&!i.price&&i.url).length, pb=node.querySelector("#listPricesBtn");
+        pb.hidden=!np&&!pb.disabled; if(!pb.disabled) pb.innerHTML=`<span aria-hidden="true">💶</span>Prezzi dai link (${np})`; }
       const reg=node.querySelector("#listRegisterBtn");
       reg.hidden=!done.length;
       reg.textContent=`🧾 Registra come spesa (${done.length})`;
@@ -2784,6 +3017,15 @@ function openListDetail(listId){
       node.querySelector("#listClearDone").textContent=fixed?"↩︎ Rimetti":"Togli";
       node.querySelector("#listSortBtn").textContent=l.sortMode==="manual"?"🗂️ Per reparto":"↕︎ In ordine";
       const baseBtn=node.querySelector("#listBaseBtn"); baseBtn.hidden=!(l.template&&l.template.length);
+      if(TD){
+        node.querySelector("#listEmpty").textContent="Niente da fare. Scrivi qui sopra la prima cosa.";
+        node.querySelector("#listGestureHint").textContent="Tocca il pallino: fatto · tocca il testo: dettagli · tieni premuto: modifica · scorri a sinistra: ✎ 🗑";
+        node.querySelector("#listDoneTitle").textContent=`✓ Fatto · ${done.length}`;
+        node.querySelector("#listClearDone").textContent="Togli";
+        node.querySelector("#listDoneHint").hidden=true;
+        reg.hidden=true; node.querySelector("#listTotal").textContent="";
+        node.querySelector("#listSortBtn").textContent=l.sortMode==="manual"?"📅 Per scadenza":"↕︎ In ordine";
+      }
       // v1.19.0 — niente più striscia "Comprati spesso": gli acquisti stanno nella linguetta 🕘 a destra.
       const sbox=node.querySelector("#listSuggest"); sbox.hidden=true; sbox.innerHTML="";
       const tb=node.querySelector("#listTrashBtn"), tn=(l.trash||[]).length; tb.hidden=!tn; tb.textContent=`🗑 Cestino della lista · ${tn}`;
@@ -2791,7 +3033,7 @@ function openListDetail(listId){
     }
     /* Noi Due 1.16.0 — Pannello di aggiunta: bozza con quantità, prezzo, reparto e per chi.
        Il reparto segue quello che scrivi finché non ne scegli uno tu. */
-    const lc={qty:1,aisle:"",aisleManual:false,forWhom:"both"};
+    const lc={qty:1,aisle:"",aisleManual:false,forWhom:"both",due:"",repeat:""};
     const more=node.querySelector("#lcMore"), qtyOut=node.querySelector("#lcQty");
     const picks=node.querySelector("#lcPicks"), urlIn=node.querySelector("#lcUrlInput"), composer=node.querySelector("#listComposer");
     function lcText(){ const t=input.value.trim(), url=extractUrl(t); return url?t.replace(url,"").trim():t; }
@@ -2800,10 +3042,23 @@ function openListDetail(listId){
     function afterKeyboard(fn){ const ae=document.activeElement; if(ae&&composer.contains(ae)&&ae.matches("input")){ ae.blur(); setTimeout(fn,320); } else fn(); }
     function lcPaint(){
       const typed=input.value.trim();
-      const dirty=!!typed||lc.qty>1||!!priceInput.value.trim()||!!urlIn.value.trim()||lc.aisleManual||lc.forWhom!=="both";
+      const dirty=!!typed||lc.qty>1||!!priceInput.value.trim()||!!urlIn.value.trim()||lc.aisleManual||lc.forWhom!=="both"||!!lc.due||!!lc.repeat;
       more.hidden=!dirty;
       composer.classList.toggle("open",dirty);
       if(!dirty) return;
+      if(TD){
+        const di=dueInfo(lc.due);
+        picks.innerHTML="";
+        const wBtn=pickButton({label:"Chi lo fa",emoji:lc.forWhom==="both"?"👫":"●",value:lc.forWhom==="both"?"Tutti e due":personName(lc.forWhom),onOpen:btn=>afterKeyboard(()=>openPick(btn,"Chi lo fa",whoOptions(lc.forWhom),k=>{ lc.forWhom=k; lcPaint(); }))});
+        if(lc.forWhom!=="both") wBtn.querySelector(".pb-em").style.color=safeColor(personColor(lc.forWhom));
+        const dBtn=pickButton({label:"Scadenza",emoji:di?di.icon:"📅",value:di?di.full:"Nessuna",onOpen:btn=>afterKeyboard(()=>openDuePick(btn,lc.due,v=>{ lc.due=v; lcPaint(); }))});
+        picks.append(wBtn,dBtn);
+        const rBtn=pickButton({label:"Ripeti",emoji:"🔁",value:lc.repeat?REPEATS[lc.repeat]:"Mai",onOpen:btn=>afterKeyboard(()=>openPick(btn,"Ripeti",repeatOptions(lc.repeat),k=>{ lc.repeat=k==="none"?"":k; if(lc.repeat&&!lc.due) lc.due=todayISO(); lcPaint(); }))});
+        const lr=node.querySelector(".lc-linkrow"); let host=lr.querySelector(".td-rep-host"); if(!host){ host=document.createElement("div"); host.className="td-rep-host"; lr.prepend(host); }
+        host.innerHTML=""; host.append(rBtn);
+        const addBtn=node.querySelector("#listAddBtn"); addBtn.textContent="Aggiungi"; addBtn.disabled=!typed;
+        return;
+      }
       const parsed=parseQty(lcText());
       if(!lc.aisleManual) lc.aisle=parsed.text?guessAisle(parsed.text):"altro";
       qtyOut.textContent=String(lc.qty>1?lc.qty:parsed.qty);
@@ -2839,6 +3094,16 @@ function openListDetail(listId){
     node.querySelector("#lcPlusBtn").addEventListener("mousedown",e=>e.preventDefault());
     node.querySelector("#lcPlusBtn").addEventListener("click",()=>{ if(input.value.trim()||extractUrl(urlIn.value)) add(); else input.focus(); });
     function add(){
+      if(TD){
+        const t=input.value.trim(); if(!t){ input.focus(); return; }
+        const it=newListItem("",{forWhom:lc.forWhom,aisle:"",due:lc.due||(lc.repeat?todayISO():""),repeat:lc.repeat||""}); it.text=t.slice(0,120); it.qty=1;
+        list().items.push(it); lastAddedId=it.id;
+        const keep=composer.contains(document.activeElement);
+        input.value=""; priceInput.value=""; urlIn.value="";
+        Object.assign(lc,{qty:1,aisle:"",aisleManual:false,forWhom:"both",due:"",repeat:""});
+        save(); lcPaint(); if(keep) input.focus();
+        showToast(`Aggiunto: ${it.text}`); return;
+      }
       const text=input.value.trim();
       const url=extractUrl(urlIn.value)||extractUrl(text);
       if(!text&&!url){ input.focus(); return; }
@@ -2878,6 +3143,7 @@ function openListDetail(listId){
     const drawer=document.createElement("aside"); drawer.className="ls-drawer"; drawer.setAttribute("aria-label","Aggiunta rapida"); drawer.hidden=true;
     drawer.innerHTML=`<div class="ls-dr-head"><div class="ls-seg" role="tablist"><button type="button" data-dr-tab="acq">🕘 Acquisti</button><button type="button" data-dr-tab="fav">★ Preferiti</button></div><button type="button" class="ls-dr-close" aria-label="Chiudi">✕</button></div><p class="ls-dr-hint">Tocca per rimetterlo in lista, oppure trascinalo ← sulla lista</p><div class="ls-dr-list"></div><div class="ls-dr-foot"></div>`;
     document.body.append(scrim,drawer,side);
+    if(TD) side.hidden=true;
     /* v1.29.0 — Le linguette coprivano le schede dei prodotti: dopo 5 secondi fermi si
        nascondono fuori dal bordo; appena scorri su o giù (o tocchi la lista) ricompaiono. */
     let lsAwayTimer=null, lsLastY=null;
@@ -2969,7 +3235,7 @@ function openListDetail(listId){
     const sideObs=new MutationObserver(()=>{
       if(!node.isConnected){ sideObs.disconnect(); side.remove(); drawer.remove(); scrim.remove(); document.body.classList.remove("ls-dragging","ls-over"); return; }
       const sheets=[...document.querySelectorAll("#overlayRoot .sheet")], top=sheets[sheets.length-1]===node;
-      side.hidden=!top; if(!top&&!drawer.hidden) closeDrawer();
+      side.hidden=!top||TD; if(!top&&!drawer.hidden) closeDrawer();
     });
     sideObs.observe(document.getElementById("overlayRoot"),{childList:true,subtree:true});
     node.querySelector("#listAddBtn").addEventListener("click",add);
@@ -2987,6 +3253,7 @@ function openListDetail(listId){
         const extra={url:url||""};
         if(og&&og.reparto&&aisleKeys().includes(og.reparto)) extra.aisle=og.reparto;
         const it=newListItem(label,extra);
+        if(TD){ it.text=text.slice(0,120); it.qty=1; it.aisle=""; }
         if(og&&Number(og.quantita)>1) it.qty=Math.min(99,Math.round(Number(og.quantita)));
         if(og&&Number(og.prezzo)>0) it.price=Math.round(Number(og.prezzo)*100)/100/(it.qty||1);
         const k=normName(url||it.text); if(!k||existing.has(k)) return; existing.add(k);
@@ -3010,6 +3277,7 @@ function openListDetail(listId){
     }));
     [priceInput].forEach(el=>el.addEventListener("keydown",e=>{ if(e.key==="Enter"){ e.preventDefault(); add(); } }));
     node.querySelector("#listClearDone").addEventListener("click",()=>{ const l=list(), done=l.items.filter(i=>i.done);
+      if(TD){ markDeleted(done.map(i=>i.id)); l.items=l.items.filter(i=>!i.done); save(); showToast(`Tolte ${done.length} ${done.length===1?"cosa fatta":"cose fatte"}`); return; }
       if(l.restockOnExit){ recordPurchased(l,done); done.forEach(i=>{ i.done=false; i.counted=""; }); save(); showToast("Rimessi tutti da comprare"); return; }
       recordPurchased(l,done); markDeleted(done.map(i=>i.id)); l.items=l.items.filter(i=>!i.done); save(); showToast("Tolti gli acquistati dalla lista (restano in 🕘 Acquisti)"); });
     node.querySelector("#listFavBtn").addEventListener("click",()=>openDrawer("fav"));
@@ -3018,6 +3286,7 @@ function openListDetail(listId){
     const restockWatch=setInterval(()=>{
       if(node.isConnected) return;
       clearInterval(restockWatch);
+      try{ if(shopLock) shopLock.release(); }catch(e){} shopLock=null; document.body.classList.remove("nd-shop"); document.removeEventListener("visibilitychange",shopVis);
       const l=state.lists.find(x=>x.id===listId);
       if(!l||!l.restockOnExit) return;
       const done=l.items.filter(i=>i.done); if(!done.length) return;
@@ -3060,6 +3329,30 @@ function openListDetail(listId){
       openAddTransaction(null,{name:l.name,amount,categoryId:listCategoryFor(l),groupId:l.groupId,note:shared.map(label).join(", ").slice(0,500),
         onSaved:t=>{ t.listId=listId; finish(t.accountId,t.date); }});
       if(!(amount>0)) setTimeout(()=>showToast(personal.length?"Inserisci l'importo degli articoli condivisi (senza quelli personali)":"Inserisci l'importo dello scontrino"),400);
+    });
+    /* v1.49.0 — Modalità negozio: solo quello che manca, righe grandi, schermo sempre acceso. */
+    async function shopLockOn(){ try{ if(shopOn&&navigator.wakeLock&&document.visibilityState==="visible") shopLock=await navigator.wakeLock.request("screen"); }catch(e){} }
+    function shopVis(){ if(shopOn&&node.isConnected) shopLockOn(); }
+    document.addEventListener("visibilitychange",shopVis);
+    function setShop(on){
+      shopOn=on; node.classList.toggle("shop-mode",on); document.body.classList.toggle("nd-shop",on);
+      if(on){ shopLockOn(); node.scrollTo({top:0}); showToast(navigator.wakeLock?"Modalità negozio: lo schermo resta acceso":"Modalità negozio"); }
+      else { try{ if(shopLock) shopLock.release(); }catch(e){} shopLock=null; }
+      paint();
+    }
+    node.querySelector("#listShopBtn").addEventListener("click",()=>setShop(true));
+    node.querySelector("#shopExitBtn").addEventListener("click",()=>setShop(false));
+    /* v1.49.0 — Prezzi letti dai link degli articoli che non ce l'hanno. */
+    node.querySelector("#listPricesBtn").addEventListener("click",async()=>{
+      const l=list(); if(!l) return;
+      const its=l.items.filter(i=>!i.done&&!i.price&&i.url); if(!its.length) return;
+      const btn=node.querySelector("#listPricesBtn"); btn.disabled=true; btn.innerHTML=`<span aria-hidden="true">💶</span>Cerco ${its.length}…`;
+      let found=0;
+      for(const it of its){ const p=await fetchLinkPreview(it.url).catch(()=>null);
+        if(p&&Number(p.price)>0&&!it.price){ it.price=Math.round(Number(p.price)*100)/100; found++; }
+        if(p&&p.image&&!it.image&&!it.photo) it.image=p.image; }
+      btn.disabled=false; save();
+      showToast(found?`Prezzo trovato per ${found} su ${its.length}`:"Nessun prezzo indicato su quei siti");
     });
     listDetailRefresh=paint;
     paint();
@@ -3117,31 +3410,57 @@ function openListPaste(onAdd){
 function openListForm(listId=null){
   const l=listId?state.lists.find(x=>x.id===listId):null;
   openSheet("tpl-list-form",(node,close)=>{
-    const draft={name:l?.name||"",emoji:l?.emoji||"🛒",groupId:l?.groupId||defaultGroupId()};
+    const draft={name:l?.name||"",emoji:l?.emoji||LIST_KINDS.list.emoji,groupId:l?.groupId||defaultGroupId(),kind:l?listKind(l):"list"};
+    let emojiTouched=!!l;
     node.querySelector("#listFormTitle").textContent=l?"Modifica lista":"Nuova lista";
     const nameInput=node.querySelector("#listNameInput"); nameInput.value=draft.name;
-    buildEmojiField(node.querySelector("#listEmojiRow"),draft.emoji,v=>{draft.emoji=v;});
+    const emojiRow=node.querySelector("#listEmojiRow");
+    const mountEmoji=()=>buildEmojiField(emojiRow,draft.emoji,v=>{draft.emoji=v;});
+    mountEmoji();
+    emojiRow.addEventListener("input",()=>{ emojiTouched=true; });
+    emojiRow.addEventListener("click",e=>{ if(e.target.closest(".emoji-clear")) emojiTouched=true; });
     const chips=node.querySelector("#listGroupChips");
     const paintGroups=()=>{
       chips.innerHTML=state.groups.map(g=>`<button type="button" class="chip${g.id===draft.groupId?" active":""}" data-group="${escapeHtml(g.id)}"><span class="em">${escapeHtml(g.emoji)}</span>${escapeHtml(g.name)}</button>`).join("");
       chips.querySelectorAll("[data-group]").forEach(b=>b.addEventListener("click",()=>{draft.groupId=b.dataset.group;paintGroups();}));
     };
     paintGroups();
-    draft.restock=l?!!l.restockOnExit:false;
-    { const sw=node.querySelector("#listRestockSwitch"); const p=()=>{ sw.classList.toggle("on",draft.restock); sw.setAttribute("aria-pressed",String(draft.restock)); }; sw.addEventListener("click",()=>{ draft.restock=!draft.restock; p(); }); p(); }
+    let paintBase=()=>{};
+    const kindGrid=node.querySelector("#listKindGrid"), kindHint=node.querySelector("#listKindHint");
+    const paintKind=()=>{
+      kindGrid.innerHTML=Object.entries(LIST_KINDS).map(([k,x])=>`<button type="button" class="lk-opt lk-${k}${k===draft.kind?" on":""}" data-kind="${k}" aria-pressed="${k===draft.kind}"><span class="lk-em" aria-hidden="true">${x.emoji}</span><b>${escapeHtml(x.label)}</b><small>${escapeHtml(x.title)}</small></button>`).join("");
+      kindGrid.querySelectorAll("[data-kind]").forEach(b=>b.addEventListener("click",()=>{
+        draft.kind=b.dataset.kind;
+        if(!emojiTouched){ draft.emoji=LIST_KINDS[draft.kind].emoji; mountEmoji(); }
+        paintKind();
+      }));
+      let hint=LIST_KINDS[draft.kind].desc;
+      if(l&&listKind(l)!==draft.kind&&l.items.length){
+        if(draft.kind==="todo") hint+=" Gli elementi restano: prezzi, reparti e foto vengono solo nascosti.";
+        else if(listKind(l)==="todo") hint+=" Le cose da fare diventano articoli da comprare.";
+        if(draft.kind==="shopping") hint+=" Quelli già spuntati tornano da comprare quando esci dalla lista.";
+      }
+      kindHint.textContent=hint;
+      node.querySelector("#listGroupRow").hidden=draft.kind==="todo";
+      nameInput.placeholder=draft.kind==="todo"?"es. Cose da fare a casa, Trasloco…":draft.kind==="shopping"?"es. Spesa, Supermercato…":"es. Per la casa, Farmacia, Regali…";
+      paintBase();
+    };
     if(l){
       const row=node.querySelector("#listBaseRow"), info=node.querySelector("#listBaseInfo"), clr=node.querySelector("#listBaseClear");
       row.hidden=false;
-      const paintBase=()=>{ const n=(l.template||[]).length; info.textContent=n?`Contiene ${n} ${n===1?"articolo":"articoli"}: nella lista tocca “⭐ Lista base” per rimettere quelli che mancano.`:"Salva gli articoli che compri sempre (es. la spesa della settimana) per rimetterli in lista con un tocco."; clr.hidden=!n; };
-      node.querySelector("#listBaseSave").addEventListener("click",()=>{ const t=[...new Set(l.items.map(i=>`${i.qty>1?i.qty+" ":""}${i.text}`))]; if(!t.length){ showToast("La lista è vuota: aggiungi prima gli articoli"); return; } l.template=t; persist(); paintBase(); showToast("Lista base salvata"); });
+      paintBase=()=>{ const n=(l.template||[]).length, td=draft.kind==="todo";
+        info.textContent=n?`Contiene ${n} ${n===1?"voce":"voci"}: nella lista tocca “⭐ Lista base” per rimettere quelle che mancano.`
+          :(td?"Salva le cose da fare che ritornano (es. le pulizie della settimana) per rimetterle in lista con un tocco.":"Salva gli articoli che compri sempre (es. la spesa della settimana) per rimetterli in lista con un tocco.");
+        clr.hidden=!n; };
+      node.querySelector("#listBaseSave").addEventListener("click",()=>{ const t=[...new Set(l.items.map(i=>`${i.qty>1&&!isTodoList(l)?i.qty+" ":""}${i.text}`))]; if(!t.length){ showToast("La lista è vuota: aggiungi prima qualcosa"); return; } l.template=t; persist(); paintBase(); showToast("Lista base salvata"); });
       clr.addEventListener("click",()=>{ l.template=[]; persist(); paintBase(); });
-      paintBase();
     }
+    paintKind();
     const del=node.querySelector("#deleteListBtn");
     if(l){
       del.hidden=false;
       del.addEventListener("click",async()=>{
-        if(!await askConfirm(`Eliminare la lista "${l.name}"${l.items.length?` con ${l.items.length} articoli`:""}?`,{ok:"Elimina",danger:true})) return;
+        if(!await askConfirm(`Eliminare la lista "${l.name}"${l.items.length?` con ${l.items.length} ${l.items.length===1?"elemento":"elementi"}`:""}?`,{ok:"Elimina",danger:true})) return;
         markDeleted(l.id, l.items.map(i=>i.id));
         state.lists=state.lists.filter(x=>x.id!==l.id);
         persist(); renderAll(); close(); showToast("Lista eliminata");
@@ -3150,8 +3469,9 @@ function openListForm(listId=null){
     node.querySelector("#saveListBtn").addEventListener("click",()=>{
       const name=nameInput.value.trim();
       if(!name){ showToast("Inserisci il nome della lista"); nameInput.focus(); return; }
-      if(l){ Object.assign(l,{name,emoji:draft.emoji,groupId:draft.groupId,restockOnExit:draft.restock}); persist(); renderAll(); close(); showToast("Lista aggiornata"); }
-      else{ const nl={id:uid(),name,emoji:draft.emoji,groupId:draft.groupId,items:[],restockOnExit:draft.restock,sortMode:"aisle",template:[],history:{}}; state.lists.push(nl); persist(); renderAll(); close(); openListDetail(nl.id); }
+      const kind=draft.kind, restockOnExit=kind==="shopping";
+      if(l){ const was=listKind(l); Object.assign(l,{name,emoji:draft.emoji,groupId:draft.groupId,kind,restockOnExit}); persist(); renderAll(); close(); showToast(was!==kind?`Lista aggiornata: ora è ${LIST_KINDS[kind].label}`:"Lista aggiornata"); }
+      else{ const nl={id:uid(),name,emoji:draft.emoji,groupId:draft.groupId,items:[],kind,restockOnExit,sortMode:"aisle",template:[],history:{}}; state.lists.push(nl); persist(); renderAll(); close(); openListDetail(nl.id); }
     });
   });
 }
@@ -3164,7 +3484,7 @@ function renderCoupleGroups(){
     const bal=groupBalance(g.id);
     const spent=coupleMonthStats(null,null,g.id);
     const card=document.createElement("button");
-    card.type="button"; card.className="group-card";
+    card.type="button"; card.className="group-card"+((spent.paid.a+spent.paid.b+spent.paid.joint)<0.005&&Math.abs(bal)<0.005?" empty":"");
     const debtor=bal>0?"b":"a";
     const who=Math.abs(bal)<0.005?"In pari":`${personName(debtor)} deve a ${personName(otherPerson(debtor))}`;
     card.innerHTML=`<span class="mv-ic">${emojiIconHtml(g.emoji)}</span>
@@ -3237,15 +3557,15 @@ function openGroupDetail(gid){
       const shift=Math.max(-40,Math.min(40,bal/Math.max(spentAll*0.15,50)*40));
       node.querySelector("#groupDetailKnot").style.left=(50-shift)+"%";
       const st=coupleMonthStats(null,null,gid), show=v=>balancesHidden?"••••":fmt(v);
-      node.querySelector("#gdPaidALabel").textContent=`Ha pagato ${personName("a")}`;
-      node.querySelector("#gdPaidBLabel").textContent=`Ha pagato ${personName("b")}`;
+      node.querySelector("#gdPaidALabel").textContent=personName("a");
+      node.querySelector("#gdPaidBLabel").textContent=personName("b");
       node.querySelector("#gdPaidA").textContent=show(st.paid.a);
       node.querySelector("#gdPaidB").textContent=show(st.paid.b);
       node.querySelector("#gdPaidJoint").textContent=show(st.paid.joint);
-      node.querySelector("#gdMonth").textContent="Totale delle spese di questo gruppo";
+      node.querySelector("#gdMonth").textContent="Pagato da ciascuno in questo gruppo, da sempre";
       const list=state.transactions.filter(t=>!t.isBalanceAdjustment && (t.type!=="transfer" ? groupOf(t)===gid : (isCoupleSettle(t) && Math.abs(txDebtIn(t,gid))>=0.005)))
-        .sort((a,b)=>b.date.localeCompare(a.date)||String(b.id).localeCompare(String(a.id))).slice(0,40);
-      renderTxRows(node.querySelector("#groupDetailTx"),list);
+        .sort((a,b)=>b.date.localeCompare(a.date)||String(b.id).localeCompare(String(a.id))).slice(0,150);
+      renderTxRowsByMonth(node.querySelector("#groupDetailTx"),list);
       node.querySelector("#groupDetailEmpty").hidden=list.length>0;
     }
     groupDetailRefresh=paint;
@@ -3316,7 +3636,7 @@ function openSettleForm(scope="all"){
     const dir=node.querySelector("#settleDirToggle"), hint=node.querySelector("#settleHint"), scopeChips=node.querySelector("#settleScopeChips");
     const fromChips=node.querySelector("#settleFromChips"), toChips=node.querySelector("#settleToChips");
     dateInput.value=todayISO(); dateInput.max=todayISO();
-    const setAmount=()=>{ amountInput.value=Math.abs(bal)>=0.005?String(Math.abs(bal)).replace(".",","):""; amountInput.dispatchEvent(new Event("input")); };
+    const setAmount=()=>{ amountInput.value=Math.abs(bal)>=0.005?(Math.round(Math.abs(bal)*100)/100).toFixed(2).replace(".",","):""; amountInput.dispatchEvent(new Event("input")); };
     autoGrowAmountInput(amountInput); setAmount();
     function chipsFor(container,owner,getSel,setSel){
       container.innerHTML="";
@@ -3710,17 +4030,29 @@ function openItemSummary(listId,itemId){
     box.hidden=!pic;
     box.querySelector("img")?.addEventListener("error",()=>{ box.hidden=true; });
     const who=it.forWhom==="a"||it.forWhom==="b"?`Solo ${personName(it.forWhom)}`:"Tutti e due";
-    const rows=[
+    const TD=isTodoList(l), di=dueInfo(it.due);
+    const rows=TD?[
+      ["Chi lo fa",it.forWhom==="a"||it.forWhom==="b"?personName(it.forWhom):"Tutti e due"],
+      ["Scadenza",di?di.full:"nessuna"],
+      ["Ripeti",it.repeat?REPEATS[it.repeat]:""],
+      ["Ultima volta",it.lastDone?`${whenLabel(it.lastDone)}${it.lastDoneBy?` · ${personName(it.lastDoneBy)}`:""}`:""],
+      ["Stato",it.done?`✓ fatto${it.boughtAt?` · ${whenLabel(it.boughtAt)}`:""}${it.doneBy?` · ${personName(it.doneBy)}`:""}`:"da fare"],
+      ["Aggiunto da",it.addedBy?personName(it.addedBy):(it.via||"")],
+    ]:[
       ["Reparto",`${a.emoji} ${a.name}`],
       ["Quantità",String(it.qty||1)],
       ["Prezzo", it.price?`${fmt(it.price)}${(it.qty||1)>1?` · ${fmt(it.price*(it.qty||1))} in tutto`:""}`:"non indicato"],
       ["Per chi",who],
       ["Preferito", isFavorite(it.text)?"★ sì":"no"],
+      ["Urgente", it.prio==="high"?"🔥 sì":""],
       ["Stato", it.done?`✓ acquistato${it.boughtAt?` · ${whenLabel(it.boughtAt)}`:""}`:"da comprare"],
-      ["Aggiunto da", it.addedBy?personName(it.addedBy):(it.via||"—")],
-      ["Codice a barre", it.code||"—"],
+      ["Aggiunto da", it.addedBy?personName(it.addedBy):(it.via||"")],
+      ["Codice a barre", it.code||""],
     ];
-    node.querySelector("#isumRows").innerHTML=rows.map(([k,v])=>`<div class="isum-row"><dt>${escapeHtml(k)}</dt><dd>${escapeHtml(v)}</dd></div>`).join("");
+    // v1.48.0 — righe vuote nascoste; "Link salvati" solo se ce ne sono.
+    { const has=!TD&&itemLinks(it).length>0; node.querySelector(".isum-label").hidden=!has; node.querySelector("#isumLinks").hidden=!has; }
+    if(TD) node.querySelector("#isumEditBtn").textContent="✎ Modifica";
+    node.querySelector("#isumRows").innerHTML=rows.filter(([,v])=>v).map(([k,v])=>`<div class="isum-row"><dt>${escapeHtml(k)}</dt><dd>${escapeHtml(v)}</dd></div>`).join("");
     node.querySelector("#isumLinks").innerHTML=linkRegistryHtml(itemLinks(it),{editable:false});
     node.querySelector("#isumEditBtn").addEventListener("click",()=>{ close(); openListItem(listId,itemId); });
   });
@@ -3729,9 +4061,24 @@ function openListItem(listId,itemId){
   const l=state.lists.find(x=>x.id===listId), it=l?.items.find(x=>x.id===itemId);
   if(!it) return;
   openSheet("tpl-list-item",(node,close)=>{
+    const TD=isTodoList(l); node.classList.toggle("is-todo",TD);
+    const dueInput=node.querySelector("#itemDueInput"); let repSel=it.repeat||"";
+    if(TD){
+      node.querySelector(".add-eyebrow").textContent="Modifica cosa da fare";
+      node.querySelector("#itemDueRow").hidden=false; dueInput.value=it.due||"";
+      const quick=node.querySelector("#itemDueChips"), t=todayISO(), dow=new Date(t+"T12:00:00").getDay();
+      const opts=[["","Nessuna"],[t,"Oggi"],[isoPlusDays(t,1),"Domani"],[isoPlusDays(t,((6-dow)+7)%7||7),"Sabato"],[isoPlusDays(t,7),"Tra 7 giorni"]];
+      const paintDue=()=>{ quick.innerHTML=opts.map(([v,lbl])=>`<button type="button" class="chip${(dueInput.value||"")===v?" active":""}" data-due="${v}">${lbl}</button>`).join("");
+        quick.querySelectorAll("[data-due]").forEach(b=>b.addEventListener("click",()=>{ dueInput.value=b.dataset.due; paintDue(); })); };
+      dueInput.addEventListener("change",paintDue); paintDue();
+      const repBox=node.querySelector("#itemRepeatChips");
+      const paintRep=()=>{ repBox.innerHTML=[["","Mai"],...Object.entries(REPEATS)].map(([v,lbl])=>`<button type="button" class="chip${repSel===v?" active":""}" data-rep="${v}">${v?"🔁 ":""}${lbl}</button>`).join("");
+        repBox.querySelectorAll("[data-rep]").forEach(b=>b.addEventListener("click",()=>{ repSel=b.dataset.rep; if(repSel&&!dueInput.value){ dueInput.value=todayISO(); paintDue(); } paintRep(); })); };
+      paintRep();
+    }
     const draft={photo:it.photo||"",image:it.image||"",url:it.url||""};
     const nameInput=node.querySelector("#itemNameInput"), priceInput=node.querySelector("#itemPriceInput"), codeInput=node.querySelector("#itemCodeInput");
-    nameInput.value=it.text; priceInput.value=it.price?String(it.price).replace(".",","):""; codeInput.value=it.code||"";
+    nameInput.value=it.text; priceInput.value=it.price?it.price.toFixed(2).replace(".",","):""; codeInput.value=it.code||"";
     draft.qty=it.qty||1; draft.aisle=it.aisle||guessAisle(it.text); draft.forWhom=it.forWhom||"both";
     const qtyEl=node.querySelector("#itemQty");
     const paintQty=()=>{ qtyEl.textContent=String(draft.qty); };
@@ -3741,6 +4088,10 @@ function openListItem(listId,itemId){
     /* v1.32.0 — Per chi e Reparto: due pulsanti con menu al posto delle righe di chip. */
     const picksBox=node.querySelector("#itemPicks");
     const paintPicks=()=>{
+      if(TD){ picksBox.innerHTML=""; picksBox.classList.remove("pick-2"); picksBox.classList.add("pick-1");
+        const w=pickButton({label:"Chi lo fa",emoji:draft.forWhom==="both"?"👫":"●",value:draft.forWhom==="both"?"Tutti e due":personName(draft.forWhom),onOpen:btn=>openPick(btn,"Chi lo fa",whoOptions(draft.forWhom),k=>{ draft.forWhom=k; paintPicks(); })});
+        if(draft.forWhom!=="both") w.querySelector(".pb-em").style.color=safeColor(personColor(draft.forWhom));
+        picksBox.append(w); return; }
       const a=aisleInfo(draft.aisle), who=draft.forWhom==="a"||draft.forWhom==="b"?`Solo ${personName(draft.forWhom)}`:"Tutti e due";
       picksBox.innerHTML="";
       const fBtn=pickButton({label:"Per chi",emoji:draft.forWhom==="both"?"👫":"●",value:who,onOpen:btn=>openPick(btn,"Per chi",
@@ -3753,6 +4104,8 @@ function openListItem(listId,itemId){
       picksBox.append(fBtn,aBtn);
     };
     paintPicks();
+    draft.prio=it.prio==="high";
+    { const ps=node.querySelector("#itemPrioSwitch"); const pp=()=>{ ps.classList.toggle("on",draft.prio); ps.setAttribute("aria-pressed",String(draft.prio)); }; ps.addEventListener("click",()=>{ draft.prio=!draft.prio; pp(); }); pp(); }
     draft.fav=isFavorite(it.text);
     const favSw=node.querySelector("#itemFavSwitch");
     const paintFav=()=>{ favSw.classList.toggle("on",draft.fav); favSw.setAttribute("aria-pressed",String(draft.fav)); };
@@ -3837,8 +4190,9 @@ function openListItem(listId,itemId){
     node.querySelector("#saveItemBtn").addEventListener("click",()=>{
       const text=nameInput.value.trim();
       if(!text){ showToast("Scrivi il nome"); nameInput.focus(); return; }
+      if(TD){ Object.assign(it,{text:text.slice(0,120),forWhom:draft.forWhom,due:/^\d{4}-\d{2}-\d{2}$/.test(dueInput.value)?dueInput.value:(repSel?todayISO():""),repeat:repSel||""}); persist(); renderCoupleLists(); if(listDetailRefresh) listDetailRefresh(); close(); return; }
       const price=parseAmount(priceInput.value);
-      Object.assign(it,{text:text.slice(0,120),price:price>0?Math.round(price*100)/100:null,code:cleanCode(codeInput.value),photo:draft.photo,image:draft.image,links:draft.links,url:draft.links[0]?.url||draft.url||"",qty:draft.qty,aisle:draft.aisle,forWhom:draft.forWhom});
+      Object.assign(it,{text:text.slice(0,120),price:price>0?Math.round(price*100)/100:null,code:cleanCode(codeInput.value),photo:draft.photo,image:draft.image,links:draft.links,url:draft.links[0]?.url||draft.url||"",qty:draft.qty,aisle:draft.aisle,forWhom:draft.forWhom,prio:draft.prio?"high":""});
       if(draft.fav!==isFavorite(it.text)) setFavorite(it.text,draft.fav,draft.aisle);
       if(!persist()){ showToast("Spazio pieno: togli qualche foto dalle liste"); return; }
       renderCoupleLists(); if(listDetailRefresh) listDetailRefresh(); close();
@@ -3888,9 +4242,15 @@ function openAddTransaction(txId,prefill=null){
     dateInput.max = todayISO();
     noteInput.value = existing?.note || prefill?.note || "";
 
+    let catTouched=!!(existing?.categoryId||prefill?.categoryId);
     function renderCatChips(){
-      renderCategoryPicker(catChipsGrouped, txType, ()=>selectedCategoryId, id=>{ selectedCategoryId=id; });
+      renderCategoryPicker(catChipsGrouped, txType, ()=>selectedCategoryId, (id,o)=>{ selectedCategoryId=id; if(o&&o.user) catTouched=true; });
     }
+    nameInput.addEventListener("input",()=>{
+      if(catTouched||txType==="transfer") return;
+      const g=guessCategoryFor(nameInput.value,txType);
+      if(g&&g!==selectedCategoryId){ selectedCategoryId=g; catChipsGrouped._activeMacro=null; renderCatChips(); }
+    });
     function renderAccChips(){
       accChips.innerHTML = "";
       state.accounts.forEach(a=>{
@@ -4213,7 +4573,7 @@ function openChartInfo(kind){
     dividi:"Quanto della spesa spetta a ciascuno. A metà, con una percentuale, tutta all'altra persona oppure solo a chi ha pagato (spesa personale). Dalla cassa comune non si crea nessun debito.",
     fisse:"Spese che si ripetono, come affitto, bollette o abbonamenti. Scegli quanto, ogni quanto, chi paga, il gruppo e come dividere: alla data giusta la spesa viene registrata da sola nei movimenti e aggiorna il saldo tra voi. Tocca una spesa fissa per modificarla, metterla in pausa o eliminarla.",
     gruppi:"Ogni gruppo è un conto separato tra voi, con il suo saldo (es. Casa, Viaggio a Lisbona). Il numero grande in alto è la somma di tutti i gruppi. Tocca un gruppo per vederne i movimenti o saldarlo.",
-    liste:"Tocca una lista per aggiungere articoli: scrivendoli, incollando una lista (ogni riga diventa un articolo) o con una foto. Tocca un prodotto quando lo prendi: finisce in “Acquistato” con data e ora e nella cronologia 🕘 (linguetta a destra). Scorrendo puoi metterlo nei ★ preferiti o eliminarlo: va nel cestino della lista (🗑 in fondo); dalla pagina Liste trovi il cestino di tutte le liste. Gli acquistati si possono registrare come spesa.",
+    liste:"Ci sono tre tipi di lista, che scegli quando la crei (e cambi da Modifica): 🛒 Spesa — i prodotti spuntati tornano da comprare quando esci; 🛍️ Classica — cose da comprare una volta; ✅ To-do — cose da fare, con chi lo fa, la scadenza e la ripetizione (es. ogni settimana). Tocca una lista per aggiungere articoli: scrivendoli, incollando una lista (ogni riga diventa un articolo) o con una foto. Tocca un prodotto quando lo prendi: finisce in “Acquistato” con data e ora e nella cronologia 🕘 (linguetta a destra). Scorrendo puoi metterlo nei ★ preferiti o eliminarlo: va nel cestino della lista (🗑 in fondo); dalla pagina Liste trovi il cestino di tutte le liste. Gli acquistati si possono registrare come spesa.",
     ripartizione:"Mostra come entrate o uscite del periodo selezionato sono distribuite fra categorie o macrocategorie. Non considera i trasferimenti fra conti.",
     andamento:"Entrate/Uscite mostra i flussi del periodo. Saldo cumulato mostra il saldo reale, partendo dal saldo presente prima dell’inizio del periodo. Tieni premuto un punto per leggere il giorno.",
     conti:"Mostra la variazione netta di ciascun conto nel periodo scelto. I trasferimenti compaiono come uscita nel conto di origine e entrata in quello di destinazione."
@@ -4237,6 +4597,7 @@ function openCategoriesHub(startMode){
     }
     node.querySelectorAll("[data-hub]").forEach(b=>b.addEventListener("click",()=>setMode(b.dataset.hub)));
     addBtn.addEventListener("click",()=>openCategoryForm(null));
+    node.querySelector("#hubReorderBtn")?.addEventListener("click",e=>{ const on=!node.classList.contains("reordering"); node.classList.toggle("reordering",on); e.currentTarget.textContent=on?"Fine":"Riordina"; });
     setMode(mode);
   });
 }
@@ -4652,6 +5013,7 @@ function mergeStates(local,inc,prefer){
   (second.lists||[]).forEach(l=>{ const prev=lists.get(l.id); lists.set(l.id,{...(prev||{}),...l,items:mergeArr(prev?.items||[],l.items||[]),
     // v1.19.0 — acquisti e cestino delle liste: si sommano quelli dei due telefoni.
     purchases:mergeArr(prev?.purchases||[],l.purchases||[]).sort((a,b)=>String(a.at).localeCompare(String(b.at))).slice(-400),
+    doneLog:mergeArr(prev?.doneLog||[],l.doneLog||[]).sort((a,b)=>String(a.at).localeCompare(String(b.at))).slice(-400),
     trash:mergeArr(prev?.trash||[],l.trash||[]).sort((a,b)=>String(b.deletedAt).localeCompare(String(a.deletedAt))).slice(0,200)}); });
   // Stessa cosa aggiunta da tutti e due (es. "Latte" ancora da comprare): resta una volta sola.
   out.lists=[...lists.values()].filter(l=>!gone(l.id)).map(l=>{ const seenText=new Set(); return {...l,items:l.items.filter(i=>!gone(i.id)).filter(i=>{ if(i.done) return true; const k=normName(i.text); if(seenText.has(k)) return false; seenText.add(k); return true; })}; });
@@ -4995,6 +5357,8 @@ function renderPushCard(){
     inner=`<div class="push-settings">${hasMonthly
         ? `<label class="toggle-line push-line"><input type="checkbox" id="pushMonthlyInput"${pushState.row.monthly_summary!==false?" checked":""}> Riepilogo mensile (il giorno 1 alle 9:00)</label>
            <label class="toggle-line push-line"><input type="checkbox" id="pushAmountsInput"${pushState.row.show_amounts?" checked":""}> Mostra gli importi nel riepilogo</label>`
+        +("last_todo_sent" in pushState.row?`<label class="toggle-line push-line"><input type="checkbox" id="pushTodoInput"${pushState.row.todo_remind!==false?" checked":""}> Promemoria delle cose da fare (dalle 9, quelle in scadenza)</label>`
+          :`<p class="push-msg">Promemoria delle cose da fare: esegui su Supabase supabase/promemoria_todo.sql.</p>`)
         : `<p class="push-msg">Riepilogo mensile: per attivarlo esegui su Supabase i file supabase/riepilogo_mensile.sql e cron_riepilogo.sql (vedi GUIDA_NOTIFICHE).</p>`}</div>
       <div class="suite-sync-actions"><button type="button" class="suite-sync-primary primary" id="pushTestBtn"${pushState.busy?" disabled":""}>Invia una prova</button>${hasMonthly?`<button type="button" id="pushTestMonthlyBtn"${pushState.busy?" disabled":""}>Prova riepilogo</button>`:""}<button type="button" id="pushOffBtn"${pushState.busy?" disabled":""}>Disattiva</button></div>`;
   } else {
@@ -5076,6 +5440,7 @@ document.getElementById("pushCard")?.addEventListener("click",e=>{
 });
 document.getElementById("pushCard")?.addEventListener("change",e=>{
   if(e.target.id==="pushMonthlyInput") pushUpdate({monthly_summary:e.target.checked});
+  if(e.target.id==="pushTodoInput") pushUpdate({todo_remind:e.target.checked});
   else if(e.target.id==="pushAmountsInput") pushUpdate({show_amounts:e.target.checked});
 });
 setTimeout(refreshPushState,1500);
@@ -5138,10 +5503,10 @@ function bubChartHtml(items, o) {
   var W = 340, H = o.h || 260, P = bubPack(items, W, H), esc = o.esc || function (s) { return String(s); };
   return '<div class="bub-wrap" style="aspect-ratio:' + W + '/' + H + '">' + items.map(function (it, i) {
     var p = P[i], zero = !(Number(it.value) > 0), d = p.r * 2, fs = Math.max(11, Math.min(26, p.r * 0.3)), ls = Math.max(9, Math.min(14, p.r * 0.15));
-    var small = p.r < 34;
+    var small = p.r < 22, tiny = p.r < 34;
     return '<button type="button" class="bub' + (zero ? ' zero' : '') + (it.on ? ' on' : '') + '" ' + (o.attr ? o.attr(it) : '') +
-      ' style="left:' + ((p.x - p.r) / W * 100).toFixed(2) + '%;top:' + ((p.y - p.r) / H * 100).toFixed(2) + '%;width:' + (d / W * 100).toFixed(2) + '%;--bc:' + (zero ? 'var(--bub-zero)' : it.color) + ';--bi:' + (it.ink || (zero ? 'var(--bub-zero-ink)' : '#0b0d0c')) + ';animation-delay:' + (i * 60) + 'ms" aria-label="' + esc(it.label + ': ' + it.text) + '">' +
-      '<b style="font-size:' + fs.toFixed(1) + 'px">' + esc(it.text) + '</b>' + (small ? '' : '<small style="font-size:' + ls.toFixed(1) + 'px">' + esc(it.label) + '</small>') + '</button>';
+      ' aria-label="' + esc(it.label + ' ' + it.text) + '" style="left:' + ((p.x - p.r) / W * 100).toFixed(2) + '%;top:' + ((p.y - p.r) / H * 100).toFixed(2) + '%;width:' + (d / W * 100).toFixed(2) + '%;--bc:' + (zero ? 'var(--bub-zero)' : it.color) + ';--bi:' + (it.ink || (zero ? 'var(--bub-zero-ink)' : '#0b0d0c')) + ';animation-delay:' + (i * 60) + 'ms" aria-label="' + esc(it.label + ': ' + it.text) + '">' +
+      '<b style="font-size:' + fs.toFixed(1) + 'px">' + esc(it.text) + '</b>' + (small ? '' : '<small style="font-size:' + (tiny ? 8.5 : ls).toFixed(1) + 'px">' + esc(tiny ? String(it.label).slice(0, 8) : it.label) + '</small>') + '</button>';
   }).join('') + '</div>';
 }
 /* legenda come nella banca: pallino, nome, cifra sotto */
@@ -5195,7 +5560,7 @@ function ndPayData(ym){
 function renderCoupleBubbles(){
   const view=document.getElementById("view-coppia"), grid=view?.querySelector('.forecast-grid[aria-label="Chi ha pagato in tutto"]'); if(!grid) return;
   let box=document.getElementById("coupleBubbles");
-  if(!box){ box=document.createElement("div"); box.id="coupleBubbles"; box.className="section-block bub-card nd-bub"; grid.before(box); }
+  if(!box){ box=document.createElement("div"); box.id="coupleBubbles"; box.className="section-block bub-card nd-bub"; (grid.closest(".nd-sempre")||grid).before(box); }
   const months=bubLastMonths(3); if(!ndBubM||!months.some(m=>m.key===ndBubM)) ndBubM=months[2].key;
   const items=ndPayData(ndBubM), mo=months.find(m=>m.key===ndBubM), tot=items.reduce((s,i)=>s+i.value,0);
   items.forEach(i=>{ i.side=tot>0?Math.round(i.value/tot*100)+"%":""; });
@@ -5233,7 +5598,7 @@ document.addEventListener("click",e=>{
   const bm=t.closest("[data-ndbm]"), bk=t.closest("[data-ndbk]"), sm=t.closest("[data-ndsm]"), smo=t.closest("[data-ndsmode]"), sk=t.closest("[data-ndsk]");
   if(bm){ ndBubM=bm.dataset.ndbm; renderCoupleBubbles(); }
   else if(bk){ const it=ndPayData(ndBubM).find(x=>x.key===bk.dataset.ndbk), mo=bubLastMonths(3).find(m=>m.key===ndBubM); if(it) ndMovementsSheet(`Pagate da ${it.label}`,mo?mo.long:"",it.list); }
-  else if(sm){ ndStM=sm.dataset.ndsm; renderStatsBubblesNd(); }
+  else if(sm){ ndStM=sm.dataset.ndsm; renderStats(); }
   else if(smo){ ndStMode=smo.dataset.ndsmode; renderStatsBubblesNd(); }
   else if(sk){ const it=ndSpendData(ndStM,ndStMode).find(x=>x.key===sk.dataset.ndsk), mo=bubLastMonths(3).find(m=>m.key===ndStM); if(it) ndMovementsSheet(`${it.emoji?it.emoji+" ":""}${it.label}`,mo?mo.long:"",it.list); }
 });

@@ -4,11 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
 <title>Noi Due — Spese di coppia</title>
-<meta name="app-version" content="1.47.0">
+<meta name="app-version" content="1.49.0">
 <meta name="description" content="Spese di coppia: chi ha pagato, chi deve a chi, budget e statistiche.">
 
 <!-- PWA / iOS home screen -->
-<link rel="manifest" href="manifest.json?v=1.47.0">
+<link rel="manifest" href="manifest.json?v=1.49.0">
 <meta name="theme-color" content="#12181F">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -16,12 +16,12 @@
 <!-- iPhone: icona nella cartella principale, senza ?v=, con la dimensione dichiarata (la legge anche Safari più vecchio). -->
 <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
 <link rel="apple-touch-icon-precomposed" sizes="180x180" href="apple-touch-icon-precomposed.png">
-<link rel="icon" href="icons/icon-192.png?v=1.47.0">
+<link rel="icon" href="icons/icon-192.png?v=1.49.0">
 
-<link rel="stylesheet" href="style.css?v=1.47.0">
+<link rel="stylesheet" href="style.css?v=1.49.0">
 <!-- Token grafici condivisi dalle 4 app: va caricato per ultimo. -->
-<link rel="stylesheet" href="suite-ui.css?v=1.47.0">
-<link rel="stylesheet" href="suite-tokens.css?v=1.47.0">
+<link rel="stylesheet" href="suite-ui.css?v=1.49.0">
+<link rel="stylesheet" href="suite-tokens.css?v=1.49.0">
 </head>
 <body>
 
@@ -55,7 +55,7 @@
     <!-- ===== HOME / DASHBOARD ===== -->
     <section class="view active" id="view-home" data-view="home">
       <h1 class="view-title">Home</h1>
-      <!-- v1.47.0 — RIQUADRO DELLE SPESE COME IN BET TRACKER: carta verde con la cifra grande (centesimi più piccoli),
+      <!-- v1.49.0 — RIQUADRO DELLE SPESE COME IN BET TRACKER: carta verde con la cifra grande (centesimi più piccoli),
            pastiglie (rispetto al mese prima, ultimi 7 giorni, rimborsi tra voi), andamento degli ultimi 30 giorni, tre caselle
            (chi ha pagato: voi due e la cassa comune) e sotto, dentro la carta, "chi deve a chi" (apre Saldi).
            Gli id di prima restano: renderNdHome e renderCoupleStrip li aggiornano come prima. -->
@@ -79,7 +79,8 @@
           <div class="hero-liquidity"><strong id="ndBudgetLeft">0,00 €</strong></div>
         </div>
       </div>
-      <section class="home-lists hl-card" id="homeLists" aria-label="Liste della spesa"></section>
+      <section class="home-lists hl-card" id="homeLists" aria-label="Liste"></section>
+      <section class="hl-card nd-budget" id="homeBudget" aria-label="Budget del mese" hidden></section>
 
       <!-- Elementi ereditati da Bilancio, non usati in Noi Due: restano nascosti perché il codice comune li aggiorna. -->
       <div class="nd-legacy" hidden aria-hidden="true">
@@ -126,40 +127,46 @@
         <div class="couple-tug" id="coupleTug" aria-hidden="true"><span class="couple-knot" id="coupleKnot"></span></div>
         <div class="couple-tug-names"><span id="coupleNameA"></span><span id="coupleNameB"></span></div>
         <p class="couple-total-note">Totale di tutti i gruppi</p>
+        <p class="settle-alert" id="settleAlertMsg" hidden></p>
         <button type="button" class="primary-btn couple-settle" id="settleBtn">🤝 Registra rimborso</button>
+        <button type="button" class="settle-alert-btn" id="settleAlertBtn">🔕 Avviso rimborso spento</button>
       </div>
 
-      <div class="section-block couple-groups-block">
+      <div class="section-block couple-groups-block" data-acc="gruppi">
         <div class="section-head"><h2>Gruppi <button type="button" class="nd-info" data-nd-info="gruppi" aria-label="Cosa sono i gruppi">i</button></h2><button type="button" class="pill-btn mini-btn" id="addGroupBtn">＋ Nuovo</button></div>
+        <p class="acc-sum" id="accGruppiSum"></p>
         <div id="coupleGroups" class="couple-groups"></div>
       </div>
 
-      <div class="section-block nd-fixed-block">
+      <div class="section-block nd-fixed-block" data-acc="fisse" data-acc-default="closed">
         <div class="section-head"><h2>Spese fisse <button type="button" class="nd-info" data-nd-info="fisse" aria-label="Come funzionano le spese fisse">i</button></h2><button type="button" class="pill-btn mini-btn" id="addFixedBtn">＋ Nuova</button></div>
-        <p class="field-hint nd-fixed-total" id="fixedTotal"></p>
+        <p class="field-hint nd-fixed-total acc-keep" id="fixedTotal"></p>
         <div id="fixedList" class="couple-groups"></div>
         <p class="empty-hint" id="fixedEmpty" hidden>Nessuna spesa fissa. Aggiungi affitto, bollette o abbonamenti: verranno registrati da soli alla data giusta.</p>
       </div>
 
-      <div class="forecast-grid" aria-label="Chi ha pagato in tutto">
+      <div class="section-block nd-sempre" data-acc="sempre" data-acc-default="closed">
+        <div class="section-head"><h2>Da sempre: chi ha pagato</h2></div>
+        <p class="acc-sum" id="accSempreSum"></p>
+        <div class="forecast-grid" aria-label="Chi ha pagato in tutto">
         <div class="forecast-card"><span id="couplePaidALabel">Ha pagato</span><strong id="couplePaidA">0,00 €</strong></div>
         <div class="forecast-card"><span id="couplePaidBLabel">Ha pagato</span><strong id="couplePaidB">0,00 €</strong></div>
         <div class="forecast-card wide"><span>Cassa comune</span><strong id="couplePaidJoint">0,00 €</strong></div>
-      </div>
-
-      <div class="section-block">
-        <div class="section-head"><h2 id="coupleSharesTitle">Quote del mese</h2></div>
+        </div>
+        <p class="field-hint nd-paid-note">Tutti i gruppi, da quando usate Noi Due.</p>
+        <h3 class="nd-sub-h" id="coupleSharesTitle">Quote di ciascuno</h3>
         <div id="coupleShares" class="couple-shares"></div>
       </div>
 
-      <div class="section-block">
-        <div class="section-head"><h2>Ultime spese divise</h2></div>
+      <div class="section-block" data-acc="divise">
+        <div class="section-head"><h2>Ultime spese divise</h2><button type="button" class="pill-btn mini-btn" id="coupleSharedAll">Tutti i movimenti ›</button></div>
         <div id="coupleSharedTx" class="tx-list"></div>
         <p class="empty-hint" id="coupleSharedEmpty" hidden>Nessuna spesa divisa. Quando uno dei due paga, scegli come dividere.</p>
       </div>
 
-      <div class="section-block">
+      <div class="section-block" data-acc="rimborsi" data-acc-default="closed">
         <div class="section-head"><h2>Rimborsi tra voi</h2></div>
+        <p class="acc-sum" id="accRimborsiSum"></p>
         <div id="coupleSettleTx" class="tx-list"></div>
         <p class="empty-hint" id="coupleSettleEmpty" hidden>Quando uno dei due salda il debito, il rimborso compare qui.</p>
       </div>
@@ -169,7 +176,7 @@
     <section class="view" id="view-liste" data-view="liste">
       <h1 class="view-title">Liste</h1>
       <div class="section-block">
-        <div class="section-head"><h2>Cosa comprare <button type="button" class="nd-info" data-nd-info="liste" aria-label="Come funzionano le liste">i</button></h2><span class="lv-actions"><button type="button" class="pill-btn mini-btn" id="listsTrashBtn" aria-label="Cestino di tutte le liste">🗑</button><button type="button" class="pill-btn mini-btn" id="addListBtn">＋ Nuova lista</button></span></div>
+        <div class="section-head"><h2>Le vostre liste <button type="button" class="nd-info" data-nd-info="liste" aria-label="Come funzionano le liste">i</button></h2><span class="lv-actions"><button type="button" class="pill-btn mini-btn" id="listsTrashBtn" aria-label="Cestino di tutte le liste">🗑</button><button type="button" class="pill-btn mini-btn" id="addListBtn">＋ Nuova lista</button></span></div>
         <div id="coupleLists" class="lv-grid"></div>
       </div>
     </section>
@@ -200,20 +207,7 @@
 
     <!-- ===== STATISTICHE ===== -->
     <section class="view" id="view-stats" data-view="stats">
-      <div class="stats-period-filter">
-        <label for="statsRangeSelect">Periodo statistiche</label>
-        <select id="statsRangeSelect" aria-label="Periodo delle statistiche">
-          <option value="1w">1 settimana</option>
-          <option value="2w">2 settimane</option>
-          <option value="1m" selected>1 mese</option>
-          <option value="2m">2 mesi</option>
-          <option value="3m">3 mesi</option>
-          <option value="6m">6 mesi</option>
-          <option value="1y">1 anno</option>
-        </select>
-      </div>
-      <div id="statsInsights" class="stat-card-grid"></div>
-      <div class="section-block">
+      <div class="section-block nd-off" hidden>
         <div class="section-head"><h2>Spese per categoria</h2><button class="chart-info-btn" data-chart-info="ripartizione" aria-label="Spiega grafico ripartizione">i</button></div>
         <div class="type-toggle stats-nature-toggle" id="statsNatureToggle"><button class="type-opt active" data-stats-nature="expense">Uscite</button><button class="type-opt" data-stats-nature="income">Entrate</button></div>
         <div class="type-toggle" id="statsGroupToggle">
@@ -224,12 +218,26 @@
         <div id="pieLegend" class="pie-legend"></div>
       </div>
       <div class="section-block">
-        <div class="section-head trend-head"><h2>Andamento</h2><button class="chart-info-btn" data-chart-info="andamento" aria-label="Spiega grafico andamento">i</button></div>
+        <div class="section-head trend-head"><h2>Andamento delle spese</h2><button class="chart-info-btn" data-chart-info="andamento" aria-label="Spiega grafico andamento">i</button></div>
+        <div class="stats-period-filter" hidden>
+          <label for="statsRangeSelect">Periodo statistiche</label>
+          <select id="statsRangeSelect" aria-label="Periodo delle statistiche">
+            <option value="1w">1 settimana</option>
+            <option value="2w">2 settimane</option>
+            <option value="1m" selected>1 mese</option>
+            <option value="2m">2 mesi</option>
+            <option value="3m">3 mesi</option>
+            <option value="6m">6 mesi</option>
+            <option value="1y">1 anno</option>
+          </select>
+        </div>
+
         <div class="type-toggle trend-mode-toggle" id="trendModeToggle"><button class="type-opt active" data-trend-mode="flow">Spese</button><button class="type-opt" data-trend-mode="balance">Saldo cumulato</button><button class="type-opt" data-trend-mode="compare">Confronto mensile</button></div>
         <div class="chart-wrap" id="barWrap"></div>
         <div id="trendLegend" class="pie-legend"></div>
+        <div id="statsInsights" class="stat-card-grid"></div>
       </div>
-      <div class="section-block">
+      <div class="section-block nd-off" hidden>
         <div class="section-head"><h2>Chi ha pagato</h2><button class="chart-info-btn" data-chart-info="conti" aria-label="Spiega grafico conti">i</button></div>
         <div id="accountBreakdown" class="account-breakdown"></div>
       </div>
@@ -471,11 +479,15 @@
       </div>
     </section>
     <div class="lc-tools">
+      <button type="button" class="lc-tool lc-shop" id="listShopBtn" hidden><span aria-hidden="true">🛒</span>Negozio</button>
       <button type="button" class="lc-tool" id="listFavBtn"><span aria-hidden="true">★</span>Preferiti</button>
       <button type="button" class="lc-tool" id="listPasteBtn"><span aria-hidden="true">📋</span>Incolla lista</button>
       <button type="button" class="lc-tool" id="listBaseBtn" hidden><span aria-hidden="true">⭐</span>Lista base</button>
       <button type="button" class="lc-tool" id="listSortBtn">↕︎ In ordine</button>
+      <button type="button" class="lc-tool" id="listPricesBtn" hidden><span aria-hidden="true">💶</span>Prezzi dai link</button>
     </div>
+    <div class="td-filter" id="tdFilter" role="group" aria-label="Di chi" hidden></div>
+    <div class="shop-bar" id="shopBar" hidden><span id="shopBarTxt"></span><button type="button" class="pill-btn mini-btn" id="shopExitBtn">Esci</button></div>
     <div class="list-suggest" id="listSuggest" hidden></div>
     <div id="listTodo" class="list-items"></div>
     <p class="field-hint list-gesture-hint" id="listGestureHint">Tocca il pallino: acquistato · tocca il nome: dettagli · tieni premuto: modifica · scorri a sinistra: ✎ ☆ 🗑</p>
@@ -536,6 +548,8 @@
       <div class="field-row"><label>Prezzo cad.</label><input type="text" id="itemPriceInput" class="text-input" inputmode="decimal" placeholder="€ facoltativo" autocomplete="off"></div>
     </div>
     <div class="pick-row pick-2 item-picks" id="itemPicks"></div>
+    <div class="field-row item-due-row" id="itemDueRow" hidden><label>Scadenza</label><input type="date" id="itemDueInput" class="text-input"><div class="chip-row item-due-chips" id="itemDueChips"></div><label class="item-rep-lbl">Ripeti</label><div class="chip-row item-rep-chips" id="itemRepeatChips"></div></div>
+    <button type="button" class="shared-switch item-fav-switch item-prio-switch" id="itemPrioSwitch" aria-pressed="false"><span class="shared-knob" aria-hidden="true"></span><span class="shared-switch-text"><strong>🔥 Urgente</strong><small>Va in cima alla lista</small></span></button>
     <button type="button" class="shared-switch item-fav-switch" id="itemFavSwitch" aria-pressed="false"><span class="shared-knob" aria-hidden="true"></span><span class="shared-switch-text"><strong>★ Nei preferiti</strong></span></button>
     <div class="field-row item-link-field"><label>Link del prodotto</label>
       <div class="scan-code-row item-url-row"><input type="url" id="itemUrlInput" class="text-input" inputmode="url" placeholder="Incolla un link" autocomplete="off" autocapitalize="off"><button type="button" class="list-add-btn" id="itemUrlFetchBtn" aria-label="Aggiungi questo link">＋</button></div>
@@ -616,16 +630,14 @@
     <div class="sheet-head">
       <h3 id="listFormTitle">Nuova lista</h3><button class="primary-btn" id="saveListBtn" aria-label="Salva lista">Salva</button>
     </div>
+    <div class="field-row" id="listKindRow"><label>Tipo di lista</label><div class="lk-grid" id="listKindGrid" role="group" aria-label="Tipo di lista"></div><small class="field-hint lk-hint" id="listKindHint"></small></div>
     <div class="field-row"><label>Nome lista</label><input type="text" id="listNameInput" class="text-input" maxlength="40" placeholder="es. Spesa, Per la casa, Farmacia…"></div>
     <div class="field-row"><label>Icona</label><div class="emoji-row" id="listEmojiRow"></div></div>
-    <div class="field-row"><label>Gruppo della spesa</label><div class="chip-row" id="listGroupChips"></div><small class="field-hint">Quando registri gli acquisti, la spesa va in questo gruppo.</small></div>
-    <div class="field-row" id="listRestockRow">
-      <button type="button" class="shared-switch" id="listRestockSwitch" aria-pressed="false"><span class="shared-knob" aria-hidden="true"></span><span class="shared-switch-text"><strong>Lista della spesa fissa</strong><small>Al supermercato spunti i prodotti; quando esci dalla lista tornano tutti da comprare. Elimini solo a mano.</small></span></button>
-    </div>
+    <div class="field-row" id="listGroupRow"><label>Gruppo della spesa</label><div class="chip-row" id="listGroupChips"></div><small class="field-hint">Quando registri gli acquisti, la spesa va in questo gruppo.</small></div>
     <div class="field-row" id="listBaseRow" hidden>
       <label>Lista base</label>
       <small class="field-hint" id="listBaseInfo"></small>
-      <div class="list-base-actions"><button type="button" class="pill-btn" id="listBaseSave">⭐ Salva gli articoli attuali come lista base</button><button type="button" class="pill-btn" id="listBaseClear" hidden>Togli la lista base</button></div>
+      <div class="list-base-actions"><button type="button" class="pill-btn" id="listBaseSave">⭐ Salva quelli attuali come lista base</button><button type="button" class="pill-btn" id="listBaseClear" hidden>Togli la lista base</button></div>
     </div>
     <button class="text-danger-btn" id="deleteListBtn" hidden>Elimina lista</button>
   </div>
@@ -699,9 +711,10 @@
       <label>Colore</label>
       <div class="color-row" id="categoryColorRow"></div>
     </div>
-    <div class="field-row" hidden>
-      <label>Budget mensile (opzionale)</label>
-      <input type="text" inputmode="decimal" id="categoryBudgetInput" class="text-input" placeholder="es. 250">
+    <div class="field-row">
+      <label>Budget mensile di coppia (facoltativo)</label>
+      <input type="text" inputmode="decimal" id="categoryBudgetInput" class="text-input" placeholder="es. 300 €">
+      <small class="field-hint">Lo vedi in Home: quanto avete speso in tutto in questa categoria nel mese e quanto resta.</small>
     </div>
     <button class="text-danger-btn" id="deleteCategoryBtn" hidden>Elimina categoria</button>
   </div>
@@ -780,6 +793,7 @@
     <div class="sheet-head">
       <h3>Categorie</h3>
       <div class="sheet-head-actions">
+        <button type="button" class="pill-btn mini-btn hub-reorder" id="hubReorderBtn">Riordina</button>
         <button class="add-btn" id="hubAddBtn" aria-label="Aggiungi categoria">+</button>
         <button class="sheet-close" data-close aria-label="Chiudi pannello">✕</button>
       </div>
@@ -901,7 +915,7 @@
   </div>
 </template>
 
-<script src="suite.js?v=1.47.0"></script>
-<script src="app.js?v=1.47.0"></script>
+<script src="suite.js?v=1.49.0"></script>
+<script src="app.js?v=1.49.0"></script>
 </body>
 </html>

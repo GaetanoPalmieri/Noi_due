@@ -61,11 +61,24 @@ function buildMessage(oldData: any, newData: any) {
   const txDiff = diffIds(oldData?.transactions, newData?.transactions);
   const oldLists = byId(oldData?.lists), newLists = byId(newData?.lists);
   let itemsAdded = 0, itemsRemoved = 0;
-  const addedByList: string[] = [], removedByList: string[] = [];
+  const addedByList: string[] = [], removedByList: string[] = [], doneByList: string[] = [];
   const lines: string[] = [];
   newLists.forEach((l, id) => {
     const old = oldLists.get(id);
     const d = diffIds(old?.items, l.items);
+    // v1.48.0 — liste To-do: notifica le cose segnate come fatte
+    if (l?.kind === "todo") {
+      const was = byId(old?.items);
+      // v1.49.0 — anche le cose che si ripetono (registro doneLog): non diventano "fatte", passano alla scadenza dopo
+      const fromLog = diffIds(old?.doneLog, l.doneLog).added.map((e: any) => ({ id: e.itemId, text: e.text }));
+      const seen = new Set(fromLog.map((x: any) => x.id));
+      const doneNow = [...fromLog, ...(Array.isArray(l.items) ? l.items : []).filter((i: any) => i?.done && was.has(i.id) && !was.get(i.id)?.done && !seen.has(i.id))];
+      if (doneNow.length) {
+        doneByList.push(`${doneNow.length} in ${l.name || "una lista"}`);
+        const names = doneNow.map((i: any) => String(i.text || "").slice(0, 30)).filter(Boolean);
+        lines.push(`✅ Fatto · ${l.name || "Lista"}: ${names.slice(0, 3).join(", ")}${names.length > 3 ? ` e altri ${names.length - 3}` : ""}`);
+      }
+    }
     // v1.21.0 — nella notifica anche i nomi dei prodotti aggiunti (i primi 3)
     if (d.added.length) {
       itemsAdded += d.added.length; addedByList.push(`${d.added.length} a ${l.name || "una lista"}`);
@@ -95,14 +108,16 @@ function buildMessage(oldData: any, newData: any) {
   if (txDiff.removed.length) removedParts.push(`${txDiff.removed.length} ${txDiff.removed.length === 1 ? "movimento" : "movimenti"}`);
   if (removedByList.length) removedParts.push(removedByList.join(", "));
 
-  if (!addedParts.length && !removedParts.length) return null;
+  if (!addedParts.length && !removedParts.length && !doneByList.length) return null;
   const bits: string[] = [];
   if (addedParts.length) bits.push(`ha aggiunto ${addedParts.join(" e ")}`);
+  if (doneByList.length) bits.push(`ha completato ${doneByList.join(", ")}`);
   if (removedParts.length) bits.push(`ha rimosso ${removedParts.join(" e ")}`);
   const mov = (n: number) => `${n} ${n === 1 ? "movimento" : "movimenti"}`;
   if (txDiff.removed.length) lines.unshift(`➖ ${mov(txDiff.removed.length)}`);
   if (txDiff.added.length) lines.unshift(`➕ ${mov(txDiff.added.length)}`);
-  return { addedCount: txDiff.added.length + itemsAdded, removedCount: txDiff.removed.length + itemsRemoved, text: bits.join(" · "), lines };
+  const doneCount = doneByList.reduce((n, x) => n + (parseInt(x, 10) || 0), 0);
+  return { addedCount: txDiff.added.length + itemsAdded, removedCount: txDiff.removed.length + itemsRemoved, doneCount, text: bits.join(" · "), lines };
 }
 
 /* ---------- Riepilogo mensile (stessa logica dell'app: coupleMonthStats e coupleBalance) ---------- */
@@ -213,13 +228,45 @@ function monthlyMessage(data: any, key: string, today: string, showAmounts: bool
   }
   // v1.21.0 — chi ha preso cosa dalle liste nel mese
   const bought: Record<string, number> = { a: 0, b: 0 };
-  (Array.isArray(data?.lists) ? data.lists : []).forEach((l: any) => (Array.isArray(l?.purchases) ? l.purchases : []).forEach((p: any) => {
+  (Array.isArray(data?.lists) ? data.lists : []).filter((l: any) => l?.kind !== "todo").forEach((l: any) => (Array.isArray(l?.purchases) ? l.purchases : []).forEach((p: any) => {
     if (p && typeof p.at === "string" && p.at.startsWith(key) && (p.by === "a" || p.by === "b")) bought[p.by]++;
   }));
   if (bought.a + bought.b > 0) lines.push("🛒 Presi " + (["a", "b"] as const).filter((k) => bought[k] > 0).map((k) => `${C.name(k)} ${bought[k]}`).join(" · "));
   lines.push(balance);
   const m = monthName(key);
   return { title: `📊 ${m.charAt(0).toUpperCase() + m.slice(1)}`, body: lines.join("\n"), tag: `noidue-riepilogo-${key}`, url: "./" };
+}
+
+/* ---------- v1.49.0 — Promemoria delle cose da fare (liste To-do) ---------- */
+const TODO_FROM = 9, TODO_TO = 21;
+function todoMessage(data: any, person: string | null, today: string) {
+  const late: string[] = [], now: string[] = [];
+  (Array.isArray(data?.lists) ? data.lists : []).filter((l: any) => l?.kind === "todo").forEach((l: any) => (Array.isArray(l.items) ? l.items : []).forEach((i: any) => {
+    if (!i || i.done || typeof i.due !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(i.due) || i.due > today) return;
+    if (person && (i.forWhom === "a" || i.forWhom === "b") && i.forWhom !== person) return;
+    (i.due < today ? late : now).push(String(i.text || "").slice(0, 40));
+  }));
+  if (!late.length && !now.length) return null;
+  const more = (arr: string[]) => `${arr.slice(0, 4).join(", ")}${arr.length > 4 ? ` e altre ${arr.length - 4}` : ""}`;
+  const lines: string[] = [];
+  if (now.length) lines.push(`📌 Oggi: ${more(now)}`);
+  if (late.length) lines.push(`⚠️ In ritardo: ${more(late)}`);
+  const n = late.length + now.length;
+  return { title: `✅ ${n} ${n === 1 ? "cosa da fare" : "cose da fare"}`, body: lines.join("\n"), tag: `noidue-todo-${today}`, url: "./" };
+}
+/* ---------- v1.49.0 — Avviso quando il debito supera la soglia scelta nell'app ---------- */
+function coupleBal(data: any, today: string) {
+  const C = makeCouple(data);
+  return Math.round((Array.isArray(data?.transactions) ? data.transactions : []).filter((t: any) => t && typeof t.date === "string" && t.date <= today).reduce((s: number, t: any) => s + C.txDebt(t), 0) * 100) / 100;
+}
+function settleAlert(oldData: any, newData: any) {
+  const T = Number(newData?.couple?.settleAlert) || 0;
+  if (!(T > 0) || !oldData) return null;
+  const today = localNow("Europe/Rome").today;
+  const before = Math.abs(coupleBal(oldData, today)), after = coupleBal(newData, today);
+  if (Math.abs(after) < T || before >= T) return null;
+  const C = makeCouple(newData), debtor = after > 0 ? "b" : "a", creditor = debtor === "a" ? "b" : "a";
+  return { debtor, creditor, amount: Math.abs(after), T, name: C.name };
 }
 
 async function loadCouple(coupleId: string) {
@@ -262,7 +309,18 @@ Deno.serve(async (req) => {
       const { data: subs, error } = await admin.from("push_subscriptions").select("*").eq("app", APP).eq("enabled", true).not("couple_id", "is", null);
       if (error) return json({ error: error.message }, 500);
       const cache = new Map<string, any>();
-      let sent = 0, skipped = 0;
+      let sent = 0, skipped = 0, todoSent = 0;
+      // Promemoria delle cose da fare: una volta al giorno per telefono, dalle 9 (se la colonna esiste e l'opzione è attiva)
+      for (const s of subs || []) {
+        if (!("last_todo_sent" in s) || s.todo_remind === false) continue;
+        const { today, hour } = localNow(s.tz);
+        if (hour < TODO_FROM || hour > TODO_TO || s.last_todo_sent === today) continue;
+        if (!cache.has(s.couple_id)) cache.set(s.couple_id, await loadCouple(s.couple_id));
+        const msg = todoMessage(cache.get(s.couple_id), s.person === "a" || s.person === "b" ? s.person : null, today);
+        if (!msg) continue; // niente in scadenza: si riprova all'ora dopo (se ne aggiungete una per oggi arriva lo stesso)
+        const r = await send(s, msg);
+        if (r === "ok") { todoSent++; await admin.from("push_subscriptions").update({ last_todo_sent: today }).eq("id", s.id); }
+      }
       for (const s of subs || []) {
         const { today, hour } = localNow(s.tz);
         // Solo il giorno 1 dalle 9, una volta per mese, e solo se la colonna esiste (riepilogo_mensile.sql eseguito)
@@ -275,15 +333,23 @@ Deno.serve(async (req) => {
         if (r === "ok") sent++;
         if (r === "ok" || r === "nothing") await admin.from("push_subscriptions").update({ last_monthly_sent: key }).eq("id", s.id);
       }
-      return json({ monthly: sent, skipped, total: subs?.length || 0 });
+      return json({ monthly: sent, todo: todoSent, skipped, total: subs?.length || 0 });
     }
 
     const { couple_id, editor, old, new: fresh } = reqBody || {};
     if (!couple_id) return json({ error: "couple_id mancante" }, 400);
+    // v1.49.0 — soglia del rimborso superata: avviso a tutti e due
+    const sa = settleAlert(old, fresh);
+    if (sa) {
+      const { data: all } = await admin.from("push_subscriptions").select("*").eq("app", APP).eq("couple_id", couple_id).eq("enabled", true);
+      for (const s of all || []) await send(s, { title: "⚖️ Ora di un rimborso?", body: s.show_amounts === false
+        ? `${sa.name(sa.debtor)} ha superato la soglia scelta: conviene registrare un rimborso a ${sa.name(sa.creditor)}.`
+        : `${sa.name(sa.debtor)} deve ${fmt(sa.amount)} a ${sa.name(sa.creditor)} (soglia ${fmt(sa.T)}).`, tag: "noidue-soglia", url: "./" });
+    }
     const msg = buildMessage(old, fresh);
-    if (!msg) return json({ sent: 0, reason: "nessuna aggiunta/rimozione" });
+    if (!msg) return json({ sent: 0, reason: "nessuna aggiunta/rimozione", alert: !!sa });
     const who = editor === "a" || editor === "b" ? (fresh?.couple?.[editor]?.name || "Il tuo partner") : "Il tuo partner";
-    const tot = msg.addedCount + msg.removedCount;
+    const tot = msg.addedCount + msg.removedCount + (msg.doneCount || 0);
     const payload = { title: `👤 ${who} · ${tot} ${tot === 1 ? "modifica" : "modifiche"}`, body: msg.lines.slice(0, 5).join("\n"), tag: "noidue-sync", url: "./" };
     let q = admin.from("push_subscriptions").select("*").eq("app", APP).eq("couple_id", couple_id).eq("enabled", true);
     const { data: subs } = await q;

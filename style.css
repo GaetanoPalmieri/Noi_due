@@ -9108,3 +9108,9 @@ html:root body #views #view-home > .hero.nh-card .nh-tile b { font-size: clamp(1
 .hb-row.over .hb-bar i{background:var(--rust)}
 .hb-bar em{position:absolute;top:-3px;width:2px;height:13px;border-radius:2px;background:var(--ink);opacity:.45;transform:translateX(-1px)}
 .amounts-hidden .hb-bar i{width:0!important}
+
+/* Noi Due 1.49.1 — "Elimina questa lista" ben visibile, spazio sotto il pannello */
+#overlayRoot #sheetListForm{padding-bottom:calc(30px + env(safe-area-inset-bottom))!important}
+.nd-del-list{display:block;width:100%;margin:22px 0 4px;padding:13px 16px;border-radius:14px;border:1.5px solid color-mix(in srgb,var(--rust) 55%,transparent);background:color-mix(in srgb,var(--rust) 10%,transparent);color:var(--rust);font:inherit;font-size:15px;font-weight:750;cursor:pointer}
+.nd-del-list[hidden]{display:none!important}
+.nd-del-list:active{transform:scale(.98)}

@@ -4,11 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
 <title>Noi Due — Spese di coppia</title>
-<meta name="app-version" content="1.49.0">
+<meta name="app-version" content="1.49.1">
 <meta name="description" content="Spese di coppia: chi ha pagato, chi deve a chi, budget e statistiche.">
 
 <!-- PWA / iOS home screen -->
-<link rel="manifest" href="manifest.json?v=1.49.0">
+<link rel="manifest" href="manifest.json?v=1.49.1">
 <meta name="theme-color" content="#12181F">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -16,12 +16,12 @@
 <!-- iPhone: icona nella cartella principale, senza ?v=, con la dimensione dichiarata (la legge anche Safari più vecchio). -->
 <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
 <link rel="apple-touch-icon-precomposed" sizes="180x180" href="apple-touch-icon-precomposed.png">
-<link rel="icon" href="icons/icon-192.png?v=1.49.0">
+<link rel="icon" href="icons/icon-192.png?v=1.49.1">
 
-<link rel="stylesheet" href="style.css?v=1.49.0">
+<link rel="stylesheet" href="style.css?v=1.49.1">
 <!-- Token grafici condivisi dalle 4 app: va caricato per ultimo. -->
-<link rel="stylesheet" href="suite-ui.css?v=1.49.0">
-<link rel="stylesheet" href="suite-tokens.css?v=1.49.0">
+<link rel="stylesheet" href="suite-ui.css?v=1.49.1">
+<link rel="stylesheet" href="suite-tokens.css?v=1.49.1">
 </head>
 <body>
 
@@ -55,7 +55,7 @@
     <!-- ===== HOME / DASHBOARD ===== -->
     <section class="view active" id="view-home" data-view="home">
       <h1 class="view-title">Home</h1>
-      <!-- v1.49.0 — RIQUADRO DELLE SPESE COME IN BET TRACKER: carta verde con la cifra grande (centesimi più piccoli),
+      <!-- v1.49.1 — RIQUADRO DELLE SPESE COME IN BET TRACKER: carta verde con la cifra grande (centesimi più piccoli),
            pastiglie (rispetto al mese prima, ultimi 7 giorni, rimborsi tra voi), andamento degli ultimi 30 giorni, tre caselle
            (chi ha pagato: voi due e la cassa comune) e sotto, dentro la carta, "chi deve a chi" (apre Saldi).
            Gli id di prima restano: renderNdHome e renderCoupleStrip li aggiornano come prima. -->
@@ -637,9 +637,9 @@
     <div class="field-row" id="listBaseRow" hidden>
       <label>Lista base</label>
       <small class="field-hint" id="listBaseInfo"></small>
-      <div class="list-base-actions"><button type="button" class="pill-btn" id="listBaseSave">⭐ Salva quelli attuali come lista base</button><button type="button" class="pill-btn" id="listBaseClear" hidden>Togli la lista base</button></div>
+      <div class="list-base-actions"><button type="button" class="pill-btn" id="listBaseSave" data-no-icon>⭐ Salva quelli attuali come lista base</button><button type="button" class="pill-btn" id="listBaseClear" data-no-icon hidden>Togli la lista base</button></div>
     </div>
-    <button class="text-danger-btn" id="deleteListBtn" hidden>Elimina lista</button>
+    <button type="button" class="nd-del-list" id="deleteListBtn" data-no-icon hidden>🗑 Elimina questa lista</button>
   </div>
 </template>
 
@@ -915,7 +915,7 @@
   </div>
 </template>
 
-<script src="suite.js?v=1.49.0"></script>
-<script src="app.js?v=1.49.0"></script>
+<script src="suite.js?v=1.49.1"></script>
+<script src="app.js?v=1.49.1"></script>
 </body>
 </html>

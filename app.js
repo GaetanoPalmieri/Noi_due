@@ -2475,7 +2475,8 @@ function renderHomeLists(){
     b.className="hl-item"+(c.open?"":" empty")+(c.late?" late":"")+(isTodoList(l)?" is-todo":"");
     b.innerHTML=`<span class="hl-em" aria-hidden="true">${emojiIconHtml(l.emoji)}</span><span class="hl-txt"><b>${escapeHtml(l.name)}</b><small>${escapeHtml(sub)}</small></span>${listRingHtml(c.open,c.total)}`;
     b.setAttribute("aria-label",`Lista ${l.name}: ${sub}`);
-    b.addEventListener("click",()=>openListDetail(l.id));
+    b.addEventListener("click",()=>{ if(b._skipClick) return; openListDetail(l.id); });
+    bindListCardMenu(b,l);
     b.addEventListener("keydown",e=>{ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); openListDetail(l.id); } });
     row.appendChild(b);
   });
@@ -2493,7 +2494,8 @@ function renderCoupleLists(){
     card.className="lv-card"+(c.open?"":" empty")+(c.late?" late":""); card.setAttribute("role","button"); card.tabIndex=0;
     card.innerHTML=`<span class="lv-em" aria-hidden="true">${emojiIconHtml(l.emoji)}</span><span class="lv-head"><b>${escapeHtml(l.name)}</b><small><i class="lv-kind lk-${k}">${info.emoji} ${escapeHtml(info.label)}</i>${escapeHtml(listSubline(l,c,{long:true}))}${g&&k!=="todo"?` · ${escapeHtml(g.emoji+" "+g.name)}`:""}</small></span>${listRingHtml(c.open,c.total)}<span class="lv-chev" aria-hidden="true">›</span>`;
     card.setAttribute("aria-label",`${l.name} (${info.label}): ${listSubline(l,c)}`);
-    card.addEventListener("click",()=>openListDetail(l.id));
+    card.addEventListener("click",()=>{ if(card._skipClick) return; openListDetail(l.id); });
+    bindListCardMenu(card,l);
     card.addEventListener("keydown",e=>{ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); openListDetail(l.id); } });
     box.appendChild(card);
   });
@@ -3407,6 +3409,23 @@ function openListPaste(onAdd){
     paint();
   });
 }
+/* v1.49.1 — Eliminare una lista: dal pulsante in Modifica lista oppure tenendo premuta la lista. Si può annullare. */
+async function confirmDeleteList(listId,after){
+  const l=state.lists.find(x=>x.id===listId); if(!l) return;
+  const n=l.items.length;
+  if(!await askConfirm(`Eliminare la lista "${l.name}"${n?` con ${n} ${n===1?"elemento":"elementi"}`:""}?`,{ok:"Elimina",danger:true})) return;
+  const copy=JSON.parse(JSON.stringify(l)), pos=state.lists.indexOf(l), ids=[l.id,...l.items.map(i=>i.id)];
+  markDeleted(ids); state.lists=state.lists.filter(x=>x.id!==l.id);
+  persist(); renderAll(); if(typeof after==="function") after();
+  showActionToast(`🗑 Lista “${copy.name}” eliminata`,"Annulla",()=>{
+    if(state.lists.some(x=>x.id===copy.id)) return;
+    ids.forEach(id=>{ if(state.deleted) delete state.deleted[id]; });
+    state.lists.splice(Math.min(pos,state.lists.length),0,copy); persist(); renderAll(); showToast("Lista ripristinata");
+  });
+}
+function bindListCardMenu(card,l){
+  enableLongPressActions(card,{title:`${l.emoji} ${l.name}`,onEdit:()=>openListForm(l.id),onDelete:()=>confirmDeleteList(l.id)});
+}
 function openListForm(listId=null){
   const l=listId?state.lists.find(x=>x.id===listId):null;
   openSheet("tpl-list-form",(node,close)=>{
@@ -3459,12 +3478,7 @@ function openListForm(listId=null){
     const del=node.querySelector("#deleteListBtn");
     if(l){
       del.hidden=false;
-      del.addEventListener("click",async()=>{
-        if(!await askConfirm(`Eliminare la lista "${l.name}"${l.items.length?` con ${l.items.length} ${l.items.length===1?"elemento":"elementi"}`:""}?`,{ok:"Elimina",danger:true})) return;
-        markDeleted(l.id, l.items.map(i=>i.id));
-        state.lists=state.lists.filter(x=>x.id!==l.id);
-        persist(); renderAll(); close(); showToast("Lista eliminata");
-      });
+      del.addEventListener("click",()=>confirmDeleteList(l.id,close));
     }
     node.querySelector("#saveListBtn").addEventListener("click",()=>{
       const name=nameInput.value.trim();
@@ -4573,7 +4587,7 @@ function openChartInfo(kind){
     dividi:"Quanto della spesa spetta a ciascuno. A metà, con una percentuale, tutta all'altra persona oppure solo a chi ha pagato (spesa personale). Dalla cassa comune non si crea nessun debito.",
     fisse:"Spese che si ripetono, come affitto, bollette o abbonamenti. Scegli quanto, ogni quanto, chi paga, il gruppo e come dividere: alla data giusta la spesa viene registrata da sola nei movimenti e aggiorna il saldo tra voi. Tocca una spesa fissa per modificarla, metterla in pausa o eliminarla.",
     gruppi:"Ogni gruppo è un conto separato tra voi, con il suo saldo (es. Casa, Viaggio a Lisbona). Il numero grande in alto è la somma di tutti i gruppi. Tocca un gruppo per vederne i movimenti o saldarlo.",
-    liste:"Ci sono tre tipi di lista, che scegli quando la crei (e cambi da Modifica): 🛒 Spesa — i prodotti spuntati tornano da comprare quando esci; 🛍️ Classica — cose da comprare una volta; ✅ To-do — cose da fare, con chi lo fa, la scadenza e la ripetizione (es. ogni settimana). Tocca una lista per aggiungere articoli: scrivendoli, incollando una lista (ogni riga diventa un articolo) o con una foto. Tocca un prodotto quando lo prendi: finisce in “Acquistato” con data e ora e nella cronologia 🕘 (linguetta a destra). Scorrendo puoi metterlo nei ★ preferiti o eliminarlo: va nel cestino della lista (🗑 in fondo); dalla pagina Liste trovi il cestino di tutte le liste. Gli acquistati si possono registrare come spesa.",
+    liste:"Ci sono tre tipi di lista, che scegli quando la crei (e cambi da Modifica): 🛒 Spesa — i prodotti spuntati tornano da comprare quando esci; 🛍️ Classica — cose da comprare una volta; ✅ To-do — cose da fare, con chi lo fa, la scadenza e la ripetizione (es. ogni settimana). Tieni premuta una lista per modificarla o eliminarla. Tocca una lista per aggiungere articoli: scrivendoli, incollando una lista (ogni riga diventa un articolo) o con una foto. Tocca un prodotto quando lo prendi: finisce in “Acquistato” con data e ora e nella cronologia 🕘 (linguetta a destra). Scorrendo puoi metterlo nei ★ preferiti o eliminarlo: va nel cestino della lista (🗑 in fondo); dalla pagina Liste trovi il cestino di tutte le liste. Gli acquistati si possono registrare come spesa.",
     ripartizione:"Mostra come entrate o uscite del periodo selezionato sono distribuite fra categorie o macrocategorie. Non considera i trasferimenti fra conti.",
     andamento:"Entrate/Uscite mostra i flussi del periodo. Saldo cumulato mostra il saldo reale, partendo dal saldo presente prima dell’inizio del periodo. Tieni premuto un punto per leggere il giorno.",
     conti:"Mostra la variazione netta di ciascun conto nel periodo scelto. I trasferimenti compaiono come uscita nel conto di origine e entrata in quello di destinazione."
